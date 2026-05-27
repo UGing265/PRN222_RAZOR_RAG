@@ -74,11 +74,20 @@ public static class DocumentChunker
                             {
                                 var words = sentence.Split((char[]?)null, StringSplitOptions.RemoveEmptyEntries);
                                 var start = 0;
+                                var stride = maxWords - overlapWords;
+                                if (stride <= 0) stride = 1;
+
                                 while (start < words.Length)
                                 {
                                     var length = Math.Min(maxWords, words.Length - start);
                                     chunks.Add(string.Join(" ", words.Skip(start).Take(length)));
-                                    start += Math.Max(1, length - overlapWords);
+                                    
+                                    if (start + length >= words.Length)
+                                    {
+                                        break;
+                                    }
+                                    
+                                    start += stride;
                                 }
                                 currentChunk.Clear();
                                 currentWordCount = 0;
