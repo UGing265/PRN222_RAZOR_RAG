@@ -32,7 +32,8 @@ Tài liệu này ghi chú lại những vấn đề đã gặp phải với lu�
 ```csharp
 public int ChunkMaxWords { get; set; } = 1100;
 public int ChunkOverlapWords { get; set; } = 100;
-public int BatchSize { get; set; } = 60; // Gửi tối đa 60 chunks trong 1 request Batch
-public int BatchDelaySeconds { get; set; } = 2; // Nghỉ 2s giữa mỗi chuyến Batch
+public int BatchSize { get; set; } = 15; // Gửi 15 chunks trong 1 request Batch
+public int BatchDelaySeconds { get; set; } = 10; // Nghỉ 10s giữa mỗi chuyến Batch
 ```
+**Lưu ý quan trọng:** Google tính Quota dựa trên "số lượng Chunk" bên trong Batch, chứ không tính theo "số lần gọi API". Giới hạn Free Tier của Gemini là **100 Chunks / Phút**. Với cấu hình `15 chunk nghỉ 10 giây`, hệ thống của bạn sẽ chạy tốc độ 90 Chunks / Phút, luôn nằm gọn trong ngưỡng an toàn tuyệt đối mà không bao giờ bị báo lỗi Rate Limit 429.
 Cấu hình này đảm bảo tốc độ xử lý file nhanh hơn rất nhiều, tiết kiệm số lần gọi API gấp 60 lần, chống được lỗi kẹt hàng đợi (job queue) và giúp Chatbot trả lời thông minh hơn nhờ mảng văn bản (Chunk) liền mạch, giàu ngữ nghĩa.
