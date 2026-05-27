@@ -47,23 +47,22 @@ public class GeminiChapterSegmentationService : IChapterSegmentationService
 
         var chunkPack = string.Join("\n", chunks.OrderBy(x => x.ChunkOrder).Select(x => 
         {
-            var preview = x.Content.Length > 150 ? x.Content.Substring(0, 150).Replace("\n", " ") + "..." : x.Content.Replace("\n", " ");
+            var preview = x.Content.Length > 300 ? x.Content.Substring(0, 300).Replace("\n", " ") + "..." : x.Content.Replace("\n", " ");
             return $"[CHUNK {x.ChunkOrder}] {preview}";
         }));
         var prompt = """
 Bạn là hệ thống chia chương tài liệu học thuật.
-Hãy phân chia tài liệu thành các chương lớn theo thứ tự logic dựa trên các chunk bên dưới.
+Hãy phân chia tài liệu thành các chương dựa trên các chunk bên dưới.
 
 Yêu cầu BẮT BUỘC:
-- Nhóm các chunk thành các chương LỚN (Tối đa 15-20 chương cho toàn bộ tài liệu). KHÔNG chia quá nhỏ lắt nhắt.
-- Chỉ trả về JSON hợp lệ.
-- Không thêm giải thích ngoài JSON.
-- Mỗi chương phải có title, summary, startChunkIndex, endChunkIndex, confidenceScore.
-- 'summary' phải RẤT NGẮN GỌN (tối đa 1-2 câu).
-- startChunkIndex và endChunkIndex phải là số nguyên, dựa trên chỉ số chunk.
-- Các chương không được chồng lấn và phải phủ hết toàn bộ chunk.
-- Chỉ dùng chunk có sẵn, không bịa nội dung.
-- Nếu tài liệu ngắn, trả về 1 chương duy nhất.
+1. ƯU TIÊN TÌM HEADER: Hãy quét kỹ nội dung các chunk để tìm các dấu hiệu chuyển chương rõ ràng (VD: 'Chapter 1', 'Chương 1', 'PART I', 'Mục lục'). 
+   - Nếu sách gốc có 6 chương, HÃY TRẢ VỀ ĐÚNG 6 CHƯƠNG đó.
+   - Nếu sách KHÔNG CÓ chia chương rõ ràng, thì MỚI tự động gộp các chunk lại thành các phần lớn logic (Tối đa 15-20 chương).
+2. Chỉ trả về JSON hợp lệ, KHÔNG giải thích thêm.
+3. Mỗi chương phải có title, summary, startChunkIndex, endChunkIndex, confidenceScore.
+4. 'summary' RẤT NGẮN GỌN (1-2 câu).
+5. startChunkIndex và endChunkIndex là số nguyên. Các chương phải bao phủ toàn bộ tài liệu và không chồng lấn.
+6. Nếu tài liệu quá ngắn, trả về 1 chương duy nhất.
 
 Thông tin tài liệu:
 - Title: __TITLE__
