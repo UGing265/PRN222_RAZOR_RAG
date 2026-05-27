@@ -1,0 +1,210 @@
+@model GUI.Models.Documents.DocumentDetailsViewModel
+
+@{
+    ViewData["Title"] = "Chi tiết tài liệu";
+}
+
+<div class="page-shell grain">
+    <div class="container-fluid px-4 px-md-5 py-4 py-md-5">
+        <div class="d-flex justify-content-between align-items-start gap-3 mb-4">
+            <div>
+                <div class="kicker">— Kho tài liệu</div>
+                <h1 class="hero-title" style="font-size: clamp(2.5rem, 5vw, 4.5rem);">@Model.Title</h1>
+                <div class="text-muted-foreground mt-2">@Model.Subject</div>
+            </div>
+            <div class="d-flex gap-2 flex-wrap">
+                <a asp-action="Delete" asp-route-id="@Model.Id" class="btn btn-outline-danger pill-button px-3 py-2">Xoá tài liệu</a>
+                <span class="badge rounded-pill px-3 py-2 @(Model.Status == "approved" ? "text-bg-success" : Model.Status == "rejected" ? "text-bg-danger" : "text-bg-warning")">@Model.Status</span>
+            </div>
+        </div>
+
+        <div class="row g-4">
+            <div class="col-lg-8">
+                <div class="soft-panel editorial-shadow p-4 p-md-5 mb-4">
+                    <div class="row g-4 file-meta">
+                        <div class="col-md-6">
+                            <div class="file-subtle mb-2">Trường</div>
+                            <div>@Model.School</div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="file-subtle mb-2">Khoa / phòng ban</div>
+                            <div>@Model.Department</div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="file-subtle mb-2">Hiển thị</div>
+                            <div>@Model.Visibility</div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="file-subtle mb-2">Ngôn ngữ</div>
+                            <div>@Model.Language</div>
+                        </div>
+                        <div class="col-12">
+                            <div class="file-subtle mb-2">Mô tả</div>
+                            <div>@Model.Description</div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="soft-panel editorial-shadow mb-4 overflow-hidden">
+                    <div class="p-4 border-bottom border-border d-flex justify-content-between align-items-center">
+                        <div>
+                            <h2 class="h5 mb-1">Tệp đã tải lên</h2>
+                            <div class="font-mono-xs text-muted-foreground">Danh sách file gắn với tài liệu</div>
+                        </div>
+                        <span class="badge text-bg-dark rounded-pill px-3 py-2">@Model.FileCount file</span>
+                    </div>
+                    @if (!Model.Files.Any())
+                    {
+                        <div class="p-4 text-center text-muted-foreground">Chưa có file nào.</div>
+                    }
+                    else
+                    {
+                        <div class="p-4">
+                            <div class="row g-3">
+                                @foreach (var file in Model.Files)
+                                {
+                                    <div class="col-12">
+                                        <div class="file-card d-flex align-items-center justify-content-between gap-3 flex-wrap">
+                                            <div class="d-flex align-items-center gap-3 min-w-0">
+                                                <div class="d-flex align-items-center justify-content-center rounded-circle" style="width:44px;height:44px;background:#f4dcd0;color:#6b4a40;">📎</div>
+                                                <div class="min-w-0">
+                                                    <div class="file-meta fw-semibold text-truncate">@file.OriginalFilename</div>
+                                                    <div class="file-subtle">@file.MimeType</div>
+                                                </div>
+                                            </div>
+                                            <div class="d-flex align-items-center gap-3 flex-wrap ms-auto">
+                                                <div class="file-subtle">@(file.FileSizeBytes / 1024.0 / 1024.0).ToString("0.00") MB</div>
+                                                <span class="badge rounded-pill text-bg-secondary px-3 py-2">@file.ExtractionStatus</span>
+                                                <div class="file-subtle">@file.CreatedAt.ToString("dd/MM/yyyy HH:mm")</div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                }
+                            </div>
+                        </div>
+                    }
+                </div>
+
+                <div class="soft-panel editorial-shadow mb-4 overflow-hidden">
+                    <div class="p-4 border-bottom border-border d-flex justify-content-between align-items-center">
+                        <div>
+                            <div class="kicker">— Chương</div>
+                            <h2 class="h5 mb-1 mt-2">Các chương đã chia</h2>
+                            <div class="font-mono-xs text-muted-foreground">@Model.TotalChapters chương · @Model.TotalChunks đoạn</div>
+                        </div>
+                        <span class="badge rounded-pill text-bg-dark px-3 py-2">@Model.Chapters.Count chương hiển thị</span>
+                    </div>
+
+                    @if (!Model.Chapters.Any())
+                    {
+                        <div class="p-4 text-center text-muted-foreground">Chưa có chương nào.</div>
+                    }
+                    else
+                    {
+                        <div class="p-4">
+                            <div class="row g-3">
+                                @foreach (var chapter in Model.Chapters)
+                                {
+                                    <div class="col-12 col-xl-6">
+                                        <div class="chunk-card h-100">
+                                            <div class="d-flex justify-content-between align-items-start gap-3 mb-3">
+                                                <div>
+                                                    <div class="font-mono-xs text-muted-foreground">Chương @chapter.ChapterOrder</div>
+                                                    <h3 class="h6 mb-1 mt-2">@chapter.Title</h3>
+                                                </div>
+                                                <span class="chunk-chip">@chapter.ChunkCount chunk</span>
+                                            </div>
+                                            @if (!string.IsNullOrWhiteSpace(chapter.Summary))
+                                            {
+                                                <p class="text-muted-foreground mb-3">@chapter.Summary</p>
+                                            }
+                                            <div class="d-flex flex-wrap gap-2 align-items-center">
+                                                <span class="chunk-chip">Chunk @chapter.StartChunkIndex → @chapter.EndChunkIndex</span>
+                                                @if (chapter.ConfidenceScore is not null)
+                                                {
+                                                    <span class="chunk-chip">Độ tin cậy @chapter.ConfidenceScore</span>
+                                                }
+                                                @if (chapter.IsAiGenerated)
+                                                {
+                                                    <span class="chunk-chip">AI</span>
+                                                }
+                                            </div>
+                                        </div>
+                                    </div>
+                                }
+                            </div>
+                        </div>
+                    }
+                </div>
+
+                <div class="soft-panel editorial-shadow">
+                    <div class="p-4 border-bottom border-border d-flex justify-content-between align-items-center gap-3 flex-wrap">
+                        <div>
+                            <div class="kicker">— Chunk</div>
+                            <h2 class="h5 mb-1 mt-2">Các đoạn nội dung</h2>
+                            <div class="font-mono-xs text-muted-foreground">Trang @Model.ChunkPage / @Model.TotalChunkPages</div>
+                        </div>
+                        <div class="d-flex align-items-center gap-2 flex-wrap">
+                            <a asp-action="Details" asp-route-id="@Model.Id" asp-route-chunkPage="@Math.Max(1, Model.ChunkPage - 1)" asp-route-chunkPageSize="@Model.ChunkPageSize" class="btn btn-outline-dark btn-sm pill-button @(Model.ChunkPage <= 1 ? "disabled" : "")">Prev</a>
+                            <a asp-action="Details" asp-route-id="@Model.Id" asp-route-chunkPage="@Math.Min(Model.TotalChunkPages, Model.ChunkPage + 1)" asp-route-chunkPageSize="@Model.ChunkPageSize" class="btn btn-outline-dark btn-sm pill-button @(Model.ChunkPage >= Model.TotalChunkPages ? "disabled" : "")">Next</a>
+                        </div>
+                    </div>
+
+                    @if (!Model.Chunks.Any())
+                    {
+                        <div class="p-4 text-center text-muted-foreground">Chưa có chunk nào.</div>
+                    }
+                    else
+                    {
+                        <div class="p-4">
+                            <div class="row g-3">
+                                @foreach (var chunk in Model.Chunks)
+                                {
+                                    var previewText = chunk.Content;
+                                    if (previewText.Length > 180)
+                                    {
+                                        previewText = previewText[..180] + "…";
+                                    }
+                                    <div class="col-12 col-xl-6">
+                                        <details class="chunk-card h-100">
+                                            <summary class="list-unstyled d-flex justify-content-between align-items-start gap-3" style="cursor:pointer;">
+                                                <div class="flex-grow-1">
+                                                    <div class="d-flex align-items-center justify-content-between gap-3 mb-2">
+                                                        <div class="font-mono-xs text-muted-foreground">Đoạn @chunk.ChunkOrder</div>
+                                                        <span class="chunk-chip">#@(chunk.ChunkOrder.ToString("000"))</span>
+                                                    </div>
+                                                    <div class="fw-semibold mb-2" style="font-family: 'Source Serif 4', Georgia, serif;">@chunk.WordCount từ</div>
+                                                    <div class="chunk-preview chunk-preview-compact">@previewText</div>
+                                                </div>
+                                            </summary>
+
+                                            <div class="mt-3 pt-3 border-top border-border">
+                                                <div class="d-flex flex-wrap gap-2 mb-3">
+                                                    <span class="chunk-chip">@chunk.ChunkHash</span>
+                                                    <span class="chunk-chip">@chunk.WordCount từ</span>
+                                                </div>
+                                                <div class="font-mono-xs text-muted-foreground mb-2">Toàn bộ nội dung</div>
+                                                <div class="chunk-full" style="font-family: 'Source Serif 4', Georgia, serif; font-size: 15px;">@chunk.Content</div>
+                                            </div>
+                                        </details>
+                                    </div>
+                                }
+                            </div>
+                        </div>
+                    }
+                </div>
+            </div>
+
+            <div class="col-lg-4">
+                <div class="soft-panel editorial-shadow p-4 p-md-5 sticky-top" style="top: 24px;">
+                    <div class="font-mono-xs text-muted-foreground mb-3">Tóm lược</div>
+                    <h2 class="h5 mb-4">Thông tin nhanh</h2>
+                    <div class="d-flex justify-content-between align-items-center mb-3 file-meta"><span class="file-subtle">Tổng file</span><strong>@Model.FileCount</strong></div>
+                    <div class="d-flex justify-content-between align-items-center mb-3 file-meta"><span class="file-subtle">Tổng đoạn</span><strong>@Model.TotalChunks</strong></div>
+                    <div class="d-flex justify-content-between align-items-center mb-3 file-meta"><span class="file-subtle">Tổng chương</span><strong>@Model.TotalChapters</strong></div>
+                    <div class="d-flex justify-content-between align-items-center file-meta"><span class="file-subtle">Duyệt lúc</span><strong>@(Model.ApprovedAt?.ToString("dd/MM/yyyy HH:mm") ?? "Chưa duyệt")</strong></div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

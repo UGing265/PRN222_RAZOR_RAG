@@ -1,0 +1,228 @@
+@model GUI.Models.Documents.DocumentCreateViewModel
+
+@{
+    ViewData["Title"] = "Tải lên";
+}
+
+<div class="page-shell grain">
+    <div class="container-fluid px-4 px-md-5 py-4 py-md-5">
+        <div class="d-flex align-items-center justify-content-between mb-4 small text-muted-foreground">
+            <div class="d-flex align-items-center gap-2">
+                <span style="width:10px;height:10px;border-radius:9999px;border:1px solid rgba(82,39,27,.25);display:inline-block;"></span>
+                <span>Không gian làm việc — Tải lên</span>
+            </div>
+            <a asp-route="dashboard" class="link-plain text-muted-foreground">Bảng điều khiển</a>
+        </div>
+
+        <section class="soft-panel editorial-shadow p-4 p-md-5 mb-4">
+            <div class="d-flex justify-content-between align-items-start gap-3 mb-4">
+                <div>
+                    <div class="font-mono-xs text-muted-foreground mb-3">Mục tải lên</div>
+                    <h1 class="hero-title mb-3" style="font-size: clamp(3rem, 7vw, 5rem);">Đưa tài liệu <span class="font-serif-italic text-coral-deep">vào kho.</span></h1>
+                    <p class="text-muted-foreground col-lg-8 mb-0">
+                        Chọn một file rồi nhập thông tin cần thiết. Hệ thống sẽ tự xử lý phần còn lại.
+                    </p>
+                </div>
+                <div class="rounded-4 p-4" style="background:#4a1f16;color:#fff;min-width:160px;">
+                    <div class="font-mono-xs text-white-50">Phiên này</div>
+                    <div class="display-6 fw-semibold mt-2">01</div>
+                </div>
+            </div>
+
+            <div class="row g-0 overflow-hidden" style="border-radius: 28px; border: 1px solid rgba(82,39,27,.08); background: rgba(255,255,255,.6);">
+                <div class="col-md-8 p-4 p-md-5 border-end border-border">
+                    <form asp-action="Create" method="post" enctype="multipart/form-data">
+                        @Html.AntiForgeryToken()
+                        <div asp-validation-summary="ModelOnly" class="alert alert-danger py-2"></div>
+
+                        <div class="chunk-card mb-4 text-center" id="uploadDropzone" role="button" tabindex="0">
+                            <div class="d-flex justify-content-between align-items-start mb-4">
+                                <div class="font-mono-xs text-muted-foreground">Kéo thả</div>
+                                <div class="font-mono-xs text-muted-foreground">Đang hoạt động</div>
+                            </div>
+                            <div class="d-flex justify-content-center mb-4">
+                                <div class="d-flex align-items-center justify-content-center rounded-circle" style="width:96px;height:96px;background:var(--coral-soft);color:var(--coral);font-size:38px;">⇪</div>
+                            </div>
+                            <h2 class="hero-title" style="font-size: clamp(2rem, 4vw, 3.4rem);">Kéo thả file <span class="font-serif-italic text-coral-deep">vào đây</span></h2>
+                            <p class="text-muted-foreground mt-3 mb-0">
+                                Hoặc bấm vào khung để chọn file PDF, DOC, DOCX, PPT, PPTX.
+                            </p>
+                            <input asp-for="UploadFile" type="file" class="d-none" id="uploadFileInput" accept=".pdf,.doc,.docx,.ppt,.pptx" />
+                            <span asp-validation-for="UploadFile" class="text-danger small d-block mt-3"></span>
+                        </div>
+
+                        <div class="row g-3">
+                            <div class="col-12 col-lg-7">
+                                <label asp-for="Title" class="form-label font-mono-xs text-muted-foreground"></label>
+                                <input asp-for="Title" class="form-control pill-input" placeholder="Tiêu đề tài liệu" />
+                                <span asp-validation-for="Title" class="text-danger small"></span>
+                            </div>
+                            <div class="col-12 col-lg-5">
+                                <label asp-for="Subject" class="form-label font-mono-xs text-muted-foreground"></label>
+                                <input asp-for="Subject" class="form-control pill-input" placeholder="Môn hoặc chủ đề" />
+                                <span asp-validation-for="Subject" class="text-danger small"></span>
+                            </div>
+                        </div>
+
+                        <div class="d-flex justify-content-between align-items-center mt-4">
+                            <div class="font-mono-xs text-muted-foreground">Nếu cần, có thể bổ sung thêm thông tin bên dưới.</div>
+                            <button type="button" class="btn btn-link link-plain text-coral-deep p-0" data-bs-toggle="collapse" data-bs-target="#moreInfoCollapse" aria-expanded="false" aria-controls="moreInfoCollapse">Thêm thông tin</button>
+                        </div>
+
+                        <div class="collapse mt-3" id="moreInfoCollapse">
+                            <div class="soft-panel p-4" style="background: rgba(255,255,255,.58);">
+                                <div class="row g-3">
+                                    <div class="col-12 col-md-6">
+                                        <label asp-for="School" class="form-label font-mono-xs text-muted-foreground"></label>
+                                        <input asp-for="School" class="form-control pill-input" placeholder="Trường hoặc đơn vị" />
+                                        <span asp-validation-for="School" class="text-danger small"></span>
+                                    </div>
+                                    <div class="col-12 col-md-6">
+                                        <label asp-for="Department" class="form-label font-mono-xs text-muted-foreground"></label>
+                                        <input asp-for="Department" class="form-control pill-input" placeholder="Khoa hoặc phòng ban" />
+                                        <span asp-validation-for="Department" class="text-danger small"></span>
+                                    </div>
+                                    <div class="col-12 col-md-4">
+                                        <label asp-for="Language" class="form-label font-mono-xs text-muted-foreground"></label>
+                                        <input asp-for="Language" class="form-control pill-input" placeholder="vi / en" />
+                                        <span asp-validation-for="Language" class="text-danger small"></span>
+                                    </div>
+                                    <div class="col-12 col-md-4">
+                                        <label asp-for="Visibility" class="form-label font-mono-xs text-muted-foreground"></label>
+                                        <select asp-for="Visibility" class="form-select pill-input">
+                                            <option value="private">Riêng tư</option>
+                                            <option value="public">Công khai</option>
+                                            <option value="internal">Nội bộ</option>
+                                        </select>
+                                        <span asp-validation-for="Visibility" class="text-danger small"></span>
+                                    </div>
+                                    <div class="col-12 col-md-4">
+                                        <label asp-for="SourceType" class="form-label font-mono-xs text-muted-foreground"></label>
+                                        <input asp-for="SourceType" class="form-control pill-input" placeholder="nguồn tải lên" />
+                                        <span asp-validation-for="SourceType" class="text-danger small"></span>
+                                    </div>
+                                    <div class="col-12">
+                                        <label asp-for="Description" class="form-label font-mono-xs text-muted-foreground"></label>
+                                        <textarea asp-for="Description" class="form-control rounded-4" rows="4" placeholder="Mô tả ngắn về tài liệu"></textarea>
+                                        <span asp-validation-for="Description" class="text-danger small"></span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="mt-4 d-flex gap-2 flex-wrap align-items-center">
+                            <button type="submit" class="btn btn-dark pill-button px-4 py-3" style="background:#d86a58;border-color:#d86a58;">Tải lên</button>
+                            <button type="button" id="uploadCancelBtn" class="btn btn-outline-dark pill-button px-4 py-3">Huỷ</button>
+                        </div>
+
+                        <div class="upload-progress-shell mt-4 d-none" id="uploadProgressShell">
+                            <div class="d-flex justify-content-between align-items-center mb-2">
+                                <div class="font-mono-xs text-muted-foreground">Đang tải ở chế độ nền</div>
+                                <div class="font-mono-xs text-muted-foreground" id="uploadProgressLabel">0%</div>
+                            </div>
+                            <div class="progress" style="height: 10px; border-radius: 9999px; background: rgba(82,39,27,.08);">
+                                <div id="uploadProgressBar" class="progress-bar" role="progressbar" style="width: 0%; background: linear-gradient(90deg, #d86a58, #4a1f16);"></div>
+                            </div>
+                            <div class="font-mono-xs text-muted-foreground mt-2" id="uploadProgressMeta">Đang chuẩn bị...</div>
+                        </div>
+                    </form>
+                </div>
+
+                <aside class="col-md-4 p-4 p-md-5" style="background:#4a1f16;color:#f8e7df;">
+                    <div class="font-mono-xs text-white-50 mb-4">Quy trình</div>
+                    <h3 class="display-6 fw-semibold mb-4">Đọc file — tách đoạn — tạo vector — lưu kho</h3>
+                    <div class="d-flex flex-column gap-3 mt-4">
+                        <div class="d-flex justify-content-between"><span>01 Đọc file</span><span class="small text-uppercase">OpenXML / PdfPig</span></div>
+                        <div class="d-flex justify-content-between"><span>02 Tách đoạn</span><span class="small text-uppercase">60 từ</span></div>
+                        <div class="d-flex justify-content-between"><span>03 Tạo vector</span><span class="small text-uppercase">Gemini</span></div>
+                        <div class="d-flex justify-content-between"><span>04 Lưu kho</span><span class="small text-uppercase">Postgres / Vector</span></div>
+                    </div>
+                </aside>
+            </div>
+
+            <div class="row g-4 mt-4">
+                <div class="col-md-4">
+                    <div class="metric-card editorial-shadow h-100">
+                        <div class="font-mono-xs text-muted-foreground">Tài liệu</div>
+                        <div class="display-6 fw-semibold mt-2">0</div>
+                        <div class="font-mono-xs text-muted-foreground">Đã xử lý trong phiên này</div>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="metric-card editorial-shadow h-100">
+                        <div class="font-mono-xs text-muted-foreground">Bảo mật</div>
+                        <div class="display-6 fw-semibold mt-2">AES-256</div>
+                        <div class="font-mono-xs text-muted-foreground">Lưu trữ mã hóa</div>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="library-card editorial-shadow h-100 d-flex align-items-end">
+                        <div>
+                            <div class="font-mono-xs text-white-50">Thư viện</div>
+                            <div class="h4 mb-0 fw-semibold">Xem toàn bộ tài liệu —</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+    </div>
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+    <script>
+        (function () {
+            const dropzone = document.getElementById('uploadDropzone');
+            const input = document.getElementById('uploadFileInput');
+            const form = input?.closest('form');
+            const progressShell = document.getElementById('uploadProgressShell');
+            const progressBar = document.getElementById('uploadProgressBar');
+            const progressLabel = document.getElementById('uploadProgressLabel');
+            const progressMeta = document.getElementById('uploadProgressMeta');
+            const cancelBtn = document.getElementById('uploadCancelBtn');
+            if (!dropzone || !input || !form || !progressShell || !progressBar || !progressLabel || !progressMeta || !cancelBtn) return;
+
+            dropzone.addEventListener('click', () => input.click());
+            dropzone.addEventListener('keydown', (e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); input.click(); } });
+
+            cancelBtn.addEventListener('click', () => window.location.href = '/dashboard');
+
+            form.addEventListener('submit', async (e) => {
+                if (!input.files || input.files.length === 0) return;
+                e.preventDefault();
+
+                progressShell.classList.remove('d-none');
+                progressBar.style.width = '0%';
+                progressLabel.textContent = '0%';
+                progressMeta.textContent = 'Đang đẩy file vào hàng đợi...';
+
+                const simulateProgress = setInterval(() => {
+                    const current = parseInt(progressBar.style.width || '0', 10) || 0;
+                    const next = Math.min(95, current + Math.max(3, Math.floor(Math.random() * 12)));
+                    progressBar.style.width = `${next}%`;
+                    progressLabel.textContent = `${next}%`;
+                    progressMeta.textContent = next < 50 ? 'Đang tải file...' : next < 90 ? 'Đang xử lý tài liệu...' : 'Đang hoàn tất...';
+                }, 220);
+
+                try {
+                    const response = await fetch(form.action, {
+                        method: 'POST',
+                        body: new FormData(form),
+                        headers: { 'X-Requested-With': 'XMLHttpRequest' }
+                    });
+                    clearInterval(simulateProgress);
+
+                    const data = await response.json();
+                    progressBar.style.width = '100%';
+                    progressLabel.textContent = '100%';
+                    progressMeta.textContent = 'Hoàn tất. Đang chuyển trang...';
+                    window.location.href = data.redirectUrl || '/dashboard';
+                } catch (error) {
+                    clearInterval(simulateProgress);
+                    progressShell.classList.add('d-none');
+                    form.submit();
+                }
+            });
+        })();
+    </script>
+}

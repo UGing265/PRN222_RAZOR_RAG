@@ -1,0 +1,37 @@
+@{
+    var controller = ViewContext.RouteData.Values["controller"]?.ToString();
+    var action = ViewContext.RouteData.Values["action"]?.ToString();
+    string IsActive(string c, string? a = null) => controller == c && (a is null || action == a) ? "active" : string.Empty;
+}
+
+<aside class="sidebar">
+    <div>
+        <a asp-route="dashboard" class="d-flex align-items-center gap-3 text-decoration-none text-foreground mb-4">
+            <span class="brand-mark">R</span>
+            <div class="lh-sm">
+                <div class="fw-semibold">RAG Assistant</div>
+                <div class="font-mono-xs text-muted-foreground">Không gian làm việc</div>
+            </div>
+        </a>
+
+        <div class="font-mono-xs text-muted-foreground mb-2">Điều hướng</div>
+        <nav class="nav flex-column gap-1">
+            <a class="nav-link @IsActive("Dashboard", "Index")" asp-route="dashboard">Bảng điều khiển</a>
+            <a class="nav-link @IsActive("Documents", "Create")" asp-route="upload">Tải lên</a>
+            <a class="nav-link @IsActive("Documents", "MyDocuments")" asp-controller="Documents" asp-action="MyDocuments">Thư viện</a>
+            <a class="nav-link @IsActive("Chat", "Index")" asp-route="chat">Trò chuyện</a>
+        </nav>
+
+        <div class="font-mono-xs text-muted-foreground mt-4 mb-2">Tài khoản</div>
+        <form asp-controller="Auth" asp-action="Logout" method="post" class="d-grid gap-1">
+            @Html.AntiForgeryToken()
+            <button type="submit" class="nav-link btn btn-link text-start text-decoration-none border-0 p-0">Đăng xuất</button>
+        </form>
+    </div>
+
+    <div class="sidebar-card" style="background: rgba(255,255,255,.32); border: 1px solid rgba(82,39,27,.08);">
+        <div class="font-mono-xs text-muted-foreground mb-2">Hiện tại</div>
+        <div class="fw-semibold">@DateTime.Now.ToString("HH:mm")</div>
+        <div class="font-mono-xs text-muted-foreground mt-2">GMT+7 · TP.HCM</div>
+    </div>
+</aside>

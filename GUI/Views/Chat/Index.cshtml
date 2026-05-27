@@ -1,0 +1,56 @@
+@{
+    ViewData["Title"] = "Chat";
+}
+
+<div class="page-shell grain">
+    <div class="container-fluid px-4 px-md-5 py-4 py-md-5">
+        <div class="d-flex justify-content-between align-items-start gap-3 mb-4">
+            <div>
+                <div class="kicker">— Knowledge chat</div>
+                <h1 class="hero-title" style="font-size: clamp(2.5rem, 5vw, 4.5rem);">Chat</h1>
+                <p class="text-muted-foreground mt-2 mb-0">Hỏi đáp với tài liệu, trích nguồn và tìm thông tin nhanh chóng.</p>
+            </div>
+            <a asp-route="dashboard" class="font-mono-xs text-muted-foreground link-plain">← Dashboard</a>
+        </div>
+
+        <div class="row g-4">
+            <div class="col-lg-8">
+                <div class="soft-panel editorial-shadow p-4 p-md-5" style="min-height: 70vh;">
+                    <div class="d-flex justify-content-between align-items-center mb-4">
+                        <h2 class="h5 mb-0">Conversation</h2>
+                        <span class="badge text-bg-success rounded-pill">Ready</span>
+                    </div>
+
+                    <div class="d-flex flex-column gap-3 mb-4" style="min-height: 48vh;">
+                        <div class="p-3 bg-white border border-border rounded-4 w-75">
+                            <div class="font-mono-xs text-muted-foreground mb-1">Assistant</div>
+                            <div>Xin chào, bạn muốn hỏi gì về tài liệu hôm nay?</div>
+                        </div>
+                        <div class="p-3 bg-dark text-white rounded-4 w-75 ms-auto">
+                            <div class="font-mono-xs text-white-50 mb-1">You</div>
+                            <div>Cho mình xem nội dung của tài liệu vừa upload.</div>
+                        </div>
+                    </div>
+
+                    <div class="border-top border-border pt-4">
+                        <div class="input-group">
+                            <input class="form-control pill-input" placeholder="Nhập câu hỏi..." />
+                            <button class="btn btn-dark pill-button px-4" type="button">Send</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-lg-4">
+                <div class="soft-panel editorial-shadow p-4 p-md-5 mb-4">
+                    <h2 class="h5 mb-3">Sources</h2>
+                    <div class="text-muted-foreground">Chưa có nguồn nào được chọn.</div>
+                </div>
+                <div class="soft-panel editorial-shadow p-4 p-md-5">
+                    <h2 class="h5 mb-3">Context</h2>
+                    <div class="text-muted-foreground">Kết nối với tài liệu đã index để bắt đầu hỏi đáp.</div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

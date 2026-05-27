@@ -1,0 +1,4 @@
+﻿@{
+    var controller = ViewContext.RouteData.Values["controller"]?.ToString();
+    Layout = controller is "Auth" ? "_Layout" : "_AppLayout";
+}

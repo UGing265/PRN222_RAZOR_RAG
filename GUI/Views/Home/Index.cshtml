@@ -1,0 +1,32 @@
+﻿@{
+    ViewData["Title"] = "Home";
+}
+
+<div class="container-fluid px-4 px-md-5 py-4 py-md-5">
+    <div class="soft-panel editorial-shadow p-4 p-md-5">
+        <div class="row align-items-center g-4">
+            <div class="col-lg-7">
+                <div class="kicker">— RAG Assistant</div>
+                <h1 class="hero-title mt-3 mb-4" style="font-size: clamp(3rem, 7vw, 5rem);">Quản lý tài liệu học tập <span class="font-serif-italic text-coral-deep">gọn gàng</span>, rõ ràng và dễ tìm kiếm.</h1>
+                <p class="lead text-muted-foreground mb-4">
+                    Tạo tài liệu trước, upload file sau — luồng tối ưu cho kho tri thức nội bộ.
+                </p>
+                <div class="d-flex gap-2 flex-wrap">
+                    <a class="btn btn-dark pill-button px-4 py-3" asp-route="dashboard" style="background:#d86a58;border-color:#d86a58;">Vào dashboard</a>
+                    <a class="btn btn-outline-dark pill-button px-4 py-3" asp-controller="Auth" asp-action="Login">Đăng nhập</a>
+                </div>
+            </div>
+            <div class="col-lg-5">
+                <div class="soft-panel p-4 h-100" style="background: rgba(255,255,255,.55);">
+                    <h2 class="h5 fw-semibold mb-3">Tính năng chính</h2>
+                    <ul class="list-unstyled mb-0 text-muted-foreground">
+                        <li class="mb-2">• Upload file an toàn với validate định dạng</li>
+                        <li class="mb-2">• Tự gắn tài liệu vào user đang đăng nhập</li>
+                        <li class="mb-2">• Chuẩn bị cho bước chunking / indexing</li>
+                        <li>• Giao diện đồng bộ, có sidebar workspace</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

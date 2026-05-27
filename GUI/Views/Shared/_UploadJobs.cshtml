@@ -1,0 +1,38 @@
+@using DAL.Entities
+@{
+    var jobs = ViewBag.ActiveUploadJobs as List<UploadJob> ?? new List<UploadJob>();
+}
+
+@if (jobs.Any())
+{
+    <div class="soft-panel editorial-shadow p-4 mb-4">
+        <div class="d-flex justify-content-between align-items-center mb-3">
+            <div>
+                <div class="font-mono-xs text-muted-foreground">Đang xử lý nền</div>
+                <h2 class="h6 mb-0 mt-2">Tài liệu đang tải lên</h2>
+            </div>
+            <span class="badge rounded-pill text-bg-dark">@jobs.Count tác vụ</span>
+        </div>
+
+        <div class="row g-3">
+            @foreach (var job in jobs)
+            {
+                var width = Math.Clamp(job.ProgressPercent, 0, 100);
+                <div class="col-12">
+                    <div class="file-card">
+                        <div class="d-flex justify-content-between align-items-start gap-3 mb-2">
+                            <div>
+                                <div class="fw-semibold">@job.FileName</div>
+                                <div class="file-subtle">@job.Status — @job.Message</div>
+                            </div>
+                            <div class="font-mono-xs text-muted-foreground">@width%</div>
+                        </div>
+                        <div class="progress" style="height: 10px; border-radius: 9999px; background: rgba(82,39,27,.08);">
+                            <div class="progress-bar" role="progressbar" style="width:@width%; background: linear-gradient(90deg, #d86a58, #4a1f16);"></div>
+                        </div>
+                    </div>
+                </div>
+            }
+        </div>
+    </div>
+}
