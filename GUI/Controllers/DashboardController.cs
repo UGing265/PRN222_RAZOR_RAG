@@ -66,4 +66,21 @@ public class DashboardController : Controller
 
         return View();
     }
+
+    [HttpGet]
+    public async Task<IActionResult> UploadJobsPartial(CancellationToken cancellationToken = default)
+    {
+        if (!Guid.TryParse(User.FindFirstValue(ClaimTypes.NameIdentifier), out var userId))
+        {
+            return Unauthorized();
+        }
+
+        ViewBag.ActiveUploadJobs = await _dbContext.UploadJobs.AsNoTracking()
+            .Where(x => x.OwnerUserId == userId && x.Status != "done" && x.Status != "failed")
+            .OrderByDescending(x => x.UpdatedAt)
+            .Take(5)
+            .ToListAsync(cancellationToken);
+
+        return PartialView("_UploadJobs");
+    }
 }

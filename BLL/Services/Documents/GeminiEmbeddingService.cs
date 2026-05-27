@@ -37,8 +37,8 @@ public class GeminiEmbeddingService : IEmbeddingService
             throw new InvalidOperationException("Missing Gemini API keys. Set Gemini:ApiKeys or GEMINI_API_KEY.");
         }
 
-        _model = configuration["Gemini:EmbeddingModel"] ?? "gemini-embedding-1";
-        _logger.LogInformation("Gemini embedding service initialized. Model={Model}, ApiKeyCount={ApiKeyCount}", _model, _apiKeys.Length);
+        _model = configuration["Gemini:EmbeddingModel"] ?? "gemini-embedding-2";
+        _logger.LogDebug("Gemini embedding service initialized. Model={Model}, ApiKeyCount={Count}", _model, _apiKeys.Length);
     }
 
     public async Task<Vector> EmbedAsync(string text, CancellationToken cancellationToken = default)
