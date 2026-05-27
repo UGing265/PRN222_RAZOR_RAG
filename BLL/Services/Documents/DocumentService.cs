@@ -200,6 +200,7 @@ public class DocumentService : IDocumentService
                 .Include(x => x.DocumentFiles)
                 .Include(x => x.DocumentChunks)
                 .Include(x => x.DocumentChapters)
+                .AsSplitQuery()
                 .FirstOrDefaultAsync(x => x.Id == documentId, cancellationToken);
         }
         catch (Exception ex)

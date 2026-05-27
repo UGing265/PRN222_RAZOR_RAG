@@ -145,6 +145,8 @@ __CHUNKPACK__
             try
             {
                 var url = $"https://generativelanguage.googleapis.com/v1beta/models/{_model}:generateContent?key={apiKey}";
+                _logger.LogInformation("Gemini chapter segmentation request started. Attempt={Attempt}/{MaxAttempts}, ApiKeyIndex={ApiKeyIndex}, BatchSize={BatchSize}", attempt + 1, _apiKeys.Length, apiKeyIndex, chunks.Count);
+                
                 var request = new GeminiGenerateRequest
                 {
                     Contents = [new GeminiContent
@@ -166,8 +168,12 @@ __CHUNKPACK__
                 if (!response.IsSuccessStatusCode)
                 {
                     lastError = new InvalidOperationException($"Gemini chapter segmentation failed: {(int)response.StatusCode} {body}");
+                    _logger.LogWarning("Gemini chapter segmentation failed. Attempt={Attempt}/{MaxAttempts}, ApiKeyIndex={ApiKeyIndex}, StatusCode={StatusCode}", attempt + 1, _apiKeys.Length, apiKeyIndex, (int)response.StatusCode);
+                    await Task.Delay(1000, cancellationToken);
                     continue;
                 }
+
+                _logger.LogInformation("Gemini chapter segmentation succeeded. ApiKeyIndex={ApiKeyIndex}", apiKeyIndex);
 
                 var payload = JsonSerializer.Deserialize<GeminiGenerateResponse>(body);
                 var text = payload?.Candidates?.FirstOrDefault()?.Content?.Parts?.FirstOrDefault()?.Text;
