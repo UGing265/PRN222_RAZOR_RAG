@@ -45,7 +45,11 @@ public class GeminiChapterSegmentationService : IChapterSegmentationService
             return [];
         }
 
-        var chunkPack = string.Join("\n\n", chunks.OrderBy(x => x.ChunkOrder).Select(x => $"[CHUNK {x.ChunkOrder}] {x.Content}"));
+        var chunkPack = string.Join("\n\n", chunks.OrderBy(x => x.ChunkOrder).Select(x => 
+        {
+            var preview = x.Content.Length > 500 ? x.Content.Substring(0, 500) + "..." : x.Content;
+            return $"[CHUNK {x.ChunkOrder}] {preview}";
+        }));
         var prompt = """
 Bạn là hệ thống chia chương tài liệu học thuật.
 Hãy phân chia tài liệu thành các chương theo thứ tự logic dựa trên các chunk bên dưới.
