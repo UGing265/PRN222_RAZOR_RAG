@@ -97,12 +97,18 @@ public class DocumentService : IDocumentService
             foreach (var batch in chunks.Chunk(_indexingOptions.BatchSize))
             {
                 batchIndex++;
-                foreach (var rawChunk in batch)
+                
+                var cleanBatch = batch.Select(SanitizeForPostgres).ToList();
+                var embedCts = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
+                embedCts.CancelAfter(TimeSpan.FromSeconds(120));
+                
+                var embeddings = await _embeddingService.EmbedBatchAsync(cleanBatch, embedCts.Token);
+
+                for (int i = 0; i < cleanBatch.Count; i++)
                 {
-                    var chunk = SanitizeForPostgres(rawChunk);
-                    var embedCts = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
-                    embedCts.CancelAfter(TimeSpan.FromSeconds(60));
-                    var embedding = await _embeddingService.EmbedAsync(chunk, embedCts.Token);
+                    var chunk = cleanBatch[i];
+                    var embedding = embeddings.ElementAtOrDefault(i) ?? new Vector(new float[3072]);
+                    
                     var metadata = SanitizeForPostgres(JsonSerializer.Serialize(new
                     {
                         sourceFileName = SanitizeForPostgres(file.FileName),

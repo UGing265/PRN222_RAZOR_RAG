@@ -34,7 +34,7 @@ public class UploadJobBackgroundService : BackgroundService
 
                 if (job is null)
                 {
-                    await Task.Delay(TimeSpan.FromSeconds(2), stoppingToken);
+                    await Task.Delay(TimeSpan.FromSeconds(5), stoppingToken);
                     continue;
                 }
 
@@ -70,12 +70,24 @@ public class UploadJobBackgroundService : BackgroundService
                 await db.SaveChangesAsync(stoppingToken);
 
                 _logger.LogInformation("Processing upload job {JobId} for document {DocumentId}", job.Id, job.DocumentId);
-                await processor.ProcessAsync(job, stoppingToken);
-                job.Status = "done";
-                job.ProgressPercent = 100;
-                job.Message = "Hoàn tất";
-                job.UpdatedAt = DateTime.UtcNow;
-                await db.SaveChangesAsync(stoppingToken);
+                try 
+                {
+                    await processor.ProcessAsync(job, stoppingToken);
+                    job.Status = "done";
+                    job.ProgressPercent = 100;
+                    job.Message = "Hoàn tất";
+                }
+                catch (Exception ex)
+                {
+                    job.Status = "failed";
+                    job.Message = "Lỗi xử lý: " + (ex.Message.Length > 200 ? ex.Message.Substring(0, 200) : ex.Message);
+                    throw;
+                }
+                finally 
+                {
+                    job.UpdatedAt = DateTime.UtcNow;
+                    await db.SaveChangesAsync(stoppingToken);
+                }
 
                 _logger.LogInformation("Completed upload job {JobId}", job.Id);
             }

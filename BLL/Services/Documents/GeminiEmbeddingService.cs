@@ -48,6 +48,17 @@ public class GeminiEmbeddingService : IEmbeddingService
             return new Vector(new float[ExpectedDimensions]);
         }
 
+        var results = await EmbedBatchAsync([text], cancellationToken);
+        return results.FirstOrDefault() ?? new Vector(new float[ExpectedDimensions]);
+    }
+
+    public async Task<List<Vector>> EmbedBatchAsync(IReadOnlyList<string> texts, CancellationToken cancellationToken = default)
+    {
+        if (texts.Count == 0)
+        {
+            return [];
+        }
+
         Exception? lastError = null;
         var attempts = _apiKeys.Length;
 
@@ -57,27 +68,31 @@ public class GeminiEmbeddingService : IEmbeddingService
             var apiKey = _apiKeys[apiKeyIndex];
             try
             {
-                var url = $"https://generativelanguage.googleapis.com/v1beta/models/{_model}:embedContent?key={apiKey}";
-                var request = new GeminiEmbedRequest
+                var url = $"https://generativelanguage.googleapis.com/v1beta/models/{_model}:batchEmbedContents?key={apiKey}";
+                var batchRequest = new GeminiBatchEmbedRequest
                 {
-                    Content = new GeminiContent
+                    Requests = texts.Select(text => new GeminiEmbedRequest
                     {
-                        Parts = [new GeminiPart { Text = text }]
-                    },
-                    TaskType = "RETRIEVAL_DOCUMENT",
-                    OutputDimensionality = ExpectedDimensions
+                        Model = $"models/{_model}",
+                        Content = new GeminiContent
+                        {
+                            Parts = [new GeminiPart { Text = text }]
+                        },
+                        TaskType = "RETRIEVAL_DOCUMENT",
+                        OutputDimensionality = ExpectedDimensions
+                    }).ToList()
                 };
 
-                _logger.LogInformation("Gemini embedding request started. Attempt={Attempt}/{Attempts}, ApiKeyIndex={ApiKeyIndex}, Model={Model}, TextLength={TextLength}",
-                    i + 1, attempts, apiKeyIndex, _model, text.Length);
+                _logger.LogInformation("Gemini batch embedding request started. Attempt={Attempt}/{Attempts}, ApiKeyIndex={ApiKeyIndex}, Model={Model}, BatchSize={BatchSize}",
+                    i + 1, attempts, apiKeyIndex, _model, texts.Count);
 
-                using var response = await HttpClient.PostAsJsonAsync(url, request, cancellationToken);
+                using var response = await HttpClient.PostAsJsonAsync(url, batchRequest, cancellationToken);
                 var responseBody = await response.Content.ReadAsStringAsync(cancellationToken);
 
                 if (!response.IsSuccessStatusCode)
                 {
                     _logger.LogWarning(
-                        "Gemini embedding failed. Attempt={Attempt}/{Attempts}, ApiKeyIndex={ApiKeyIndex}, StatusCode={StatusCode}, Body={Body}",
+                        "Gemini batch embedding failed. Attempt={Attempt}/{Attempts}, ApiKeyIndex={ApiKeyIndex}, StatusCode={StatusCode}, Body={Body}",
                         i + 1, attempts, apiKeyIndex, (int)response.StatusCode, Truncate(responseBody, 2000));
 
                     if ((int)response.StatusCode is 401 or 403 or 429 or 400)
@@ -87,29 +102,45 @@ public class GeminiEmbeddingService : IEmbeddingService
                         continue;
                     }
 
-                    throw new InvalidOperationException($"Gemini embedding failed: {response.StatusCode} - {responseBody}");
+                    throw new InvalidOperationException($"Gemini batch embedding failed: {response.StatusCode} - {responseBody}");
                 }
 
-                var payload = await response.Content.ReadFromJsonAsync<GeminiEmbedResponse>(cancellationToken: cancellationToken);
-                var values = payload?.Embedding?.Values ?? [];
-                var floats = values.Select(v => (float)v).ToArray();
-                _logger.LogInformation("Gemini embedding succeeded. ApiKeyIndex={ApiKeyIndex}, Dimension={Dimension}", apiKeyIndex, floats.Length);
-                return new Vector(floats.Length == 0 ? new float[ExpectedDimensions] : floats);
+                var payload = System.Text.Json.JsonSerializer.Deserialize<GeminiBatchEmbedResponse>(responseBody);
+                var vectors = new List<Vector>();
+
+                var returnedEmbeddings = payload?.Embeddings ?? [];
+                
+                for (int j = 0; j < texts.Count; j++)
+                {
+                    if (string.IsNullOrWhiteSpace(texts[j]))
+                    {
+                        vectors.Add(new Vector(new float[ExpectedDimensions]));
+                        continue;
+                    }
+
+                    // Map the results assuming Gemini returns them in order, if some are missing we return empty
+                    var values = returnedEmbeddings.ElementAtOrDefault(j)?.Values ?? [];
+                    var floats = values.Select(v => (float)v).ToArray();
+                    vectors.Add(new Vector(floats.Length == 0 ? new float[ExpectedDimensions] : floats));
+                }
+
+                _logger.LogInformation("Gemini batch embedding succeeded. ApiKeyIndex={ApiKeyIndex}, Returned={Returned}/{Requested}", apiKeyIndex, returnedEmbeddings.Count, texts.Count);
+                return vectors;
             }
             catch (HttpRequestException ex)
             {
                 lastError = ex;
-                _logger.LogWarning(ex, "Gemini embedding HTTP error. ApiKeyIndex={ApiKeyIndex}", apiKeyIndex);
+                _logger.LogWarning(ex, "Gemini batch embedding HTTP error. ApiKeyIndex={ApiKeyIndex}", apiKeyIndex);
             }
             catch (InvalidOperationException ex)
             {
                 lastError = ex;
-                _logger.LogWarning(ex, "Gemini embedding operation error. ApiKeyIndex={ApiKeyIndex}", apiKeyIndex);
+                _logger.LogWarning(ex, "Gemini batch embedding operation error. ApiKeyIndex={ApiKeyIndex}", apiKeyIndex);
             }
         }
 
-        _logger.LogError(lastError, "Gemini embedding failed after rotating through all API keys. Model={Model}, ApiKeyCount={ApiKeyCount}", _model, _apiKeys.Length);
-        throw new InvalidOperationException("Gemini embedding failed after rotating through all API keys.", lastError);
+        _logger.LogError(lastError, "Gemini batch embedding failed after rotating through all API keys. Model={Model}, ApiKeyCount={ApiKeyCount}", _model, _apiKeys.Length);
+        throw new InvalidOperationException("Gemini batch embedding failed after rotating through all API keys.", lastError);
     }
 
     private int GetNextApiKeyIndex()
@@ -128,8 +159,17 @@ public class GeminiEmbeddingService : IEmbeddingService
         return value[..maxLength] + "...";
     }
 
+    private sealed class GeminiBatchEmbedRequest
+    {
+        [JsonPropertyName("requests")]
+        public List<GeminiEmbedRequest> Requests { get; set; } = [];
+    }
+
     private sealed class GeminiEmbedRequest
     {
+        [JsonPropertyName("model")]
+        public string? Model { get; set; }
+
         [JsonPropertyName("content")]
         public GeminiContent Content { get; set; } = new();
 
@@ -143,7 +183,7 @@ public class GeminiEmbeddingService : IEmbeddingService
     private sealed class GeminiContent
     {
         [JsonPropertyName("parts")]
-        public List<GeminiPart> Parts { get; set; } = new();
+        public List<GeminiPart> Parts { get; set; } = [];
     }
 
     private sealed class GeminiPart
@@ -152,15 +192,15 @@ public class GeminiEmbeddingService : IEmbeddingService
         public string Text { get; set; } = string.Empty;
     }
 
-    private sealed class GeminiEmbedResponse
+    private sealed class GeminiBatchEmbedResponse
     {
-        [JsonPropertyName("embedding")]
-        public GeminiEmbedding? Embedding { get; set; }
+        [JsonPropertyName("embeddings")]
+        public List<GeminiEmbedding> Embeddings { get; set; } = [];
     }
 
     private sealed class GeminiEmbedding
     {
         [JsonPropertyName("values")]
-        public List<double> Values { get; set; } = new();
+        public List<double> Values { get; set; } = [];
     }
 }
