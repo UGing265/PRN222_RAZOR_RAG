@@ -4,7 +4,6 @@ using DocumentFormat.OpenXml.Presentation;
 using DocumentFormat.OpenXml.Wordprocessing;
 using Microsoft.Extensions.Logging;
 using UglyToad.PdfPig;
-using UglyToad.PdfPig.DocumentLayoutAnalysis.TextExtractor;
 using System.Text;
 using A = DocumentFormat.OpenXml.Drawing;
 using WText = DocumentFormat.OpenXml.Wordprocessing.Text;
@@ -42,8 +41,8 @@ public class SimpleFileParserService : IFileParserService
         using var document = PdfDocument.Open(filePath);
         foreach (var page in document.GetPages())
         {
-            var text = ContentOrderTextExtractor.GetText(page);
-            sb.AppendLine(text);
+            var words = page.GetWords();
+            sb.AppendLine(string.Join(" ", words.Select(w => w.Text)));
         }
 
         return sb.ToString();
