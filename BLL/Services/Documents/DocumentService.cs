@@ -269,6 +269,12 @@ public class DocumentService : IDocumentService
 
     private static string BuildSearchText(Document document, string extractedText)
     {
+        // Truncate extracted text to avoid PostgreSQL tsvector 1MB size limit (Error 54000)
+        // 50,000 characters is a safe limit that still provides good keyword search coverage
+        var safeExtractedText = string.IsNullOrWhiteSpace(extractedText) 
+            ? string.Empty 
+            : (extractedText.Length > 50000 ? extractedText.Substring(0, 50000) : extractedText);
+
         return string.Join(" ", new[]
         {
             document.Title,
@@ -276,7 +282,7 @@ public class DocumentService : IDocumentService
             document.Subject,
             document.School,
             document.Department,
-            extractedText
+            safeExtractedText
         }.Where(x => !string.IsNullOrWhiteSpace(x)));
     }
 
