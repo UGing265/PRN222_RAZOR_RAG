@@ -47,8 +47,20 @@ public class GeminiChapterSegmentationService : IChapterSegmentationService
 
         var chunkPack = string.Join("\n", chunks.OrderBy(x => x.ChunkOrder).Select(x => 
         {
-            var preview = x.Content.Length > 300 ? x.Content.Substring(0, 300).Replace("\n", " ") + "..." : x.Content.Replace("\n", " ");
-            return $"[CHUNK {x.ChunkOrder}] {preview}";
+            var cleanContent = x.Content.Replace("\r", "");
+            var lines = cleanContent.Split('\n', StringSplitOptions.RemoveEmptyEntries);
+            
+            var preview = cleanContent.Length > 500 ? cleanContent.Substring(0, 500).Replace("\n", " ") + "..." : cleanContent.Replace("\n", " ");
+            
+            // Trích xuất các dòng ngắn có khả năng là Header/Tiêu đề chương
+            var potentialHeaders = lines
+                .Where(l => l.Trim().Length > 3 && l.Trim().Length < 80)
+                .Where(l => !l.Trim().EndsWith(".") && !l.Trim().EndsWith(","))
+                .Take(10);
+                
+            var headersStr = string.Join(" | ", potentialHeaders);
+            
+            return $"[CHUNK {x.ChunkOrder}] Preview: {preview} === Headers tiềm năng: {headersStr}";
         }));
         var prompt = """
 Bạn là hệ thống chia chương tài liệu học thuật chuyên nghiệp.
