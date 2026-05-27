@@ -49,23 +49,8 @@ public class UploadJobBackgroundService : BackgroundService
                 }
 
                 job.Status = "processing";
-                job.ProgressPercent = 5;
-                job.Message = "Đang chờ đọc file";
-                job.UpdatedAt = DateTime.UtcNow;
-                await db.SaveChangesAsync(stoppingToken);
-
-                job.ProgressPercent = 20;
-                job.Message = "Đang đọc nội dung";
-                job.UpdatedAt = DateTime.UtcNow;
-                await db.SaveChangesAsync(stoppingToken);
-
-                job.ProgressPercent = 55;
-                job.Message = "Đang phân tích và chia đoạn";
-                job.UpdatedAt = DateTime.UtcNow;
-                await db.SaveChangesAsync(stoppingToken);
-
-                job.ProgressPercent = 85;
-                job.Message = "Đang hoàn tất chỉ mục";
+                job.ProgressPercent = 1;
+                job.Message = "Đưa vào hàng đợi xử lý";
                 job.UpdatedAt = DateTime.UtcNow;
                 await db.SaveChangesAsync(stoppingToken);
 
