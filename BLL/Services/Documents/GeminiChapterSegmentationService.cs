@@ -51,18 +51,19 @@ public class GeminiChapterSegmentationService : IChapterSegmentationService
             return $"[CHUNK {x.ChunkOrder}] {preview}";
         }));
         var prompt = """
-Bạn là hệ thống chia chương tài liệu học thuật.
-Hãy phân chia tài liệu thành các chương dựa trên các chunk bên dưới.
+Bạn là hệ thống chia chương tài liệu học thuật chuyên nghiệp.
+Nhiệm vụ của bạn là đọc cực kỳ cẩn thận và phân chia tài liệu thành các chương (chapters) hoàn chỉnh dựa trên các chunk bên dưới.
 
 Yêu cầu BẮT BUỘC:
-1. ƯU TIÊN TÌM HEADER: Hãy quét kỹ nội dung các chunk để tìm các dấu hiệu chuyển chương rõ ràng (VD: 'Chapter 1', 'Chương 1', 'PART I', 'Mục lục'). 
-   - Nếu sách gốc có 6 chương, HÃY TRẢ VỀ ĐÚNG 6 CHƯƠNG đó.
-   - Nếu sách KHÔNG CÓ chia chương rõ ràng, thì MỚI tự động gộp các chunk lại thành các phần lớn logic (Tối đa 15-20 chương).
+1. ĐỌC CẨN THẬN VÀ ƯU TIÊN TÌM HEADER: Hãy quét thật kỹ từng dòng nội dung của tất cả các chunk để tìm các dấu hiệu chuyển chương/phần rõ ràng (VD: 'Chapter 1', 'Chương 1', 'PART I', 'Mục lục', 'Introduction', 'Conclusion').
+   - Tuyệt đối KHÔNG bỏ sót bất kỳ chương nào có trong sách. Sách có bao nhiêu chương thì HÃY TRẢ VỀ ĐẦY ĐỦ bấy nhiêu chương, không giới hạn số lượng chương.
+   - Nếu sách KHÔNG CÓ chia chương rõ ràng, thì hãy tự động phân tích và gộp các chunk lại thành các phần/chủ đề lớn logic nhất.
 2. Chỉ trả về JSON hợp lệ, KHÔNG giải thích thêm.
 3. Mỗi chương phải có title, summary, startChunkIndex, endChunkIndex, confidenceScore.
 4. 'summary' RẤT NGẮN GỌN (1-2 câu).
-5. startChunkIndex và endChunkIndex là số nguyên. Các chương phải bao phủ toàn bộ tài liệu và không chồng lấn.
-6. Nếu tài liệu quá ngắn, trả về 1 chương duy nhất.
+5. startChunkIndex và endChunkIndex là số nguyên. Các chương phải bao phủ ĐẦY ĐỦ toàn bộ tài liệu (từ chunk đầu tiên đến chunk cuối cùng) và tuyệt đối KHÔNG được chồng lấn nhau.
+6. Chỉ dùng chunk có sẵn, không bịa nội dung.
+7. Nếu tài liệu quá ngắn, trả về 1 chương duy nhất.
 
 Thông tin tài liệu:
 - Title: __TITLE__
