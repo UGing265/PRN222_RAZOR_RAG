@@ -47,20 +47,24 @@ public class GeminiChapterSegmentationService : IChapterSegmentationService
 
         var allChapters = new List<DocumentChapter>();
         var batchSize = 40;
+        string lastChapterTitle = "";
         
         for (int i = 0; i < chunks.Count; i += batchSize)
         {
             var chunkBatch = chunks.Skip(i).Take(batchSize).ToList();
-            var batchChapters = await ProcessBatchAsync(document, chunkBatch, cancellationToken);
+            var batchChapters = await ProcessBatchAsync(document, chunkBatch, lastChapterTitle, cancellationToken);
             
             if (batchChapters.Count > 0)
             {
                 allChapters.AddRange(batchChapters);
+                lastChapterTitle = batchChapters.Last().Title;
             }
             else
             {
                 // Fallback cho batch này nếu lỗi toàn tập
-                allChapters.AddRange(BuildFallbackChapters(document, chunkBatch));
+                var fallback = BuildFallbackChapters(document, chunkBatch);
+                allChapters.AddRange(fallback);
+                lastChapterTitle = fallback.Last().Title;
             }
         }
         
@@ -73,7 +77,7 @@ public class GeminiChapterSegmentationService : IChapterSegmentationService
         return allChapters;
     }
 
-    private async Task<List<DocumentChapter>> ProcessBatchAsync(Document document, IReadOnlyList<DocumentChunk> chunks, CancellationToken cancellationToken)
+    private async Task<List<DocumentChapter>> ProcessBatchAsync(Document document, IReadOnlyList<DocumentChunk> chunks, string lastChapterTitle, CancellationToken cancellationToken)
     {
 
         var chunkPack = string.Join("\n", chunks.OrderBy(x => x.ChunkOrder).Select(x => 
@@ -96,6 +100,8 @@ public class GeminiChapterSegmentationService : IChapterSegmentationService
         var prompt = """
 Bạn là hệ thống chia chương tài liệu học thuật chuyên nghiệp.
 Nhiệm vụ của bạn là đọc cực kỳ cẩn thận và phân chia tài liệu thành các chương (chapters) hoàn chỉnh dựa trên các chunk bên dưới.
+
+__PREVIOUS_CONTEXT__
 
 Yêu cầu BẮT BUỘC:
 1. NGÔN NGỮ ĐẦU RA: Toàn bộ `title` (Tên chương) và `summary` (Tóm tắt) BẮT BUỘC PHẢI VIẾT BẰNG TIẾNG VIỆT, cho dù nội dung tài liệu gốc là tiếng Anh hay ngôn ngữ khác.
@@ -131,6 +137,7 @@ __CHUNKPACK__
   ]
 }
 """
+.Replace("__PREVIOUS_CONTEXT__", string.IsNullOrWhiteSpace(lastChapterTitle) ? "" : $"LƯU Ý QUAN TRỌNG: Các phần trước của tài liệu đã được xử lý. Chương cuối cùng của phần trước có tên là '{lastChapterTitle}'. Hãy phân tích tiếp nối nội dung từ đây, đánh số thứ tự chương tiếp theo cho phù hợp, TUYỆT ĐỐI KHÔNG bắt đầu đánh số lại từ Chương 1.")
 .Replace("__TITLE__", document.Title)
 .Replace("__SUBJECT__", document.Subject ?? string.Empty)
 .Replace("__SCHOOL__", document.School ?? string.Empty)
