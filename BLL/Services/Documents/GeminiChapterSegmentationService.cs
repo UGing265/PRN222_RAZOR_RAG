@@ -35,7 +35,7 @@ public class GeminiChapterSegmentationService : IChapterSegmentationService
             throw new InvalidOperationException("Missing Gemini API keys. Set Gemini:ApiKeys or GEMINI_API_KEY.");
         }
 
-        _model = configuration["Gemini:ChatModel"] ?? "gemini-1.5-pro";
+        _model = configuration["Gemini:ChatModel"] ?? "gemini-2.5-flash";
     }
 
     public async Task<List<DocumentChapter>> GenerateChaptersAsync(Document document, IReadOnlyList<DocumentChunk> chunks, CancellationToken cancellationToken = default)
@@ -44,6 +44,37 @@ public class GeminiChapterSegmentationService : IChapterSegmentationService
         {
             return [];
         }
+
+        var allChapters = new List<DocumentChapter>();
+        var batchSize = 40;
+        
+        for (int i = 0; i < chunks.Count; i += batchSize)
+        {
+            var chunkBatch = chunks.Skip(i).Take(batchSize).ToList();
+            var batchChapters = await ProcessBatchAsync(document, chunkBatch, cancellationToken);
+            
+            if (batchChapters.Count > 0)
+            {
+                allChapters.AddRange(batchChapters);
+            }
+            else
+            {
+                // Fallback cho batch này nếu lỗi toàn tập
+                allChapters.AddRange(BuildFallbackChapters(document, chunkBatch));
+            }
+        }
+        
+        // Re-order and merge contiguous chunks if needed
+        for (int i = 0; i < allChapters.Count; i++)
+        {
+            allChapters[i].ChapterOrder = i + 1;
+        }
+
+        return allChapters;
+    }
+
+    private async Task<List<DocumentChapter>> ProcessBatchAsync(Document document, IReadOnlyList<DocumentChunk> chunks, CancellationToken cancellationToken)
+    {
 
         var chunkPack = string.Join("\n", chunks.OrderBy(x => x.ChunkOrder).Select(x => 
         {
@@ -154,8 +185,8 @@ __CHUNKPACK__
             }
         }
 
-        _logger.LogError(lastError, "Chapter segmentation failed, falling back to one chapter.");
-        return BuildFallbackChapters(document, chunks);
+        _logger.LogError(lastError, "Chapter segmentation batch failed, returning empty list for this batch.");
+        return [];
     }
 
     private List<DocumentChapter> BuildChaptersFromResponse(Document document, IReadOnlyList<DocumentChunk> chunks, ChapterResponse? response)
