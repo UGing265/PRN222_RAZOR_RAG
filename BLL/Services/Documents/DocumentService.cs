@@ -63,7 +63,7 @@ public class DocumentService : IDocumentService
         return await _s3StorageService.UploadAsync(documentId.ToString("N"), file, cancellationToken);
     }
 
-    public async Task<DocumentFile> AddDocumentFileAsync(Guid documentId, string s3Key, string s3Url, IFormFile file, CancellationToken cancellationToken = default)
+    public async Task<DocumentFile> AddDocumentFileAsync(Guid documentId, string s3Key, string s3Url, IFormFile file, Func<int, Task>? onProgress = null, CancellationToken cancellationToken = default)
     {
         ValidateFile(file);
 
@@ -137,6 +137,12 @@ public class DocumentService : IDocumentService
                     });
 
                     chunkIndex++;
+                }
+
+                if (onProgress != null && totalChunks > 0)
+                {
+                    int progress = 20 + (int)((chunkIndex / (double)totalChunks) * 70);
+                    await onProgress(progress);
                 }
 
                 if (chunkIndex < totalChunks)

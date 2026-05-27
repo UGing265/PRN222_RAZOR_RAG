@@ -52,7 +52,13 @@ public class UploadProcessingService : IUploadProcessingService
         var formFile = new TempFileFormFile(tempFileName, fileName, tempInfo.Length, contentType);
         var s3Key = job.StoragePath;
         var s3Url = $"s3://{s3Key}";
-        await _documentService.AddDocumentFileAsync(job.DocumentId.Value, s3Key, s3Url, formFile, cancellationToken);
+        await _documentService.AddDocumentFileAsync(job.DocumentId.Value, s3Key, s3Url, formFile, async (percent) => 
+        {
+            job.ProgressPercent = percent;
+            job.Message = $"Đang tạo chỉ mục và lưu Vector ({percent}%)";
+            job.UpdatedAt = DateTime.UtcNow;
+            await _dbContext.SaveChangesAsync(cancellationToken);
+        }, cancellationToken);
         await _documentService.GenerateChaptersAsync(job.DocumentId.Value, cancellationToken);
         File.Delete(tempFileName);
 
