@@ -45,9 +45,9 @@ public class GeminiChapterSegmentationService : IChapterSegmentationService
             return [];
         }
 
-        var chunkPack = string.Join("\n\n", chunks.OrderBy(x => x.ChunkOrder).Select(x => 
+        var chunkPack = string.Join("\n", chunks.OrderBy(x => x.ChunkOrder).Select(x => 
         {
-            var preview = x.Content.Length > 500 ? x.Content.Substring(0, 500) + "..." : x.Content;
+            var preview = x.Content.Length > 150 ? x.Content.Substring(0, 150).Replace("\n", " ") + "..." : x.Content.Replace("\n", " ");
             return $"[CHUNK {x.ChunkOrder}] {preview}";
         }));
         var prompt = """
@@ -204,12 +204,29 @@ __CHUNKPACK__
     private static string ExtractJson(string text)
     {
         var start = text.IndexOf('{');
+        if (start < 0) return text;
+        
         var end = text.LastIndexOf('}');
-        if (start < 0 || end <= start)
+        if (end <= start) return text;
+
+        var json = text.Substring(start, end - start + 1);
+        
+        // Simple heuristic to auto-close if truncated
+        int openBraces = json.Count(c => c == '{');
+        int closeBraces = json.Count(c => c == '}');
+        int openBrackets = json.Count(c => c == '[');
+        int closeBrackets = json.Count(c => c == ']');
+        
+        if (openBrackets > closeBrackets)
         {
-            return text;
+            json += new string(']', openBrackets - closeBrackets);
         }
-        return text.Substring(start, end - start + 1);
+        if (openBraces > closeBraces)
+        {
+            json += new string('}', openBraces - closeBraces);
+        }
+        
+        return json;
     }
 
     private int GetNextApiKeyIndex()
