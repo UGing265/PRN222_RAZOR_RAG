@@ -60,7 +60,7 @@ public class GeminiEmbeddingService : IEmbeddingService
         }
 
         Exception? lastError = null;
-        var attempts = _apiKeys.Length;
+        var attempts = Math.Max(_apiKeys.Length, 9);
 
         for (var i = 0; i < attempts; i++)
         {
@@ -99,6 +99,12 @@ public class GeminiEmbeddingService : IEmbeddingService
                     {
                         lastError = new InvalidOperationException(
                             $"Gemini API returned {(int)response.StatusCode} for key index {apiKeyIndex}. Body: {Truncate(responseBody, 1000)}");
+                        
+                        if ((int)response.StatusCode == 429)
+                        {
+                            // Nghỉ 5 giây trước khi thử lại key khác (hoặc key cũ) để API phục hồi
+                            await Task.Delay(TimeSpan.FromSeconds(5), cancellationToken);
+                        }
                         continue;
                     }
 
