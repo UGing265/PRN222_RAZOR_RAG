@@ -52,16 +52,18 @@ public class GeminiChapterSegmentationService : IChapterSegmentationService
         }));
         var prompt = """
 Bạn là hệ thống chia chương tài liệu học thuật.
-Hãy phân chia tài liệu thành các chương theo thứ tự logic dựa trên các chunk bên dưới.
+Hãy phân chia tài liệu thành các chương lớn theo thứ tự logic dựa trên các chunk bên dưới.
 
-Yêu cầu:
+Yêu cầu BẮT BUỘC:
+- Nhóm các chunk thành các chương LỚN (Tối đa 15-20 chương cho toàn bộ tài liệu). KHÔNG chia quá nhỏ lắt nhắt.
 - Chỉ trả về JSON hợp lệ.
 - Không thêm giải thích ngoài JSON.
 - Mỗi chương phải có title, summary, startChunkIndex, endChunkIndex, confidenceScore.
+- 'summary' phải RẤT NGẮN GỌN (tối đa 1-2 câu).
 - startChunkIndex và endChunkIndex phải là số nguyên, dựa trên chỉ số chunk.
-- Các chương không được chồng lấn.
+- Các chương không được chồng lấn và phải phủ hết toàn bộ chunk.
 - Chỉ dùng chunk có sẵn, không bịa nội dung.
-- Nếu tài liệu ngắn, có thể trả về 1 chương duy nhất.
+- Nếu tài liệu ngắn, trả về 1 chương duy nhất.
 
 Thông tin tài liệu:
 - Title: __TITLE__
@@ -110,7 +112,7 @@ __CHUNKPACK__
                     {
                         Temperature = 0.2,
                         TopP = 0.8,
-                        MaxOutputTokens = 4096,
+                        MaxOutputTokens = 8192,
                         ResponseMimeType = "application/json"
                     }
                 };
