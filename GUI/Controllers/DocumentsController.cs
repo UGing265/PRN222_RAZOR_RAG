@@ -1,6 +1,5 @@
 using BLL.DTOs.Documents;
 using BLL.Interfaces.Documents;
-using DAL.Entities;
 using GUI.Models.Documents;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
