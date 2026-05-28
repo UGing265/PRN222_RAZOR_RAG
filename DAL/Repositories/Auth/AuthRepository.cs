@@ -1,0 +1,40 @@
+using DAL.Data;
+using DAL.Entities;
+using DAL.Interfaces.Auth;
+using Microsoft.EntityFrameworkCore;
+
+namespace DAL.Repositories.Auth;
+
+public class AuthRepository : IAuthRepository
+{
+    private readonly DBContext _dbContext;
+
+    public AuthRepository(DBContext dbContext)
+    {
+        _dbContext = dbContext;
+    }
+
+    public Task<bool> EmailExistsAsync(string normalizedEmail, CancellationToken cancellationToken = default)
+    {
+        return _dbContext.Users.AnyAsync(x => x.Email.ToLower() == normalizedEmail, cancellationToken);
+    }
+
+    public Task<bool> RoleExistsAsync(short roleId, CancellationToken cancellationToken = default)
+    {
+        return _dbContext.Roles.AnyAsync(x => x.Id == roleId, cancellationToken);
+    }
+
+    public async Task<User> AddUserAsync(User user, CancellationToken cancellationToken = default)
+    {
+        _dbContext.Users.Add(user);
+        await _dbContext.SaveChangesAsync(cancellationToken);
+        return user;
+    }
+
+    public Task<User?> GetUserByEmailWithRoleAsync(string normalizedEmail, CancellationToken cancellationToken = default)
+    {
+        return _dbContext.Users
+            .Include(x => x.Role)
+            .FirstOrDefaultAsync(x => x.Email.ToLower() == normalizedEmail, cancellationToken);
+    }
+}

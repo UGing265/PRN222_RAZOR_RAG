@@ -2,7 +2,6 @@ using BLL.Interfaces.Documents;
 using DAL.Data;
 using DAL.Entities;
 using Microsoft.AspNetCore.Http;
-using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 
 namespace BLL.Services.Documents;

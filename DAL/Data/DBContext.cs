@@ -1,17 +1,13 @@
 using System;
 using System.Collections.Generic;
+using DAL.Entities;
 using Microsoft.EntityFrameworkCore;
 using Pgvector.EntityFrameworkCore;
-using DAL.Entities;
 
 namespace DAL.Data;
 
 public partial class DBContext : DbContext
 {
-    public DBContext()
-    {
-    }
-
     public DBContext(DbContextOptions<DBContext> options)
         : base(options)
     {
