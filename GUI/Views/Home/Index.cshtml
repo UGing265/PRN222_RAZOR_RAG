@@ -2,31 +2,58 @@
     ViewData["Title"] = "Home";
 }
 
-<div class="container-fluid px-4 px-md-5 py-4 py-md-5">
-    <div class="soft-panel editorial-shadow p-4 p-md-5">
-        <div class="row align-items-center g-4">
-            <div class="col-lg-7">
-                <div class="kicker">— RAG Assistant</div>
-                <h1 class="hero-title mt-3 mb-4" style="font-size: clamp(3rem, 7vw, 5rem);">Quản lý tài liệu học tập <span class="font-serif-italic text-coral-deep">gọn gàng</span>, rõ ràng và dễ tìm kiếm.</h1>
-                <p class="lead text-muted-foreground mb-4">
-                    Tạo tài liệu trước, upload file sau — luồng tối ưu cho kho tri thức nội bộ.
-                </p>
-                <div class="d-flex gap-2 flex-wrap">
-                    <a class="btn btn-dark pill-button px-4 py-3" asp-route="dashboard" style="background:#d86a58;border-color:#d86a58;">Vào dashboard</a>
-                    <a class="btn btn-outline-dark pill-button px-4 py-3" asp-controller="Auth" asp-action="Login">Đăng nhập</a>
+<div class="page-shell grain">
+    <div class="container-fluid px-4 px-md-5 py-4 py-md-5">
+        <section class="soft-panel editorial-shadow p-4 p-md-5" style="background: rgba(255,255,255,.72);">
+            <div class="row align-items-center g-4">
+                <div class="col-lg-8">
+                    <div class="kicker">— RAG Assistant</div>
+                    <h1 class="hero-title mt-3 mb-3" style="font-size: clamp(2.6rem, 6vw, 4.8rem); line-height: .98;">
+                        Tài Liệu. Upload. Truy Cập.
+                    </h1>
+                    <p class="text-muted-foreground mb-4" style="max-width: 720px;">
+                        Quản lý tài liệu, lưu trữ file gốc và xem nội dung theo slug.
+                    </p>
+
+                    <div class="d-flex gap-2 flex-wrap">
+                        <a class="btn btn-dark pill-button px-4 py-3" asp-controller="Documents" asp-action="Create" style="background:#4a1f16;border-color:#4a1f16;">Tải Lên</a>
+                        <a class="btn btn-outline-dark pill-button px-4 py-3" asp-controller="Documents" asp-action="MyDocuments">Thư Viện</a>
+                        @if (User?.Identity?.IsAuthenticated == true)
+                        {
+                            <a class="btn btn-outline-dark pill-button px-4 py-3" asp-controller="Auth" asp-action="Logout">Đăng Xuất</a>
+                        }
+                        else
+                        {
+                            <a class="btn btn-outline-dark pill-button px-4 py-3" asp-controller="Auth" asp-action="Login">Đăng Nhập</a>
+                            <a class="btn btn-outline-dark pill-button px-4 py-3" asp-controller="Auth" asp-action="Register">Đăng Ký</a>
+                        }
+                    </div>
+                </div>
+
+                <div class="col-lg-4">
+                    <div class="file-card h-100">
+                        <div class="font-mono-xs text-muted-foreground mb-2">Chức Năng</div>
+                        <div class="d-grid gap-3">
+                            <div>
+                                <div class="fw-semibold">Upload</div>
+                                <div class="file-subtle mt-1">Lưu file gốc.</div>
+                            </div>
+                            <div>
+                                <div class="fw-semibold">Parse</div>
+                                <div class="file-subtle mt-1">Tách nội dung.</div>
+                            </div>
+                            <div>
+                                <div class="fw-semibold">Chunk</div>
+                                <div class="file-subtle mt-1">Chia đoạn.</div>
+                            </div>
+                            <div>
+                                <div class="fw-semibold">Slug</div>
+                                <div class="file-subtle mt-1">Xem chi tiết.</div>
+                            </div>
+                        </div>
+                    </div>
                 </div>
             </div>
-            <div class="col-lg-5">
-                <div class="soft-panel p-4 h-100" style="background: rgba(255,255,255,.55);">
-                    <h2 class="h5 fw-semibold mb-3">Tính năng chính</h2>
-                    <ul class="list-unstyled mb-0 text-muted-foreground">
-                        <li class="mb-2">• Upload file an toàn với validate định dạng</li>
-                        <li class="mb-2">• Tự gắn tài liệu vào user đang đăng nhập</li>
-                        <li class="mb-2">• Chuẩn bị cho bước chunking / indexing</li>
-                        <li>• Giao diện đồng bộ, có sidebar workspace</li>
-                    </ul>
-                </div>
-            </div>
-        </div>
+        </section>
     </div>
 </div>

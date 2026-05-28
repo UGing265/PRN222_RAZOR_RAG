@@ -65,6 +65,7 @@ public class AuthService : IAuthService
         Id = user.Id,
         FullName = user.FullName,
         Email = user.Email,
+        RoleId = user.RoleId,
         RoleName = user.Role?.Name ?? user.RoleId.ToString()
     };
 

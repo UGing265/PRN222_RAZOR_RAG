@@ -33,6 +33,12 @@ public class AuthController : Controller
 
         try
         {
+            if (model.RoleId is not 2 and not 3)
+            {
+                ModelState.AddModelError(nameof(model.RoleId), "Chỉ được chọn Giảng Viên hoặc Sinh Viên.");
+                return View(model);
+            }
+
             var user = await _authService.RegisterAsync(model.FullName, model.Email, model.Password, model.RoleId, cancellationToken);
             await SignInAsync(user, isPersistent: true);
             TempData["SuccessMessage"] = "Đăng ký thành công.";
@@ -101,7 +107,8 @@ public class AuthController : Controller
             new(ClaimTypes.NameIdentifier, user.Id.ToString()),
             new(ClaimTypes.Name, user.FullName),
             new(ClaimTypes.Email, user.Email),
-            new(ClaimTypes.Role, user.RoleName)
+            new(ClaimTypes.Role, user.RoleName),
+            new("role_id", user.RoleId.ToString())
         };
 
         var identity = new ClaimsIdentity(claims, CookieAuthenticationDefaults.AuthenticationScheme);

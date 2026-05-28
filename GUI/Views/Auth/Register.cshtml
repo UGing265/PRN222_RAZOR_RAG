@@ -1,109 +1,57 @@
 @model GUI.Models.Auth.RegisterViewModel
 
 @{
-    ViewData["Title"] = "Đăng ký";
+    ViewData["Title"] = "Đăng Ký";
 }
 
 <div class="page-shell grain">
-    <header class="mx-auto flex-max container-fluid px-4 px-md-5 pt-4 pt-md-5 d-flex align-items-center justify-content-between">
-        <a asp-controller="Home" asp-action="Index" class="d-flex align-items-center gap-3 text-decoration-none text-foreground">
-            <span class="brand-mark">R</span>
-            <div class="lh-sm">
-                <div class="fw-semibold">RAG Assistant</div>
-                <div class="font-mono-xs text-muted-foreground">Issue №04 · 2026</div>
+    <main class="container-fluid px-4 px-md-5 py-5" style="max-width: 620px;">
+        <div class="soft-panel editorial-shadow p-4 p-md-5" style="background: rgba(255,255,255,.72);">
+            <div class="d-flex align-items-center justify-content-between mb-4">
+                <h1 class="hero-title mb-0" style="font-size: clamp(2rem, 4vw, 3rem);">Đăng Ký</h1>
+                <a asp-controller="Home" asp-action="Index" class="link-plain text-muted-foreground font-mono-xs">Trang Chủ</a>
             </div>
-        </a>
-        <a asp-controller="Auth" asp-action="Login" class="font-mono-xs text-muted-foreground link-plain">Đăng nhập →</a>
-    </header>
 
-    <main class="container-fluid px-4 px-md-5 py-4 py-md-5">
-        <div class="row g-5 align-items-stretch">
-            <section class="col-lg-7 pe-lg-5 border-lg-end border-border">
-                <div class="kicker">— Join the workspace</div>
-                <h1 class="hero-title mt-3 mb-4">
-                    Tạo tài khoản<br />
-                    <span class="font-serif-italic text-coral-deep">của bạn</span><br />
-                    ngay bây giờ.
-                </h1>
-                <p class="lead text-muted-foreground col-xl-9">
-                    Đăng ký để upload, phân tích và trò chuyện với tài liệu trong không gian học tập riêng của bạn.
-                </p>
+            <form asp-action="Register" method="post">
+                @Html.AntiForgeryToken()
+                <div asp-validation-summary="ModelOnly" class="alert alert-danger py-2"></div>
 
-                <div class="row g-4 mt-5 pt-4 border-top border-border">
-                    <div class="col-md-4">
-                        <div class="display-6 fw-semibold">01</div>
-                        <div class="font-mono-xs text-muted-foreground">Tạo tài khoản</div>
+                <div class="mb-3">
+                    <label asp-for="FullName" class="form-label font-mono-xs text-muted-foreground"></label>
+                    <input asp-for="FullName" class="form-control pill-input" placeholder="Họ và tên" />
+                    <span asp-validation-for="FullName" class="text-danger small"></span>
+                </div>
+
+                <div class="mb-3">
+                    <label asp-for="Email" class="form-label font-mono-xs text-muted-foreground"></label>
+                    <input asp-for="Email" class="form-control pill-input" placeholder="name@example.com" />
+                    <span asp-validation-for="Email" class="text-danger small"></span>
+                </div>
+
+                <div class="row g-3 mb-3">
+                    <div class="col-md-6">
+                        <label asp-for="Password" class="form-label font-mono-xs text-muted-foreground"></label>
+                        <input asp-for="Password" type="password" class="form-control pill-input" placeholder="Mật khẩu" />
+                        <span asp-validation-for="Password" class="text-danger small"></span>
                     </div>
-                    <div class="col-md-4">
-                        <div class="display-6 fw-semibold">02</div>
-                        <div class="font-mono-xs text-muted-foreground">Upload tài liệu</div>
-                    </div>
-                    <div class="col-md-4">
-                        <div class="display-6 fw-semibold">03</div>
-                        <div class="font-mono-xs text-muted-foreground">Chat với tri thức</div>
+                    <div class="col-md-6">
+                        <label asp-for="ConfirmPassword" class="form-label font-mono-xs text-muted-foreground"></label>
+                        <input asp-for="ConfirmPassword" type="password" class="form-control pill-input" placeholder="Nhập lại" />
+                        <span asp-validation-for="ConfirmPassword" class="text-danger small"></span>
                     </div>
                 </div>
-            </section>
 
-            <aside class="col-lg-5">
-                <div class="soft-panel editorial-shadow p-4 p-md-5 h-100">
-                    <div class="d-flex align-items-center justify-content-between">
-                        <div class="font-mono-xs text-muted-foreground">Section B · Register</div>
-                        <div class="text-coral-deep">●</div>
-                    </div>
-
-                    <h2 class="display-6 fw-semibold mt-4 mb-4">Đăng ký</h2>
-
-                    <form asp-action="Register" method="post" class="mt-4">
-                        @Html.AntiForgeryToken()
-                        <div asp-validation-summary="ModelOnly" class="alert alert-danger py-2"></div>
-
-                        <div class="mb-4">
-                            <label asp-for="FullName" class="form-label font-mono-xs text-muted-foreground"></label>
-                            <input asp-for="FullName" class="form-control pill-input" placeholder="Họ và tên" />
-                            <span asp-validation-for="FullName" class="text-danger small"></span>
-                        </div>
-
-                        <div class="mb-4">
-                            <label asp-for="Email" class="form-label font-mono-xs text-muted-foreground"></label>
-                            <input asp-for="Email" class="form-control pill-input" placeholder="name@example.com" />
-                            <span asp-validation-for="Email" class="text-danger small"></span>
-                        </div>
-
-                        <div class="row g-3 mb-4">
-                            <div class="col-md-6">
-                                <label asp-for="Password" class="form-label font-mono-xs text-muted-foreground"></label>
-                                <input asp-for="Password" type="password" class="form-control pill-input" placeholder="Mật khẩu" />
-                                <span asp-validation-for="Password" class="text-danger small"></span>
-                            </div>
-                            <div class="col-md-6">
-                                <label asp-for="ConfirmPassword" class="form-label font-mono-xs text-muted-foreground"></label>
-                                <input asp-for="ConfirmPassword" type="password" class="form-control pill-input" placeholder="Nhập lại" />
-                                <span asp-validation-for="ConfirmPassword" class="text-danger small"></span>
-                            </div>
-                        </div>
-
-                        <div class="mb-4">
-                            <label asp-for="RoleId" class="form-label font-mono-xs text-muted-foreground">Vai trò</label>
-                            <select asp-for="RoleId" class="form-select pill-input">
-                                <option value="1">Teacher</option>
-                                <option value="2">Student</option>
-                            </select>
-                            <span asp-validation-for="RoleId" class="text-danger small"></span>
-                        </div>
-
-                        <button type="submit" class="btn btn-dark pill-button w-100 d-flex align-items-center justify-content-between px-4 py-3">
-                            <span>Đăng ký</span>
-                            <span class="button-arrow">→</span>
-                        </button>
-                    </form>
-
-                    <p class="mt-4 text-center text-muted-foreground">
-                        Đã có tài khoản?
-                        <a asp-action="Login" class="fw-medium text-foreground link-plain">Đăng nhập</a>
-                    </p>
+                <div class="mb-4">
+                    <label asp-for="RoleId" class="form-label font-mono-xs text-muted-foreground"></label>
+                    <select asp-for="RoleId" class="form-select pill-input">
+                        <option value="2">Giảng Viên</option>
+                        <option value="3">Sinh Viên</option>
+                    </select>
+                    <span asp-validation-for="RoleId" class="text-danger small"></span>
                 </div>
-            </aside>
+
+                <button type="submit" class="btn btn-dark pill-button w-100 py-3" style="background:#4a1f16;border-color:#4a1f16;">Đăng Ký</button>
+            </form>
         </div>
     </main>
 </div>

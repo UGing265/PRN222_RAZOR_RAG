@@ -1,5 +1,3 @@
-using DAL.Entities;
-
 namespace GUI.Models.Documents;
 
 public class DocumentDetailsViewModel
@@ -21,7 +19,7 @@ public class DocumentDetailsViewModel
     public int ChunkPage { get; set; } = 1;
     public int ChunkPageSize { get; set; } = 10;
     public int TotalChunkPages { get; set; } = 1;
-    public List<DocumentFile> Files { get; set; } = [];
+    public List<DocumentFileViewModel> Files { get; set; } = [];
     public List<DocumentChunkViewModel> Chunks { get; set; } = [];
     public List<DocumentChapterViewModel> Chapters { get; set; } = [];
 }

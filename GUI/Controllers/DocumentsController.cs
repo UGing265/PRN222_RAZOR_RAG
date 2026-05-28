@@ -1,8 +1,12 @@
 using BLL.DTOs.Documents;
 using BLL.Interfaces.Documents;
+using DAL.Entities;
 using GUI.Models.Documents;
 using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Authentication;
+using Microsoft.Extensions.DependencyInjection;
 using System.Security.Claims;
 
 namespace GUI.Controllers;
@@ -21,14 +25,16 @@ public class DocumentsController : Controller
     }
 
     [HttpGet]
+    [Authorize(Roles = "Admin,Lecturer")]
     public IActionResult Create()
     {
         return View(new DocumentCreateViewModel());
     }
 
     [HttpPost]
+    [Authorize(Roles = "Admin,Lecturer")]
     [ValidateAntiForgeryToken]
-    public async Task<IActionResult> Create(DocumentCreateViewModel model, CancellationToken cancellationToken)
+    public async Task<IActionResult> Create(DocumentCreateViewModel model)
     {
         if (!ModelState.IsValid)
         {
@@ -64,9 +70,10 @@ public class DocumentsController : Controller
                 FileContentType = model.UploadFile.ContentType
             };
 
-            var savedDocument = await _documentService.CreateDocumentAsync(documentInput, model.UploadFile, cancellationToken);
-            var s3Result = await _documentService.UploadOriginalFileToS3Async(savedDocument.Id, model.UploadFile, cancellationToken);
-            await _documentService.AddDocumentFileAsync(savedDocument.Id, s3Result.Key, s3Result.Url, model.UploadFile, null, cancellationToken);
+            var savedDocument = await _documentService.CreateDocumentAsync(documentInput, model.UploadFile, CancellationToken.None);
+            var s3Result = await _documentService.UploadOriginalFileToS3Async(savedDocument.Id, model.UploadFile, CancellationToken.None);
+
+            await _documentService.EnqueueUploadJobAsync(ownerUserId, savedDocument.Id, model.UploadFile.FileName, s3Result.Key, model.UploadFile.Length, CancellationToken.None);
 
             TempData["SuccessMessage"] = "Upload đã được đưa vào hàng đợi xử lý nền.";
 
@@ -95,17 +102,29 @@ public class DocumentsController : Controller
     }
 
     [HttpGet("{slug}")]
+    [Authorize(Roles = "Admin,Lecturer,Student")]
     public async Task<IActionResult> Details(string slug, int chunkPage = 1, int chunkPageSize = 10, CancellationToken cancellationToken = default)
     {
         try
         {
-            var document = await _documentService.GetDocumentWithFilesBySlugAsync(slug, cancellationToken);
+            if (!Guid.TryParse(User.FindFirstValue(ClaimTypes.NameIdentifier), out var userId))
+            {
+                return Unauthorized();
+            }
+
+            var document = await _documentService.GetDocumentBySlugAsync(slug, userId, cancellationToken);
             if (document is null)
             {
                 return NotFound();
             }
 
-            var documentDetails = await _documentService.GetDocumentDetailsAsync(document.Id, chunkPage, chunkPageSize, cancellationToken);
+            var documentWithFiles = await _documentService.GetDocumentWithFilesBySlugAsync(slug, cancellationToken);
+            if (documentWithFiles is null)
+            {
+                return NotFound();
+            }
+
+            var documentDetails = await _documentService.GetDocumentDetailsAsync(documentWithFiles.Id, chunkPage, chunkPageSize, cancellationToken);
             if (documentDetails is null)
             {
                 return NotFound();
@@ -130,7 +149,15 @@ public class DocumentsController : Controller
                 ChunkPage = chunkPage,
                 ChunkPageSize = chunkPageSize,
                 TotalChunkPages = Math.Max(1, (int)Math.Ceiling(documentDetails.Chunks.Count / (double)Math.Clamp(chunkPageSize, 8, 10))),
-                Files = documentDetails.Files,
+                Files = documentDetails.Files.Select(file => new DocumentFileViewModel
+                {
+                    Id = file.Id,
+                    OriginalFilename = file.OriginalFilename,
+                    MimeType = file.MimeType,
+                    FileSizeBytes = file.FileSizeBytes,
+                    ExtractionStatus = file.ExtractionStatus,
+                    CreatedAt = file.CreatedAt
+                }).ToList(),
                 Chapters = documentDetails.Chapters.Select(x => new DocumentChapterViewModel
                 {
                     Id = x.Id,
@@ -161,6 +188,7 @@ public class DocumentsController : Controller
     }
 
     [HttpGet("{slug}/delete")]
+    [Authorize(Roles = "Admin,Lecturer")]
     public async Task<IActionResult> Delete(string slug, CancellationToken cancellationToken = default)
     {
         if (!Guid.TryParse(User.FindFirstValue(ClaimTypes.NameIdentifier), out var userId))
@@ -177,6 +205,7 @@ public class DocumentsController : Controller
         var viewModel = new DeleteDocumentViewModel
         {
             Id = viewData.Id,
+            Slug = slug,
             Title = viewData.Title,
             FileCount = viewData.FileCount,
             ChunkCount = viewData.ChunkCount
@@ -185,7 +214,8 @@ public class DocumentsController : Controller
         return View(viewModel);
     }
 
-    [HttpDelete("{slug}")]
+    [HttpPost("{slug}/delete")]
+    [Authorize(Roles = "Admin,Lecturer")]
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> DeleteConfirmed(string slug, CancellationToken cancellationToken = default)
     {
@@ -206,7 +236,53 @@ public class DocumentsController : Controller
         return RedirectToAction(nameof(MyDocuments));
     }
 
+    [HttpGet("all")]
+    [Authorize(Roles = "Admin,Lecturer,Student")]
+    public async Task<IActionResult> AllDocuments(string? q = null, int page = 1, int pageSize = 6, CancellationToken cancellationToken = default)
+    {
+        try
+        {
+            var userId = Guid.TryParse(User.FindFirstValue(ClaimTypes.NameIdentifier), out var parsedUserId) ? parsedUserId : (Guid?)null;
+            var result = await _documentService.GetAllDocumentsAsync(q, page, pageSize, userId, cancellationToken);
+
+            var viewModel = new AllDocumentsViewModel
+            {
+                Documents = result.Documents.Select(x => new DocumentListItemViewModel
+                {
+                    Id = x.Id,
+                    Slug = x.Slug,
+                    Title = x.Title,
+                    Subject = x.Subject,
+                    Status = x.Status,
+                    Visibility = x.Visibility,
+                    School = x.School,
+                    CreatedAt = x.CreatedAt,
+                    UpdatedAt = x.UpdatedAt,
+                    FileCount = x.FileCount,
+                    ChunkCount = x.ChunkCount,
+                    PreviewText = x.PreviewText,
+                    OwnerEmail = x.OwnerEmail
+                }).ToList(),
+                TotalDocuments = result.TotalDocuments,
+                Page = result.Page,
+                PageSize = result.PageSize,
+                TotalPages = result.TotalPages,
+                Query = q
+            };
+
+            ViewBag.Query = q;
+            return View(viewModel);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error while loading all documents for user");
+            TempData["ErrorMessage"] = "Không thể tải danh sách tài liệu.";
+            return RedirectToAction("Index", "Home");
+        }
+    }
+
     [HttpGet("mine")]
+    [Authorize(Roles = "Lecturer,Student")]
     public async Task<IActionResult> MyDocuments(string? q = null, int page = 1, int pageSize = 6, CancellationToken cancellationToken = default)
     {
         if (!Guid.TryParse(User.FindFirstValue(ClaimTypes.NameIdentifier), out var userId))
@@ -223,6 +299,7 @@ public class DocumentsController : Controller
                 Documents = result.Documents.Select(x => new DocumentListItemViewModel
                 {
                     Id = x.Id,
+                    Slug = x.Slug,
                     Title = x.Title,
                     Subject = x.Subject,
                     Status = x.Status,
@@ -232,7 +309,8 @@ public class DocumentsController : Controller
                     UpdatedAt = x.UpdatedAt,
                     FileCount = x.FileCount,
                     ChunkCount = x.ChunkCount,
-                    PreviewText = x.PreviewText
+                    PreviewText = x.PreviewText,
+                    OwnerEmail = x.OwnerEmail
                 }).ToList(),
                 TotalDocuments = result.TotalDocuments,
                 PendingDocuments = result.PendingDocuments,
@@ -245,8 +323,7 @@ public class DocumentsController : Controller
                 TotalPages = result.TotalPages
             };
 
-            ViewBag.Query = q;
-            ViewBag.ActiveUploadJobs = result.ActiveUploadJobs.Select(x => new UploadJobViewModel
+            viewModel.ActiveUploadJobs = result.ActiveUploadJobs.Select(x => new UploadJobViewModel
             {
                 Id = x.Id,
                 DocumentId = x.DocumentId,
@@ -258,6 +335,13 @@ public class DocumentsController : Controller
                 CreatedAt = x.CreatedAt,
                 UpdatedAt = x.UpdatedAt
             }).ToList();
+
+            ViewBag.Query = q;
+
+            if (Request.Headers.TryGetValue("X-Requested-With", out var requestedWith) && requestedWith == "XMLHttpRequest")
+            {
+                return PartialView("_UploadJobs", viewModel.ActiveUploadJobs);
+            }
 
             return View(viewModel);
         }

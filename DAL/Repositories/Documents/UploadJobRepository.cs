@@ -14,6 +14,13 @@ public class UploadJobRepository : IUploadJobRepository
         _dbContext = dbContext;
     }
 
+    public async Task<UploadJob> AddUploadJobAsync(UploadJob job, CancellationToken cancellationToken = default)
+    {
+        _dbContext.UploadJobs.Add(job);
+        await _dbContext.SaveChangesAsync(cancellationToken);
+        return job;
+    }
+
     public Task<UploadJob?> GetNextPendingJobAsync(CancellationToken cancellationToken = default)
     {
         return _dbContext.UploadJobs

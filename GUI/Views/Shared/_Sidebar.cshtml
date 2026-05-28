@@ -1,37 +1,77 @@
+@using System.Security.Claims
 @{
     var controller = ViewContext.RouteData.Values["controller"]?.ToString();
     var action = ViewContext.RouteData.Values["action"]?.ToString();
     string IsActive(string c, string? a = null) => controller == c && (a is null || action == a) ? "active" : string.Empty;
+    var isAuthenticated = User?.Identity?.IsAuthenticated == true;
+    var roleId = short.TryParse(User?.FindFirstValue("role_id"), out var parsedRoleId) ? parsedRoleId : (short)0;
+    var fullName = User?.FindFirstValue(ClaimTypes.Name) ?? "Người dùng";
+    var email = User?.FindFirstValue(ClaimTypes.Email) ?? string.Empty;
+    var roleLabel = roleId switch
+    {
+        1 => "Admin",
+        2 => "Giảng viên",
+        3 => "Sinh viên",
+        _ => "Khách"
+    };
+    var canSeeDocuments = isAuthenticated && (roleId == 1 || roleId == 2 || roleId == 3);
+    var canCreateDocuments = isAuthenticated && (roleId == 1 || roleId == 2);
+    var canSeeAllPages = isAuthenticated && roleId == 1;
 }
 
 <aside class="sidebar">
     <div>
-        <a asp-route="dashboard" class="d-flex align-items-center gap-3 text-decoration-none text-foreground mb-4">
+        <a asp-controller="Home" asp-action="Index" class="d-flex align-items-center gap-3 text-decoration-none text-foreground mb-4">
             <span class="brand-mark">R</span>
             <div class="lh-sm">
                 <div class="fw-semibold">RAG Assistant</div>
-                <div class="font-mono-xs text-muted-foreground">Không gian làm việc</div>
+                <div class="font-mono-xs text-muted-foreground">Không Gian Làm Việc</div>
             </div>
         </a>
 
-        <div class="font-mono-xs text-muted-foreground mb-2">Điều hướng</div>
+        <div class="font-mono-xs text-muted-foreground mb-2">Điều Hướng</div>
         <nav class="nav flex-column gap-1">
-            <a class="nav-link @IsActive("Dashboard", "Index")" asp-route="dashboard">Bảng điều khiển</a>
-            <a class="nav-link @IsActive("Documents", "Create")" asp-controller="Documents" asp-action="Create">Tải lên</a>
-            <a class="nav-link @IsActive("Documents", "MyDocuments")" asp-controller="Documents" asp-action="MyDocuments">Thư viện</a>
-            <a class="nav-link @IsActive("Chat", "Index")" asp-route="chat">Trò chuyện</a>
+            <a class="nav-link @IsActive("Home", "Index")" asp-controller="Home" asp-action="Index">Trang Chủ</a>
+            @if (isAuthenticated)
+            {
+                if (canCreateDocuments)
+                {
+                    <a class="nav-link @IsActive("Documents", "Create")" asp-controller="Documents" asp-action="Create">Tải Lên</a>
+                }
+                if (canSeeDocuments)
+                {
+                    <a class="nav-link @IsActive("Documents", "MyDocuments")" asp-controller="Documents" asp-action="MyDocuments">Thư Viện Của Tôi</a>
+                }
+                <a class="nav-link @IsActive("Documents", "AllDocuments")" asp-controller="Documents" asp-action="AllDocuments">Tất Cả Tài Liệu</a>
+                if (canSeeAllPages)
+                {
+                    <a class="nav-link @IsActive("Dashboard", "Index")" asp-controller="Dashboard" asp-action="Index">Bảng Điều Khiển</a>
+                }
+            }
+            else
+            {
+                <a class="nav-link @IsActive("Auth", "Login")" asp-controller="Auth" asp-action="Login">Đăng Nhập</a>
+                <a class="nav-link @IsActive("Auth", "Register")" asp-controller="Auth" asp-action="Register">Đăng Ký</a>
+            }
         </nav>
-
-        <div class="font-mono-xs text-muted-foreground mt-4 mb-2">Tài khoản</div>
-        <form asp-controller="Auth" asp-action="Logout" method="post" class="d-grid gap-1">
-            @Html.AntiForgeryToken()
-            <button type="submit" class="nav-link btn btn-link text-start text-decoration-none border-0 p-0">Đăng xuất</button>
-        </form>
     </div>
 
     <div class="sidebar-card" style="background: rgba(255,255,255,.32); border: 1px solid rgba(82,39,27,.08);">
-        <div class="font-mono-xs text-muted-foreground mb-2">Hiện tại</div>
-        <div class="fw-semibold">@DateTime.Now.ToString("HH:mm")</div>
-        <div class="font-mono-xs text-muted-foreground mt-2">GMT+7 · TP.HCM</div>
+        <div class="font-mono-xs text-muted-foreground mb-2">Tài Khoản</div>
+        @if (isAuthenticated)
+        {
+            <div class="fw-semibold text-truncate">@fullName</div>
+            <div class="small text-muted-foreground text-truncate">@email</div>
+            <div class="font-mono-xs text-muted-foreground mt-2">@roleLabel</div>
+            <form asp-controller="Auth" asp-action="Logout" method="post" class="mt-3">
+                @Html.AntiForgeryToken()
+                <button type="submit" class="btn btn-outline-dark btn-sm pill-button w-100">Đăng Xuất</button>
+            </form>
+        }
+        else
+        {
+            <div class="fw-semibold">Chưa Đăng Nhập</div>
+            <a asp-controller="Auth" asp-action="Login" class="btn btn-outline-dark btn-sm pill-button w-100 mt-3">Đăng Nhập</a>
+        }
     </div>
 </aside>

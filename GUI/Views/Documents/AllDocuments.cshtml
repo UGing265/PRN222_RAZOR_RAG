@@ -1,0 +1,60 @@
+@model GUI.Models.Documents.AllDocumentsViewModel
+
+@{
+    ViewData["Title"] = "Tài liệu công khai";
+    var query = ViewBag.Query as string;
+}
+
+<div class="page-shell grain">
+    <div class="container-fluid px-4 px-md-5 py-4 py-md-5" style="max-width: 1200px;">
+        <div class="d-flex align-items-center justify-content-between gap-3 flex-wrap mb-4">
+            <div>
+                <h1 class="hero-title mb-0" style="font-size: clamp(2rem, 4vw, 3rem);">Tài Liệu Của Mọi Người</h1>
+                <p class="text-muted-foreground mb-0">Xem toàn bộ tài liệu đã hoàn tất từ các tài khoản khác.</p>
+            </div>
+        </div>
+
+        <form method="get" asp-action="AllDocuments" class="soft-panel editorial-shadow p-4 mb-4" style="background: rgba(255,255,255,.72);">
+            <div class="row g-3 align-items-end">
+                <div class="col-md-8">
+                    <label class="form-label font-mono-xs text-muted-foreground">Tìm kiếm</label>
+                    <input type="text" name="q" value="@query" class="form-control pill-input" placeholder="Tìm theo tiêu đề, môn học, trường, mô tả..." />
+                </div>
+                <div class="col-md-2">
+                    <button type="submit" class="btn btn-dark pill-button w-100" style="background:#4a1f16;border-color:#4a1f16;">Tìm</button>
+                </div>
+                <div class="col-md-2">
+                    <a asp-action="AllDocuments" class="btn btn-outline-dark pill-button w-100">Xoá Lọc</a>
+                </div>
+            </div>
+        </form>
+
+        <div class="row g-3 mb-4">
+            <div class="col-md-3"><div class="file-card"><div class="font-mono-xs text-muted-foreground">Tổng</div><div class="h3 fw-semibold mb-0">@Model.TotalDocuments</div></div></div>
+            <div class="col-md-3"><div class="file-card"><div class="font-mono-xs text-muted-foreground">Trang</div><div class="h3 fw-semibold mb-0">@Model.Page / @Model.TotalPages</div></div></div>
+        </div>
+
+        <div class="row g-3">
+            @foreach (var item in Model.Documents)
+            {
+                <div class="col-md-6 col-xl-4">
+                    <div class="file-card h-100 d-flex flex-column justify-content-between">
+                        <div>
+                            <div class="d-flex justify-content-between gap-3 mb-3">
+                                <div class="fw-semibold text-truncate">@item.Title</div>
+                                <span class="font-mono-xs text-muted-foreground">@item.Status</span>
+                            </div>
+                            <div class="text-muted-foreground small mb-2"><strong>Môn:</strong> @(string.IsNullOrWhiteSpace(item.Subject) ? "—" : item.Subject)</div>
+                            <div class="text-muted-foreground small mb-2"><strong>Đăng Bởi:</strong> @(string.IsNullOrWhiteSpace(item.OwnerEmail) ? "—" : item.OwnerEmail)</div>
+                            <div class="text-muted-foreground small mb-3" style="display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden;">@(string.IsNullOrWhiteSpace(item.PreviewText) ? "Không có mô tả xem trước" : item.PreviewText)</div>
+                            <div class="font-mono-xs text-muted-foreground">@item.UpdatedAt.ToString("dd/MM/yyyy HH:mm")</div>
+                        </div>
+                        <div class="d-flex gap-2 mt-3">
+                            <a asp-controller="Documents" asp-action="Details" asp-route-slug="@item.Slug" class="btn btn-outline-dark btn-sm pill-button">Mở</a>
+                        </div>
+                    </div>
+                </div>
+            }
+        </div>
+    </div>
+</div>

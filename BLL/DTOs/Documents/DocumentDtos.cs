@@ -32,6 +32,7 @@ public sealed class DocumentListItemDto
     public DateTime UpdatedAt { get; init; }
     public string? Visibility { get; init; }
     public string? School { get; init; }
+    public string? OwnerEmail { get; init; }
 }
 
 public sealed class DocumentDetailsDto

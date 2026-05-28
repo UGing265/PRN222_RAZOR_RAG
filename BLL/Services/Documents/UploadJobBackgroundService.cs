@@ -46,7 +46,7 @@ public class UploadJobBackgroundService : BackgroundService
 
                 job.Status = "processing";
                 job.ProgressPercent = 1;
-                job.Message = "Đưa vào hàng đợi xử lý";
+                job.Message = "Đang xử lý";
                 job.UpdatedAt = DateTime.UtcNow;
                 await db.SaveChangesAsync(stoppingToken);
 

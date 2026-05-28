@@ -29,14 +29,16 @@ public class DocumentService : IDocumentService
     private readonly IChapterSegmentationService _chapterSegmentationService;
     private readonly IS3StorageService _s3StorageService;
     private readonly DocumentIndexingOptions _indexingOptions;
+    private readonly IUploadJobRepository _uploadJobRepository;
 
-    public DocumentService(IDocumentRepository documentRepository, IConfiguration configuration, IFileParserService fileParserService, IEmbeddingService embeddingService, IChapterSegmentationService chapterSegmentationService, IS3StorageService s3StorageService)
+    public DocumentService(IDocumentRepository documentRepository, IConfiguration configuration, IFileParserService fileParserService, IEmbeddingService embeddingService, IChapterSegmentationService chapterSegmentationService, IS3StorageService s3StorageService, IUploadJobRepository uploadJobRepository)
     {
         _documentRepository = documentRepository;
         _fileParserService = fileParserService;
         _embeddingService = embeddingService;
         _chapterSegmentationService = chapterSegmentationService;
         _s3StorageService = s3StorageService;
+        _uploadJobRepository = uploadJobRepository;
         _indexingOptions = configuration.GetSection("DocumentIndexing").Get<DocumentIndexingOptions>() ?? new DocumentIndexingOptions();
     }
 
@@ -89,12 +91,12 @@ public class DocumentService : IDocumentService
             Language = input.Language,
             Visibility = input.Visibility,
             SourceType = input.SourceType,
-            Status = "approved",
+            Status = "processing",
             TotalChunks = 0,
             TotalChapters = 0,
             CreatedAt = DateTime.UtcNow,
             UpdatedAt = DateTime.UtcNow,
-            ApprovedAt = DateTime.UtcNow
+            ApprovedAt = null
         };
 
         return await _documentRepository.AddDocumentAsync(document, cancellationToken);
@@ -104,6 +106,24 @@ public class DocumentService : IDocumentService
     {
         ValidateFile(file);
         return await _s3StorageService.UploadAsync(documentId.ToString("N"), file, cancellationToken);
+    }
+
+    public async Task EnqueueUploadJobAsync(Guid ownerUserId, Guid documentId, string fileName, string storagePath, long fileSizeBytes, CancellationToken cancellationToken = default)
+    {
+        await _uploadJobRepository.AddUploadJobAsync(new UploadJob
+        {
+            OwnerUserId = ownerUserId,
+            DocumentId = documentId,
+            FileName = fileName,
+            StoragePath = storagePath,
+            FileSizeBytes = fileSizeBytes,
+            Status = "pending",
+            ProgressPercent = 0,
+            Message = "Đang chờ xử lý",
+            IsNotified = false,
+            CreatedAt = DateTime.UtcNow,
+            UpdatedAt = DateTime.UtcNow
+        }, cancellationToken);
     }
 
     public async Task<DocumentFile> AddDocumentFileAsync(Guid documentId, string s3Key, string s3Url, IFormFile file, Func<int, Task>? onProgress = null, CancellationToken cancellationToken = default)
@@ -265,6 +285,7 @@ public class DocumentService : IDocumentService
     }
 
     public Task<Document?> GetDocumentBySlugAsync(string slug, CancellationToken cancellationToken = default) => _documentRepository.GetDocumentBySlugAsync(slug, cancellationToken);
+    public Task<Document?> GetDocumentBySlugAsync(string slug, Guid? requesterUserId, CancellationToken cancellationToken = default) => _documentRepository.GetDocumentBySlugAsync(slug, requesterUserId, cancellationToken);
     public Task<Document?> GetDocumentWithFilesAsync(Guid documentId, CancellationToken cancellationToken = default) => _documentRepository.GetDocumentWithFilesAsync(documentId, cancellationToken);
     public Task<Document?> GetDocumentWithFilesBySlugAsync(string slug, CancellationToken cancellationToken = default) => _documentRepository.GetDocumentWithFilesBySlugAsync(slug, cancellationToken);
     public Task<Document?> GetDocumentForOwnerAsync(Guid documentId, Guid ownerUserId, CancellationToken cancellationToken = default) => _documentRepository.GetOwnedDocumentAsync(documentId, ownerUserId, cancellationToken);
@@ -319,6 +340,47 @@ public class DocumentService : IDocumentService
                 CreatedAt = x.CreatedAt,
                 UpdatedAt = x.UpdatedAt
             }).ToList()
+        };
+    }
+
+    public async Task<MyDocumentsDto> GetAllDocumentsAsync(string? query, int page = 1, int pageSize = 6, Guid? requesterUserId = null, CancellationToken cancellationToken = default)
+    {
+        pageSize = Math.Clamp(pageSize, 6, 12);
+        page = Math.Max(page, 1);
+        var totalDocuments = await _documentRepository.CountDocumentsAsync(query, requesterUserId, cancellationToken);
+        var totalPages = Math.Max(1, (int)Math.Ceiling(totalDocuments / (double)pageSize));
+        page = Math.Clamp(page, 1, totalPages);
+
+        var documents = await _documentRepository.GetDocumentsAsync(query, page, pageSize, requesterUserId, cancellationToken);
+
+        return new MyDocumentsDto
+        {
+            Documents = documents.Select(x => new DocumentListItemDto
+            {
+                Id = x.Id,
+                Slug = x.Slug ?? string.Empty,
+                Title = x.Title,
+                Subject = x.Subject,
+                Status = x.Status,
+                Visibility = x.Visibility,
+                School = x.School,
+                CreatedAt = x.CreatedAt,
+                UpdatedAt = x.UpdatedAt,
+                FileCount = x.DocumentFiles.Count,
+                ChunkCount = x.DocumentChunks.Count,
+                PreviewText = x.Description ?? x.DocumentChunks.OrderBy(c => c.ChunkOrder).Select(c => c.Content).FirstOrDefault(),
+                OwnerEmail = x.OwnerUser?.Email
+            }).ToList(),
+            TotalDocuments = totalDocuments,
+            PendingDocuments = 0,
+            ApprovedDocuments = 0,
+            RejectedDocuments = 0,
+            TotalFiles = documents.Sum(x => x.DocumentFiles.Count),
+            TotalChunks = documents.Sum(x => x.DocumentChunks.Count),
+            Page = page,
+            PageSize = pageSize,
+            TotalPages = totalPages,
+            ActiveUploadJobs = []
         };
     }
 
@@ -381,6 +443,7 @@ public class DocumentService : IDocumentService
         await DeleteDocumentAssetsAsync(documentId, cancellationToken);
         await _documentRepository.RemoveDocumentFilesByDocumentAsync(documentId, cancellationToken);
         await _documentRepository.RemoveDocumentChunksByDocumentAsync(documentId, cancellationToken);
+        await _documentRepository.RemoveDocumentChaptersByDocumentAsync(documentId, cancellationToken);
         await _documentRepository.RemoveDocumentAsync(document, cancellationToken);
         await _documentRepository.SaveChangesAsync(cancellationToken);
     }

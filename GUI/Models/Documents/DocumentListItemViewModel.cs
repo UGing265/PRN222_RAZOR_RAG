@@ -14,4 +14,5 @@ public class DocumentListItemViewModel
     public DateTime UpdatedAt { get; set; }
     public string? Visibility { get; set; }
     public string? School { get; set; }
+    public string? OwnerEmail { get; set; }
 }

@@ -13,7 +13,7 @@
                 <div class="text-muted-foreground mt-2">@Model.Subject</div>
             </div>
             <div class="d-flex gap-2 flex-wrap">
-                <a asp-action="Delete" asp-route-slug="@Model.Slug" class="btn btn-outline-danger pill-button px-3 py-2">Xoá tài liệu</a>
+                <a asp-action="Delete" asp-route-slug="@Model.Slug" class="btn btn-outline-danger pill-button px-3 py-2">Xoá Tài Liệu</a>
                 <span class="badge rounded-pill px-3 py-2 @(Model.Status == "approved" ? "text-bg-success" : Model.Status == "rejected" ? "text-bg-danger" : "text-bg-warning")">@Model.Status</span>
             </div>
         </div>
