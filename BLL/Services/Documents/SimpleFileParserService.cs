@@ -41,7 +41,35 @@ public class SimpleFileParserService : IFileParserService
         using var document = PdfDocument.Open(filePath);
         foreach (var page in document.GetPages())
         {
-            sb.AppendLine(page.Text);
+            var words = page.GetWords().ToList();
+            if (words.Count == 0) continue;
+            
+            var lineBuilder = new StringBuilder();
+            var lastWord = words[0];
+            lineBuilder.Append(lastWord.Text);
+
+            for (int i = 1; i < words.Count; i++)
+            {
+                var word = words[i];
+                var yDiff = Math.Abs(word.BoundingBox.Bottom - lastWord.BoundingBox.Bottom);
+                
+                if (yDiff > 2) // Khác dòng
+                {
+                    lineBuilder.AppendLine();
+                    if (yDiff > 10) // Khoảng cách lớn -> Đoạn văn mới
+                    {
+                        lineBuilder.AppendLine();
+                    }
+                }
+                else
+                {
+                    lineBuilder.Append(" ");
+                }
+                lineBuilder.Append(word.Text);
+                lastWord = word;
+            }
+            sb.AppendLine(lineBuilder.ToString());
+            sb.AppendLine();
         }
 
         return sb.ToString();

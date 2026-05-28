@@ -5,4 +5,5 @@ namespace BLL.Interfaces.Documents;
 public interface IEmbeddingService
 {
     Task<Vector> EmbedAsync(string text, CancellationToken cancellationToken = default);
+    Task<List<Vector>> EmbedBatchAsync(IReadOnlyList<string> texts, CancellationToken cancellationToken = default);
 }

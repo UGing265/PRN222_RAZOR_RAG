@@ -33,8 +33,8 @@ public class UploadProcessingService : IUploadProcessingService
         }
 
         job.Status = "processing";
-        job.ProgressPercent = 90;
-        job.Message = "Đang lưu file và tạo chỉ mục";
+        job.ProgressPercent = 5;
+        job.Message = "Đang tải tệp từ lưu trữ S3";
         job.UpdatedAt = DateTime.UtcNow;
         await _dbContext.SaveChangesAsync(cancellationToken);
 
@@ -48,11 +48,28 @@ public class UploadProcessingService : IUploadProcessingService
             await s3Stream.CopyToAsync(tempWrite, cancellationToken);
         }
 
+        job.ProgressPercent = 15;
+        job.Message = "Đang phân tích nội dung văn bản";
+        job.UpdatedAt = DateTime.UtcNow;
+        await _dbContext.SaveChangesAsync(cancellationToken);
+
         var tempInfo = new FileInfo(tempFileName);
         var formFile = new TempFileFormFile(tempFileName, fileName, tempInfo.Length, contentType);
         var s3Key = job.StoragePath;
         var s3Url = $"s3://{s3Key}";
-        await _documentService.AddDocumentFileAsync(job.DocumentId.Value, s3Key, s3Url, formFile, cancellationToken);
+        await _documentService.AddDocumentFileAsync(job.DocumentId.Value, s3Key, s3Url, formFile, async (percent) => 
+        {
+            job.ProgressPercent = percent;
+            job.Message = $"Đang tạo chỉ mục và lưu Vector ({percent}%)";
+            job.UpdatedAt = DateTime.UtcNow;
+            await _dbContext.SaveChangesAsync(cancellationToken);
+        }, cancellationToken);
+
+        job.ProgressPercent = 95;
+        job.Message = "Đang phân bổ chương tự động";
+        job.UpdatedAt = DateTime.UtcNow;
+        await _dbContext.SaveChangesAsync(cancellationToken);
+
         await _documentService.GenerateChaptersAsync(job.DocumentId.Value, cancellationToken);
         File.Delete(tempFileName);
 

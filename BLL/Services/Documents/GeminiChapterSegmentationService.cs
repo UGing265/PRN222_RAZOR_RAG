@@ -35,7 +35,7 @@ public class GeminiChapterSegmentationService : IChapterSegmentationService
             throw new InvalidOperationException("Missing Gemini API keys. Set Gemini:ApiKeys or GEMINI_API_KEY.");
         }
 
-        _model = configuration["Gemini:ChatModel"] ?? "gemini-1.5-pro";
+        _model = configuration["Gemini:ChatModel"] ?? "gemini-2.5-flash";
     }
 
     public async Task<List<DocumentChapter>> GenerateChaptersAsync(Document document, IReadOnlyList<DocumentChunk> chunks, CancellationToken cancellationToken = default)
@@ -45,19 +45,75 @@ public class GeminiChapterSegmentationService : IChapterSegmentationService
             return [];
         }
 
-        var chunkPack = string.Join("\n\n", chunks.OrderBy(x => x.ChunkOrder).Select(x => $"[CHUNK {x.ChunkOrder}] {x.Content}"));
-        var prompt = """
-Bạn là hệ thống chia chương tài liệu học thuật.
-Hãy phân chia tài liệu thành các chương theo thứ tự logic dựa trên các chunk bên dưới.
+        var allChapters = new List<DocumentChapter>();
+        var batchSize = 40;
+        string lastChapterTitle = "";
+        
+        for (int i = 0; i < chunks.Count; i += batchSize)
+        {
+            var chunkBatch = chunks.Skip(i).Take(batchSize).ToList();
+            var batchChapters = await ProcessBatchAsync(document, chunkBatch, lastChapterTitle, cancellationToken);
+            
+            if (batchChapters.Count > 0)
+            {
+                allChapters.AddRange(batchChapters);
+                lastChapterTitle = batchChapters.Last().Title;
+            }
+            else
+            {
+                // Fallback cho batch này nếu lỗi toàn tập
+                var fallback = BuildFallbackChapters(document, chunkBatch);
+                allChapters.AddRange(fallback);
+                lastChapterTitle = fallback.Last().Title;
+            }
+        }
+        
+        // Re-order and merge contiguous chunks if needed
+        for (int i = 0; i < allChapters.Count; i++)
+        {
+            allChapters[i].ChapterOrder = i + 1;
+        }
 
-Yêu cầu:
-- Chỉ trả về JSON hợp lệ.
-- Không thêm giải thích ngoài JSON.
-- Mỗi chương phải có title, summary, startChunkIndex, endChunkIndex, confidenceScore.
-- startChunkIndex và endChunkIndex phải là số nguyên, dựa trên chỉ số chunk.
-- Các chương không được chồng lấn.
-- Chỉ dùng chunk có sẵn, không bịa nội dung.
-- Nếu tài liệu ngắn, có thể trả về 1 chương duy nhất.
+        return allChapters;
+    }
+
+    private async Task<List<DocumentChapter>> ProcessBatchAsync(Document document, IReadOnlyList<DocumentChunk> chunks, string lastChapterTitle, CancellationToken cancellationToken)
+    {
+
+        var chunkPack = string.Join("\n", chunks.OrderBy(x => x.ChunkOrder).Select(x => 
+        {
+            var cleanContent = x.Content.Replace("\r", "");
+            var lines = cleanContent.Split('\n', StringSplitOptions.RemoveEmptyEntries);
+            
+            var preview = cleanContent.Length > 500 ? cleanContent.Substring(0, 500).Replace("\n", " ") + "..." : cleanContent.Replace("\n", " ");
+            
+            // Trích xuất các dòng ngắn có khả năng là Header/Tiêu đề chương
+            var potentialHeaders = lines
+                .Where(l => l.Trim().Length > 3 && l.Trim().Length < 80)
+                .Where(l => !l.Trim().EndsWith(".") && !l.Trim().EndsWith(","))
+                .Take(10);
+                
+            var headersStr = string.Join(" | ", potentialHeaders);
+            
+            return $"[CHUNK {x.ChunkOrder}] Preview: {preview} === Headers tiềm năng: {headersStr}";
+        }));
+        var prompt = """
+Bạn là hệ thống chia chương tài liệu học thuật chuyên nghiệp.
+Nhiệm vụ của bạn là đọc cực kỳ cẩn thận và phân chia tài liệu thành các chương (chapters) hoàn chỉnh dựa trên các chunk bên dưới.
+
+__PREVIOUS_CONTEXT__
+
+Yêu cầu BẮT BUỘC:
+1. NGÔN NGỮ ĐẦU RA: Toàn bộ `title` (Tên chương) và `summary` (Tóm tắt) BẮT BUỘC PHẢI VIẾT BẰNG TIẾNG VIỆT, cho dù nội dung tài liệu gốc là tiếng Anh hay ngôn ngữ khác.
+2. ĐỌC CẨN THẬN VÀ ƯU TIÊN TÌM HEADER: Hãy quét thật kỹ từng dòng nội dung của tất cả các chunk để tìm các dấu hiệu chuyển chương/phần rõ ràng (VD: 'Chapter 1', 'Chương 1', 'PART I', 'Mục lục', 'Introduction', 'Conclusion').
+   - Tuyệt đối KHÔNG bỏ sót bất kỳ chương nào có trong sách. Sách có bao nhiêu chương thì HÃY TRẢ VỀ ĐẦY ĐỦ bấy nhiêu chương, không giới hạn số lượng chương.
+   - Nếu sách KHÔNG CÓ chia chương rõ ràng, thì hãy tự động phân tích và gộp các chunk lại thành các phần/chủ đề lớn logic nhất.
+3. Chỉ trả về JSON hợp lệ, KHÔNG giải thích thêm.
+4. Mỗi chương phải có title, summary, startChunkIndex, endChunkIndex, confidenceScore.
+5. 'summary' RẤT NGẮN GỌN (1-2 câu) bằng TIẾNG VIỆT.
+6. startChunkIndex và endChunkIndex là số nguyên. Các chương phải bao phủ ĐẦY ĐỦ toàn bộ tài liệu (từ chunk đầu tiên đến chunk cuối cùng) và tuyệt đối KHÔNG được chồng lấn nhau.
+7. Chỉ dùng chunk có sẵn, không bịa nội dung.
+8. Nếu tài liệu quá ngắn, trả về 1 chương duy nhất.
 
 Thông tin tài liệu:
 - Title: __TITLE__
@@ -81,6 +137,7 @@ __CHUNKPACK__
   ]
 }
 """
+.Replace("__PREVIOUS_CONTEXT__", string.IsNullOrWhiteSpace(lastChapterTitle) ? "" : $"LƯU Ý QUAN TRỌNG: Các phần trước của tài liệu đã được xử lý. Chương cuối cùng của phần trước có tên là '{lastChapterTitle}'. Hãy phân tích tiếp nối nội dung từ đây, đánh số thứ tự chương tiếp theo cho phù hợp, TUYỆT ĐỐI KHÔNG bắt đầu đánh số lại từ Chương 1.")
 .Replace("__TITLE__", document.Title)
 .Replace("__SUBJECT__", document.Subject ?? string.Empty)
 .Replace("__SCHOOL__", document.School ?? string.Empty)
@@ -95,6 +152,8 @@ __CHUNKPACK__
             try
             {
                 var url = $"https://generativelanguage.googleapis.com/v1beta/models/{_model}:generateContent?key={apiKey}";
+                _logger.LogInformation("Gemini chapter segmentation request started. Attempt={Attempt}/{MaxAttempts}, ApiKeyIndex={ApiKeyIndex}, BatchSize={BatchSize}", attempt + 1, _apiKeys.Length, apiKeyIndex, chunks.Count);
+                
                 var request = new GeminiGenerateRequest
                 {
                     Contents = [new GeminiContent
@@ -106,7 +165,7 @@ __CHUNKPACK__
                     {
                         Temperature = 0.2,
                         TopP = 0.8,
-                        MaxOutputTokens = 4096,
+                        MaxOutputTokens = 8192,
                         ResponseMimeType = "application/json"
                     }
                 };
@@ -116,8 +175,12 @@ __CHUNKPACK__
                 if (!response.IsSuccessStatusCode)
                 {
                     lastError = new InvalidOperationException($"Gemini chapter segmentation failed: {(int)response.StatusCode} {body}");
+                    _logger.LogWarning("Gemini chapter segmentation failed. Attempt={Attempt}/{MaxAttempts}, ApiKeyIndex={ApiKeyIndex}, StatusCode={StatusCode}", attempt + 1, _apiKeys.Length, apiKeyIndex, (int)response.StatusCode);
+                    await Task.Delay(1000, cancellationToken);
                     continue;
                 }
+
+                _logger.LogInformation("Gemini chapter segmentation succeeded. ApiKeyIndex={ApiKeyIndex}", apiKeyIndex);
 
                 var payload = JsonSerializer.Deserialize<GeminiGenerateResponse>(body);
                 var text = payload?.Candidates?.FirstOrDefault()?.Content?.Parts?.FirstOrDefault()?.Text;
@@ -136,8 +199,8 @@ __CHUNKPACK__
             }
         }
 
-        _logger.LogError(lastError, "Chapter segmentation failed, falling back to one chapter.");
-        return BuildFallbackChapters(document, chunks);
+        _logger.LogError(lastError, "Chapter segmentation batch failed, returning empty list for this batch.");
+        return [];
     }
 
     private List<DocumentChapter> BuildChaptersFromResponse(Document document, IReadOnlyList<DocumentChunk> chunks, ChapterResponse? response)
@@ -198,12 +261,29 @@ __CHUNKPACK__
     private static string ExtractJson(string text)
     {
         var start = text.IndexOf('{');
+        if (start < 0) return text;
+        
         var end = text.LastIndexOf('}');
-        if (start < 0 || end <= start)
+        if (end <= start) return text;
+
+        var json = text.Substring(start, end - start + 1);
+        
+        // Simple heuristic to auto-close if truncated
+        int openBraces = json.Count(c => c == '{');
+        int closeBraces = json.Count(c => c == '}');
+        int openBrackets = json.Count(c => c == '[');
+        int closeBrackets = json.Count(c => c == ']');
+        
+        if (openBrackets > closeBrackets)
         {
-            return text;
+            json += new string(']', openBrackets - closeBrackets);
         }
-        return text.Substring(start, end - start + 1);
+        if (openBraces > closeBraces)
+        {
+            json += new string('}', openBraces - closeBraces);
+        }
+        
+        return json;
     }
 
     private int GetNextApiKeyIndex()

@@ -3,6 +3,7 @@
     var jobs = ViewBag.ActiveUploadJobs as List<UploadJob> ?? new List<UploadJob>();
 }
 
+<div id="upload-jobs-wrapper-content">
 @if (jobs.Any())
 {
     <div class="soft-panel editorial-shadow p-4 mb-4">
@@ -36,3 +37,24 @@
         </div>
     </div>
 }
+</div>
+
+<script>
+    if (!window.uploadJobsPollingStarted) {
+        window.uploadJobsPollingStarted = true;
+        setInterval(() => {
+            fetch('/Dashboard/UploadJobsPartial')
+                .then(res => res.text())
+                .then(html => {
+                    var parser = new DOMParser();
+                    var doc = parser.parseFromString(html, 'text/html');
+                    var newContent = doc.getElementById('upload-jobs-wrapper-content');
+                    var currentWrapper = document.getElementById('upload-jobs-wrapper-content');
+                    if (newContent && currentWrapper) {
+                        currentWrapper.innerHTML = newContent.innerHTML;
+                    }
+                })
+                .catch(err => console.error('Upload polling error:', err));
+        }, 1000);
+    }
+</script>

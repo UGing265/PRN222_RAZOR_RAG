@@ -63,7 +63,7 @@ public class DocumentService : IDocumentService
         return await _s3StorageService.UploadAsync(documentId.ToString("N"), file, cancellationToken);
     }
 
-    public async Task<DocumentFile> AddDocumentFileAsync(Guid documentId, string s3Key, string s3Url, IFormFile file, CancellationToken cancellationToken = default)
+    public async Task<DocumentFile> AddDocumentFileAsync(Guid documentId, string s3Key, string s3Url, IFormFile file, Func<int, Task>? onProgress = null, CancellationToken cancellationToken = default)
     {
         ValidateFile(file);
 
@@ -97,12 +97,18 @@ public class DocumentService : IDocumentService
             foreach (var batch in chunks.Chunk(_indexingOptions.BatchSize))
             {
                 batchIndex++;
-                foreach (var rawChunk in batch)
+                
+                var cleanBatch = batch.Select(SanitizeForPostgres).ToList();
+                var embedCts = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
+                embedCts.CancelAfter(TimeSpan.FromSeconds(120));
+                
+                var embeddings = await _embeddingService.EmbedBatchAsync(cleanBatch, embedCts.Token);
+
+                for (int i = 0; i < cleanBatch.Count; i++)
                 {
-                    var chunk = SanitizeForPostgres(rawChunk);
-                    var embedCts = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
-                    embedCts.CancelAfter(TimeSpan.FromSeconds(60));
-                    var embedding = await _embeddingService.EmbedAsync(chunk, embedCts.Token);
+                    var chunk = cleanBatch[i];
+                    var embedding = embeddings.ElementAtOrDefault(i) ?? new Vector(new float[3072]);
+                    
                     var metadata = SanitizeForPostgres(JsonSerializer.Serialize(new
                     {
                         sourceFileName = SanitizeForPostgres(file.FileName),
@@ -131,6 +137,12 @@ public class DocumentService : IDocumentService
                     });
 
                     chunkIndex++;
+                }
+
+                if (onProgress != null && totalChunks > 0)
+                {
+                    int progress = 20 + (int)((chunkIndex / (double)totalChunks) * 70);
+                    await onProgress(progress);
                 }
 
                 if (chunkIndex < totalChunks)
@@ -188,6 +200,7 @@ public class DocumentService : IDocumentService
                 .Include(x => x.DocumentFiles)
                 .Include(x => x.DocumentChunks)
                 .Include(x => x.DocumentChapters)
+                .AsSplitQuery()
                 .FirstOrDefaultAsync(x => x.Id == documentId, cancellationToken);
         }
         catch (Exception ex)
@@ -257,6 +270,12 @@ public class DocumentService : IDocumentService
 
     private static string BuildSearchText(Document document, string extractedText)
     {
+        // Truncate extracted text to avoid PostgreSQL tsvector 1MB size limit (Error 54000)
+        // 50,000 characters is a safe limit that still provides good keyword search coverage
+        var safeExtractedText = string.IsNullOrWhiteSpace(extractedText) 
+            ? string.Empty 
+            : (extractedText.Length > 50000 ? extractedText.Substring(0, 50000) : extractedText);
+
         return string.Join(" ", new[]
         {
             document.Title,
@@ -264,7 +283,7 @@ public class DocumentService : IDocumentService
             document.Subject,
             document.School,
             document.Department,
-            extractedText
+            safeExtractedText
         }.Where(x => !string.IsNullOrWhiteSpace(x)));
     }
 
