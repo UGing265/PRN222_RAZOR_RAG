@@ -5,6 +5,7 @@ namespace GUI.Models.Documents;
 public class DocumentDetailsViewModel
 {
     public Guid Id { get; set; }
+    public string Slug { get; set; } = string.Empty;
     public string Title { get; set; } = string.Empty;
     public string? Subject { get; set; }
     public string? School { get; set; }

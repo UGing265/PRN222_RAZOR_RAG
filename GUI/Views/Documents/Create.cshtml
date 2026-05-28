@@ -11,7 +11,7 @@
                 <span style="width:10px;height:10px;border-radius:9999px;border:1px solid rgba(82,39,27,.25);display:inline-block;"></span>
                 <span>Không gian làm việc — Tải lên</span>
             </div>
-            <a asp-route="dashboard" class="link-plain text-muted-foreground">Bảng điều khiển</a>
+            <a asp-controller="Dashboard" asp-action="Index" class="link-plain text-muted-foreground">Bảng điều khiển</a>
         </div>
 
         <section class="soft-panel editorial-shadow p-4 p-md-5 mb-4">
@@ -185,7 +185,7 @@
             dropzone.addEventListener('click', () => input.click());
             dropzone.addEventListener('keydown', (e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); input.click(); } });
 
-            cancelBtn.addEventListener('click', () => window.location.href = '/dashboard');
+            cancelBtn.addEventListener('click', () => window.location.href = '/documents/mine');
 
             form.addEventListener('submit', async (e) => {
                 if (!input.files || input.files.length === 0) return;

@@ -1,21 +1,22 @@
 using System.Security.Claims;
-using DAL.Data;
+using BLL.Interfaces.Documents;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
 
 namespace GUI.Controllers;
 
 [Authorize]
+[Route("dashboard")]
 public class DashboardController : Controller
 {
-    private readonly DBContext _dbContext;
+    private readonly IDocumentService _documentService;
 
-    public DashboardController(DBContext dbContext)
+    public DashboardController(IDocumentService documentService)
     {
-        _dbContext = dbContext;
+        _documentService = documentService;
     }
 
+    [HttpGet]
     public async Task<IActionResult> Index(CancellationToken cancellationToken = default)
     {
         if (!Guid.TryParse(User.FindFirstValue(ClaimTypes.NameIdentifier), out var userId))
@@ -23,51 +24,25 @@ public class DashboardController : Controller
             return Unauthorized();
         }
 
-        var documentsQuery = _dbContext.Documents.AsNoTracking().Where(x => x.OwnerUserId == userId);
+        var summary = await _documentService.GetDashboardSummaryAsync(userId, cancellationToken);
+        ViewBag.TotalDocuments = summary.TotalDocuments;
+        ViewBag.TotalChunks = summary.TotalChunks;
+        ViewBag.TotalFiles = summary.TotalFiles;
+        ViewBag.ApprovedDocuments = summary.ApprovedDocuments;
+        ViewBag.PendingDocuments = summary.PendingDocuments;
+        ViewBag.RejectedDocuments = summary.RejectedDocuments;
+        ViewBag.RecentDocuments = summary.RecentDocuments;
+        ViewBag.ActiveUploadJobs = summary.ActiveUploadJobs;
 
-        ViewBag.TotalDocuments = await documentsQuery.CountAsync(cancellationToken);
-        ViewBag.TotalChunks = await _dbContext.DocumentChunks.AsNoTracking().CountAsync(x => x.Document.OwnerUserId == userId, cancellationToken);
-        ViewBag.TotalFiles = await _dbContext.DocumentFiles.AsNoTracking().CountAsync(x => x.Document.OwnerUserId == userId, cancellationToken);
-        ViewBag.ApprovedDocuments = await documentsQuery.CountAsync(x => x.Status == "approved", cancellationToken);
-        ViewBag.PendingDocuments = await documentsQuery.CountAsync(x => x.Status == "pending", cancellationToken);
-        ViewBag.RejectedDocuments = await documentsQuery.CountAsync(x => x.Status == "rejected", cancellationToken);
-        ViewBag.RecentDocuments = await documentsQuery
-            .OrderByDescending(x => x.UpdatedAt)
-            .Select(x => new
-            {
-                x.Id,
-                x.Title,
-                x.Subject,
-                x.Status,
-                x.UpdatedAt,
-                FileCount = x.DocumentFiles.Count,
-                ChunkCount = x.DocumentChunks.Count
-            })
-            .Take(5)
-            .ToListAsync(cancellationToken);
-
-        var completedJob = await _dbContext.UploadJobs
-            .Where(x => x.OwnerUserId == userId && x.Status == "done" && !x.IsNotified)
-            .OrderByDescending(x => x.UpdatedAt)
-            .FirstOrDefaultAsync(cancellationToken);
-
-        if (completedJob is not null)
+        if (!string.IsNullOrWhiteSpace(summary.CompletedUploadMessage))
         {
-            TempData["SuccessMessage"] = $"Tệp \"{completedJob.FileName}\" đã xử lý xong.";
-            completedJob.IsNotified = true;
-            await _dbContext.SaveChangesAsync(cancellationToken);
+            TempData["SuccessMessage"] = summary.CompletedUploadMessage;
         }
-
-        ViewBag.ActiveUploadJobs = await _dbContext.UploadJobs.AsNoTracking()
-            .Where(x => x.OwnerUserId == userId && x.Status != "done" && x.Status != "failed")
-            .OrderByDescending(x => x.UpdatedAt)
-            .Take(5)
-            .ToListAsync(cancellationToken);
 
         return View();
     }
 
-    [HttpGet]
+    [HttpGet("upload-jobs")]
     public async Task<IActionResult> UploadJobsPartial(CancellationToken cancellationToken = default)
     {
         if (!Guid.TryParse(User.FindFirstValue(ClaimTypes.NameIdentifier), out var userId))
@@ -75,12 +50,7 @@ public class DashboardController : Controller
             return Unauthorized();
         }
 
-        ViewBag.ActiveUploadJobs = await _dbContext.UploadJobs.AsNoTracking()
-            .Where(x => x.OwnerUserId == userId && x.Status != "done" && x.Status != "failed")
-            .OrderByDescending(x => x.UpdatedAt)
-            .Take(5)
-            .ToListAsync(cancellationToken);
-
+        ViewBag.ActiveUploadJobs = await _documentService.GetUploadJobsAsync(userId, cancellationToken);
         return PartialView("_UploadJobs");
     }
 }

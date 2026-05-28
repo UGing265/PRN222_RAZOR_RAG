@@ -13,7 +13,7 @@
                 <div class="text-muted-foreground mt-2">@Model.Subject</div>
             </div>
             <div class="d-flex gap-2 flex-wrap">
-                <a asp-action="Delete" asp-route-id="@Model.Id" class="btn btn-outline-danger pill-button px-3 py-2">Xoá tài liệu</a>
+                <a asp-action="Delete" asp-route-slug="@Model.Slug" class="btn btn-outline-danger pill-button px-3 py-2">Xoá tài liệu</a>
                 <span class="badge rounded-pill px-3 py-2 @(Model.Status == "approved" ? "text-bg-success" : Model.Status == "rejected" ? "text-bg-danger" : "text-bg-warning")">@Model.Status</span>
             </div>
         </div>
@@ -145,8 +145,8 @@
                             <div class="font-mono-xs text-muted-foreground">Trang @Model.ChunkPage / @Model.TotalChunkPages</div>
                         </div>
                         <div class="d-flex align-items-center gap-2 flex-wrap">
-                            <a asp-action="Details" asp-route-id="@Model.Id" asp-route-chunkPage="@Math.Max(1, Model.ChunkPage - 1)" asp-route-chunkPageSize="@Model.ChunkPageSize" class="btn btn-outline-dark btn-sm pill-button @(Model.ChunkPage <= 1 ? "disabled" : "")">Prev</a>
-                            <a asp-action="Details" asp-route-id="@Model.Id" asp-route-chunkPage="@Math.Min(Model.TotalChunkPages, Model.ChunkPage + 1)" asp-route-chunkPageSize="@Model.ChunkPageSize" class="btn btn-outline-dark btn-sm pill-button @(Model.ChunkPage >= Model.TotalChunkPages ? "disabled" : "")">Next</a>
+                            <a asp-action="Details" asp-route-slug="@Model.Slug" asp-route-chunkPage="@Math.Max(1, Model.ChunkPage - 1)" asp-route-chunkPageSize="@Model.ChunkPageSize" class="btn btn-outline-dark btn-sm pill-button @(Model.ChunkPage <= 1 ? "disabled" : "")">Prev</a>
+                            <a asp-action="Details" asp-route-slug="@Model.Slug" asp-route-chunkPage="@Math.Min(Model.TotalChunkPages, Model.ChunkPage + 1)" asp-route-chunkPageSize="@Model.ChunkPageSize" class="btn btn-outline-dark btn-sm pill-button @(Model.ChunkPage >= Model.TotalChunkPages ? "disabled" : "")">Next</a>
                         </div>
                     </div>
 

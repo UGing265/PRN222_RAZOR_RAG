@@ -1,3 +1,4 @@
+using BLL.DTOs.Auth;
 using BLL.Interfaces.Auth;
 using DAL.Entities;
 using DAL.Interfaces.Auth;
@@ -14,7 +15,7 @@ public class AuthService : IAuthService
         _authRepository = authRepository;
     }
 
-    public async Task<User> RegisterAsync(string fullName, string email, string password, short roleId, CancellationToken cancellationToken = default)
+    public async Task<AuthUserDto> RegisterAsync(string fullName, string email, string password, short roleId, CancellationToken cancellationToken = default)
     {
         var normalizedEmail = email.Trim().ToLowerInvariant();
         var existingUser = await _authRepository.EmailExistsAsync(normalizedEmail, cancellationToken);
@@ -42,10 +43,11 @@ public class AuthService : IAuthService
             UpdatedAt = now
         };
 
-        return await _authRepository.AddUserAsync(user, cancellationToken);
+        var created = await _authRepository.AddUserAsync(user, cancellationToken);
+        return Map(created);
     }
 
-    public async Task<User?> ValidateCredentialsAsync(string email, string password, CancellationToken cancellationToken = default)
+    public async Task<AuthUserDto?> ValidateCredentialsAsync(string email, string password, CancellationToken cancellationToken = default)
     {
         var normalizedEmail = email.Trim().ToLowerInvariant();
         var user = await _authRepository.GetUserByEmailWithRoleAsync(normalizedEmail, cancellationToken);
@@ -55,8 +57,16 @@ public class AuthService : IAuthService
             return null;
         }
 
-        return VerifyPassword(password, user.PasswordHash) ? user : null;
+        return VerifyPassword(password, user.PasswordHash) ? Map(user) : null;
     }
+
+    private static AuthUserDto Map(User user) => new()
+    {
+        Id = user.Id,
+        FullName = user.FullName,
+        Email = user.Email,
+        RoleName = user.Role?.Name ?? user.RoleId.ToString()
+    };
 
     private static string HashPassword(string password)
     {

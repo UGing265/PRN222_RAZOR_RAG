@@ -1,4 +1,5 @@
 using System.Security.Claims;
+using BLL.DTOs.Auth;
 using BLL.Interfaces.Auth;
 using GUI.Models.Auth;
 using Microsoft.AspNetCore.Authentication;
@@ -93,14 +94,14 @@ public class AuthController : Controller
         return RedirectToAction(nameof(Login));
     }
 
-    private async Task SignInAsync(DAL.Entities.User user, bool isPersistent)
+    private async Task SignInAsync(AuthUserDto user, bool isPersistent)
     {
         var claims = new List<Claim>
         {
             new(ClaimTypes.NameIdentifier, user.Id.ToString()),
             new(ClaimTypes.Name, user.FullName),
             new(ClaimTypes.Email, user.Email),
-            new(ClaimTypes.Role, user.Role?.Name ?? user.RoleId.ToString())
+            new(ClaimTypes.Role, user.RoleName)
         };
 
         var identity = new ClaimsIdentity(claims, CookieAuthenticationDefaults.AuthenticationScheme);

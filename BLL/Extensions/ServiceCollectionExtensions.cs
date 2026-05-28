@@ -10,9 +10,9 @@ using DAL.Interfaces.Documents;
 using DAL.Repositories.Auth;
 using DAL.Repositories.Documents;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Diagnostics;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
-using Pgvector.EntityFrameworkCore;
 
 namespace BLL.Extensions;
 
@@ -21,7 +21,8 @@ public static class ServiceCollectionExtensions
     public static IServiceCollection AddBusinessLayer(this IServiceCollection services, IConfiguration configuration)
     {
         services.AddDbContext<DBContext>(options =>
-            options.UseNpgsql(configuration.GetConnectionString("DefaultConnection"), o => o.UseVector()));
+            options.UseNpgsql(configuration.GetConnectionString("DefaultConnection"), o => o.UseVector())
+                .ConfigureWarnings(w => w.Ignore(RelationalEventId.MultipleCollectionIncludeWarning)));
 
         services.AddScoped<IAuthRepository, AuthRepository>();
         services.AddScoped<IDocumentRepository, DocumentRepository>();

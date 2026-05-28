@@ -17,7 +17,7 @@
         <div class="font-mono-xs text-muted-foreground mb-2">Điều hướng</div>
         <nav class="nav flex-column gap-1">
             <a class="nav-link @IsActive("Dashboard", "Index")" asp-route="dashboard">Bảng điều khiển</a>
-            <a class="nav-link @IsActive("Documents", "Create")" asp-route="upload">Tải lên</a>
+            <a class="nav-link @IsActive("Documents", "Create")" asp-controller="Documents" asp-action="Create">Tải lên</a>
             <a class="nav-link @IsActive("Documents", "MyDocuments")" asp-controller="Documents" asp-action="MyDocuments">Thư viện</a>
             <a class="nav-link @IsActive("Chat", "Index")" asp-route="chat">Trò chuyện</a>
         </nav>
