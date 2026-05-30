@@ -40,8 +40,7 @@ public class AuthController : Controller
             }
 
             var user = await _authService.RegisterAsync(model.FullName, model.Email, model.Password, model.RoleId, cancellationToken);
-            await SignInAsync(user, isPersistent: true);
-            TempData["SuccessMessage"] = "Đăng ký thành công.";
+            TempData["SuccessMessage"] = "Đăng ký thành công. Vui lòng đăng nhập.";
             return RedirectToAction("Index", "Home");
         }
         catch (InvalidOperationException ex)
