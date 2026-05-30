@@ -281,7 +281,7 @@ public class DocumentsController : Controller
     }
 
     [HttpGet("mine")]
-    [Authorize(Roles = "Lecturer,Student")]
+    [Authorize(Roles = "Admin,Lecturer")]
     public async Task<IActionResult> MyDocuments(string? q = null, int page = 1, int pageSize = 6, CancellationToken cancellationToken = default)
     {
         if (!Guid.TryParse(User.FindFirstValue(ClaimTypes.NameIdentifier), out var userId))

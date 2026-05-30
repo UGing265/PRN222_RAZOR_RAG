@@ -3,12 +3,12 @@ using Microsoft.AspNetCore.Mvc;
 
 namespace GUI.Controllers;
 
-[Authorize(Roles = "Admin")]
+[Authorize(Roles = "Admin,Student")]
 public class ChatController : Controller
 {
     [HttpGet]
     public IActionResult Index()
     {
-        return NotFound();
+        return View();
     }
 }
