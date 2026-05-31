@@ -1,17 +1,13 @@
 using System;
 using System.Collections.Generic;
+using DAL.Entities;
 using Microsoft.EntityFrameworkCore;
 using Pgvector.EntityFrameworkCore;
-using DAL.Entities;
 
 namespace DAL.Data;
 
 public partial class DBContext : DbContext
 {
-    public DBContext()
-    {
-    }
-
     public DBContext(DbContextOptions<DBContext> options)
         : base(options)
     {
@@ -77,6 +73,9 @@ public partial class DBContext : DbContext
                 .HasMaxLength(200)
                 .HasColumnName("school");
             entity.Property(e => e.SearchText).HasColumnName("search_text");
+            entity.Property(e => e.Slug)
+                .HasMaxLength(255)
+                .HasColumnName("slug");
             entity.Property(e => e.SourceType)
                 .HasMaxLength(30)
                 .HasDefaultValueSql("'upload'::character varying")

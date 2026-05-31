@@ -1,31 +1,30 @@
+using BLL.DTOs.Auth;
 using BLL.Interfaces.Auth;
-using DAL.Data;
 using DAL.Entities;
-using Microsoft.EntityFrameworkCore;
+using DAL.Interfaces.Auth;
 using System.Security.Cryptography;
-using System.Text;
 
 namespace BLL.Services.Auth;
 
 public class AuthService : IAuthService
 {
-    private readonly DBContext _dbContext;
+    private readonly IAuthRepository _authRepository;
 
-    public AuthService(DBContext dbContext)
+    public AuthService(IAuthRepository authRepository)
     {
-        _dbContext = dbContext;
+        _authRepository = authRepository;
     }
 
-    public async Task<User> RegisterAsync(string fullName, string email, string password, short roleId, CancellationToken cancellationToken = default)
+    public async Task<AuthUserDto> RegisterAsync(string fullName, string email, string password, short roleId, CancellationToken cancellationToken = default)
     {
         var normalizedEmail = email.Trim().ToLowerInvariant();
-        var existingUser = await _dbContext.Users.AnyAsync(x => x.Email.ToLower() == normalizedEmail, cancellationToken);
+        var existingUser = await _authRepository.EmailExistsAsync(normalizedEmail, cancellationToken);
         if (existingUser)
         {
             throw new InvalidOperationException("Email đã được sử dụng.");
         }
 
-        var roleExists = await _dbContext.Roles.AnyAsync(x => x.Id == roleId, cancellationToken);
+        var roleExists = await _authRepository.RoleExistsAsync(roleId, cancellationToken);
         if (!roleExists)
         {
             throw new InvalidOperationException("Role không hợp lệ.");
@@ -44,25 +43,31 @@ public class AuthService : IAuthService
             UpdatedAt = now
         };
 
-        _dbContext.Users.Add(user);
-        await _dbContext.SaveChangesAsync(cancellationToken);
-        return user;
+        var created = await _authRepository.AddUserAsync(user, cancellationToken);
+        return Map(created);
     }
 
-    public async Task<User?> ValidateCredentialsAsync(string email, string password, CancellationToken cancellationToken = default)
+    public async Task<AuthUserDto?> ValidateCredentialsAsync(string email, string password, CancellationToken cancellationToken = default)
     {
         var normalizedEmail = email.Trim().ToLowerInvariant();
-        var user = await _dbContext.Users
-            .Include(x => x.Role)
-            .FirstOrDefaultAsync(x => x.Email.ToLower() == normalizedEmail, cancellationToken);
+        var user = await _authRepository.GetUserByEmailWithRoleAsync(normalizedEmail, cancellationToken);
 
         if (user is null || !user.IsActive)
         {
             return null;
         }
 
-        return VerifyPassword(password, user.PasswordHash) ? user : null;
+        return VerifyPassword(password, user.PasswordHash) ? Map(user) : null;
     }
+
+    private static AuthUserDto Map(User user) => new()
+    {
+        Id = user.Id,
+        FullName = user.FullName,
+        Email = user.Email,
+        RoleId = user.RoleId,
+        RoleName = user.Role?.Name ?? user.RoleId.ToString()
+    };
 
     private static string HashPassword(string password)
     {

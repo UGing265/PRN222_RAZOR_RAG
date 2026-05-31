@@ -12,6 +12,8 @@ public partial class Document
 
     public string Title { get; set; } = null!;
 
+    public string? Slug { get; set; }
+
     public string? Description { get; set; }
 
     public string? Subject { get; set; }

@@ -1,4 +1,5 @@
-﻿@{
+@{
     var controller = ViewContext.RouteData.Values["controller"]?.ToString();
-    Layout = controller is "Auth" ? "_Layout" : "_AppLayout";
+    var isAuthenticated = User?.Identity?.IsAuthenticated == true;
+    Layout = (controller is "Auth" || !isAuthenticated) ? "_Layout" : "_AppLayout";
 }

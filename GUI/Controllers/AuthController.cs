@@ -1,4 +1,5 @@
 using System.Security.Claims;
+using BLL.DTOs.Auth;
 using BLL.Interfaces.Auth;
 using GUI.Models.Auth;
 using Microsoft.AspNetCore.Authentication;
@@ -32,9 +33,14 @@ public class AuthController : Controller
 
         try
         {
+            if (model.RoleId is not 2 and not 3)
+            {
+                ModelState.AddModelError(nameof(model.RoleId), "Chỉ được chọn Giảng Viên hoặc Sinh Viên.");
+                return View(model);
+            }
+
             var user = await _authService.RegisterAsync(model.FullName, model.Email, model.Password, model.RoleId, cancellationToken);
-            await SignInAsync(user, isPersistent: true);
-            TempData["SuccessMessage"] = "Đăng ký thành công.";
+            TempData["SuccessMessage"] = "Đăng ký thành công. Vui lòng đăng nhập.";
             return RedirectToAction("Index", "Home");
         }
         catch (InvalidOperationException ex)
@@ -93,14 +99,15 @@ public class AuthController : Controller
         return RedirectToAction(nameof(Login));
     }
 
-    private async Task SignInAsync(DAL.Entities.User user, bool isPersistent)
+    private async Task SignInAsync(AuthUserDto user, bool isPersistent)
     {
         var claims = new List<Claim>
         {
             new(ClaimTypes.NameIdentifier, user.Id.ToString()),
             new(ClaimTypes.Name, user.FullName),
             new(ClaimTypes.Email, user.Email),
-            new(ClaimTypes.Role, user.Role?.Name ?? user.RoleId.ToString())
+            new(ClaimTypes.Role, user.RoleName),
+            new("role_id", user.RoleId.ToString())
         };
 
         var identity = new ClaimsIdentity(claims, CookieAuthenticationDefaults.AuthenticationScheme);

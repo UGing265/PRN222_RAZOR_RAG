@@ -1,6 +1,5 @@
 using BLL.Interfaces.Documents;
-using DAL.Data;
-using Microsoft.EntityFrameworkCore;
+using DAL.Interfaces.Documents;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
@@ -25,13 +24,10 @@ public class UploadJobBackgroundService : BackgroundService
             try
             {
                 using var scope = _scopeFactory.CreateScope();
-                var db = scope.ServiceProvider.GetRequiredService<DBContext>();
+                var db = scope.ServiceProvider.GetRequiredService<IUploadJobRepository>();
                 var processor = scope.ServiceProvider.GetRequiredService<IUploadProcessingService>();
 
-                var job = await db.UploadJobs
-                    .OrderBy(x => x.CreatedAt)
-                    .FirstOrDefaultAsync(x => x.Status == "pending", stoppingToken);
-
+                var job = await db.GetNextPendingJobAsync(stoppingToken);
                 if (job is null)
                 {
                     await Task.Delay(TimeSpan.FromSeconds(5), stoppingToken);
@@ -50,7 +46,7 @@ public class UploadJobBackgroundService : BackgroundService
 
                 job.Status = "processing";
                 job.ProgressPercent = 1;
-                job.Message = "Đưa vào hàng đợi xử lý";
+                job.Message = "Đang xử lý";
                 job.UpdatedAt = DateTime.UtcNow;
                 await db.SaveChangesAsync(stoppingToken);
 

@@ -12,4 +12,5 @@ public class MyDocumentsViewModel
     public int PageSize { get; set; }
     public int TotalPages { get; set; }
     public List<DocumentListItemViewModel> Documents { get; set; } = new();
+    public List<UploadJobViewModel> ActiveUploadJobs { get; set; } = new();
 }

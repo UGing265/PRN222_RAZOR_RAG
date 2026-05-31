@@ -66,12 +66,17 @@ public class UploadProcessingService : IUploadProcessingService
         }, cancellationToken);
 
         job.ProgressPercent = 95;
-        job.Message = "Đang phân bổ chương tự động";
+        job.Message = "Hoàn tất xử lý tài liệu";
         job.UpdatedAt = DateTime.UtcNow;
         await _dbContext.SaveChangesAsync(cancellationToken);
 
-        await _documentService.GenerateChaptersAsync(job.DocumentId.Value, cancellationToken);
-        File.Delete(tempFileName);
+        if (File.Exists(tempFileName)) File.Delete(tempFileName);
+
+        var document = await _dbContext.Documents.FirstOrDefaultAsync(x => x.Id == job.DocumentId.Value, cancellationToken)
+            ?? throw new InvalidOperationException("Document not found.");
+        document.Status = "completed";
+        document.ApprovedAt = DateTime.UtcNow;
+        document.UpdatedAt = DateTime.UtcNow;
 
         job.Status = "done";
         job.ProgressPercent = 100;

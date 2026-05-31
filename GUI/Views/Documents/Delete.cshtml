@@ -19,11 +19,10 @@
                 <div class="d-flex justify-content-between"><span class="file-subtle">Chunks</span><strong>@Model.ChunkCount</strong></div>
             </div>
 
-            <form asp-action="DeleteConfirmed" method="post" class="d-flex gap-2 flex-wrap">
+            <form asp-action="DeleteConfirmed" asp-route-slug="@Model.Slug" method="post" class="d-flex gap-2 flex-wrap">
                 @Html.AntiForgeryToken()
-                <input type="hidden" name="id" value="@Model.Id" />
                 <button type="submit" class="btn btn-danger pill-button px-4 py-3">Xoá vĩnh viễn</button>
-                <a asp-action="Details" asp-route-id="@Model.Id" class="btn btn-outline-dark pill-button px-4 py-3">Huỷ</a>
+                <a asp-action="Details" asp-route-slug="@Model.Slug" class="btn btn-outline-dark pill-button px-4 py-3">Huỷ</a>
             </form>
         </div>
     </div>
