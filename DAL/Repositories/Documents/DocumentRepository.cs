@@ -113,7 +113,7 @@ public class DocumentRepository : IDocumentRepository
             .Include(x => x.DocumentFiles)
             .Include(x => x.DocumentChunks)
             .Include(x => x.OwnerUser)
-            .Where(x => x.Status == "completed");
+            .Where(x => x.Status == "completed" && (x.OwnerUser.RoleId == 1 || x.OwnerUser.RoleId == 2));
 
         if (requesterUserId.HasValue)
         {
@@ -138,7 +138,10 @@ public class DocumentRepository : IDocumentRepository
 
     public Task<int> CountDocumentsAsync(string? query, Guid? requesterUserId = null, CancellationToken cancellationToken = default)
     {
-        var q = _dbContext.Documents.AsNoTracking().Include(x => x.OwnerUser).Where(x => x.Status == "completed");
+        var q = _dbContext.Documents.AsNoTracking()
+            .Include(x => x.OwnerUser)
+            .Where(x => x.Status == "completed" && (x.OwnerUser.RoleId == 1 || x.OwnerUser.RoleId == 2));
+
         if (requesterUserId.HasValue)
         {
             var userId = requesterUserId.Value;
