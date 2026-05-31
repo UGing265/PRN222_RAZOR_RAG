@@ -104,19 +104,19 @@
             <!-- Popout Menu (Fixed overlay above profile card) -->
             <div class="profile-popout" id="profilePopout">
                 <!-- User Header (Avatar, Name, Plan + Chevron) -->
-                <div class="d-flex align-items-center justify-content-between p-2 mb-1.5 rounded-3 hover-bg-profile-item" style="cursor: pointer;" data-bs-toggle="modal" data-bs-target="#settingsModal" data-bs-target-tab="profile">
-                    <div class="d-flex align-items-center gap-2.5">
-                        <div class="rounded-circle text-white d-flex align-items-center justify-content-center fw-bold shadow-sm flex-shrink-0" 
-                             style="width: 38px; height: 38px; font-size: 1rem; background: var(--brown) !important;">
+                <div class="hover-bg-profile-item" style="display: flex; align-items: center; justify-content: space-between; padding: 8px; margin-bottom: 6px; border-radius: 12px; cursor: pointer; gap: 12px;" data-bs-toggle="modal" data-bs-target="#settingsModal" data-bs-target-tab="profile">
+                    <div style="display: flex; align-items: center; gap: 12px; overflow: hidden;">
+                        <div class="rounded-circle text-white" 
+                             style="width: 38px; height: 38px; min-width: 38px; display: flex; align-items: center; justify-content: center; font-weight: bold; background: var(--brown) !important; flex-shrink: 0; box-shadow: 0 2px 4px rgba(0,0,0,0.08);">
                             @fullName.Substring(0, 1).ToUpper()
                         </div>
-                        <div class="lh-sm overflow-hidden" style="max-width: 140px;">
-                            <div class="fw-bold text-foreground text-truncate" style="font-size: 0.85rem;">@fullName</div>
-                            <div class="text-muted-foreground text-truncate" style="font-size: 0.72rem;">Gói: Basic</div>
+                        <div style="display: flex; flex-direction: column; line-height: 1.25; overflow: hidden; max-width: 140px; text-align: left;">
+                            <div class="fw-bold text-truncate" style="font-size: 0.85rem; color: var(--foreground);">@fullName</div>
+                            <div class="text-muted-foreground text-truncate" style="font-size: 0.72rem; color: var(--muted);">Gói: Basic</div>
                         </div>
                     </div>
                     <!-- Right chevron -->
-                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="var(--muted)" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="var(--muted)" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink: 0;">
                         <polyline points="9 18 15 12 9 6"></polyline>
                     </svg>
                 </div>
