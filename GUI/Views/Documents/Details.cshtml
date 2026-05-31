@@ -100,13 +100,9 @@
         <!-- Header -->
         <div class="d-flex flex-column flex-md-row justify-content-between align-items-start gap-4 mb-5">
             <div class="min-w-0 flex-grow-1">
-                <div class="kicker mb-1">— Kho tài liệu</div>
+                <div class="kicker mb-1">Kho tài liệu</div>
                 <h1 class="hero-title text-overflow-safe mb-2" style="font-size: clamp(2rem, 4vw, 3.2rem); line-height: 1.1;">@Model.Title</h1>
                 <div class="font-mono-xs text-muted-foreground d-flex align-items-center gap-2">
-                    <span class="badge rounded-pill px-3 py-1.5 @(Model.Status == "approved" ? "badge-approved-glass" : Model.Status == "rejected" ? "badge-rejected-glass" : "badge-pending-glass")">
-                        @(Model.Status == "approved" ? "Đã duyệt" : Model.Status == "rejected" ? "Từ chối" : "Đang chờ duyệt")
-                    </span>
-                    <span>•</span>
                     <span style="font-weight: 600; color: var(--coral);">@Model.Subject</span>
                 </div>
             </div>
