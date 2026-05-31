@@ -31,31 +31,51 @@
 
         <div class="font-mono-xs text-muted-foreground mb-2">Điều Hướng</div>
         <nav class="nav flex-column gap-1">
-            <a class="nav-link @IsActive("Home", "Index")" asp-controller="Home" asp-action="Index">Trang Chủ</a>
             @if (isAuthenticated)
             {
                 if (canCreateDocuments)
                 {
-                    <a class="nav-link @IsActive("Documents", "Create")" asp-controller="Documents" asp-action="Create">Tải Lên</a>
+                    <a class="nav-link @IsActive("Documents", "Create")" asp-controller="Documents" asp-action="Create">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" class="nav-icon"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+                        <span>Tải Lên</span>
+                    </a>
                 }
                 if (canSeeDocuments)
                 {
-                    <a class="nav-link @IsActive("Documents", "MyDocuments")" asp-controller="Documents" asp-action="MyDocuments">Thư Viện Của Tôi</a>
+                    <a class="nav-link @IsActive("Documents", "MyDocuments")" asp-controller="Documents" asp-action="MyDocuments">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" class="nav-icon"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg>
+                        <span>Thư Viện Của Tôi</span>
+                    </a>
                 }
                 if (roleId == 1 || roleId == 3)
                 {
-                    <a class="nav-link @IsActive("Chat", "Index")" asp-controller="Chat" asp-action="Index">Trò Chuyện AI</a>
+                    <a class="nav-link @IsActive("Chat", "Index")" asp-controller="Chat" asp-action="Index">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" class="nav-icon"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+                        <span>Trò Chuyện AI</span>
+                    </a>
                 }
-                <a class="nav-link @IsActive("Documents", "AllDocuments")" asp-controller="Documents" asp-action="AllDocuments">Tất Cả Tài Liệu</a>
+                <a class="nav-link @IsActive("Documents", "AllDocuments")" asp-controller="Documents" asp-action="AllDocuments">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" class="nav-icon"><circle cx="12" cy="12" r="10"/><polygon points="16.24 7.76 14.12 14.12 7.76 16.24 9.88 9.88 16.24 7.76"/></svg>
+                    <span>Khám phá</span>
+                </a>
                 if (canSeeAllPages)
                 {
-                    <a class="nav-link @IsActive("Dashboard", "Index")" asp-controller="Dashboard" asp-action="Index">Bảng Điều Khiển</a>
+                    <a class="nav-link @IsActive("Dashboard", "Index")" asp-controller="Dashboard" asp-action="Index">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" class="nav-icon"><rect x="3" y="3" width="7" height="9"/><rect x="14" y="3" width="7" height="5"/><rect x="14" y="12" width="7" height="9"/><rect x="3" y="16" width="7" height="5"/></svg>
+                        <span>Bảng Điều Khiển</span>
+                    </a>
                 }
             }
             else
             {
-                <a class="nav-link @IsActive("Auth", "Login")" asp-controller="Auth" asp-action="Login">Đăng Nhập</a>
-                <a class="nav-link @IsActive("Auth", "Register")" asp-controller="Auth" asp-action="Register">Đăng Ký</a>
+                <a class="nav-link @IsActive("Auth", "Login")" asp-controller="Auth" asp-action="Login">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" class="nav-icon"><path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4"/><polyline points="10 17 15 12 10 7"/><line x1="15" y1="12" x2="3" y2="12"/></svg>
+                    <span>Đăng Nhập</span>
+                </a>
+                <a class="nav-link @IsActive("Auth", "Register")" asp-controller="Auth" asp-action="Register">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" class="nav-icon"><path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="8.5" cy="7" r="4"/><line x1="20" y1="8" x2="20" y2="14"/><line x1="23" y1="11" x2="17" y2="11"/></svg>
+                    <span>Đăng Ký</span>
+                </a>
             }
         </nav>
     </div>
@@ -363,6 +383,54 @@
     background: rgba(255, 255, 255, 0.7) !important;
     border-color: rgba(82, 39, 27, 0.2) !important;
     box-shadow: 0 8px 24px rgba(82, 39, 27, 0.06) !important;
+}
+
+/* Premium Navigation Styling Overrides */
+.sidebar .nav-link {
+    color: var(--muted) !important;
+    font-weight: 500;
+    font-size: 0.88rem;
+    transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 10px 16px;
+    border-radius: 14px;
+    margin-bottom: 2px;
+    background: transparent !important;
+    border: 1px solid transparent;
+}
+
+.sidebar .nav-link .nav-icon {
+    opacity: 0.75;
+    transition: all 0.25s ease;
+}
+
+/* Hover State */
+.sidebar .nav-link:hover:not(.active) {
+    background: rgba(255, 255, 255, 0.45) !important;
+    color: var(--brown) !important;
+    transform: translateX(4px);
+    border-color: rgba(82, 39, 27, 0.04);
+}
+
+.sidebar .nav-link:hover:not(.active) .nav-icon {
+    opacity: 1;
+    transform: scale(1.05);
+}
+
+/* Active State */
+.sidebar .nav-link.active {
+    background: var(--brown) !important;
+    color: #ffffff !important;
+    font-weight: 600;
+    box-shadow: 0 4px 12px rgba(74, 31, 22, 0.15);
+    transform: translateX(0);
+}
+
+.sidebar .nav-link.active .nav-icon {
+    color: #ffffff !important;
+    opacity: 1;
 }
 </style>
 
