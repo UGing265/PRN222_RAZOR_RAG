@@ -115,15 +115,7 @@ public class DocumentRepository : IDocumentRepository
             .Include(x => x.OwnerUser)
             .Where(x => x.Status == "completed" && (x.OwnerUser.RoleId == 1 || x.OwnerUser.RoleId == 2));
 
-        if (requesterUserId.HasValue)
-        {
-            var userId = requesterUserId.Value;
-            q = q.Where(x => x.Visibility != "private" || x.OwnerUserId == userId);
-        }
-        else
-        {
-            q = q.Where(x => x.Visibility != "private");
-        }
+        q = q.Where(x => x.Visibility != "private");
 
         if (!string.IsNullOrWhiteSpace(query))
         {
@@ -142,15 +134,8 @@ public class DocumentRepository : IDocumentRepository
             .Include(x => x.OwnerUser)
             .Where(x => x.Status == "completed" && (x.OwnerUser.RoleId == 1 || x.OwnerUser.RoleId == 2));
 
-        if (requesterUserId.HasValue)
-        {
-            var userId = requesterUserId.Value;
-            q = q.Where(x => x.Visibility != "private" || x.OwnerUserId == userId);
-        }
-        else
-        {
-            q = q.Where(x => x.Visibility != "private");
-        }
+        q = q.Where(x => x.Visibility != "private");
+
         if (!string.IsNullOrWhiteSpace(query))
         {
             q = q.Where(x => x.Title.Contains(query) || (x.Subject != null && x.Subject.Contains(query)) || (x.School != null && x.School.Contains(query)) || (x.Description != null && x.Description.Contains(query)));
