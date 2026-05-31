@@ -22,11 +22,11 @@
 <aside class="sidebar">
     <div>
     <div class="d-flex align-items-center justify-content-between mb-4">
-        <a asp-controller="Home" asp-action="Index" class="d-flex align-items-center gap-3 text-decoration-none text-foreground">
-            <span class="brand-mark">S</span>
-            <div class="lh-sm">
-                <div class="fw-semibold">StudyMate AI</div>
-                <div class="font-mono-xs text-muted-foreground">Không Gian Làm Việc</div>
+        <a asp-controller="Home" asp-action="Index" class="d-flex align-items-center gap-2 text-decoration-none text-foreground">
+            <span class="brand-mark" style="width: 36px; height: 36px; min-width: 36px;">S</span>
+            <div class="lh-sm" style="overflow: hidden;">
+                <div class="fw-semibold" style="white-space: nowrap; font-size: 0.95rem;">StudyMate AI</div>
+                <div class="font-mono-xs text-muted-foreground" style="font-size: 8.5px; letter-spacing: 0.05em; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">Không Gian Làm Việc</div>
             </div>
         </a>
         <button id="collapseSidebarBtn" class="btn border-0 p-1 d-flex align-items-center justify-content-center hover-bg-profile-item" style="border-radius: 8px; color: var(--muted); cursor: pointer;" title="Thu gọn thanh bên">
@@ -109,15 +109,15 @@
             <!-- Interactive & Collapsible Profile Card -->
             <div class="profile-card-toggle" id="profileCard" aria-expanded="false" style="cursor: pointer;">
                 <div class="d-flex align-items-center justify-content-between">
-                    <div class="d-flex align-items-center gap-3">
+                    <div class="d-flex align-items-center gap-2">
                         <div class="rounded-circle text-white d-flex align-items-center justify-content-center fw-bold shadow-sm flex-shrink-0" 
                              id="sidebarAvatar"
-                             style="width: 42px; height: 42px; font-size: 1.1rem; background: var(--brown) !important;">
+                             style="width: 38px; height: 38px; font-size: 1.0rem; background: var(--brown) !important;">
                             @fullName.Substring(0, 1).ToUpper()
                         </div>
-                        <div class="lh-sm overflow-hidden" style="max-width: 140px;">
-                            <div class="fw-bold text-truncate text-foreground" id="sidebarFullName" style="font-size: 0.9rem;">@fullName</div>
-                            <div class="small text-muted-foreground text-truncate" id="sidebarRole" style="font-size: 0.75rem;">@roleLabel</div>
+                        <div class="lh-sm overflow-hidden" style="max-width: 125px;">
+                            <div class="fw-bold text-truncate text-foreground" id="sidebarFullName" style="font-size: 0.88rem;">@fullName</div>
+                            <div class="small text-muted-foreground text-truncate" id="sidebarRole" style="font-size: 0.72rem;">@roleLabel</div>
                         </div>
                     </div>
                     <!-- Animated Chevron Icon pointing up ^ -->
@@ -448,6 +448,7 @@
 
 .sidebar {
     width: 250px !important;
+    padding: 18px 12px !important;
     transition: transform 0.35s cubic-bezier(0.25, 1, 0.5, 1), opacity 0.3s ease !important;
 }
 
