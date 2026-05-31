@@ -4,69 +4,138 @@
     ViewData["Title"] = "Chỉnh Sửa Tài Liệu";
 }
 
-<div class="page-shell grain">
-    <div class="container-fluid px-4 px-md-5 py-4 py-md-5" style="max-width: 980px;">
-        <div class="soft-panel editorial-shadow p-4 p-md-4" style="background: rgba(255,255,255,.72); border-radius: 24px;">
-            <div class="d-flex align-items-center justify-content-between mb-4">
-                <h1 class="hero-title mb-0" style="font-size: clamp(1.9rem, 3vw, 2.5rem);">Chỉnh Sửa</h1>
-                <a asp-controller="Documents" asp-action="MyDocuments" class="link-plain text-muted-foreground font-mono-xs">Thư Viện</a>
-            </div>
+<style>
+    /* Premium Edit Form Glassmorphism Styling */
+    .edit-card-glass {
+        background: rgba(255, 255, 255, 0.55);
+        backdrop-filter: blur(16px);
+        -webkit-backdrop-filter: blur(16px);
+        border: 1px solid rgba(82, 39, 27, 0.06);
+        border-radius: 24px;
+        padding: 32px;
+        transition: all 0.3s ease;
+    }
 
+    .form-glass-input {
+        background: rgba(255, 255, 255, 0.65) !important;
+        backdrop-filter: blur(8px) !important;
+        border: 1px solid rgba(82, 39, 27, 0.08) !important;
+        border-radius: 14px !important;
+        padding: 12px 16px !important;
+        font-size: 0.92rem !important;
+        color: var(--foreground) !important;
+        transition: all 0.25s ease !important;
+        box-shadow: none !important;
+    }
+
+    .form-glass-input:focus {
+        background: rgba(255, 255, 255, 0.95) !important;
+        border-color: var(--coral) !important;
+        box-shadow: 0 6px 18px rgba(216, 106, 88, 0.06) !important;
+    }
+
+    .form-glass-select {
+        background: rgba(255, 255, 255, 0.65) !important;
+        backdrop-filter: blur(8px) !important;
+        border: 1px solid rgba(82, 39, 27, 0.08) !important;
+        border-radius: 14px !important;
+        padding: 12px 16px !important;
+        font-size: 0.92rem !important;
+        color: var(--foreground) !important;
+        transition: all 0.25s ease !important;
+        box-shadow: none !important;
+        height: auto !important;
+    }
+
+    .form-glass-select:focus {
+        background: rgba(255, 255, 255, 0.95) !important;
+        border-color: var(--coral) !important;
+        box-shadow: 0 6px 18px rgba(216, 106, 88, 0.06) !important;
+    }
+</style>
+
+<div class="page-shell grain">
+    <div class="container-fluid px-4 px-md-5 py-4 py-md-5" style="max-width: 900px;">
+        
+        <!-- Header -->
+        <div class="d-flex align-items-center justify-content-between mb-5 flex-wrap gap-3">
+            <div>
+                <span class="font-mono-xs text-coral-deep" style="font-weight: 700; letter-spacing: 0.15em;">QUẢN LÝ TÀI LIỆU</span>
+                <h1 class="hero-title mt-2 mb-0" style="font-size: clamp(2.2rem, 5vw, 3.2rem); color: var(--brown); line-height: 1.1;">Chỉnh Sửa Tài Liệu</h1>
+            </div>
+            <div>
+                <a asp-controller="Documents" asp-action="MyDocuments" class="btn btn-outline-dark pill-button px-4 py-2 d-inline-flex align-items-center gap-2" style="font-size: 0.88rem;">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/>
+                    </svg>
+                    Quay Lại Thư Viện
+                </a>
+            </div>
+        </div>
+
+        <div class="edit-card-glass shadow-sm">
             <form asp-action="Edit" method="post" id="editForm">
                 @Html.AntiForgeryToken()
                 <input type="hidden" asp-for="Id" />
-                <div asp-validation-summary="ModelOnly" class="alert alert-danger py-2"></div>
+                <div asp-validation-summary="ModelOnly" class="alert alert-danger py-2 rounded-3 mb-4"></div>
 
+                <!-- Form Fields -->
                 <div class="row g-3">
                     <div class="col-md-12">
-                        <label asp-for="Title" class="form-label font-mono-xs text-muted-foreground">Tiêu Đề</label>
-                        <input asp-for="Title" class="form-control pill-input" placeholder="Nhập tiêu đề tài liệu" style="border-radius: 12px;" />
+                        <label asp-for="Title" class="form-label font-mono-xs text-muted-foreground mb-1" style="font-size: 9px; letter-spacing: 0.08em;">TIÊU ĐỀ TÀI LIỆU</label>
+                        <input asp-for="Title" class="form-control form-glass-input" placeholder="Nhập tiêu đề tài liệu..." />
                         <span asp-validation-for="Title" class="text-danger small"></span>
                     </div>
 
                     <div class="col-md-6">
-                        <label asp-for="Subject" class="form-label font-mono-xs text-muted-foreground">Môn Học / Chủ Đề</label>
-                        <input asp-for="Subject" class="form-control pill-input" placeholder="Môn / Chủ đề" style="border-radius: 12px;" />
+                        <label asp-for="Subject" class="form-label font-mono-xs text-muted-foreground mb-1" style="font-size: 9px; letter-spacing: 0.08em;">MÔN HỌC / CHỦ ĐỀ</label>
+                        <input asp-for="Subject" class="form-control form-glass-input" placeholder="Ví dụ: SWD392, PRN222..." />
                         <span asp-validation-for="Subject" class="text-danger small"></span>
                     </div>
 
                     <div class="col-md-6">
-                        <label asp-for="School" class="form-label font-mono-xs text-muted-foreground">Trường Học</label>
-                        <input asp-for="School" class="form-control pill-input" placeholder="Trường" style="border-radius: 12px;" />
+                        <label asp-for="School" class="form-label font-mono-xs text-muted-foreground mb-1" style="font-size: 9px; letter-spacing: 0.08em;">TRƯỜNG HỌC</label>
+                        <input asp-for="School" class="form-control form-glass-input" placeholder="Ví dụ: Đại học FPT..." />
                         <span asp-validation-for="School" class="text-danger small"></span>
                     </div>
 
                     <div class="col-md-6">
-                        <label asp-for="Department" class="form-label font-mono-xs text-muted-foreground">Khoa / Phòng Ban</label>
-                        <input asp-for="Department" class="form-control pill-input" placeholder="Khoa / Phòng ban" style="border-radius: 12px;" />
+                        <label asp-for="Department" class="form-label font-mono-xs text-muted-foreground mb-1" style="font-size: 9px; letter-spacing: 0.08em;">KHOA / NGÀNH HỌC</label>
+                        <input asp-for="Department" class="form-control form-glass-input" placeholder="Ví dụ: Kỹ thuật phần mềm..." />
                         <span asp-validation-for="Department" class="text-danger small"></span>
                     </div>
 
                     <div class="col-md-3">
-                        <label asp-for="Language" class="form-label font-mono-xs text-muted-foreground">Ngôn Ngữ</label>
-                        <input asp-for="Language" class="form-control pill-input" placeholder="vi / en" style="border-radius: 12px;" />
+                        <label asp-for="Language" class="form-label font-mono-xs text-muted-foreground mb-1" style="font-size: 9px; letter-spacing: 0.08em;">NGÔN NGỮ</label>
+                        <input asp-for="Language" class="form-control form-glass-input" placeholder="Ví dụ: vi, en..." />
                         <span asp-validation-for="Language" class="text-danger small"></span>
                     </div>
 
                     <div class="col-md-3">
-                        <label asp-for="Visibility" class="form-label font-mono-xs text-muted-foreground">Quyền Hiển Thị</label>
-                        <select asp-for="Visibility" class="form-select pill-input" style="border-radius: 12px; height: calc(3.5rem + 2px);">
-                            <option value="private">Riêng Tư</option>
-                            <option value="public">Công Khai</option>
-                            <option value="internal">Nội Bộ</option>
+                        <label asp-for="Visibility" class="form-label font-mono-xs text-muted-foreground mb-1" style="font-size: 9px; letter-spacing: 0.08em;">QUYỀN RIÊNG TƯ</label>
+                        <select asp-for="Visibility" class="form-select form-glass-select">
+                            <option value="private">Riêng tư (Chỉ mình tôi)</option>
+                            <option value="public">Công khai (Tất cả mọi người)</option>
+                            <option value="internal">Nội bộ</option>
                         </select>
                         <span asp-validation-for="Visibility" class="text-danger small"></span>
                     </div>
 
                     <div class="col-12">
-                        <label asp-for="Description" class="form-label font-mono-xs text-muted-foreground">Mô Tả</label>
-                        <textarea asp-for="Description" class="form-control pill-input py-3" placeholder="Mô tả chi tiết hoặc tóm tắt tài liệu..." rows="4" style="border-radius: 16px; height: auto;"></textarea>
+                        <label asp-for="Description" class="form-label font-mono-xs text-muted-foreground mb-1" style="font-size: 9px; letter-spacing: 0.08em;">MÔ TẢ CHI TIẾT</label>
+                        <textarea asp-for="Description" class="form-control form-glass-input" placeholder="Nhập tóm tắt mô tả ngắn gọn về tài liệu này..." rows="4" style="height: auto; resize: vertical;"></textarea>
                         <span asp-validation-for="Description" class="text-danger small"></span>
                     </div>
                 </div>
 
-                <div class="d-flex align-items-center gap-2 mt-4 flex-wrap">
-                    <button type="submit" class="btn btn-dark pill-button px-4 py-3" style="background:#4a1f16;border-color:#4a1f16;">Lưu Thay Đổi</button>
+                <!-- Action Buttons -->
+                <div class="d-flex align-items-center gap-2 mt-5">
+                    <button type="submit" class="btn btn-premium-primary pill-button px-5 py-3 w-100 w-md-auto d-inline-flex align-items-center justify-content-center gap-2" style="font-size: 0.95rem;">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/>
+                        </svg>
+                        Lưu Thay Đổi
+                    </button>
                     <a asp-action="MyDocuments" class="btn btn-outline-dark pill-button px-4 py-3">Hủy bỏ</a>
                 </div>
             </form>

@@ -160,10 +160,10 @@ public class DocumentRepository : IDocumentRepository
             .ToListAsync(cancellationToken);
 
     public Task<Document?> GetOwnedDocumentAsync(Guid documentId, Guid ownerUserId, CancellationToken cancellationToken = default)
-        => _dbContext.Documents.AsNoTracking().FirstOrDefaultAsync(x => x.Id == documentId && x.OwnerUserId == ownerUserId, cancellationToken);
+        => _dbContext.Documents.FirstOrDefaultAsync(x => x.Id == documentId && x.OwnerUserId == ownerUserId, cancellationToken);
 
     public Task<Document?> GetOwnedDocumentBySlugAsync(string slug, Guid ownerUserId, CancellationToken cancellationToken = default)
-        => _dbContext.Documents.AsNoTracking().FirstOrDefaultAsync(x => x.Slug == slug && x.OwnerUserId == ownerUserId, cancellationToken);
+        => _dbContext.Documents.FirstOrDefaultAsync(x => x.Slug == slug && x.OwnerUserId == ownerUserId, cancellationToken);
 
     public Task<int> CountFilesByDocumentAsync(Guid documentId, CancellationToken cancellationToken = default)
         => _dbContext.DocumentFiles.CountAsync(x => x.DocumentId == documentId, cancellationToken);
