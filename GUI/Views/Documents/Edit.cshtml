@@ -1,0 +1,79 @@
+@model GUI.Models.Documents.DocumentEditViewModel
+
+@{
+    ViewData["Title"] = "Chỉnh Sửa Tài Liệu";
+}
+
+<div class="page-shell grain">
+    <div class="container-fluid px-4 px-md-5 py-4 py-md-5" style="max-width: 980px;">
+        <div class="soft-panel editorial-shadow p-4 p-md-4" style="background: rgba(255,255,255,.72); border-radius: 24px;">
+            <div class="d-flex align-items-center justify-content-between mb-4">
+                <h1 class="hero-title mb-0" style="font-size: clamp(1.9rem, 3vw, 2.5rem);">Chỉnh Sửa</h1>
+                <a asp-controller="Documents" asp-action="MyDocuments" class="link-plain text-muted-foreground font-mono-xs">Thư Viện</a>
+            </div>
+
+            <form asp-action="Edit" method="post" id="editForm">
+                @Html.AntiForgeryToken()
+                <input type="hidden" asp-for="Id" />
+                <div asp-validation-summary="ModelOnly" class="alert alert-danger py-2"></div>
+
+                <div class="row g-3">
+                    <div class="col-md-12">
+                        <label asp-for="Title" class="form-label font-mono-xs text-muted-foreground">Tiêu Đề</label>
+                        <input asp-for="Title" class="form-control pill-input" placeholder="Nhập tiêu đề tài liệu" style="border-radius: 12px;" />
+                        <span asp-validation-for="Title" class="text-danger small"></span>
+                    </div>
+
+                    <div class="col-md-6">
+                        <label asp-for="Subject" class="form-label font-mono-xs text-muted-foreground">Môn Học / Chủ Đề</label>
+                        <input asp-for="Subject" class="form-control pill-input" placeholder="Môn / Chủ đề" style="border-radius: 12px;" />
+                        <span asp-validation-for="Subject" class="text-danger small"></span>
+                    </div>
+
+                    <div class="col-md-6">
+                        <label asp-for="School" class="form-label font-mono-xs text-muted-foreground">Trường Học</label>
+                        <input asp-for="School" class="form-control pill-input" placeholder="Trường" style="border-radius: 12px;" />
+                        <span asp-validation-for="School" class="text-danger small"></span>
+                    </div>
+
+                    <div class="col-md-6">
+                        <label asp-for="Department" class="form-label font-mono-xs text-muted-foreground">Khoa / Phòng Ban</label>
+                        <input asp-for="Department" class="form-control pill-input" placeholder="Khoa / Phòng ban" style="border-radius: 12px;" />
+                        <span asp-validation-for="Department" class="text-danger small"></span>
+                    </div>
+
+                    <div class="col-md-3">
+                        <label asp-for="Language" class="form-label font-mono-xs text-muted-foreground">Ngôn Ngữ</label>
+                        <input asp-for="Language" class="form-control pill-input" placeholder="vi / en" style="border-radius: 12px;" />
+                        <span asp-validation-for="Language" class="text-danger small"></span>
+                    </div>
+
+                    <div class="col-md-3">
+                        <label asp-for="Visibility" class="form-label font-mono-xs text-muted-foreground">Quyền Hiển Thị</label>
+                        <select asp-for="Visibility" class="form-select pill-input" style="border-radius: 12px; height: calc(3.5rem + 2px);">
+                            <option value="private">Riêng Tư</option>
+                            <option value="public">Công Khai</option>
+                            <option value="internal">Nội Bộ</option>
+                        </select>
+                        <span asp-validation-for="Visibility" class="text-danger small"></span>
+                    </div>
+
+                    <div class="col-12">
+                        <label asp-for="Description" class="form-label font-mono-xs text-muted-foreground">Mô Tả</label>
+                        <textarea asp-for="Description" class="form-control pill-input py-3" placeholder="Mô tả chi tiết hoặc tóm tắt tài liệu..." rows="4" style="border-radius: 16px; height: auto;"></textarea>
+                        <span asp-validation-for="Description" class="text-danger small"></span>
+                    </div>
+                </div>
+
+                <div class="d-flex align-items-center gap-2 mt-4 flex-wrap">
+                    <button type="submit" class="btn btn-dark pill-button px-4 py-3" style="background:#4a1f16;border-color:#4a1f16;">Lưu Thay Đổi</button>
+                    <a asp-action="MyDocuments" class="btn btn-outline-dark pill-button px-4 py-3">Hủy bỏ</a>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}

@@ -18,6 +18,17 @@ public sealed class DocumentCreateInput
     public string FileContentType { get; init; } = string.Empty;
 }
 
+public sealed class DocumentEditInput
+{
+    public string Title { get; init; } = string.Empty;
+    public string? Description { get; init; }
+    public string? Subject { get; init; }
+    public string? School { get; init; }
+    public string? Department { get; init; }
+    public string? Language { get; init; }
+    public string Visibility { get; init; } = "private";
+}
+
 public sealed class DocumentListItemDto
 {
     public Guid Id { get; init; }

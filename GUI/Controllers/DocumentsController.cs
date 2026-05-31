@@ -235,6 +235,72 @@ public class DocumentsController : Controller
         return RedirectToAction(nameof(MyDocuments));
     }
 
+    [HttpGet("{slug}/edit")]
+    [Authorize(Roles = "Admin,Lecturer")]
+    public async Task<IActionResult> Edit(string slug, CancellationToken cancellationToken = default)
+    {
+        if (!Guid.TryParse(User.FindFirstValue(ClaimTypes.NameIdentifier), out var userId))
+        {
+            return Unauthorized();
+        }
+
+        var document = await _documentService.GetOwnedDocumentBySlugAsync(slug, userId, cancellationToken);
+        if (document is null)
+        {
+            return NotFound();
+        }
+
+        var viewModel = new DocumentEditViewModel
+        {
+            Id = document.Id,
+            Title = document.Title,
+            Description = document.Description,
+            Subject = document.Subject,
+            School = document.School,
+            Department = document.Department,
+            Language = document.Language,
+            Visibility = document.Visibility
+        };
+
+        return View(viewModel);
+    }
+
+    [HttpPost("{slug}/edit")]
+    [Authorize(Roles = "Admin,Lecturer")]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> Edit(string slug, DocumentEditViewModel model, CancellationToken cancellationToken = default)
+    {
+        if (!ModelState.IsValid)
+        {
+            return View(model);
+        }
+
+        if (!Guid.TryParse(User.FindFirstValue(ClaimTypes.NameIdentifier), out var userId))
+        {
+            return Unauthorized();
+        }
+
+        var editInput = new DocumentEditInput
+        {
+            Title = model.Title,
+            Description = model.Description,
+            Subject = model.Subject,
+            School = model.School,
+            Department = model.Department,
+            Language = model.Language,
+            Visibility = model.Visibility
+        };
+
+        var updated = await _documentService.UpdateDocumentAsync(model.Id, userId, editInput, cancellationToken);
+        if (updated is null)
+        {
+            return NotFound();
+        }
+
+        TempData["SuccessMessage"] = "Đã cập nhật thông tin tài liệu.";
+        return RedirectToAction(nameof(MyDocuments));
+    }
+
     [HttpGet("all")]
     [Authorize(Roles = "Admin,Lecturer,Student")]
     public async Task<IActionResult> AllDocuments(string? q = null, int page = 1, int pageSize = 6, CancellationToken cancellationToken = default)

@@ -27,6 +27,7 @@ public interface IDocumentService
     Task<DeleteDocumentViewData?> GetDeleteDocumentViewDataAsync(Guid documentId, Guid ownerUserId, CancellationToken cancellationToken = default);
     Task<DeleteDocumentViewData?> GetDeleteDocumentViewDataBySlugAsync(string slug, Guid ownerUserId, CancellationToken cancellationToken = default);
     Task DeleteDocumentAsync(Guid documentId, CancellationToken cancellationToken = default);
+    Task<Document?> UpdateDocumentAsync(Guid documentId, Guid ownerUserId, DocumentEditInput input, CancellationToken cancellationToken = default);
     Task DeleteDocumentAssetsAsync(Guid documentId, CancellationToken cancellationToken = default);
     Task<Stream> DownloadOriginalFileFromS3Async(Guid documentId, string s3Key, CancellationToken cancellationToken = default);
     Task<List<DocumentChapter>> GenerateChaptersAsync(Guid documentId, CancellationToken cancellationToken = default);

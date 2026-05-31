@@ -534,6 +534,24 @@ public class DocumentService : IDocumentService
         };
     }
 
+    public async Task<Document?> UpdateDocumentAsync(Guid documentId, Guid ownerUserId, DocumentEditInput input, CancellationToken cancellationToken = default)
+    {
+        var document = await _documentRepository.GetOwnedDocumentAsync(documentId, ownerUserId, cancellationToken);
+        if (document is null) return null;
+
+        document.Title = input.Title;
+        document.Description = input.Description;
+        document.Subject = input.Subject;
+        document.School = input.School;
+        document.Department = input.Department;
+        document.Language = input.Language;
+        document.Visibility = input.Visibility;
+        document.UpdatedAt = DateTime.UtcNow;
+
+        await _documentRepository.SaveChangesAsync(cancellationToken);
+        return document;
+    }
+
     public Task<List<UploadJobSummaryDto>> GetUploadJobsAsync(Guid ownerUserId, CancellationToken cancellationToken = default) => GetActiveUploadJobsAsync(ownerUserId, cancellationToken);
 
     private static string BuildSearchText(Document document, string extractedText)
