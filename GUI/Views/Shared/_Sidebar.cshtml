@@ -21,8 +21,8 @@
 
 <aside class="sidebar">
     <div>
-    <div class="d-flex align-items-center justify-content-between mb-4">
-        <a asp-controller="Home" asp-action="Index" class="d-flex align-items-center gap-2 text-decoration-none text-foreground">
+    <div class="d-flex align-items-center justify-content-between mb-4 sidebar-header-row">
+        <a asp-controller="Home" asp-action="Index" class="d-flex align-items-center gap-2 text-decoration-none text-foreground sidebar-text">
             <span class="brand-mark" style="width: 36px; height: 36px; min-width: 36px;">S</span>
             <div class="lh-sm" style="overflow: hidden;">
                 <div class="fw-semibold" style="white-space: nowrap; font-size: 0.95rem;">StudyMate AI</div>
@@ -35,7 +35,7 @@
     </div>
 
     <div>
-        <div class="font-mono-xs text-muted-foreground mb-2">Điều Hướng</div>
+        <div class="font-mono-xs text-muted-foreground mb-2 sidebar-text">Điều Hướng</div>
         <nav class="nav flex-column gap-1">
             <a class="nav-link @IsActive("Documents", "AllDocuments")" asp-controller="Documents" asp-action="AllDocuments">
                 <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" class="nav-icon"><circle cx="12" cy="12" r="10"/><polygon points="16.24 7.76 14.12 14.12 7.76 16.24 9.88 9.88 16.24 7.76"/></svg>
@@ -90,7 +90,7 @@
         @if (isAuthenticated)
         {
             <!-- Upgrade Promo Card -->
-            <a asp-controller="Home" asp-action="Subscription" class="text-decoration-none d-block mb-3">
+            <a asp-controller="Home" asp-action="Subscription" class="text-decoration-none d-block mb-3 sidebar-text">
                 <div class="p-3 shadow-sm text-white d-flex align-items-center justify-content-between" 
                      style="background: linear-gradient(135deg, var(--brown) 0%, var(--coral) 100%); transition: all 0.3s ease; border: 1px solid rgba(255,255,255,0.1); border-radius: 16px;"
                      onmouseover="this.style.transform='translateY(-2px)'; this.style.boxShadow='0 10px 20px rgba(216, 106, 88, 0.2)';"
@@ -115,13 +115,13 @@
                              style="width: 38px; height: 38px; font-size: 1.0rem; background: var(--brown) !important;">
                             @fullName.Substring(0, 1).ToUpper()
                         </div>
-                        <div class="lh-sm overflow-hidden" style="max-width: 125px;">
+                        <div class="lh-sm overflow-hidden sidebar-text" style="max-width: 125px;">
                             <div class="fw-bold text-truncate text-foreground" id="sidebarFullName" style="font-size: 0.88rem;">@fullName</div>
                             <div class="small text-muted-foreground text-truncate" id="sidebarRole" style="font-size: 0.72rem;">@roleLabel</div>
                         </div>
                     </div>
                     <!-- Animated Chevron Icon pointing up ^ -->
-                    <svg class="chevron-icon flex-shrink-0" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--muted)" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);">
+                    <svg class="chevron-icon flex-shrink-0 sidebar-text" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--muted)" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);">
                         <polyline points="18 15 12 9 6 15"></polyline>
                     </svg>
                 </div>
@@ -442,36 +442,90 @@
 /* Sidebar Width and Animation Transitions */
 .shell {
     display: grid !important;
-    grid-template-columns: 250px 1fr !important; /* Reduced width by 10% */
+    grid-template-columns: 250px 1fr !important;
     transition: grid-template-columns 0.35s cubic-bezier(0.25, 1, 0.5, 1) !important;
 }
 
 .sidebar {
-    width: 250px !important;
+    width: 100% !important;
     padding: 18px 12px !important;
-    transition: transform 0.35s cubic-bezier(0.25, 1, 0.5, 1), opacity 0.3s ease !important;
+    transition: all 0.35s cubic-bezier(0.25, 1, 0.5, 1) !important;
+    overflow-x: hidden !important;
 }
 
-/* Collapsed Sidebar States */
+/* Collapsed Sidebar (Slim Mini-Sidebar) States */
 .shell.collapsed {
-    grid-template-columns: 0px 1fr !important;
+    grid-template-columns: 72px 1fr !important;
 }
 
 .shell.collapsed .sidebar {
-    transform: translateX(-100%) !important;
+    padding: 18px 8px !important;
+}
+
+.shell.collapsed .sidebar-text {
     opacity: 0 !important;
+    width: 0 !important;
+    height: 0 !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    overflow: hidden !important;
     pointer-events: none !important;
+    display: none !important;
 }
 
-.shell.collapsed .main-stage {
-    padding-left: 64px !important; /* Extra padding so the expand button doesn't overlap text */
+.shell.collapsed .sidebar .nav-link span {
+    display: none !important;
 }
 
-/* Custom Expand Button */
-#expandSidebarBtn.show {
-    opacity: 1 !important;
-    pointer-events: auto !important;
-    transform: scale(1) !important;
+.shell.collapsed .sidebar .nav-link {
+    width: 44px !important;
+    height: 44px !important;
+    padding: 0 !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    margin: 0 auto !important;
+    border-radius: 12px !important;
+    transform: none !important;
+}
+
+.shell.collapsed .sidebar .nav-link .nav-icon {
+    margin: 0 !important;
+    width: 20px !important;
+    height: 20px !important;
+}
+
+.shell.collapsed .sidebar-header-row {
+    justify-content: center !important;
+    margin-bottom: 24px !important;
+}
+
+.shell.collapsed #collapseSidebarBtn {
+    margin: 0 auto !important;
+}
+
+.shell.collapsed .profile-card-toggle {
+    width: 44px !important;
+    height: 44px !important;
+    padding: 0 !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    margin: 0 auto !important;
+    border-radius: 12px !important;
+    background: transparent !important;
+    border-color: transparent !important;
+}
+
+.shell.collapsed #sidebarAvatar {
+    width: 36px !important;
+    height: 36px !important;
+    font-size: 0.95rem !important;
+}
+
+.shell.collapsed .profile-popout {
+    left: 80px !important;
+    bottom: 12px !important;
 }
 </style>
 
@@ -481,62 +535,25 @@ document.addEventListener("DOMContentLoaded", function() {
     const shell = document.querySelector('.shell');
     const collapseBtn = document.getElementById('collapseSidebarBtn');
     
-    // Dynamically create and append expand button to shell
-    const expandBtn = document.createElement('button');
-    expandBtn.id = 'expandSidebarBtn';
-    expandBtn.className = 'btn';
-    expandBtn.title = 'Mở thanh bên';
-    expandBtn.style.cssText = `
-        position: fixed;
-        left: 16px;
-        top: 16px;
-        z-index: 1040;
-        width: 40px;
-        height: 40px;
-        border-radius: 12px;
-        background: rgba(255, 255, 255, 0.9);
-        backdrop-filter: blur(12px);
-        -webkit-backdrop-filter: blur(12px);
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        border: 1px solid rgba(82, 39, 27, 0.12);
-        box-shadow: 0 4px 12px rgba(82, 39, 27, 0.08);
-        opacity: 0;
-        pointer-events: none;
-        transition: opacity 0.3s ease, transform 0.3s ease;
-        transform: scale(0.8);
-    `;
-    expandBtn.innerHTML = `
-        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--brown)" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-            <rect x="3" y="3" width="18" height="18" rx="2" ry="2"/>
-            <line x1="9" y1="3" x2="9" y2="21"/>
-        </svg>
-    `;
-    
     if (shell) {
-        shell.appendChild(expandBtn);
-        
         // Load preference
         const isCollapsed = localStorage.getItem('sidebar_collapsed') === 'true';
         if (isCollapsed) {
             shell.classList.add('collapsed');
-            expandBtn.classList.add('show');
         }
         
         if (collapseBtn) {
             collapseBtn.addEventListener('click', function() {
-                shell.classList.add('collapsed');
-                expandBtn.classList.add('show');
-                localStorage.setItem('sidebar_collapsed', 'true');
+                const willCollapse = !shell.classList.contains('collapsed');
+                if (willCollapse) {
+                    shell.classList.add('collapsed');
+                    localStorage.setItem('sidebar_collapsed', 'true');
+                } else {
+                    shell.classList.remove('collapsed');
+                    localStorage.setItem('sidebar_collapsed', 'false');
+                }
             });
         }
-        
-        expandBtn.addEventListener('click', function() {
-            shell.classList.remove('collapsed');
-            expandBtn.classList.remove('show');
-            localStorage.setItem('sidebar_collapsed', 'false');
-        });
     }
 
     const settingsModal = document.getElementById('settingsModal');
