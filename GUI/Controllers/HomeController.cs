@@ -16,6 +16,10 @@ namespace GUI.Controllers
         [HttpGet]
         public IActionResult Index()
         {
+            if (User.Identity?.IsAuthenticated == true)
+            {
+                return RedirectToAction("AllDocuments", "Documents");
+            }
             return View();
         }
 
