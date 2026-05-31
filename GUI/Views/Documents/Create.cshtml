@@ -72,6 +72,80 @@
         box-shadow: 0 6px 18px rgba(216, 106, 88, 0.06) !important;
     }
 
+    /* Premium Interactive Visibility Selection Cards */
+    .visibility-option-card {
+        background: rgba(255, 255, 255, 0.45);
+        backdrop-filter: blur(12px);
+        -webkit-backdrop-filter: blur(12px);
+        border: 1.5px solid rgba(82, 39, 27, 0.08);
+        border-radius: 18px;
+        padding: 18px 20px;
+        cursor: pointer;
+        transition: all 0.35s cubic-bezier(0.16, 1, 0.3, 1);
+        display: flex;
+        align-items: center;
+        gap: 16px;
+        position: relative;
+        overflow: hidden;
+        user-select: none;
+    }
+
+    .visibility-option-card:hover {
+        background: rgba(255, 255, 255, 0.75);
+        border-color: rgba(216, 106, 88, 0.3);
+        transform: translateY(-2px);
+        box-shadow: 0 8px 20px rgba(82, 39, 27, 0.04);
+    }
+
+    .visibility-option-card.active {
+        background: rgba(255, 255, 255, 0.95);
+        border-color: var(--coral);
+        box-shadow: 0 10px 25px rgba(216, 106, 88, 0.08);
+    }
+
+    .visibility-option-card.active::after {
+        content: '';
+        position: absolute;
+        top: 0;
+        right: 0;
+        width: 0;
+        height: 0;
+        border-style: solid;
+        border-width: 0 24px 24px 0;
+        border-color: transparent var(--coral) transparent transparent;
+    }
+
+    .visibility-option-icon {
+        width: 44px;
+        height: 44px;
+        border-radius: 12px;
+        background: rgba(216, 106, 88, 0.08);
+        color: var(--coral);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        flex-shrink: 0;
+        transition: all 0.3s ease;
+    }
+
+    .visibility-option-card.active .visibility-option-icon {
+        background: var(--coral);
+        color: #ffffff;
+    }
+
+    .visibility-option-title {
+        font-size: 0.95rem;
+        font-weight: 700;
+        color: var(--brown);
+        margin-bottom: 3px;
+    }
+
+    .visibility-option-desc {
+        font-size: 0.78rem;
+        color: var(--muted-foreground);
+        line-height: 1.3;
+    }
+
     .progress-glass {
         background: rgba(255, 255, 255, 0.45);
         backdrop-filter: blur(12px);
@@ -148,23 +222,68 @@
                         <input asp-for="Department" class="form-control form-glass-input" placeholder="Ví dụ: Kỹ thuật phần mềm..." />
                         <span asp-validation-for="Department" class="text-danger small"></span>
                     </div>
-                    <div class="col-md-4">
+                    <div class="col-md-6">
                         <label asp-for="Language" class="form-label font-mono-xs text-muted-foreground mb-1" style="font-size: 9px; letter-spacing: 0.08em;">NGÔN NGỮ</label>
                         <input asp-for="Language" class="form-control form-glass-input" placeholder="Ví dụ: vi, en..." />
                         <span asp-validation-for="Language" class="text-danger small"></span>
                     </div>
-                    <div class="col-md-4">
-                        <label asp-for="Visibility" class="form-label font-mono-xs text-muted-foreground mb-1" style="font-size: 9px; letter-spacing: 0.08em;">QUYỀN RIÊNG TƯ</label>
-                        <select asp-for="Visibility" class="form-select form-glass-select">
-                            <option value="private">Riêng tư (Chỉ mình tôi)</option>
-                            <option value="public">Công khai (Tất cả mọi người)</option>
-                        </select>
-                        <span asp-validation-for="Visibility" class="text-danger small"></span>
-                    </div>
-                    <div class="col-md-4">
+                    <div class="col-md-6">
                         <label asp-for="SourceType" class="form-label font-mono-xs text-muted-foreground mb-1" style="font-size: 9px; letter-spacing: 0.08em;">NGUỒN TÀI LIỆU</label>
                         <input asp-for="SourceType" class="form-control form-glass-input" placeholder="Ví dụ: Giáo trình, Tự soạn..." />
                         <span asp-validation-for="SourceType" class="text-danger small"></span>
+                    </div>
+                    
+                    <div class="col-12 my-3">
+                        <label class="form-label font-mono-xs text-muted-foreground mb-2" style="font-size: 9px; letter-spacing: 0.08em;">QUYỀN RIÊNG TƯ</label>
+                        <input type="hidden" asp-for="Visibility" id="visibilityInput" value="private" />
+                        
+                        <div class="row g-3">
+                            <!-- Private Card -->
+                            <div class="col-md-4">
+                                <div class="visibility-option-card active" data-value="private" tabindex="0">
+                                    <div class="visibility-option-icon">
+                                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                                            <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/>
+                                        </svg>
+                                    </div>
+                                    <div>
+                                        <div class="visibility-option-title">Riêng tư</div>
+                                        <div class="visibility-option-desc">Chỉ mình bạn có thể xem và trò chuyện.</div>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <!-- Public Card -->
+                            <div class="col-md-4">
+                                <div class="visibility-option-card" data-value="public" tabindex="0">
+                                    <div class="visibility-option-icon">
+                                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                                            <circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/>
+                                        </svg>
+                                    </div>
+                                    <div>
+                                        <div class="visibility-option-title">Công khai</div>
+                                        <div class="visibility-option-desc">Mọi thành viên đều có thể xem và tham khảo.</div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Internal Card -->
+                            <div class="col-md-4">
+                                <div class="visibility-option-card" data-value="internal" tabindex="0">
+                                    <div class="visibility-option-icon">
+                                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                                            <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/>
+                                        </svg>
+                                    </div>
+                                    <div>
+                                        <div class="visibility-option-title">Nội bộ</div>
+                                        <div class="visibility-option-desc">Chỉ chia sẻ nội bộ giảng viên và quản trị viên.</div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <span asp-validation-for="Visibility" class="text-danger small"></span>
                     </div>
                     <div class="col-12">
                         <label asp-for="Description" class="form-label font-mono-xs text-muted-foreground mb-1" style="font-size: 9px; letter-spacing: 0.08em;">MÔ TẢ NGẮN</label>
@@ -214,6 +333,34 @@
             const progressLabel = document.getElementById('uploadProgressLabel');
             const progressMeta = document.getElementById('uploadProgressMeta');
             if (!dropzone || !input || !fileLabel || !form || !progressShell || !progressBar || !progressLabel || !progressMeta) return;
+
+            // Visibility Card Selection Logic
+            const visibilityCards = document.querySelectorAll('.visibility-option-card');
+            const visibilityInput = document.getElementById('visibilityInput');
+            if (visibilityCards.length && visibilityInput) {
+                const initVal = visibilityInput.value;
+                visibilityCards.forEach(card => {
+                    if (card.dataset.value === initVal) {
+                        card.classList.add('active');
+                    } else {
+                        card.classList.remove('active');
+                    }
+
+                    const selectCard = () => {
+                        visibilityCards.forEach(c => c.classList.remove('active'));
+                        card.classList.add('active');
+                        visibilityInput.value = card.dataset.value;
+                    };
+
+                    card.addEventListener('click', selectCard);
+                    card.addEventListener('keydown', (e) => {
+                        if (e.key === 'Enter' || e.key === ' ') {
+                            e.preventDefault();
+                            selectCard();
+                        }
+                    });
+                });
+            }
 
             const updateLabel = () => {
                 fileLabel.textContent = input.files && input.files.length ? input.files[0].name : 'Chưa chọn tệp nào';
