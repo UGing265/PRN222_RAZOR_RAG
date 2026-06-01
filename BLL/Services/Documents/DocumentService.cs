@@ -302,6 +302,9 @@ public class DocumentService : IDocumentService
         var documents = await _documentRepository.GetDocumentsByOwnerAsync(ownerUserId, query, subject, page, pageSize, cancellationToken);
         var activeUploadJobs = await _documentRepository.GetActiveUploadJobsByOwnerAsync(ownerUserId, cancellationToken);
 
+        var documentIds = documents.Select(x => x.Id).ToList();
+        var previewTexts = await _documentRepository.GetPreviewTextsAsync(documentIds, cancellationToken);
+
         return new MyDocumentsDto
         {
             Documents = documents.Select(x => new DocumentListItemDto
@@ -316,8 +319,8 @@ public class DocumentService : IDocumentService
                 CreatedAt = x.CreatedAt,
                 UpdatedAt = x.UpdatedAt,
                 FileCount = x.DocumentFiles.Count,
-                ChunkCount = x.DocumentChunks.Count,
-                PreviewText = x.DocumentChunks.OrderBy(c => c.ChunkOrder).Select(c => c.Content).FirstOrDefault()
+                ChunkCount = x.TotalChunks,
+                PreviewText = previewTexts.TryGetValue(x.Id, out var content) ? content : (x.Description ?? string.Empty)
             }).ToList(),
             TotalDocuments = totalDocuments,
             PendingDocuments = await _documentRepository.CountDocumentsByStatusAsync(ownerUserId, "pending", cancellationToken),
@@ -353,6 +356,9 @@ public class DocumentService : IDocumentService
 
         var documents = await _documentRepository.GetDocumentsAsync(query, subject, page, pageSize, requesterUserId, cancellationToken);
 
+        var documentIds = documents.Select(x => x.Id).ToList();
+        var previewTexts = await _documentRepository.GetPreviewTextsAsync(documentIds, cancellationToken);
+
         return new MyDocumentsDto
         {
             Documents = documents.Select(x => new DocumentListItemDto
@@ -367,8 +373,8 @@ public class DocumentService : IDocumentService
                 CreatedAt = x.CreatedAt,
                 UpdatedAt = x.UpdatedAt,
                 FileCount = x.DocumentFiles.Count,
-                ChunkCount = x.DocumentChunks.Count,
-                PreviewText = x.Description ?? x.DocumentChunks.OrderBy(c => c.ChunkOrder).Select(c => c.Content).FirstOrDefault(),
+                ChunkCount = x.TotalChunks,
+                PreviewText = x.Description ?? (previewTexts.TryGetValue(x.Id, out var content) ? content : string.Empty),
                 OwnerEmail = x.OwnerUser?.Email
             }).ToList(),
             TotalDocuments = totalDocuments,
@@ -376,7 +382,7 @@ public class DocumentService : IDocumentService
             ApprovedDocuments = 0,
             RejectedDocuments = 0,
             TotalFiles = documents.Sum(x => x.DocumentFiles.Count),
-            TotalChunks = documents.Sum(x => x.DocumentChunks.Count),
+            TotalChunks = documents.Sum(x => x.TotalChunks),
             Page = page,
             PageSize = pageSize,
             TotalPages = totalPages,

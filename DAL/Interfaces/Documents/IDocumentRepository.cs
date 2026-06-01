@@ -36,5 +36,6 @@ public interface IDocumentRepository
     Task RemoveDocumentChaptersByDocumentAsync(Guid documentId, CancellationToken cancellationToken = default);
     Task RemoveDocumentAsync(Document document, CancellationToken cancellationToken = default);
     Task<List<string>> GetDistinctSubjectsAsync(Guid? ownerUserId = null, CancellationToken cancellationToken = default);
+    Task<Dictionary<Guid, string>> GetPreviewTextsAsync(List<Guid> documentIds, CancellationToken cancellationToken = default);
     Task SaveChangesAsync(CancellationToken cancellationToken = default);
 }

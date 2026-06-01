@@ -83,7 +83,6 @@ public class DocumentRepository : IDocumentRepository
     {
         var q = _dbContext.Documents.AsNoTracking()
             .Include(x => x.DocumentFiles)
-            .Include(x => x.DocumentChunks)
             .Where(x => x.OwnerUserId == ownerUserId && x.Status == "completed");
 
         if (!string.IsNullOrWhiteSpace(query))
@@ -120,7 +119,6 @@ public class DocumentRepository : IDocumentRepository
     {
         var q = _dbContext.Documents.AsNoTracking()
             .Include(x => x.DocumentFiles)
-            .Include(x => x.DocumentChunks)
             .Include(x => x.OwnerUser)
             .Where(x => x.Status == "completed" && (x.OwnerUser.RoleId == 1 || x.OwnerUser.RoleId == 2));
 
@@ -237,10 +235,25 @@ public class DocumentRepository : IDocumentRepository
         {
             q = q.Where(x => x.OwnerUserId == ownerUserId.Value);
         }
+        else
+        {
+            q = q.Where(x => x.Visibility != "private");
+        }
         return await q.Select(x => x.Subject!)
             .Distinct()
             .OrderBy(x => x)
             .ToListAsync(cancellationToken);
+    }
+
+    public async Task<Dictionary<Guid, string>> GetPreviewTextsAsync(List<Guid> documentIds, CancellationToken cancellationToken = default)
+    {
+        if (documentIds == null || !documentIds.Any())
+            return new Dictionary<Guid, string>();
+
+        return await _dbContext.DocumentChunks
+            .Where(x => documentIds.Contains(x.DocumentId) && x.ChunkOrder == 0)
+            .Select(x => new { x.DocumentId, x.Content })
+            .ToDictionaryAsync(x => x.DocumentId, x => x.Content, cancellationToken);
     }
 
     public Task SaveChangesAsync(CancellationToken cancellationToken = default)
