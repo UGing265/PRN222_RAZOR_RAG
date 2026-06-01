@@ -164,6 +164,61 @@
     .read-doc-btn svg {
         transition: transform 0.2s ease;
     }
+
+    /* Premium Dropdown Styling */
+    .premium-dropdown-menu {
+        background: rgba(255, 255, 255, 0.94) !important;
+        backdrop-filter: blur(16px) !important;
+        -webkit-backdrop-filter: blur(16px) !important;
+        border: 1px solid rgba(82, 39, 27, 0.08) !important;
+        border-radius: 16px !important;
+        padding: 8px !important;
+        box-shadow: 0 10px 30px rgba(82, 39, 27, 0.08) !important;
+        min-width: 200px !important;
+        margin-top: 8px !important;
+    }
+
+    .premium-dropdown-item {
+        color: var(--brown) !important;
+        font-size: 0.85rem !important;
+        font-weight: 500 !important;
+        padding: 8px 16px !important;
+        border-radius: 10px !important;
+        transition: all 0.2s ease !important;
+        cursor: pointer !important;
+    }
+
+    .premium-dropdown-item:hover {
+        background: rgba(216, 106, 88, 0.08) !important;
+        color: var(--coral) !important;
+    }
+
+    .premium-dropdown-item.active {
+        background: var(--brown) !important;
+        color: #ffffff !important;
+    }
+
+    .dropdown-toggle-premium {
+        color: var(--brown) !important;
+        font-weight: 500 !important;
+        font-size: 0.88rem !important;
+        text-decoration: none !important;
+        display: flex !important;
+        align-items: center !important;
+        gap: 6px !important;
+        border: 0 !important;
+        background: transparent !important;
+        padding: 6px 12px !important;
+    }
+
+    .dropdown-toggle-premium::after {
+        color: var(--muted) !important;
+        transition: transform 0.2s ease !important;
+    }
+
+    .dropdown-toggle-premium:hover::after {
+        transform: translateY(2px);
+    }
 </style>
 
 <div class="page-shell grain">
@@ -179,18 +234,44 @@
         </div>
 
         <!-- Sleek Unified Search & Reset bar -->
-        <form method="get" asp-action="AllDocuments" class="search-glass-panel p-2 mb-4 d-flex align-items-center gap-2">
+        <form method="get" asp-action="AllDocuments" class="search-glass-panel p-2 mb-4 d-flex align-items-center gap-3">
             <div class="d-flex align-items-center flex-grow-1 ps-2">
                 <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--muted)" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" class="flex-shrink-0">
                     <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
                 </svg>
-                <input type="text" name="q" value="@query" class="form-control search-input-clean px-3 py-2 w-100" placeholder="Tìm tiêu đề tài liệu, môn học, giáo viên..." />
+                <input type="text" name="q" value="@query" class="form-control search-input-clean px-3 py-2 w-100" placeholder="Tìm tiêu đề tài liệu..." />
+            </div>
+
+            <!-- Subject Dropdown Filter -->
+            <input type="hidden" name="subject" id="selectedSubjectInput" value="@ViewBag.SelectedSubject" />
+            <div class="dropdown pe-2 border-start d-flex align-items-center" style="border-color: rgba(0,0,0,0.12) !important;">
+                <button class="dropdown-toggle-premium" type="button" id="subjectDropdown" data-bs-toggle="dropdown" aria-expanded="false">
+                    @(string.IsNullOrWhiteSpace(ViewBag.SelectedSubject) ? "Tất cả môn học" : ViewBag.SelectedSubject)
+                </button>
+                <ul class="dropdown-menu premium-dropdown-menu dropdown-menu-end shadow-lg" aria-labelledby="subjectDropdown">
+                    <li>
+                        <a class="dropdown-item premium-dropdown-item @(string.IsNullOrWhiteSpace(ViewBag.SelectedSubject) ? "active" : "")" onclick="selectSubject('')">
+                            Tất cả môn học
+                        </a>
+                    </li>
+                    @if (ViewBag.Subjects is List<string> subjects)
+                    {
+                        foreach (var sub in subjects)
+                        {
+                            <li>
+                                <a class="dropdown-item premium-dropdown-item @(ViewBag.SelectedSubject == sub ? "active" : "")" onclick="selectSubject('@sub')">
+                                    @sub
+                                </a>
+                            </li>
+                        }
+                    }
+                </ul>
             </div>
             
             <div class="d-flex align-items-center gap-2 flex-shrink-0 pe-1">
-                @if (!string.IsNullOrWhiteSpace(query))
+                @if (!string.IsNullOrWhiteSpace(query) || !string.IsNullOrWhiteSpace(ViewBag.SelectedSubject))
                 {
-                    <a asp-action="AllDocuments" class="btn btn-link text-muted px-3 text-decoration-none small hover-text-dark" style="font-size: 0.88rem;">Xoá Lọc</a>
+                    <a asp-action="AllDocuments" class="btn btn-link text-muted px-2 text-decoration-none small hover-text-dark" style="font-size: 0.88rem;">Xoá Lọc</a>
                 }
                 <button type="submit" class="btn btn-premium-primary pill-button py-2 px-4" style="font-size: 0.88rem; min-height: 40px;">Tìm Kiếm</button>
             </div>
@@ -199,10 +280,17 @@
         <!-- Dynamic Filter Chips -->
         <div class="d-flex align-items-center gap-2 flex-wrap mb-5">
             <span class="text-muted small me-2" style="font-size: 0.8rem; font-weight: 500;">Gợi ý chủ đề:</span>
-            <a href="?q=Toán" class="filter-chip @(query == "Toán" ? "active" : "")">Toán học</a>
-            <a href="?q=Lập trình" class="filter-chip @(query == "Lập trình" ? "active" : "")">Lập trình</a>
-            <a href="?q=Kinh tế" class="filter-chip @(query == "Kinh tế" ? "active" : "")">Kinh tế</a>
-            <a href="?q=Tiếng Anh" class="filter-chip @(query == "Tiếng Anh" ? "active" : "")">Tiếng Anh</a>
+            @if (ViewBag.Subjects is List<string> suggSubjects && suggSubjects.Any())
+            {
+                @foreach (var sub in suggSubjects.Take(5))
+                {
+                    <a href="?subject=@sub" class="filter-chip @(ViewBag.SelectedSubject == sub ? "active" : "")">@sub</a>
+                }
+            }
+            else
+            {
+                <span class="text-muted small" style="font-size: 0.8rem; font-style: italic;">Chưa có chủ đề nào</span>
+            }
             
             <span class="ms-auto font-mono-xs text-muted-foreground" style="font-size: 11px;">
                 Tìm thấy <strong>@Model.TotalDocuments</strong> kết quả
@@ -281,21 +369,21 @@
                 <nav class="d-flex justify-content-center mt-5">
                     <ul class="pagination gap-2 border-0">
                         <li class="page-item @(Model.Page == 1 ? "disabled" : "")">
-                            <a class="page-link pill-button px-3 py-2 border-0" href="?q=@(query)&page=@(Model.Page - 1)" style="border-radius: 12px; color: var(--brown); background: rgba(255,255,255,0.4); font-size: 0.85rem;">
+                            <a class="page-link pill-button px-3 py-2 border-0" href="?q=@(query)&subject=@(ViewBag.SelectedSubject)&page=@(Model.Page - 1)" style="border-radius: 12px; color: var(--brown); background: rgba(255,255,255,0.4); font-size: 0.85rem;">
                                 Trước
                             </a>
                         </li>
                         @for (int i = 1; i <= Model.TotalPages; i++)
                         {
                             <li class="page-item @(Model.Page == i ? "active" : "")">
-                                <a class="page-link pill-button px-3.5 py-2 border-0" href="?q=@(query)&page=@i" 
+                                <a class="page-link pill-button px-3.5 py-2 border-0" href="?q=@(query)&subject=@(ViewBag.SelectedSubject)&page=@i" 
                                    style="border-radius: 12px; font-size: 0.85rem; font-weight: 600; @(Model.Page == i ? "background: var(--brown) !important; color: #fff !important;" : "color: var(--brown); background: rgba(255,255,255,0.4);")">
                                     @i
                                 </a>
                             </li>
                         }
                         <li class="page-item @(Model.Page == Model.TotalPages ? "disabled" : "")">
-                            <a class="page-link pill-button px-3 py-2 border-0" href="?q=@(query)&page=@(Model.Page + 1)" style="border-radius: 12px; color: var(--brown); background: rgba(255,255,255,0.4); font-size: 0.85rem;">
+                            <a class="page-link pill-button px-3 py-2 border-0" href="?q=@(query)&subject=@(ViewBag.SelectedSubject)&page=@(Model.Page + 1)" style="border-radius: 12px; color: var(--brown); background: rgba(255,255,255,0.4); font-size: 0.85rem;">
                                 Sau
                             </a>
                         </li>
@@ -305,3 +393,15 @@
         }
     </div>
 </div>
+
+@section Scripts {
+    <script>
+        function selectSubject(subject) {
+            const input = document.getElementById('selectedSubjectInput');
+            if (input) {
+                input.value = subject;
+                input.form.submit();
+            }
+        }
+    </script>
+}

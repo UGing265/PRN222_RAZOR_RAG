@@ -81,11 +81,11 @@ public class DocumentsController : Controller
                 return Json(new
                 {
                     success = true,
-                    redirectUrl = Url.RouteUrl("dashboard")
+                    redirectUrl = Url.Action(nameof(MyDocuments), "Documents")
                 });
             }
 
-            return RedirectToRoute("dashboard")!;
+            return RedirectToAction(nameof(MyDocuments));
         }
         catch (InvalidOperationException ex)
         {
@@ -303,12 +303,12 @@ public class DocumentsController : Controller
 
     [HttpGet("all")]
     [Authorize(Roles = "Admin,Lecturer,Student")]
-    public async Task<IActionResult> AllDocuments(string? q = null, int page = 1, int pageSize = 6, CancellationToken cancellationToken = default)
+    public async Task<IActionResult> AllDocuments(string? q = null, string? subject = null, int page = 1, int pageSize = 6, CancellationToken cancellationToken = default)
     {
         try
         {
             var userId = Guid.TryParse(User.FindFirstValue(ClaimTypes.NameIdentifier), out var parsedUserId) ? parsedUserId : (Guid?)null;
-            var result = await _documentService.GetAllDocumentsAsync(q, page, pageSize, userId, cancellationToken);
+            var result = await _documentService.GetAllDocumentsAsync(q, subject, page, pageSize, userId, cancellationToken);
 
             var viewModel = new AllDocumentsViewModel
             {
@@ -336,6 +336,8 @@ public class DocumentsController : Controller
             };
 
             ViewBag.Query = q;
+            ViewBag.SelectedSubject = subject;
+            ViewBag.Subjects = await _documentService.GetDistinctSubjectsAsync(null, cancellationToken);
             return View(viewModel);
         }
         catch (Exception ex)
@@ -348,7 +350,7 @@ public class DocumentsController : Controller
 
     [HttpGet("mine")]
     [Authorize(Roles = "Admin,Lecturer")]
-    public async Task<IActionResult> MyDocuments(string? q = null, int page = 1, int pageSize = 6, CancellationToken cancellationToken = default)
+    public async Task<IActionResult> MyDocuments(string? q = null, string? subject = null, int page = 1, int pageSize = 6, CancellationToken cancellationToken = default)
     {
         if (!Guid.TryParse(User.FindFirstValue(ClaimTypes.NameIdentifier), out var userId))
         {
@@ -357,7 +359,7 @@ public class DocumentsController : Controller
 
         try
         {
-            var result = await _documentService.GetMyDocumentsAsync(userId, q, page, pageSize, cancellationToken);
+            var result = await _documentService.GetMyDocumentsAsync(userId, q, subject, page, pageSize, cancellationToken);
 
             var viewModel = new MyDocumentsViewModel
             {
@@ -402,6 +404,8 @@ public class DocumentsController : Controller
             }).ToList();
 
             ViewBag.Query = q;
+            ViewBag.SelectedSubject = subject;
+            ViewBag.Subjects = await _documentService.GetDistinctSubjectsAsync(userId, cancellationToken);
 
             if (Request.Headers.TryGetValue("X-Requested-With", out var requestedWith) && requestedWith == "XMLHttpRequest")
             {

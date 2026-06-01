@@ -63,11 +63,6 @@ app.MapControllerRoute(
     defaults: new { controller = "Auth", action = "Logout" });
 
 app.MapControllerRoute(
-    name: "dashboard",
-    pattern: "dashboard",
-    defaults: new { controller = "Dashboard", action = "Index" });
-
-app.MapControllerRoute(
     name: "upload",
     pattern: "upload",
     defaults: new { controller = "Documents", action = "Create" });

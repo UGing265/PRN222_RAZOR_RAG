@@ -79,7 +79,7 @@ public class DocumentRepository : IDocumentRepository
     public Task<List<DocumentChapter>> GetDocumentChaptersAsync(Guid documentId, CancellationToken cancellationToken = default)
         => _dbContext.DocumentChapters.Where(x => x.DocumentId == documentId).ToListAsync(cancellationToken);
 
-    public Task<List<Document>> GetDocumentsByOwnerAsync(Guid ownerUserId, string? query, int page, int pageSize, CancellationToken cancellationToken = default)
+    public Task<List<Document>> GetDocumentsByOwnerAsync(Guid ownerUserId, string? query, string? subject, int page, int pageSize, CancellationToken cancellationToken = default)
     {
         var q = _dbContext.Documents.AsNoTracking()
             .Include(x => x.DocumentFiles)
@@ -91,23 +91,32 @@ public class DocumentRepository : IDocumentRepository
             q = q.Where(x => x.Title.Contains(query) || (x.Subject != null && x.Subject.Contains(query)) || (x.School != null && x.School.Contains(query)));
         }
 
+        if (!string.IsNullOrWhiteSpace(subject))
+        {
+            q = q.Where(x => x.Subject == subject);
+        }
+
         return q.OrderByDescending(x => x.UpdatedAt)
             .Skip((page - 1) * pageSize)
             .Take(pageSize)
             .ToListAsync(cancellationToken);
     }
 
-    public Task<int> CountDocumentsByOwnerAsync(Guid ownerUserId, string? query, CancellationToken cancellationToken = default)
+    public Task<int> CountDocumentsByOwnerAsync(Guid ownerUserId, string? query, string? subject, CancellationToken cancellationToken = default)
     {
         var q = _dbContext.Documents.AsNoTracking().Where(x => x.OwnerUserId == ownerUserId && x.Status == "completed");
         if (!string.IsNullOrWhiteSpace(query))
         {
             q = q.Where(x => x.Title.Contains(query) || (x.Subject != null && x.Subject.Contains(query)) || (x.School != null && x.School.Contains(query)));
         }
+        if (!string.IsNullOrWhiteSpace(subject))
+        {
+            q = q.Where(x => x.Subject == subject);
+        }
         return q.CountAsync(cancellationToken);
     }
 
-    public Task<List<Document>> GetDocumentsAsync(string? query, int page, int pageSize, Guid? requesterUserId = null, CancellationToken cancellationToken = default)
+    public Task<List<Document>> GetDocumentsAsync(string? query, string? subject, int page, int pageSize, Guid? requesterUserId = null, CancellationToken cancellationToken = default)
     {
         var q = _dbContext.Documents.AsNoTracking()
             .Include(x => x.DocumentFiles)
@@ -122,13 +131,18 @@ public class DocumentRepository : IDocumentRepository
             q = q.Where(x => x.Title.Contains(query) || (x.Subject != null && x.Subject.Contains(query)) || (x.School != null && x.School.Contains(query)) || (x.Description != null && x.Description.Contains(query)));
         }
 
+        if (!string.IsNullOrWhiteSpace(subject))
+        {
+            q = q.Where(x => x.Subject == subject);
+        }
+
         return q.OrderByDescending(x => x.UpdatedAt)
             .Skip((page - 1) * pageSize)
             .Take(pageSize)
             .ToListAsync(cancellationToken);
     }
 
-    public Task<int> CountDocumentsAsync(string? query, Guid? requesterUserId = null, CancellationToken cancellationToken = default)
+    public Task<int> CountDocumentsAsync(string? query, string? subject, Guid? requesterUserId = null, CancellationToken cancellationToken = default)
     {
         var q = _dbContext.Documents.AsNoTracking()
             .Include(x => x.OwnerUser)
@@ -140,6 +154,12 @@ public class DocumentRepository : IDocumentRepository
         {
             q = q.Where(x => x.Title.Contains(query) || (x.Subject != null && x.Subject.Contains(query)) || (x.School != null && x.School.Contains(query)) || (x.Description != null && x.Description.Contains(query)));
         }
+
+        if (!string.IsNullOrWhiteSpace(subject))
+        {
+            q = q.Where(x => x.Subject == subject);
+        }
+
         return q.CountAsync(cancellationToken);
     }
 
@@ -208,6 +228,19 @@ public class DocumentRepository : IDocumentRepository
     {
         _dbContext.Documents.Remove(document);
         return Task.CompletedTask;
+    }
+
+    public async Task<List<string>> GetDistinctSubjectsAsync(Guid? ownerUserId = null, CancellationToken cancellationToken = default)
+    {
+        var q = _dbContext.Documents.AsNoTracking().Where(x => x.Status == "completed" && x.Subject != null && x.Subject != "");
+        if (ownerUserId is not null)
+        {
+            q = q.Where(x => x.OwnerUserId == ownerUserId.Value);
+        }
+        return await q.Select(x => x.Subject!)
+            .Distinct()
+            .OrderBy(x => x)
+            .ToListAsync(cancellationToken);
     }
 
     public Task SaveChangesAsync(CancellationToken cancellationToken = default)

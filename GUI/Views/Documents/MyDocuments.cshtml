@@ -163,6 +163,117 @@
         border: 1px solid rgba(82, 39, 27, 0.06);
         border-radius: 24px;
     }
+
+    /* Premium Search & Filter Styling */
+    .search-glass-panel {
+        background: rgba(255, 255, 255, 0.55);
+        backdrop-filter: blur(12px);
+        -webkit-backdrop-filter: blur(12px);
+        border: 1px solid rgba(82, 39, 27, 0.06);
+        border-radius: 24px;
+        transition: all 0.3s ease;
+    }
+
+    .search-glass-panel:focus-within {
+        background: rgba(255, 255, 255, 0.85);
+        border-color: rgba(216, 106, 88, 0.3);
+        box-shadow: 0 10px 25px rgba(82, 39, 27, 0.04);
+    }
+
+    .search-input-clean {
+        background: transparent !important;
+        border: none !important;
+        box-shadow: none !important;
+        font-size: 0.95rem;
+        color: var(--foreground);
+    }
+
+    .search-input-clean::placeholder {
+        color: var(--muted);
+        opacity: 0.7;
+    }
+
+    .filter-chip {
+        display: inline-flex;
+        align-items: center;
+        padding: 6px 16px;
+        border-radius: 99px;
+        font-size: 0.82rem;
+        font-weight: 500;
+        color: var(--muted);
+        background: rgba(255, 255, 255, 0.4);
+        border: 1px solid rgba(82, 39, 27, 0.06);
+        text-decoration: none;
+        transition: all 0.2s ease;
+    }
+
+    .filter-chip:hover {
+        background: rgba(255, 255, 255, 0.8);
+        color: var(--brown);
+        border-color: rgba(82, 39, 27, 0.12);
+        transform: translateY(-1px);
+    }
+
+    .filter-chip.active {
+        background: var(--brown);
+        color: #ffffff;
+        border-color: var(--brown);
+    }
+
+    /* Premium Dropdown Styling */
+    .premium-dropdown-menu {
+        background: rgba(255, 255, 255, 0.94) !important;
+        backdrop-filter: blur(16px) !important;
+        -webkit-backdrop-filter: blur(16px) !important;
+        border: 1px solid rgba(82, 39, 27, 0.08) !important;
+        border-radius: 16px !important;
+        padding: 8px !important;
+        box-shadow: 0 10px 30px rgba(82, 39, 27, 0.08) !important;
+        min-width: 200px !important;
+        margin-top: 8px !important;
+    }
+
+    .premium-dropdown-item {
+        color: var(--brown) !important;
+        font-size: 0.85rem !important;
+        font-weight: 500 !important;
+        padding: 8px 16px !important;
+        border-radius: 10px !important;
+        transition: all 0.2s ease !important;
+        cursor: pointer !important;
+    }
+
+    .premium-dropdown-item:hover {
+        background: rgba(216, 106, 88, 0.08) !important;
+        color: var(--coral) !important;
+    }
+
+    .premium-dropdown-item.active {
+        background: var(--brown) !important;
+        color: #ffffff !important;
+    }
+
+    .dropdown-toggle-premium {
+        color: var(--brown) !important;
+        font-weight: 500 !important;
+        font-size: 0.88rem !important;
+        text-decoration: none !important;
+        display: flex !important;
+        align-items: center !important;
+        gap: 6px !important;
+        border: 0 !important;
+        background: transparent !important;
+        padding: 6px 12px !important;
+    }
+
+    .dropdown-toggle-premium::after {
+        color: var(--muted) !important;
+        transition: transform 0.2s ease !important;
+    }
+
+    .dropdown-toggle-premium:hover::after {
+        transform: translateY(2px);
+    }
 </style>
 
 <div class="page-shell grain">
@@ -226,17 +337,92 @@
             </div>
         </div>
 
+        <!-- Sleek Unified Search & Reset bar -->
+        <form method="get" asp-action="MyDocuments" class="search-glass-panel p-2 mb-4 d-flex align-items-center gap-3">
+            <div class="d-flex align-items-center flex-grow-1 ps-2">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--muted)" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" class="flex-shrink-0">
+                    <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
+                </svg>
+                <input type="text" name="q" value="@ViewBag.Query" class="form-control search-input-clean px-3 py-2 w-100" placeholder="Tìm tiêu đề tài liệu..." />
+            </div>
+
+            <!-- Subject Dropdown Filter -->
+            <input type="hidden" name="subject" id="selectedSubjectInput" value="@ViewBag.SelectedSubject" />
+            <div class="dropdown pe-2 border-start d-flex align-items-center" style="border-color: rgba(0,0,0,0.12) !important;">
+                <button class="dropdown-toggle-premium" type="button" id="subjectDropdown" data-bs-toggle="dropdown" aria-expanded="false">
+                    @(string.IsNullOrWhiteSpace(ViewBag.SelectedSubject) ? "Tất cả môn học" : ViewBag.SelectedSubject)
+                </button>
+                <ul class="dropdown-menu premium-dropdown-menu dropdown-menu-end shadow-lg" aria-labelledby="subjectDropdown">
+                    <li>
+                        <a class="dropdown-item premium-dropdown-item @(string.IsNullOrWhiteSpace(ViewBag.SelectedSubject) ? "active" : "")" onclick="selectSubject('')">
+                            Tất cả môn học
+                        </a>
+                    </li>
+                    @if (ViewBag.Subjects is List<string> subjects)
+                    {
+                        foreach (var sub in subjects)
+                        {
+                            <li>
+                                <a class="dropdown-item premium-dropdown-item @(ViewBag.SelectedSubject == sub ? "active" : "")" onclick="selectSubject('@sub')">
+                                    @sub
+                                </a>
+                            </li>
+                        }
+                    }
+                </ul>
+            </div>
+            
+            <div class="d-flex align-items-center gap-2 flex-shrink-0 pe-1">
+                @if (!string.IsNullOrWhiteSpace(ViewBag.Query) || !string.IsNullOrWhiteSpace(ViewBag.SelectedSubject))
+                {
+                    <a asp-action="MyDocuments" class="btn btn-link text-muted px-2 text-decoration-none small hover-text-dark" style="font-size: 0.88rem;">Xoá Lọc</a>
+                }
+                <button type="submit" class="btn btn-premium-primary pill-button py-2 px-4" style="font-size: 0.88rem; min-height: 40px;">Tìm Kiếm</button>
+            </div>
+        </form>
+
+        <!-- Dynamic Filter Chips -->
+        <div class="d-flex align-items-center gap-2 flex-wrap mb-5">
+            <span class="text-muted small me-2" style="font-size: 0.8rem; font-weight: 500;">Gợi ý chủ đề:</span>
+            @if (ViewBag.Subjects is List<string> suggSubjects && suggSubjects.Any())
+            {
+                @foreach (var sub in suggSubjects.Take(5))
+                {
+                    <a href="?subject=@sub" class="filter-chip @(ViewBag.SelectedSubject == sub ? "active" : "")">@sub</a>
+                }
+            }
+            else
+            {
+                <span class="text-muted small" style="font-size: 0.8rem; font-style: italic;">Chưa có chủ đề nào</span>
+            }
+            
+            <span class="ms-auto font-mono-xs text-muted-foreground" style="font-size: 11px;">
+                Tìm thấy <strong>@Model.TotalDocuments</strong> tài liệu của bạn
+            </span>
+        </div>
+
         <!-- Document Grid -->
         <div class="row g-4">
             @if (Model.Documents.Count == 0)
             {
                 <div class="col-12 text-center py-5">
                     <div class="p-5 progress-glass text-muted d-inline-block rounded-4">
-                        <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" class="mb-3 text-muted" style="opacity: 0.5;">
-                            <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/>
-                        </svg>
-                        <p class="mb-0 fw-medium">Bạn chưa tải lên tài liệu nào trong thư viện cá nhân.</p>
-                        <a asp-action="Create" class="btn btn-outline-dark btn-sm pill-button mt-3 px-4">Tải Lên Ngay</a>
+                        @if (!string.IsNullOrWhiteSpace(ViewBag.Query) || !string.IsNullOrWhiteSpace(ViewBag.SelectedSubject))
+                        {
+                            <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" class="mb-3 text-muted" style="opacity: 0.5;">
+                                <circle cx="12" cy="12" r="10"/><line x1="8" y1="12" x2="16" y2="12"/>
+                            </svg>
+                            <p class="mb-0 fw-medium">Không tìm thấy tài liệu phù hợp trong không gian cá nhân của bạn.</p>
+                            <a asp-action="MyDocuments" class="btn btn-outline-dark btn-sm pill-button mt-3 px-4">Xem Tất Cả</a>
+                        }
+                        else
+                        {
+                            <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" class="mb-3 text-muted" style="opacity: 0.5;">
+                                <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/>
+                            </svg>
+                            <p class="mb-0 fw-medium">Bạn chưa tải lên tài liệu nào trong thư viện cá nhân.</p>
+                            <a asp-action="Create" class="btn btn-outline-dark btn-sm pill-button mt-3 px-4">Tải Lên Ngay</a>
+                        }
                     </div>
                 </div>
             }
@@ -288,11 +474,47 @@
                 }
             }
         </div>
+
+        <!-- Premium Minimalist Pagination -->
+        @if (Model.TotalPages > 1)
+        {
+            <nav class="d-flex justify-content-center mt-5">
+                <ul class="pagination gap-2 border-0">
+                    <li class="page-item @(Model.Page == 1 ? "disabled" : "")">
+                        <a class="page-link pill-button px-3 py-2 border-0" href="?q=@(ViewBag.Query)&subject=@(ViewBag.SelectedSubject)&page=@(Model.Page - 1)" style="border-radius: 12px; color: var(--brown); background: rgba(255,255,255,0.4); font-size: 0.85rem;">
+                            Trước
+                        </a>
+                    </li>
+                    @for (int i = 1; i <= Model.TotalPages; i++)
+                    {
+                        <li class="page-item @(Model.Page == i ? "active" : "")">
+                            <a class="page-link pill-button px-3.5 py-2 border-0" href="?q=@(ViewBag.Query)&subject=@(ViewBag.SelectedSubject)&page=@i" 
+                               style="border-radius: 12px; font-size: 0.85rem; font-weight: 600; @(Model.Page == i ? "background: var(--brown) !important; color: #fff !important;" : "color: var(--brown); background: rgba(255,255,255,0.4);")">
+                                @i
+                            </a>
+                        </li>
+                    }
+                    <li class="page-item @(Model.Page == Model.TotalPages ? "disabled" : "")">
+                        <a class="page-link pill-button px-3 py-2 border-0" href="?q=@(ViewBag.Query)&subject=@(ViewBag.SelectedSubject)&page=@(Model.Page + 1)" style="border-radius: 12px; color: var(--brown); background: rgba(255,255,255,0.4); font-size: 0.85rem;">
+                            Sau
+                        </a>
+                    </li>
+                </ul>
+            </nav>
+        }
     </div>
 </div>
 
 @section Scripts {
     <script>
+        function selectSubject(subject) {
+            const input = document.getElementById('selectedSubjectInput');
+            if (input) {
+                input.value = subject;
+                input.form.submit();
+            }
+        }
+
         (function () {
             const list = document.getElementById('uploadJobList');
             const count = document.getElementById('uploadJobCount');
