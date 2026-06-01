@@ -37,4 +37,31 @@ public class AuthRepository : IAuthRepository
             .Include(x => x.Role)
             .FirstOrDefaultAsync(x => x.Email.ToLower() == normalizedEmail, cancellationToken);
     }
+
+    public Task<List<User>> GetAllUsersWithRolesAsync(CancellationToken cancellationToken = default)
+    {
+        return _dbContext.Users
+            .Include(x => x.Role)
+            .OrderByDescending(x => x.CreatedAt)
+            .ToListAsync(cancellationToken);
+    }
+
+    public Task<User?> GetUserByIdAsync(Guid userId, CancellationToken cancellationToken = default)
+    {
+        return _dbContext.Users
+            .Include(x => x.Role)
+            .FirstOrDefaultAsync(x => x.Id == userId, cancellationToken);
+    }
+
+    public async Task UpdateUserAsync(User user, CancellationToken cancellationToken = default)
+    {
+        _dbContext.Users.Update(user);
+        await _dbContext.SaveChangesAsync(cancellationToken);
+    }
+
+    public async Task DeleteUserAsync(User user, CancellationToken cancellationToken = default)
+    {
+        _dbContext.Users.Remove(user);
+        await _dbContext.SaveChangesAsync(cancellationToken);
+    }
 }

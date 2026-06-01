@@ -39,9 +39,22 @@ public class AuthController : Controller
                 return View(model);
             }
 
+            var emailLower = model.Email.Trim().ToLowerInvariant();
+            if (model.RoleId == 2 && !emailLower.EndsWith("@fe.edu.vn"))
+            {
+                ModelState.AddModelError(nameof(model.Email), "Giảng viên bắt buộc sử dụng email đuôi @fe.edu.vn.");
+                return View(model);
+            }
+
+            if (model.RoleId == 3 && !emailLower.EndsWith("@fpt.edu.vn"))
+            {
+                ModelState.AddModelError(nameof(model.Email), "Sinh viên bắt buộc sử dụng email đuôi @fpt.edu.vn.");
+                return View(model);
+            }
+
             var user = await _authService.RegisterAsync(model.FullName, model.Email, model.Password, model.RoleId, cancellationToken);
-            TempData["SuccessMessage"] = "Đăng ký thành công. Vui lòng đăng nhập.";
-            return RedirectToAction("Index", "Home");
+            TempData["SuccessMessage"] = "Đăng ký thành công! Tài khoản của bạn đang chờ Admin phê duyệt.";
+            return RedirectToAction(nameof(Login));
         }
         catch (InvalidOperationException ex)
         {
@@ -80,6 +93,11 @@ public class AuthController : Controller
             await SignInAsync(user, model.RememberMe);
             TempData["SuccessMessage"] = "Đăng nhập thành công.";
             return RedirectToAction("Index", "Home");
+        }
+        catch (InvalidOperationException ex)
+        {
+            ModelState.AddModelError(string.Empty, ex.Message);
+            return View(model);
         }
         catch (Exception ex)
         {

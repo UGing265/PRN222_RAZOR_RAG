@@ -2,10 +2,7 @@ using BLL.DTOs.Documents;
 using BLL.Interfaces.Documents;
 using GUI.Models.Documents;
 using Microsoft.AspNetCore.Authorization;
-using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.AspNetCore.Authentication;
-using Microsoft.Extensions.DependencyInjection;
 using System.Security.Claims;
 
 namespace GUI.Controllers;

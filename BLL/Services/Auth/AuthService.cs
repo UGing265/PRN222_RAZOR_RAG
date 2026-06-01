@@ -18,6 +18,15 @@ public class AuthService : IAuthService
     public async Task<AuthUserDto> RegisterAsync(string fullName, string email, string password, short roleId, CancellationToken cancellationToken = default)
     {
         var normalizedEmail = email.Trim().ToLowerInvariant();
+        if (roleId == 2 && !normalizedEmail.EndsWith("@fe.edu.vn"))
+        {
+            throw new InvalidOperationException("Giảng viên bắt buộc sử dụng email đuôi @fe.edu.vn.");
+        }
+        if (roleId == 3 && !normalizedEmail.EndsWith("@fpt.edu.vn"))
+        {
+            throw new InvalidOperationException("Sinh viên bắt buộc sử dụng email đuôi @fpt.edu.vn.");
+        }
+
         var existingUser = await _authRepository.EmailExistsAsync(normalizedEmail, cancellationToken);
         if (existingUser)
         {
@@ -38,7 +47,7 @@ public class AuthService : IAuthService
             Email = normalizedEmail,
             PasswordHash = HashPassword(password),
             RoleId = roleId,
-            IsActive = true,
+            IsActive = false,
             CreatedAt = now,
             UpdatedAt = now
         };
@@ -52,12 +61,63 @@ public class AuthService : IAuthService
         var normalizedEmail = email.Trim().ToLowerInvariant();
         var user = await _authRepository.GetUserByEmailWithRoleAsync(normalizedEmail, cancellationToken);
 
-        if (user is null || !user.IsActive)
+        if (user is null)
         {
             return null;
         }
 
-        return VerifyPassword(password, user.PasswordHash) ? Map(user) : null;
+        if (!VerifyPassword(password, user.PasswordHash))
+        {
+            return null;
+        }
+
+        if (!user.IsActive)
+        {
+            throw new InvalidOperationException("Tài khoản của bạn chưa được kích hoạt hoặc đang chờ Admin phê duyệt.");
+        }
+
+        return Map(user);
+    }
+
+    public async Task<List<AuthUserDto>> GetAllUsersAsync(CancellationToken cancellationToken = default)
+    {
+        var users = await _authRepository.GetAllUsersWithRolesAsync(cancellationToken);
+        return users.Select(Map).ToList();
+    }
+
+    public async Task<bool> ApproveUserAsync(Guid userId, CancellationToken cancellationToken = default)
+    {
+        var user = await _authRepository.GetUserByIdAsync(userId, cancellationToken);
+        if (user is null)
+        {
+            return false;
+        }
+
+        user.IsActive = true;
+        user.UpdatedAt = DateTime.UtcNow;
+        await _authRepository.UpdateUserAsync(user, cancellationToken);
+        return true;
+    }
+
+    public async Task<bool> RejectOrBlockUserAsync(Guid userId, CancellationToken cancellationToken = default)
+    {
+        var user = await _authRepository.GetUserByIdAsync(userId, cancellationToken);
+        if (user is null)
+        {
+            return false;
+        }
+
+        if (!user.IsActive)
+        {
+            await _authRepository.DeleteUserAsync(user, cancellationToken);
+        }
+        else
+        {
+            user.IsActive = false;
+            user.UpdatedAt = DateTime.UtcNow;
+            await _authRepository.UpdateUserAsync(user, cancellationToken);
+        }
+        return true;
     }
 
     private static AuthUserDto Map(User user) => new()
@@ -66,7 +126,8 @@ public class AuthService : IAuthService
         FullName = user.FullName,
         Email = user.Email,
         RoleId = user.RoleId,
-        RoleName = user.Role?.Name ?? user.RoleId.ToString()
+        RoleName = user.Role?.Name ?? user.RoleId.ToString(),
+        IsActive = user.IsActive
     };
 
     private static string HashPassword(string password)
