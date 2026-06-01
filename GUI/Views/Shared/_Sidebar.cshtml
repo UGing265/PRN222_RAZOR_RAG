@@ -43,7 +43,7 @@
             </a>
             @if (isAuthenticated)
             {
-                if (roleId == 1 || roleId == 3)
+                if (roleId == 1 || roleId == 2 || roleId == 3)
                 {
                     <a class="nav-link @IsActive("Chat", "Index")" asp-controller="Chat" asp-action="Index">
                         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" class="nav-icon"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
@@ -64,11 +64,11 @@
                         <span>Tải lên</span>
                     </a>
                 }
-                if (canSeeAllPages)
+                if (roleId == 1)
                 {
-                    <a class="nav-link @IsActive("Dashboard", "Index")" asp-controller="Dashboard" asp-action="Index">
-                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" class="nav-icon"><rect x="3" y="3" width="7" height="9"/><rect x="14" y="3" width="7" height="5"/><rect x="14" y="12" width="7" height="9"/><rect x="3" y="16" width="7" height="5"/></svg>
-                        <span>Bảng Điều Khiển</span>
+                    <a class="nav-link @IsActive("Admin", "Users")" asp-controller="Admin" asp-action="Users">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" class="nav-icon"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+                        <span>Quản lý thành viên</span>
                     </a>
                 }
             }

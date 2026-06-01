@@ -20,7 +20,7 @@
             {
                 var width = Math.Clamp(job.ProgressPercent, 0, 100);
                 <div class="col-12">
-                    <div class="file-card">
+                    <div class="file-card" data-upload-job>
                         <div class="d-flex justify-content-between align-items-start gap-3 mb-2">
                             <div>
                                 <div class="fw-semibold">@job.FileName</div>
@@ -43,7 +43,7 @@
     if (!window.uploadJobsPollingStarted) {
         window.uploadJobsPollingStarted = true;
         setInterval(() => {
-            fetch('/Dashboard/UploadJobsPartial')
+            fetch('/documents/mine', { headers: { 'X-Requested-With': 'XMLHttpRequest' } })
                 .then(res => res.text())
                 .then(html => {
                     var parser = new DOMParser();

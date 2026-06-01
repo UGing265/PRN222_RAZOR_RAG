@@ -63,11 +63,6 @@ app.MapControllerRoute(
     defaults: new { controller = "Auth", action = "Logout" });
 
 app.MapControllerRoute(
-    name: "dashboard",
-    pattern: "dashboard",
-    defaults: new { controller = "Dashboard", action = "Index" });
-
-app.MapControllerRoute(
     name: "upload",
     pattern: "upload",
     defaults: new { controller = "Documents", action = "Create" });
@@ -81,6 +76,21 @@ app.MapControllerRoute(
     name: "chat",
     pattern: "chat",
     defaults: new { controller = "Chat", action = "Index" });
+
+app.MapControllerRoute(
+    name: "admin-users",
+    pattern: "admin/users",
+    defaults: new { controller = "Admin", action = "Users" });
+
+app.MapControllerRoute(
+    name: "admin-approve",
+    pattern: "admin/users/approve/{id:guid}",
+    defaults: new { controller = "Admin", action = "Approve" });
+
+app.MapControllerRoute(
+    name: "admin-reject-block",
+    pattern: "admin/users/reject-block/{id:guid}",
+    defaults: new { controller = "Admin", action = "RejectOrBlock" });
 
 app.MapControllerRoute(
     name: "default",

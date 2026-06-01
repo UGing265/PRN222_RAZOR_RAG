@@ -291,16 +291,19 @@ public class DocumentService : IDocumentService
     public Task<Document?> GetDocumentForOwnerAsync(Guid documentId, Guid ownerUserId, CancellationToken cancellationToken = default) => _documentRepository.GetOwnedDocumentAsync(documentId, ownerUserId, cancellationToken);
     public Task<Document?> GetOwnedDocumentBySlugAsync(string slug, Guid ownerUserId, CancellationToken cancellationToken = default) => _documentRepository.GetOwnedDocumentBySlugAsync(slug, ownerUserId, cancellationToken);
 
-    public async Task<MyDocumentsDto> GetMyDocumentsAsync(Guid ownerUserId, string? query, int page = 1, int pageSize = 6, CancellationToken cancellationToken = default)
+    public async Task<MyDocumentsDto> GetMyDocumentsAsync(Guid ownerUserId, string? query, string? subject, int page = 1, int pageSize = 6, CancellationToken cancellationToken = default)
     {
         pageSize = Math.Clamp(pageSize, 6, 12);
         page = Math.Max(page, 1);
-        var totalDocuments = await _documentRepository.CountDocumentsByOwnerAsync(ownerUserId, query, cancellationToken);
+        var totalDocuments = await _documentRepository.CountDocumentsByOwnerAsync(ownerUserId, query, subject, cancellationToken);
         var totalPages = Math.Max(1, (int)Math.Ceiling(totalDocuments / (double)pageSize));
         page = Math.Clamp(page, 1, totalPages);
 
-        var documents = await _documentRepository.GetDocumentsByOwnerAsync(ownerUserId, query, page, pageSize, cancellationToken);
+        var documents = await _documentRepository.GetDocumentsByOwnerAsync(ownerUserId, query, subject, page, pageSize, cancellationToken);
         var activeUploadJobs = await _documentRepository.GetActiveUploadJobsByOwnerAsync(ownerUserId, cancellationToken);
+
+        var documentIds = documents.Select(x => x.Id).ToList();
+        var previewTexts = await _documentRepository.GetPreviewTextsAsync(documentIds, cancellationToken);
 
         return new MyDocumentsDto
         {
@@ -316,8 +319,8 @@ public class DocumentService : IDocumentService
                 CreatedAt = x.CreatedAt,
                 UpdatedAt = x.UpdatedAt,
                 FileCount = x.DocumentFiles.Count,
-                ChunkCount = x.DocumentChunks.Count,
-                PreviewText = x.DocumentChunks.OrderBy(c => c.ChunkOrder).Select(c => c.Content).FirstOrDefault()
+                ChunkCount = x.TotalChunks,
+                PreviewText = previewTexts.TryGetValue(x.Id, out var content) ? content : (x.Description ?? string.Empty)
             }).ToList(),
             TotalDocuments = totalDocuments,
             PendingDocuments = await _documentRepository.CountDocumentsByStatusAsync(ownerUserId, "pending", cancellationToken),
@@ -343,15 +346,18 @@ public class DocumentService : IDocumentService
         };
     }
 
-    public async Task<MyDocumentsDto> GetAllDocumentsAsync(string? query, int page = 1, int pageSize = 6, Guid? requesterUserId = null, CancellationToken cancellationToken = default)
+    public async Task<MyDocumentsDto> GetAllDocumentsAsync(string? query, string? subject, int page = 1, int pageSize = 6, Guid? requesterUserId = null, CancellationToken cancellationToken = default)
     {
         pageSize = Math.Clamp(pageSize, 6, 12);
         page = Math.Max(page, 1);
-        var totalDocuments = await _documentRepository.CountDocumentsAsync(query, requesterUserId, cancellationToken);
+        var totalDocuments = await _documentRepository.CountDocumentsAsync(query, subject, requesterUserId, cancellationToken);
         var totalPages = Math.Max(1, (int)Math.Ceiling(totalDocuments / (double)pageSize));
         page = Math.Clamp(page, 1, totalPages);
 
-        var documents = await _documentRepository.GetDocumentsAsync(query, page, pageSize, requesterUserId, cancellationToken);
+        var documents = await _documentRepository.GetDocumentsAsync(query, subject, page, pageSize, requesterUserId, cancellationToken);
+
+        var documentIds = documents.Select(x => x.Id).ToList();
+        var previewTexts = await _documentRepository.GetPreviewTextsAsync(documentIds, cancellationToken);
 
         return new MyDocumentsDto
         {
@@ -367,8 +373,8 @@ public class DocumentService : IDocumentService
                 CreatedAt = x.CreatedAt,
                 UpdatedAt = x.UpdatedAt,
                 FileCount = x.DocumentFiles.Count,
-                ChunkCount = x.DocumentChunks.Count,
-                PreviewText = x.Description ?? x.DocumentChunks.OrderBy(c => c.ChunkOrder).Select(c => c.Content).FirstOrDefault(),
+                ChunkCount = x.TotalChunks,
+                PreviewText = x.Description ?? (previewTexts.TryGetValue(x.Id, out var content) ? content : string.Empty),
                 OwnerEmail = x.OwnerUser?.Email
             }).ToList(),
             TotalDocuments = totalDocuments,
@@ -376,7 +382,7 @@ public class DocumentService : IDocumentService
             ApprovedDocuments = 0,
             RejectedDocuments = 0,
             TotalFiles = documents.Sum(x => x.DocumentFiles.Count),
-            TotalChunks = documents.Sum(x => x.DocumentChunks.Count),
+            TotalChunks = documents.Sum(x => x.TotalChunks),
             Page = page,
             PageSize = pageSize,
             TotalPages = totalPages,
@@ -384,7 +390,7 @@ public class DocumentService : IDocumentService
         };
     }
 
-    public Task<int> CountMyDocumentsAsync(Guid ownerUserId, string? query, CancellationToken cancellationToken = default) => _documentRepository.CountDocumentsByOwnerAsync(ownerUserId, query, cancellationToken);
+    public Task<int> CountMyDocumentsAsync(Guid ownerUserId, string? query, CancellationToken cancellationToken = default) => _documentRepository.CountDocumentsByOwnerAsync(ownerUserId, query, null, cancellationToken);
     public Task<int> CountMyDocumentsByStatusAsync(Guid ownerUserId, string status, CancellationToken cancellationToken = default) => _documentRepository.CountDocumentsByStatusAsync(ownerUserId, status, cancellationToken);
     public Task<int> CountMyFilesAsync(Guid ownerUserId, CancellationToken cancellationToken = default) => _documentRepository.CountFilesByOwnerAsync(ownerUserId, cancellationToken);
     public Task<int> CountMyChunksAsync(Guid ownerUserId, CancellationToken cancellationToken = default) => _documentRepository.CountChunksByOwnerAsync(ownerUserId, cancellationToken);
@@ -495,13 +501,13 @@ public class DocumentService : IDocumentService
 
     public async Task<DashboardSummaryDto> GetDashboardSummaryAsync(Guid ownerUserId, CancellationToken cancellationToken = default)
     {
-        var documents = await _documentRepository.GetDocumentsByOwnerAsync(ownerUserId, null, 1, 5, cancellationToken);
+        var documents = await _documentRepository.GetDocumentsByOwnerAsync(ownerUserId, null, null, 1, 5, cancellationToken);
         var activeJobs = await _documentRepository.GetActiveUploadJobsByOwnerAsync(ownerUserId, cancellationToken);
         var completed = activeJobs.FirstOrDefault(x => x.Status == "done");
 
         return new DashboardSummaryDto
         {
-            TotalDocuments = await _documentRepository.CountDocumentsByOwnerAsync(ownerUserId, null, cancellationToken),
+            TotalDocuments = await _documentRepository.CountDocumentsByOwnerAsync(ownerUserId, null, null, cancellationToken),
             TotalChunks = await _documentRepository.CountChunksByOwnerAsync(ownerUserId, cancellationToken),
             TotalFiles = await _documentRepository.CountFilesByOwnerAsync(ownerUserId, cancellationToken),
             ApprovedDocuments = await _documentRepository.CountDocumentsByStatusAsync(ownerUserId, "approved", cancellationToken),
@@ -553,6 +559,9 @@ public class DocumentService : IDocumentService
     }
 
     public Task<List<UploadJobSummaryDto>> GetUploadJobsAsync(Guid ownerUserId, CancellationToken cancellationToken = default) => GetActiveUploadJobsAsync(ownerUserId, cancellationToken);
+
+    public Task<List<string>> GetDistinctSubjectsAsync(Guid? ownerUserId = null, CancellationToken cancellationToken = default)
+        => _documentRepository.GetDistinctSubjectsAsync(ownerUserId, cancellationToken);
 
     private static string BuildSearchText(Document document, string extractedText)
     {

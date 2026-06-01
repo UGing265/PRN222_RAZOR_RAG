@@ -7,4 +7,5 @@ public sealed class AuthUserDto
     public string Email { get; init; } = string.Empty;
     public short RoleId { get; init; }
     public string RoleName { get; init; } = string.Empty;
+    public bool IsActive { get; init; }
 }
