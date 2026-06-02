@@ -24,10 +24,6 @@ CREATE SEQUENCE public.roles_id_seq
 -- ==========================================
 -- 3. TABLES (Tạo bảng)
 -- ==========================================
-CREATE TABLE public."__EFMigrationsHistory" (
-    "MigrationId" character varying(150) NOT NULL,
-    "ProductVersion" character varying(32) NOT NULL
-);
 
 CREATE TABLE public.academic_terms (
     id uuid DEFAULT public.uuid_generate_v4() NOT NULL,
