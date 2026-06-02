@@ -3,7 +3,7 @@ using Microsoft.AspNetCore.Mvc;
 
 namespace GUI.Controllers;
 
-[Authorize(Roles = "Admin,Lecturer,Student")]
+[Authorize(Roles = "Lecturer,Student")]
 public class ChatController : Controller
 {
     [HttpGet]

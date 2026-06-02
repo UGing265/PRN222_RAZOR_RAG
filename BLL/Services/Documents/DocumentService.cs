@@ -85,15 +85,18 @@ public class DocumentService : IDocumentService
             Title = input.Title,
             Slug = slug,
             Description = input.Description,
-            Subject = input.Subject,
-            School = input.School,
-            Department = input.Department,
-            Language = input.Language,
-            Visibility = input.Visibility,
+            MajorId = input.MajorId,
+            SubjectId = input.SubjectId,
+            DocumentTypeId = input.DocumentTypeId,
+            AcademicTerm = input.AcademicTerm,
+            LanguageId = input.LanguageId,
+            Visibility = input.Visibility ?? "school_wide",
             SourceType = input.SourceType,
             Status = "processing",
             TotalChunks = 0,
             TotalChapters = 0,
+            ViewCount = 0,
+            DownloadCount = 0,
             CreatedAt = DateTime.UtcNow,
             UpdatedAt = DateTime.UtcNow,
             ApprovedAt = null
@@ -171,7 +174,7 @@ public class DocumentService : IDocumentService
                         s3Url,
                         checksumSha256 = checksum,
                         chunkOrder = chunkIndex,
-                        language = document.Language,
+                        language = document.Language?.Name,
                         visibility = document.Visibility,
                         sourceType = document.SourceType
                     }));
@@ -263,19 +266,34 @@ public class DocumentService : IDocumentService
         chunkPage = Math.Clamp(chunkPage, 1, totalPages);
         var pageChunks = orderedChunks.Skip((chunkPage - 1) * chunkPageSize).Take(chunkPageSize).ToList();
 
+        // Increment view count
+        document.ViewCount++;
+        await _documentRepository.SaveChangesAsync(cancellationToken);
+
         return new DocumentDetailsDto
         {
             Id = document.Id,
+            OwnerUserId = document.OwnerUserId,
             Title = document.Title,
-            Subject = document.Subject,
-            School = document.School,
-            Department = document.Department,
+            MajorId = document.MajorId,
+            MajorName = document.Major?.Name,
+            MajorCode = document.Major?.Code,
+            SubjectId = document.SubjectId,
+            SubjectName = document.Subject?.Name,
+            SubjectCode = document.Subject?.Code,
+            DocumentTypeId = document.DocumentTypeId,
+            DocumentTypeName = document.DocumentType?.Name,
+            AcademicTerm = document.AcademicTerm,
             Visibility = document.Visibility,
-            Language = document.Language,
+            LanguageId = document.LanguageId,
+            LanguageCode = document.Language?.Code,
+            LanguageName = document.Language?.Name,
             Description = document.Description,
             Status = document.Status,
             TotalChunks = document.TotalChunks,
             TotalChapters = document.TotalChapters,
+            ViewCount = document.ViewCount,
+            DownloadCount = document.DownloadCount,
             ApprovedAt = document.ApprovedAt,
             FileCount = document.DocumentFiles?.Count ?? 0,
             Files = document.DocumentFiles?.ToList() ?? [],
@@ -291,15 +309,15 @@ public class DocumentService : IDocumentService
     public Task<Document?> GetDocumentForOwnerAsync(Guid documentId, Guid ownerUserId, CancellationToken cancellationToken = default) => _documentRepository.GetOwnedDocumentAsync(documentId, ownerUserId, cancellationToken);
     public Task<Document?> GetOwnedDocumentBySlugAsync(string slug, Guid ownerUserId, CancellationToken cancellationToken = default) => _documentRepository.GetOwnedDocumentBySlugAsync(slug, ownerUserId, cancellationToken);
 
-    public async Task<MyDocumentsDto> GetMyDocumentsAsync(Guid ownerUserId, string? query, string? subject, int page = 1, int pageSize = 6, CancellationToken cancellationToken = default)
+    public async Task<MyDocumentsDto> GetMyDocumentsAsync(Guid ownerUserId, string? query, Guid? subjectId, int page = 1, int pageSize = 6, CancellationToken cancellationToken = default)
     {
         pageSize = Math.Clamp(pageSize, 6, 12);
         page = Math.Max(page, 1);
-        var totalDocuments = await _documentRepository.CountDocumentsByOwnerAsync(ownerUserId, query, subject, cancellationToken);
+        var totalDocuments = await _documentRepository.CountDocumentsByOwnerAsync(ownerUserId, query, subjectId, cancellationToken);
         var totalPages = Math.Max(1, (int)Math.Ceiling(totalDocuments / (double)pageSize));
         page = Math.Clamp(page, 1, totalPages);
 
-        var documents = await _documentRepository.GetDocumentsByOwnerAsync(ownerUserId, query, subject, page, pageSize, cancellationToken);
+        var documents = await _documentRepository.GetDocumentsByOwnerAsync(ownerUserId, query, subjectId, page, pageSize, cancellationToken);
         var activeUploadJobs = await _documentRepository.GetActiveUploadJobsByOwnerAsync(ownerUserId, cancellationToken);
 
         var documentIds = documents.Select(x => x.Id).ToList();
@@ -312,10 +330,16 @@ public class DocumentService : IDocumentService
                 Id = x.Id,
                 Slug = x.Slug ?? string.Empty,
                 Title = x.Title,
-                Subject = x.Subject,
+                MajorId = x.MajorId,
+                MajorName = x.Major?.Name,
+                SubjectId = x.SubjectId,
+                SubjectName = x.Subject?.Name,
+                SubjectCode = x.Subject?.Code,
+                DocumentTypeId = x.DocumentTypeId,
+                DocumentTypeName = x.DocumentType?.Name,
+                AcademicTerm = x.AcademicTerm,
                 Status = x.Status,
                 Visibility = x.Visibility,
-                School = x.School,
                 CreatedAt = x.CreatedAt,
                 UpdatedAt = x.UpdatedAt,
                 FileCount = x.DocumentFiles.Count,
@@ -346,15 +370,15 @@ public class DocumentService : IDocumentService
         };
     }
 
-    public async Task<MyDocumentsDto> GetAllDocumentsAsync(string? query, string? subject, int page = 1, int pageSize = 6, Guid? requesterUserId = null, CancellationToken cancellationToken = default)
+    public async Task<MyDocumentsDto> GetAllDocumentsAsync(string? query, Guid? subjectId, int page = 1, int pageSize = 6, Guid? requesterUserId = null, CancellationToken cancellationToken = default)
     {
         pageSize = Math.Clamp(pageSize, 6, 12);
         page = Math.Max(page, 1);
-        var totalDocuments = await _documentRepository.CountDocumentsAsync(query, subject, requesterUserId, cancellationToken);
+        var totalDocuments = await _documentRepository.CountDocumentsAsync(query, subjectId, requesterUserId, cancellationToken);
         var totalPages = Math.Max(1, (int)Math.Ceiling(totalDocuments / (double)pageSize));
         page = Math.Clamp(page, 1, totalPages);
 
-        var documents = await _documentRepository.GetDocumentsAsync(query, subject, page, pageSize, requesterUserId, cancellationToken);
+        var documents = await _documentRepository.GetDocumentsAsync(query, subjectId, page, pageSize, requesterUserId, cancellationToken);
 
         var documentIds = documents.Select(x => x.Id).ToList();
         var previewTexts = await _documentRepository.GetPreviewTextsAsync(documentIds, cancellationToken);
@@ -366,10 +390,16 @@ public class DocumentService : IDocumentService
                 Id = x.Id,
                 Slug = x.Slug ?? string.Empty,
                 Title = x.Title,
-                Subject = x.Subject,
+                MajorId = x.MajorId,
+                MajorName = x.Major?.Name,
+                SubjectId = x.SubjectId,
+                SubjectName = x.Subject?.Name,
+                SubjectCode = x.Subject?.Code,
+                DocumentTypeId = x.DocumentTypeId,
+                DocumentTypeName = x.DocumentType?.Name,
+                AcademicTerm = x.AcademicTerm,
                 Status = x.Status,
                 Visibility = x.Visibility,
-                School = x.School,
                 CreatedAt = x.CreatedAt,
                 UpdatedAt = x.UpdatedAt,
                 FileCount = x.DocumentFiles.Count,
@@ -450,6 +480,7 @@ public class DocumentService : IDocumentService
         await _documentRepository.RemoveDocumentFilesByDocumentAsync(documentId, cancellationToken);
         await _documentRepository.RemoveDocumentChunksByDocumentAsync(documentId, cancellationToken);
         await _documentRepository.RemoveDocumentChaptersByDocumentAsync(documentId, cancellationToken);
+        await _documentRepository.RemoveDocumentReportsByDocumentAsync(documentId, cancellationToken);
         await _documentRepository.RemoveDocumentAsync(document, cancellationToken);
         await _documentRepository.SaveChangesAsync(cancellationToken);
     }
@@ -518,7 +549,7 @@ public class DocumentService : IDocumentService
                 Id = x.Id,
                 Slug = x.Slug ?? string.Empty,
                 Title = x.Title,
-                Subject = x.Subject,
+                Subject = x.Subject?.Name,
                 Status = x.Status,
                 UpdatedAt = x.UpdatedAt,
                 FileCount = x.DocumentFiles.Count,
@@ -547,10 +578,11 @@ public class DocumentService : IDocumentService
 
         document.Title = input.Title;
         document.Description = input.Description;
-        document.Subject = input.Subject;
-        document.School = input.School;
-        document.Department = input.Department;
-        document.Language = input.Language;
+        document.MajorId = input.MajorId;
+        document.SubjectId = input.SubjectId;
+        document.DocumentTypeId = input.DocumentTypeId;
+        document.AcademicTerm = input.AcademicTerm;
+        document.LanguageId = input.LanguageId;
         document.Visibility = input.Visibility;
         document.UpdatedAt = DateTime.UtcNow;
 
@@ -560,13 +592,101 @@ public class DocumentService : IDocumentService
 
     public Task<List<UploadJobSummaryDto>> GetUploadJobsAsync(Guid ownerUserId, CancellationToken cancellationToken = default) => GetActiveUploadJobsAsync(ownerUserId, cancellationToken);
 
-    public Task<List<string>> GetDistinctSubjectsAsync(Guid? ownerUserId = null, CancellationToken cancellationToken = default)
-        => _documentRepository.GetDistinctSubjectsAsync(ownerUserId, cancellationToken);
+    public Task<List<Major>> GetMajorsAsync(CancellationToken cancellationToken = default)
+        => _documentRepository.GetMajorsAsync(cancellationToken);
+
+    public Task<List<Subject>> GetSubjectsAsync(CancellationToken cancellationToken = default)
+        => _documentRepository.GetSubjectsAsync(cancellationToken);
+
+    public Task<List<DocumentType>> GetDocumentTypesAsync(CancellationToken cancellationToken = default)
+        => _documentRepository.GetDocumentTypesAsync(cancellationToken);
+
+    public Task<List<Language>> GetLanguagesAsync(CancellationToken cancellationToken = default)
+        => _documentRepository.GetLanguagesAsync(cancellationToken);
+
+    public async Task<Subject> CreateSubjectAsync(string code, string name, CancellationToken cancellationToken = default)
+    {
+        if (string.IsNullOrWhiteSpace(code)) throw new InvalidOperationException("Mã môn học không được để trống.");
+        if (string.IsNullOrWhiteSpace(name)) throw new InvalidOperationException("Tên môn học không được để trống.");
+
+        var normalizedCode = code.Trim().ToUpperInvariant();
+        var subjects = await _documentRepository.GetSubjectsAsync(cancellationToken);
+        if (subjects.Any(x => x.Code.Equals(normalizedCode, StringComparison.OrdinalIgnoreCase)))
+        {
+            throw new InvalidOperationException("Mã môn học đã tồn tại trong hệ thống.");
+        }
+
+        var subject = new Subject
+        {
+            Id = Guid.NewGuid(),
+            Code = normalizedCode,
+            Name = name.Trim(),
+            CreatedAt = DateTime.UtcNow
+        };
+
+        await _documentRepository.AddSubjectAsync(subject, cancellationToken);
+        await _documentRepository.SaveChangesAsync(cancellationToken);
+        return subject;
+    }
+
+    public async Task<DocumentType> CreateDocumentTypeAsync(string name, string? description, CancellationToken cancellationToken = default)
+    {
+        if (string.IsNullOrWhiteSpace(name)) throw new InvalidOperationException("Tên loại học liệu không được để trống.");
+
+        var trimmedName = name.Trim();
+        var docTypes = await _documentRepository.GetDocumentTypesAsync(cancellationToken);
+        if (docTypes.Any(x => x.Name.Equals(trimmedName, StringComparison.OrdinalIgnoreCase)))
+        {
+            throw new InvalidOperationException("Tên loại học liệu đã tồn tại trong hệ thống.");
+        }
+
+        var docType = new DocumentType
+        {
+            Id = Guid.NewGuid(),
+            Name = trimmedName,
+            Description = description?.Trim(),
+            CreatedAt = DateTime.UtcNow
+        };
+
+        await _documentRepository.AddDocumentTypeAsync(docType, cancellationToken);
+        await _documentRepository.SaveChangesAsync(cancellationToken);
+        return docType;
+    }
+
+    public async Task<Language> CreateLanguageAsync(string code, string name, CancellationToken cancellationToken = default)
+    {
+        if (string.IsNullOrWhiteSpace(code)) throw new InvalidOperationException("Mã ngôn ngữ không được để trống.");
+        if (string.IsNullOrWhiteSpace(name)) throw new InvalidOperationException("Tên ngôn ngữ không được để trống.");
+
+        var normalizedCode = code.Trim().ToLowerInvariant();
+        var trimmedName = name.Trim();
+        var languages = await _documentRepository.GetLanguagesAsync(cancellationToken);
+        if (languages.Any(x => x.Code.Equals(normalizedCode, StringComparison.OrdinalIgnoreCase)))
+        {
+            throw new InvalidOperationException("Mã ngôn ngữ đã tồn tại trong hệ thống.");
+        }
+        if (languages.Any(x => x.Name.Equals(trimmedName, StringComparison.OrdinalIgnoreCase)))
+        {
+            throw new InvalidOperationException("Tên ngôn ngữ đã tồn tại trong hệ thống.");
+        }
+
+        var language = new Language
+        {
+            Id = Guid.NewGuid(),
+            Code = normalizedCode,
+            Name = trimmedName,
+            CreatedAt = DateTime.UtcNow
+        };
+
+        await _documentRepository.AddLanguageAsync(language, cancellationToken);
+        await _documentRepository.SaveChangesAsync(cancellationToken);
+        return language;
+    }
 
     private static string BuildSearchText(Document document, string extractedText)
     {
         var safeExtractedText = string.IsNullOrWhiteSpace(extractedText) ? string.Empty : (extractedText.Length > 50000 ? extractedText.Substring(0, 50000) : extractedText);
-        return string.Join(" ", new[] { document.Title, document.Description, document.Subject, document.School, document.Department, safeExtractedText }.Where(x => !string.IsNullOrWhiteSpace(x)));
+        return string.Join(" ", new[] { document.Title, document.Description, document.Subject?.Name, document.Subject?.Code, document.Major?.Name, document.DocumentType?.Name, document.Language?.Name, document.AcademicTerm, safeExtractedText }.Where(x => !string.IsNullOrWhiteSpace(x)));
     }
 
     private static void ValidateFile(IFormFile file)
@@ -584,5 +704,100 @@ public class DocumentService : IDocumentService
         using var sha256 = SHA256.Create();
         var hash = await sha256.ComputeHashAsync(stream, cancellationToken);
         return Convert.ToHexString(hash).ToLowerInvariant();
+    }
+
+    public async Task<DocumentReport> ReportDocumentAsync(Guid documentId, Guid reporterUserId, string reason, CancellationToken cancellationToken = default)
+    {
+        if (string.IsNullOrWhiteSpace(reason)) throw new InvalidOperationException("Lý do báo cáo không được để trống.");
+
+        var document = await _documentRepository.GetDocumentAsync(documentId, cancellationToken);
+        if (document is null) throw new InvalidOperationException("Tài liệu không tồn tại.");
+
+        var report = new DocumentReport
+        {
+            Id = Guid.NewGuid(),
+            DocumentId = documentId,
+            ReporterUserId = reporterUserId,
+            Reason = reason.Trim(),
+            Status = "pending",
+            CreatedAt = DateTime.UtcNow
+        };
+
+        await _documentRepository.AddDocumentReportAsync(report, cancellationToken);
+        await _documentRepository.SaveChangesAsync(cancellationToken);
+        return report;
+    }
+
+    public Task<List<DocumentReport>> GetPendingReportsAsync(CancellationToken cancellationToken = default)
+    {
+        return _documentRepository.GetPendingReportsAsync(cancellationToken);
+    }
+
+    public async Task ResolveReportAsync(Guid reportId, string action, CancellationToken cancellationToken = default)
+    {
+        var report = await _documentRepository.GetDocumentReportAsync(reportId, cancellationToken)
+            ?? throw new InvalidOperationException("Báo cáo không tồn tại.");
+
+        if (action.Equals("delete", StringComparison.OrdinalIgnoreCase))
+        {
+            await DeleteDocumentAsync(report.DocumentId, cancellationToken);
+        }
+        else
+        {
+            var reports = await _documentRepository.GetDocumentReportsByDocumentAsync(report.DocumentId, cancellationToken);
+            foreach (var r in reports)
+            {
+                r.Status = "resolved";
+            }
+            await _documentRepository.SaveChangesAsync(cancellationToken);
+        }
+    }
+
+    public async Task<MyDocumentsDto> GetAdminDocumentsAsync(string? query, Guid? subjectId, int page = 1, int pageSize = 10, CancellationToken cancellationToken = default)
+    {
+        pageSize = Math.Clamp(pageSize, 5, 100);
+        page = Math.Max(page, 1);
+        
+        var totalDocuments = await _documentRepository.CountAdminDocumentsAsync(query, subjectId, cancellationToken);
+        var totalPages = Math.Max(1, (int)Math.Ceiling(totalDocuments / (double)pageSize));
+        page = Math.Clamp(page, 1, totalPages);
+
+        var documents = await _documentRepository.GetAdminDocumentsAsync(query, subjectId, page, pageSize, cancellationToken);
+
+        return new MyDocumentsDto
+        {
+            Documents = documents.Select(x => new DocumentListItemDto
+            {
+                Id = x.Id,
+                Slug = x.Slug ?? string.Empty,
+                Title = x.Title,
+                MajorId = x.MajorId,
+                MajorName = x.Major?.Name,
+                SubjectId = x.SubjectId,
+                SubjectName = x.Subject?.Name,
+                SubjectCode = x.Subject?.Code,
+                DocumentTypeId = x.DocumentTypeId,
+                DocumentTypeName = x.DocumentType?.Name,
+                AcademicTerm = x.AcademicTerm,
+                Status = x.Status,
+                Visibility = x.Visibility,
+                CreatedAt = x.CreatedAt,
+                UpdatedAt = x.UpdatedAt,
+                FileCount = x.DocumentFiles.Count,
+                ChunkCount = x.TotalChunks,
+                PreviewText = x.Description ?? string.Empty,
+                OwnerEmail = x.OwnerUser?.Email
+            }).ToList(),
+            TotalDocuments = totalDocuments,
+            PendingDocuments = 0,
+            ApprovedDocuments = 0,
+            RejectedDocuments = 0,
+            TotalFiles = documents.Sum(x => x.DocumentFiles.Count),
+            TotalChunks = documents.Sum(x => x.TotalChunks),
+            Page = page,
+            PageSize = pageSize,
+            TotalPages = totalPages,
+            ActiveUploadJobs = []
+        };
     }
 }

@@ -162,27 +162,41 @@
                     </div>
 
                     <div class="col-md-6">
-                        <label asp-for="Subject" class="form-label font-mono-xs text-muted-foreground mb-1" style="font-size: 9px; letter-spacing: 0.08em;">MÔN HỌC / CHỦ ĐỀ</label>
-                        <input asp-for="Subject" class="form-control form-glass-input" placeholder="Ví dụ: SWD392, PRN222..." />
-                        <span asp-validation-for="Subject" class="text-danger small"></span>
+                        <label asp-for="SubjectId" class="form-label font-mono-xs text-muted-foreground mb-1" style="font-size: 9px; letter-spacing: 0.08em;">MÔN HỌC</label>
+                        <select asp-for="SubjectId" class="form-select form-glass-select" asp-items="@(new SelectList(ViewBag.Subjects, "Id", "Name"))">
+                            <option value="">-- Chọn môn học --</option>
+                        </select>
+                        <span asp-validation-for="SubjectId" class="text-danger small"></span>
                     </div>
 
                     <div class="col-md-6">
-                        <label asp-for="School" class="form-label font-mono-xs text-muted-foreground mb-1" style="font-size: 9px; letter-spacing: 0.08em;">TRƯỜNG HỌC</label>
-                        <input asp-for="School" class="form-control form-glass-input" placeholder="Ví dụ: Đại học FPT..." />
-                        <span asp-validation-for="School" class="text-danger small"></span>
+                        <label asp-for="MajorId" class="form-label font-mono-xs text-muted-foreground mb-1" style="font-size: 9px; letter-spacing: 0.08em;">NGÀNH HỌC</label>
+                        <select asp-for="MajorId" class="form-select form-glass-select" asp-items="@(new SelectList(ViewBag.Majors, "Id", "Name"))">
+                            <option value="">-- Chọn ngành học --</option>
+                        </select>
+                        <span asp-validation-for="MajorId" class="text-danger small"></span>
                     </div>
 
                     <div class="col-md-6">
-                        <label asp-for="Department" class="form-label font-mono-xs text-muted-foreground mb-1" style="font-size: 9px; letter-spacing: 0.08em;">KHOA / NGÀNH HỌC</label>
-                        <input asp-for="Department" class="form-control form-glass-input" placeholder="Ví dụ: Kỹ thuật phần mềm..." />
-                        <span asp-validation-for="Department" class="text-danger small"></span>
+                        <label asp-for="DocumentTypeId" class="form-label font-mono-xs text-muted-foreground mb-1" style="font-size: 9px; letter-spacing: 0.08em;">LOẠI HỌC LIỆU</label>
+                        <select asp-for="DocumentTypeId" class="form-select form-glass-select" asp-items="@(new SelectList(ViewBag.DocumentTypes, "Id", "Name"))">
+                            <option value="">-- Chọn loại học liệu --</option>
+                        </select>
+                        <span asp-validation-for="DocumentTypeId" class="text-danger small"></span>
                     </div>
 
                     <div class="col-md-6">
-                        <label asp-for="Language" class="form-label font-mono-xs text-muted-foreground mb-1" style="font-size: 9px; letter-spacing: 0.08em;">NGÔN NGỮ</label>
-                        <input asp-for="Language" class="form-control form-glass-input" placeholder="Ví dụ: vi, en..." />
-                        <span asp-validation-for="Language" class="text-danger small"></span>
+                        <label asp-for="AcademicTerm" class="form-label font-mono-xs text-muted-foreground mb-1" style="font-size: 9px; letter-spacing: 0.08em;">HỌC KỲ ACADEMIC</label>
+                        <input asp-for="AcademicTerm" class="form-control form-glass-input" placeholder="Ví dụ: Spring 2026, Summer 2026..." />
+                        <span asp-validation-for="AcademicTerm" class="text-danger small"></span>
+                    </div>
+
+                    <div class="col-md-6">
+                        <label asp-for="LanguageId" class="form-label font-mono-xs text-muted-foreground mb-1" style="font-size: 9px; letter-spacing: 0.08em;">NGÔN NGỮ</label>
+                        <select asp-for="LanguageId" class="form-select form-glass-select" asp-items="@(new SelectList(ViewBag.Languages, "Id", "Name"))">
+                            <option value="">-- Chọn ngôn ngữ --</option>
+                        </select>
+                        <span asp-validation-for="LanguageId" class="text-danger small"></span>
                     </div>
 
                     <div class="col-12 my-3">

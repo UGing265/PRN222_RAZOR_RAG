@@ -350,24 +350,24 @@
             </div>
 
             <!-- Subject Dropdown Filter -->
-            <input type="hidden" name="subject" id="selectedSubjectInput" value="@ViewBag.SelectedSubject" />
+            <input type="hidden" name="subjectId" id="selectedSubjectInput" value="@ViewBag.SelectedSubjectId" />
             <div class="dropdown pe-2 border-start d-flex align-items-center" style="border-color: rgba(0,0,0,0.12) !important;">
                 <button class="dropdown-toggle-premium" type="button" id="subjectDropdown" data-bs-toggle="dropdown" aria-expanded="false">
-                    @(string.IsNullOrWhiteSpace(ViewBag.SelectedSubject) ? "Tất cả môn học" : ViewBag.SelectedSubject)
+                    @(string.IsNullOrWhiteSpace(ViewBag.SelectedSubjectName) ? "Tất cả môn học" : ViewBag.SelectedSubjectName)
                 </button>
                 <ul class="dropdown-menu premium-dropdown-menu dropdown-menu-end shadow-lg" aria-labelledby="subjectDropdown">
                     <li>
-                        <a class="dropdown-item premium-dropdown-item @(string.IsNullOrWhiteSpace(ViewBag.SelectedSubject) ? "active" : "")" onclick="selectSubject('')">
+                        <a class="dropdown-item premium-dropdown-item @(ViewBag.SelectedSubjectId == null ? "active" : "")" onclick="selectSubject('')">
                             Tất cả môn học
                         </a>
                     </li>
-                    @if (ViewBag.Subjects is List<string> subjects)
+                    @if (ViewBag.Subjects is List<DAL.Entities.Subject> subjects)
                     {
                         foreach (var sub in subjects)
                         {
                             <li>
-                                <a class="dropdown-item premium-dropdown-item @(ViewBag.SelectedSubject == sub ? "active" : "")" onclick="selectSubject('@sub')">
-                                    @sub
+                                <a class="dropdown-item premium-dropdown-item @(ViewBag.SelectedSubjectId == sub.Id ? "active" : "")" onclick="selectSubject('@sub.Id')">
+                                    @sub.Name
                                 </a>
                             </li>
                         }
@@ -376,7 +376,7 @@
             </div>
             
             <div class="d-flex align-items-center gap-2 flex-shrink-0 pe-1">
-                @if (!string.IsNullOrWhiteSpace(ViewBag.Query) || !string.IsNullOrWhiteSpace(ViewBag.SelectedSubject))
+                @if (!string.IsNullOrWhiteSpace(ViewBag.Query) || ViewBag.SelectedSubjectId != null)
                 {
                     <a asp-action="MyDocuments" class="btn btn-link text-muted px-2 text-decoration-none small hover-text-dark" style="font-size: 0.88rem;">Xoá Lọc</a>
                 }
@@ -387,11 +387,11 @@
         <!-- Dynamic Filter Chips -->
         <div class="d-flex align-items-center gap-2 flex-wrap mb-5">
             <span class="text-muted small me-2" style="font-size: 0.8rem; font-weight: 500;">Gợi ý chủ đề:</span>
-            @if (ViewBag.Subjects is List<string> suggSubjects && suggSubjects.Any())
+            @if (ViewBag.Subjects is List<DAL.Entities.Subject> suggSubjects && suggSubjects.Any())
             {
                 @foreach (var sub in suggSubjects.Take(5))
                 {
-                    <a href="?subject=@sub" class="filter-chip @(ViewBag.SelectedSubject == sub ? "active" : "")">@sub</a>
+                    <a href="?subjectId=@sub.Id" class="filter-chip @(ViewBag.SelectedSubjectId == sub.Id ? "active" : "")">@sub.Name</a>
                 }
             }
             else
@@ -437,10 +437,18 @@
                         <div class="library-card h-100 p-4">
                             <div>
                                 <!-- Subject Badge and Status -->
-                                <div class="d-flex align-items-center justify-content-between gap-3 mb-3">
-                                    <span class="subject-badge">
-                                        @(string.IsNullOrWhiteSpace(item.Subject) ? "Tài Liệu Chung" : item.Subject)
-                                    </span>
+                                <div class="d-flex align-items-center justify-content-between gap-3 mb-3 flex-wrap">
+                                    <div class="d-flex align-items-center gap-1.5 flex-wrap">
+                                        <span class="subject-badge">
+                                            @(string.IsNullOrWhiteSpace(item.SubjectName) ? "Tài Liệu" : item.SubjectName)
+                                        </span>
+                                        @if (!string.IsNullOrWhiteSpace(item.MajorName))
+                                        {
+                                            <span class="premium-accent-chip" style="font-size: 0.7rem; border-radius: 99px; padding: 2px 10px; background: rgba(82, 39, 27, 0.05) !important; border: 1px solid rgba(82, 39, 27, 0.1) !important; color: var(--brown) !important; font-family: var(--font-mono) !important; font-weight: 600 !important;">
+                                                @item.MajorName
+                                            </span>
+                                        }
+                                    </div>
                                     <span class="status-badge @GetStatusClass(item.Status)">
                                         @GetStatusText(item.Status)
                                     </span>
@@ -484,21 +492,21 @@
             <nav class="d-flex justify-content-center mt-5">
                 <ul class="pagination gap-2 border-0">
                     <li class="page-item @(Model.Page == 1 ? "disabled" : "")">
-                        <a class="page-link pill-button px-3 py-2 border-0" href="?q=@(ViewBag.Query)&subject=@(ViewBag.SelectedSubject)&page=@(Model.Page - 1)" style="border-radius: 12px; color: var(--brown); background: rgba(255,255,255,0.4); font-size: 0.85rem;">
+                        <a class="page-link pill-button px-3 py-2 border-0" href="?q=@(ViewBag.Query)&subjectId=@(ViewBag.SelectedSubjectId)&page=@(Model.Page - 1)" style="border-radius: 12px; color: var(--brown); background: rgba(255,255,255,0.4); font-size: 0.85rem;">
                             Trước
                         </a>
                     </li>
                     @for (int i = 1; i <= Model.TotalPages; i++)
                     {
                         <li class="page-item @(Model.Page == i ? "active" : "")">
-                            <a class="page-link pill-button px-3.5 py-2 border-0" href="?q=@(ViewBag.Query)&subject=@(ViewBag.SelectedSubject)&page=@i" 
+                            <a class="page-link pill-button px-3.5 py-2 border-0" href="?q=@(ViewBag.Query)&subjectId=@(ViewBag.SelectedSubjectId)&page=@i" 
                                style="border-radius: 12px; font-size: 0.85rem; font-weight: 600; @(Model.Page == i ? "background: var(--brown) !important; color: #fff !important;" : "color: var(--brown); background: rgba(255,255,255,0.4);")">
                                 @i
                             </a>
                         </li>
                     }
                     <li class="page-item @(Model.Page == Model.TotalPages ? "disabled" : "")">
-                        <a class="page-link pill-button px-3 py-2 border-0" href="?q=@(ViewBag.Query)&subject=@(ViewBag.SelectedSubject)&page=@(Model.Page + 1)" style="border-radius: 12px; color: var(--brown); background: rgba(255,255,255,0.4); font-size: 0.85rem;">
+                        <a class="page-link pill-button px-3 py-2 border-0" href="?q=@(ViewBag.Query)&subjectId=@(ViewBag.SelectedSubjectId)&page=@(Model.Page + 1)" style="border-radius: 12px; color: var(--brown); background: rgba(255,255,255,0.4); font-size: 0.85rem;">
                             Sau
                         </a>
                     </li>

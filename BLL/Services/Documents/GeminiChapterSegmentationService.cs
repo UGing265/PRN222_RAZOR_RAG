@@ -118,7 +118,7 @@ Yêu cầu BẮT BUỘC:
 Thông tin tài liệu:
 - Title: __TITLE__
 - Subject: __SUBJECT__
-- School: __SCHOOL__
+- Major: __MAJOR__
 - Language: __LANGUAGE__
 
 Chunks:
@@ -139,9 +139,9 @@ __CHUNKPACK__
 """
 .Replace("__PREVIOUS_CONTEXT__", string.IsNullOrWhiteSpace(lastChapterTitle) ? "" : $"LƯU Ý QUAN TRỌNG: Các phần trước của tài liệu đã được xử lý. Chương cuối cùng của phần trước có tên là '{lastChapterTitle}'. Hãy phân tích tiếp nối nội dung từ đây, đánh số thứ tự chương tiếp theo cho phù hợp, TUYỆT ĐỐI KHÔNG bắt đầu đánh số lại từ Chương 1.")
 .Replace("__TITLE__", document.Title)
-.Replace("__SUBJECT__", document.Subject ?? string.Empty)
-.Replace("__SCHOOL__", document.School ?? string.Empty)
-.Replace("__LANGUAGE__", document.Language ?? string.Empty)
+.Replace("__SUBJECT__", document.Subject?.Name ?? string.Empty)
+.Replace("__MAJOR__", document.Major?.Name ?? string.Empty)
+.Replace("__LANGUAGE__", document.Language?.Name ?? string.Empty)
 .Replace("__CHUNKPACK__", chunkPack);
 
         Exception? lastError = null;

@@ -1,6 +1,11 @@
 using BLL.DTOs.Documents;
 using DAL.Entities;
 using Microsoft.AspNetCore.Http;
+using System;
+using System.Collections.Generic;
+using System.IO;
+using System.Threading;
+using System.Threading.Tasks;
 
 namespace BLL.Interfaces.Documents;
 
@@ -17,8 +22,8 @@ public interface IDocumentService
     Task<Document?> GetDocumentWithFilesBySlugAsync(string slug, CancellationToken cancellationToken = default);
     Task<Document?> GetDocumentForOwnerAsync(Guid documentId, Guid ownerUserId, CancellationToken cancellationToken = default);
     Task<Document?> GetOwnedDocumentBySlugAsync(string slug, Guid ownerUserId, CancellationToken cancellationToken = default);
-    Task<MyDocumentsDto> GetMyDocumentsAsync(Guid ownerUserId, string? query, string? subject, int page = 1, int pageSize = 6, CancellationToken cancellationToken = default);
-    Task<MyDocumentsDto> GetAllDocumentsAsync(string? query, string? subject, int page = 1, int pageSize = 6, Guid? requesterUserId = null, CancellationToken cancellationToken = default);
+    Task<MyDocumentsDto> GetMyDocumentsAsync(Guid ownerUserId, string? query, Guid? subjectId, int page = 1, int pageSize = 6, CancellationToken cancellationToken = default);
+    Task<MyDocumentsDto> GetAllDocumentsAsync(string? query, Guid? subjectId, int page = 1, int pageSize = 6, Guid? requesterUserId = null, CancellationToken cancellationToken = default);
     Task<int> CountMyDocumentsAsync(Guid ownerUserId, string? query, CancellationToken cancellationToken = default);
     Task<int> CountMyDocumentsByStatusAsync(Guid ownerUserId, string status, CancellationToken cancellationToken = default);
     Task<int> CountMyFilesAsync(Guid ownerUserId, CancellationToken cancellationToken = default);
@@ -33,5 +38,15 @@ public interface IDocumentService
     Task<List<DocumentChapter>> GenerateChaptersAsync(Guid documentId, CancellationToken cancellationToken = default);
     Task<DashboardSummaryDto> GetDashboardSummaryAsync(Guid ownerUserId, CancellationToken cancellationToken = default);
     Task<List<UploadJobSummaryDto>> GetUploadJobsAsync(Guid ownerUserId, CancellationToken cancellationToken = default);
-    Task<List<string>> GetDistinctSubjectsAsync(Guid? ownerUserId = null, CancellationToken cancellationToken = default);
+    Task<List<Major>> GetMajorsAsync(CancellationToken cancellationToken = default);
+    Task<List<Subject>> GetSubjectsAsync(CancellationToken cancellationToken = default);
+    Task<List<DocumentType>> GetDocumentTypesAsync(CancellationToken cancellationToken = default);
+    Task<List<Language>> GetLanguagesAsync(CancellationToken cancellationToken = default);
+    Task<Subject> CreateSubjectAsync(string code, string name, CancellationToken cancellationToken = default);
+    Task<DocumentType> CreateDocumentTypeAsync(string name, string? description, CancellationToken cancellationToken = default);
+    Task<Language> CreateLanguageAsync(string code, string name, CancellationToken cancellationToken = default);
+    Task<DocumentReport> ReportDocumentAsync(Guid documentId, Guid reporterUserId, string reason, CancellationToken cancellationToken = default);
+    Task<List<DocumentReport>> GetPendingReportsAsync(CancellationToken cancellationToken = default);
+    Task ResolveReportAsync(Guid reportId, string action, CancellationToken cancellationToken = default);
+    Task<MyDocumentsDto> GetAdminDocumentsAsync(string? query, Guid? subjectId, int page = 1, int pageSize = 10, CancellationToken cancellationToken = default);
 }

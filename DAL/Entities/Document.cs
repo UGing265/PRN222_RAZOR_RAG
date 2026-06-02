@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations.Schema;
 
@@ -16,15 +16,20 @@ public partial class Document
 
     public string? Description { get; set; }
 
-    public string? Subject { get; set; }
+    public Guid? MajorId { get; set; }
 
-    public string? School { get; set; }
+    public Guid? SubjectId { get; set; }
 
-    public string? Department { get; set; }
+    [Column("document_type_id")]
+    public Guid? DocumentTypeId { get; set; }
+
+    [Column("academic_term")]
+    public string? AcademicTerm { get; set; }
 
     public string Status { get; set; } = null!;
 
-    public string? Language { get; set; }
+    [Column("language_id")]
+    public Guid? LanguageId { get; set; }
 
     public string Visibility { get; set; } = null!;
 
@@ -36,6 +41,12 @@ public partial class Document
     public int TotalChunks { get; set; }
 
     public int TotalChapters { get; set; }
+
+    [Column("view_count")]
+    public int ViewCount { get; set; }
+
+    [Column("download_count")]
+    public int DownloadCount { get; set; }
 
     public string? SearchText { get; set; }
 
@@ -53,5 +64,17 @@ public partial class Document
 
     public virtual User OwnerUser { get; set; } = null!;
 
+    public virtual Major? Major { get; set; }
+
+    public virtual Subject? Subject { get; set; }
+
+    public virtual DocumentType? DocumentType { get; set; }
+
+    public virtual Language? Language { get; set; }
+
     public virtual ICollection<Tag> Tags { get; set; } = new List<Tag>();
+
+    public virtual ICollection<UserBookmark> UserBookmarks { get; set; } = new List<UserBookmark>();
+
+    public virtual ICollection<DocumentReport> DocumentReports { get; set; } = new List<DocumentReport>();
 }

@@ -1,19 +1,31 @@
+using System;
+using System.Collections.Generic;
+
 namespace GUI.Models.Documents;
 
 public class DocumentDetailsViewModel
 {
     public Guid Id { get; set; }
+    public Guid OwnerUserId { get; set; }
     public string Slug { get; set; } = string.Empty;
     public string Title { get; set; } = string.Empty;
-    public string? Subject { get; set; }
-    public string? School { get; set; }
-    public string? Department { get; set; }
+    public string? SubjectName { get; set; }
+    public string? SubjectCode { get; set; }
+    public string? MajorName { get; set; }
+    public string? MajorCode { get; set; }
+    public Guid? DocumentTypeId { get; set; }
+    public string? DocumentTypeName { get; set; }
+    public string? AcademicTerm { get; set; }
     public string? Visibility { get; set; }
-    public string? Language { get; set; }
+    public Guid? LanguageId { get; set; }
+    public string? LanguageCode { get; set; }
+    public string? LanguageName { get; set; }
     public string? Description { get; set; }
     public string? Status { get; set; }
     public int TotalChunks { get; set; }
     public int TotalChapters { get; set; }
+    public int ViewCount { get; set; }
+    public int DownloadCount { get; set; }
     public DateTime? ApprovedAt { get; set; }
     public int FileCount { get; set; }
     public int ChunkPage { get; set; } = 1;

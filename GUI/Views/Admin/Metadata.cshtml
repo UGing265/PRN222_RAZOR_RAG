@@ -1,0 +1,306 @@
+@model GUI.Models.Documents.AdminMetadataViewModel
+
+@{
+    ViewData["Title"] = "Quản Lý Danh Mục";
+    string activeTab = ViewBag.ActiveTab as string ?? "subjects";
+}
+
+<div class="page-shell">
+    <main class="container-fluid px-4 px-md-5 py-5" style="max-width: 1200px;">
+        <!-- Top Heading Area -->
+        <div class="d-flex align-items-center justify-content-between mb-5">
+            <div>
+                <h1 class="hero-title mb-1" style="font-size: clamp(2rem, 4vw, 3rem);">Quản Lý Danh Mục</h1>
+                <p class="text-muted-foreground font-mono-xs">Cấu hình các danh mục Môn học, Loại tài liệu và Ngôn ngữ trong hệ thống</p>
+            </div>
+        </div>
+
+        @if (TempData["SuccessMessage"] != null)
+        {
+            <div class="alert alert-success pill-input border-0 mb-4 px-4 py-3 d-flex align-items-center gap-2" style="background: rgba(43, 92, 67, 0.12); color: #1e3f2e;">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
+                <span>@TempData["SuccessMessage"]</span>
+            </div>
+        }
+        @if (TempData["ErrorMessage"] != null)
+        {
+            <div class="alert alert-danger pill-input border-0 mb-4 px-4 py-3 d-flex align-items-center gap-2" style="background: rgba(139, 0, 0, 0.08); color: #8b0000;">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+                <span>@TempData["ErrorMessage"]</span>
+            </div>
+        }
+
+        <!-- Tabs Area -->
+        <ul class="nav nav-tabs border-0 mb-4 d-flex gap-2 font-mono-xs" id="metadataTabs" role="tablist">
+            <li class="nav-item" role="presentation">
+                <button class="nav-link pill-button px-4 py-2 text-decoration-none border-0 @(activeTab == "subjects" ? "active" : "")" id="subjects-tab" data-bs-toggle="tab" data-bs-target="#subjects-pane" type="button" role="tab" aria-controls="subjects-pane" aria-selected="@(activeTab == "subjects" ? "true" : "false")" style="border-radius: 100px;">
+                    Môn Học (@Model.Subjects.Count)
+                </button>
+            </li>
+            <li class="nav-item" role="presentation">
+                <button class="nav-link pill-button px-4 py-2 text-decoration-none border-0 @(activeTab == "documenttypes" ? "active" : "")" id="documenttypes-tab" data-bs-toggle="tab" data-bs-target="#documenttypes-pane" type="button" role="tab" aria-controls="documenttypes-pane" aria-selected="@(activeTab == "documenttypes" ? "true" : "false")" style="border-radius: 100px;">
+                    Loại Học Liệu (@Model.DocumentTypes.Count)
+                </button>
+            </li>
+            <li class="nav-item" role="presentation">
+                <button class="nav-link pill-button px-4 py-2 text-decoration-none border-0 @(activeTab == "languages" ? "active" : "")" id="languages-tab" data-bs-toggle="tab" data-bs-target="#languages-pane" type="button" role="tab" aria-controls="languages-pane" aria-selected="@(activeTab == "languages" ? "true" : "false")" style="border-radius: 100px;">
+                    Ngôn Ngữ (@Model.Languages.Count)
+                </button>
+            </li>
+        </ul>
+
+        <div class="tab-content" id="metadataTabsContent">
+            <!-- Subjects Tab -->
+            <div class="tab-pane fade @(activeTab == "subjects" ? "show active" : "")" id="subjects-pane" role="tabpanel" aria-labelledby="subjects-tab">
+                <div class="row g-4">
+                    <!-- List of Subjects -->
+                    <div class="col-lg-8">
+                        <div class="soft-panel editorial-shadow p-4 p-md-5" style="background: rgba(255,255,255,.72); border-radius: 24px;">
+                            <h2 class="h4 fw-bold text-foreground mb-4 font-mono-xs">Danh Sách Môn Học</h2>
+                            @if (!Model.Subjects.Any())
+                            {
+                                <div class="text-center py-5">
+                                    <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.2" class="text-muted mb-3"><path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/></svg>
+                                    <h3 class="font-mono-xs text-muted-foreground">Chưa có môn học nào trong hệ thống.</h3>
+                                </div>
+                            }
+                            else
+                            {
+                                <div class="table-responsive">
+                                    <table class="table table-hover align-middle mb-0" style="border-collapse: separate; border-spacing: 0 12px;">
+                                        <thead>
+                                            <tr class="font-mono-xs text-muted-foreground" style="border: none;">
+                                                <th scope="col" class="pb-3 border-0 ps-3">Mã Môn</th>
+                                                <th scope="col" class="pb-3 border-0">Tên Môn Học</th>
+                                                <th scope="col" class="pb-3 border-0 text-end pe-3">Ngày Tạo</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            @foreach (var item in Model.Subjects)
+                                            {
+                                                <tr class="glass-row" style="background: rgba(255, 255, 255, 0.4); border-radius: 16px; box-shadow: 0 4px 12px rgba(0,0,0,0.02); transition: all 0.2s ease;">
+                                                    <td class="ps-3 py-3 border-0 fw-bold font-mono-xs text-foreground" style="border-radius: 12px 0 0 12px; color: #4a1f16 !important;">
+                                                        @item.Code
+                                                    </td>
+                                                    <td class="py-3 border-0 fw-medium text-muted-foreground">@item.Name</td>
+                                                    <td class="py-3 border-0 text-end text-muted font-mono-xs pe-3" style="border-radius: 0 12px 12px 0;">
+                                                        @item.CreatedAt.ToLocalTime().ToString("dd/MM/yyyy HH:mm")
+                                                    </td>
+                                                </tr>
+                                            }
+                                        </tbody>
+                                    </table>
+                                </div>
+                            }
+                        </div>
+                    </div>
+                    <!-- Creation Form -->
+                    <div class="col-lg-4">
+                        <div class="soft-panel editorial-shadow p-4" style="background: rgba(255,255,255,.8); border-radius: 24px; border: 1px solid rgba(74, 31, 22, 0.08);">
+                            <h2 class="h5 fw-bold text-foreground mb-4 d-flex align-items-center gap-2 font-mono-xs">
+                                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M12 5v14M5 12h14"/></svg>
+                                Thêm Môn Học Mới
+                            </h2>
+                            <form asp-action="CreateSubject" method="post">
+                                <div class="mb-3">
+                                    <label for="subjectCode" class="form-label font-mono-xs text-muted-foreground">Mã môn học</label>
+                                    <input type="text" class="form-control pill-input" id="subjectCode" name="code" placeholder="Ví dụ: PRN222" required style="background: rgba(255,255,255,0.5); border: 1px solid rgba(0,0,0,0.08); border-radius: 12px; padding: 12px 16px;" oninput="this.value = this.value.toUpperCase()" />
+                                </div>
+                                <div class="mb-4">
+                                    <label for="subjectName" class="form-label font-mono-xs text-muted-foreground">Tên môn học</label>
+                                    <input type="text" class="form-control pill-input" id="subjectName" name="name" placeholder="Ví dụ: C# và ứng dụng" required style="background: rgba(255,255,255,0.5); border: 1px solid rgba(0,0,0,0.08); border-radius: 12px; padding: 12px 16px;" />
+                                </div>
+                                <button type="submit" class="btn btn-dark w-100 pill-button py-2.5 font-mono-xs text-white" style="background: #4a1f16; border: none; border-radius: 100px; font-weight: 600; box-shadow: 0 4px 12px rgba(74, 31, 22, 0.2); transition: all 0.2s;">
+                                    Tạo Môn Học
+                                </button>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Document Types Tab -->
+            <div class="tab-pane fade @(activeTab == "documenttypes" ? "show active" : "")" id="documenttypes-pane" role="tabpanel" aria-labelledby="documenttypes-tab">
+                <div class="row g-4">
+                    <!-- List of Document Types -->
+                    <div class="col-lg-8">
+                        <div class="soft-panel editorial-shadow p-4 p-md-5" style="background: rgba(255,255,255,.72); border-radius: 24px;">
+                            <h2 class="h4 fw-bold text-foreground mb-4 font-mono-xs">Danh Sách Loại Học Liệu</h2>
+                            @if (!Model.DocumentTypes.Any())
+                            {
+                                <div class="text-center py-5">
+                                    <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.2" class="text-muted mb-3"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+                                    <h3 class="font-mono-xs text-muted-foreground">Chưa có loại học liệu nào trong hệ thống.</h3>
+                                </div>
+                            }
+                            else
+                            {
+                                <div class="table-responsive">
+                                    <table class="table table-hover align-middle mb-0" style="border-collapse: separate; border-spacing: 0 12px;">
+                                        <thead>
+                                            <tr class="font-mono-xs text-muted-foreground" style="border: none;">
+                                                <th scope="col" class="pb-3 border-0 ps-3">Tên Loại</th>
+                                                <th scope="col" class="pb-3 border-0">Mô Tả</th>
+                                                <th scope="col" class="pb-3 border-0 text-end pe-3">Ngày Tạo</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            @foreach (var item in Model.DocumentTypes)
+                                            {
+                                                <tr class="glass-row" style="background: rgba(255, 255, 255, 0.4); border-radius: 16px; box-shadow: 0 4px 12px rgba(0,0,0,0.02); transition: all 0.2s ease;">
+                                                    <td class="ps-3 py-3 border-0 fw-bold font-mono-xs text-foreground" style="border-radius: 12px 0 0 12px; color: #2b5c43 !important;">
+                                                        @item.Name
+                                                    </td>
+                                                    <td class="py-3 border-0 fw-medium text-muted-foreground">@(item.Description ?? "Không có mô tả")</td>
+                                                    <td class="py-3 border-0 text-end text-muted font-mono-xs pe-3" style="border-radius: 0 12px 12px 0;">
+                                                        @item.CreatedAt.ToLocalTime().ToString("dd/MM/yyyy HH:mm")
+                                                    </td>
+                                                </tr>
+                                            }
+                                        </tbody>
+                                    </table>
+                                </div>
+                            }
+                        </div>
+                    </div>
+                    <!-- Creation Form -->
+                    <div class="col-lg-4">
+                        <div class="soft-panel editorial-shadow p-4" style="background: rgba(255,255,255,.8); border-radius: 24px; border: 1px solid rgba(43, 92, 67, 0.08);">
+                            <h2 class="h5 fw-bold text-foreground mb-4 d-flex align-items-center gap-2 font-mono-xs">
+                                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M12 5v14M5 12h14"/></svg>
+                                Thêm Loại Học Liệu Mới
+                            </h2>
+                            <form asp-action="CreateDocumentType" method="post">
+                                <div class="mb-3">
+                                    <label for="docTypeName" class="form-label font-mono-xs text-muted-foreground">Tên loại học liệu</label>
+                                    <input type="text" class="form-control pill-input" id="docTypeName" name="name" placeholder="Ví dụ: Đề thi thử, Slide bài giảng" required style="background: rgba(255,255,255,0.5); border: 1px solid rgba(0,0,0,0.08); border-radius: 12px; padding: 12px 16px;" />
+                                </div>
+                                <div class="mb-4">
+                                    <label for="docTypeDesc" class="form-label font-mono-xs text-muted-foreground">Mô tả chi tiết</label>
+                                    <textarea class="form-control pill-input" id="docTypeDesc" name="description" placeholder="Mô tả công dụng hoặc phạm vi của loại học liệu này..." rows="3" style="background: rgba(255,255,255,0.5); border: 1px solid rgba(0,0,0,0.08); border-radius: 12px; padding: 12px 16px; resize: none;"></textarea>
+                                </div>
+                                <button type="submit" class="btn btn-dark w-100 pill-button py-2.5 font-mono-xs text-white" style="background: #2b5c43; border: none; border-radius: 100px; font-weight: 600; box-shadow: 0 4px 12px rgba(43, 92, 67, 0.2); transition: all 0.2s;">
+                                    Tạo Loại Học Liệu
+                                </button>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Languages Tab -->
+            <div class="tab-pane fade @(activeTab == "languages" ? "show active" : "")" id="languages-pane" role="tabpanel" aria-labelledby="languages-tab">
+                <div class="row g-4">
+                    <!-- List of Languages -->
+                    <div class="col-lg-8">
+                        <div class="soft-panel editorial-shadow p-4 p-md-5" style="background: rgba(255,255,255,.72); border-radius: 24px;">
+                            <h2 class="h4 fw-bold text-foreground mb-4 font-mono-xs">Danh Sách Ngôn Ngữ</h2>
+                            @if (!Model.Languages.Any())
+                            {
+                                <div class="text-center py-5">
+                                    <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.2" class="text-muted mb-3"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>
+                                    <h3 class="font-mono-xs text-muted-foreground">Chưa có ngôn ngữ nào trong hệ thống.</h3>
+                                </div>
+                            }
+                            else
+                            {
+                                <div class="table-responsive">
+                                    <table class="table table-hover align-middle mb-0" style="border-collapse: separate; border-spacing: 0 12px;">
+                                        <thead>
+                                            <tr class="font-mono-xs text-muted-foreground" style="border: none;">
+                                                <th scope="col" class="pb-3 border-0 ps-3">Mã Ngôn Ngữ</th>
+                                                <th scope="col" class="pb-3 border-0">Tên Ngôn Ngữ</th>
+                                                <th scope="col" class="pb-3 border-0 text-end pe-3">Ngày Tạo</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            @foreach (var item in Model.Languages)
+                                            {
+                                                <tr class="glass-row" style="background: rgba(255, 255, 255, 0.4); border-radius: 16px; box-shadow: 0 4px 12px rgba(0,0,0,0.02); transition: all 0.2s ease;">
+                                                    <td class="ps-3 py-3 border-0 fw-bold font-mono-xs text-foreground" style="border-radius: 12px 0 0 12px; color: #1e3e62 !important;">
+                                                        @item.Code
+                                                    </td>
+                                                    <td class="py-3 border-0 fw-medium text-muted-foreground">@item.Name</td>
+                                                    <td class="py-3 border-0 text-end text-muted font-mono-xs pe-3" style="border-radius: 0 12px 12px 0;">
+                                                        @item.CreatedAt.ToLocalTime().ToString("dd/MM/yyyy HH:mm")
+                                                    </td>
+                                                </tr>
+                                            }
+                                        </tbody>
+                                    </table>
+                                </div>
+                            }
+                        </div>
+                    </div>
+                    <!-- Creation Form -->
+                    <div class="col-lg-4">
+                        <div class="soft-panel editorial-shadow p-4" style="background: rgba(255,255,255,.8); border-radius: 24px; border: 1px solid rgba(30, 62, 98, 0.08);">
+                            <h2 class="h5 fw-bold text-foreground mb-4 d-flex align-items-center gap-2 font-mono-xs">
+                                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M12 5v14M5 12h14"/></svg>
+                                Thêm Ngôn Ngữ Mới
+                            </h2>
+                            <form asp-action="CreateLanguage" method="post">
+                                <div class="mb-3">
+                                    <label for="langCode" class="form-label font-mono-xs text-muted-foreground">Mã ngôn ngữ</label>
+                                    <input type="text" class="form-control pill-input" id="langCode" name="code" placeholder="Ví dụ: vi, en, ja" required style="background: rgba(255,255,255,0.5); border: 1px solid rgba(0,0,0,0.08); border-radius: 12px; padding: 12px 16px;" oninput="this.value = this.value.toLowerCase()" />
+                                </div>
+                                <div class="mb-4">
+                                    <label for="langName" class="form-label font-mono-xs text-muted-foreground">Tên ngôn ngữ</label>
+                                    <input type="text" class="form-control pill-input" id="langName" name="name" placeholder="Ví dụ: Tiếng Việt, English" required style="background: rgba(255,255,255,0.5); border: 1px solid rgba(0,0,0,0.08); border-radius: 12px; padding: 12px 16px;" />
+                                </div>
+                                <button type="submit" class="btn btn-dark w-100 pill-button py-2.5 font-mono-xs text-white" style="background: #1e3e62; border: none; border-radius: 100px; font-weight: 600; box-shadow: 0 4px 12px rgba(30, 62, 98, 0.2); transition: all 0.2s;">
+                                    Tạo Ngôn Ngữ
+                                </button>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+</div>
+
+<style>
+    .nav-tabs .nav-link {
+        color: #666;
+        background: rgba(255,255,255,.4);
+        border: 1px solid rgba(0,0,0,.08) !important;
+        transition: all .2s;
+    }
+    .nav-tabs .nav-link:hover {
+        background: rgba(255,255,255,.7);
+        color: #111;
+    }
+    .nav-tabs .nav-link.active {
+        color: #fff !important;
+        background: #111 !important;
+        border-color: #111 !important;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    }
+    .nav-tabs #subjects-tab.active {
+        background: #4a1f16 !important;
+        border-color: #4a1f16 !important;
+        box-shadow: 0 4px 12px rgba(74, 31, 22, 0.2);
+    }
+    .nav-tabs #documenttypes-tab.active {
+        background: #2b5c43 !important;
+        border-color: #2b5c43 !important;
+        box-shadow: 0 4px 12px rgba(43, 92, 67, 0.2);
+    }
+    .nav-tabs #languages-tab.active {
+        background: #1e3e62 !important;
+        border-color: #1e3e62 !important;
+        box-shadow: 0 4px 12px rgba(30, 62, 98, 0.2);
+    }
+    .glass-row:hover {
+        transform: translateY(-2px);
+        background: rgba(255, 255, 255, 0.72) !important;
+        box-shadow: 0 8px 20px rgba(0, 0, 0, 0.04) !important;
+    }
+    .pill-input:focus {
+        background: rgb(255, 255, 255) !important;
+        border-color: rgba(0, 0, 0, 0.2) !important;
+        box-shadow: 0 0 0 3px rgba(0, 0, 0, 0.05) !important;
+        outline: none;
+    }
+</style>
