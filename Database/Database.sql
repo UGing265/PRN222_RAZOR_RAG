@@ -24,7 +24,6 @@ CREATE SEQUENCE public.roles_id_seq
 -- ==========================================
 -- 3. TABLES (Tạo bảng)
 -- ==========================================
-
 CREATE TABLE public.academic_terms (
     id uuid DEFAULT public.uuid_generate_v4() NOT NULL,
     name character varying(200) NOT NULL,
@@ -125,7 +124,6 @@ CREATE TABLE public.documents (
     subject_id uuid,
     status character varying(30) DEFAULT 'pending'::character varying NOT NULL,
     visibility character varying(30) DEFAULT 'school_wide'::character varying NOT NULL,
-    source_type character varying(30) DEFAULT 'upload'::character varying,
     page_count integer,
     total_chunks integer DEFAULT 0 NOT NULL,
     total_chapters integer DEFAULT 0 NOT NULL,
@@ -139,7 +137,8 @@ CREATE TABLE public.documents (
     document_type_id uuid,
     language_id uuid,
     md5_hash character varying(32),
-    academic_term_id uuid
+    academic_term_id uuid,
+    document_source_id uuid
 );
 
 CREATE TABLE public.languages (
@@ -212,7 +211,6 @@ ALTER TABLE ONLY public.roles ALTER COLUMN id SET DEFAULT nextval('public.roles_
 -- ==========================================
 -- 5. PRIMARY KEYS & UNIQUE CONSTRAINTS
 -- ==========================================
-ALTER TABLE ONLY public."__EFMigrationsHistory" ADD CONSTRAINT "PK___EFMigrationsHistory" PRIMARY KEY ("MigrationId");
 ALTER TABLE ONLY public.academic_terms ADD CONSTRAINT academic_terms_name_key UNIQUE (name);
 ALTER TABLE ONLY public.academic_terms ADD CONSTRAINT academic_terms_pkey PRIMARY KEY (id);
 ALTER TABLE ONLY public.audit_logs ADD CONSTRAINT audit_logs_pkey PRIMARY KEY (id);
@@ -243,6 +241,7 @@ ALTER TABLE ONLY public.users ADD CONSTRAINT users_pkey PRIMARY KEY (id);
 -- ==========================================
 -- 6. INDEXES
 -- ==========================================
+CREATE INDEX "IX_documents_document_source_id" ON public.documents USING btree (document_source_id);
 CREATE INDEX idx_audit_logs_created_at ON public.audit_logs USING btree (created_at DESC);
 CREATE INDEX idx_audit_logs_user_id ON public.audit_logs USING btree (user_id);
 CREATE INDEX idx_document_chapters_document_id ON public.document_chapters USING btree (document_id);
@@ -263,6 +262,7 @@ CREATE UNIQUE INDEX ix_documents_slug ON public.documents USING btree (slug);
 -- ==========================================
 -- 7. FOREIGN KEYS
 -- ==========================================
+ALTER TABLE ONLY public.documents ADD CONSTRAINT "FK_documents_document_sources_document_source_id" FOREIGN KEY (document_source_id) REFERENCES public.document_sources(id) ON DELETE SET NULL;
 ALTER TABLE ONLY public.audit_logs ADD CONSTRAINT audit_logs_user_id_fkey FOREIGN KEY (user_id) REFERENCES public.users(id) ON DELETE CASCADE;
 ALTER TABLE ONLY public.document_chapters ADD CONSTRAINT document_chapters_document_id_fkey FOREIGN KEY (document_id) REFERENCES public.documents(id) ON DELETE CASCADE;
 ALTER TABLE ONLY public.document_chapters ADD CONSTRAINT document_chapters_parent_chapter_id_fkey FOREIGN KEY (parent_chapter_id) REFERENCES public.document_chapters(id) ON DELETE CASCADE;
