@@ -460,16 +460,61 @@ public class DocumentRepository : IDocumentRepository
         return documentType;
     }
 
+    public Task<DocumentType?> GetDocumentTypeAsync(Guid id, CancellationToken cancellationToken = default)
+        => _dbContext.DocumentTypes.FirstOrDefaultAsync(x => x.Id == id, cancellationToken);
+
+    public Task UpdateDocumentTypeAsync(DocumentType documentType, CancellationToken cancellationToken = default)
+    {
+        _dbContext.DocumentTypes.Update(documentType);
+        return Task.CompletedTask;
+    }
+
+    public Task DeleteDocumentTypeAsync(DocumentType documentType, CancellationToken cancellationToken = default)
+    {
+        _dbContext.DocumentTypes.Remove(documentType);
+        return Task.CompletedTask;
+    }
+
     public async Task<Language> AddLanguageAsync(Language language, CancellationToken cancellationToken = default)
     {
         await _dbContext.Languages.AddAsync(language, cancellationToken);
         return language;
     }
 
+    public Task<Language?> GetLanguageAsync(Guid id, CancellationToken cancellationToken = default)
+        => _dbContext.Languages.FirstOrDefaultAsync(x => x.Id == id, cancellationToken);
+
+    public Task UpdateLanguageAsync(Language language, CancellationToken cancellationToken = default)
+    {
+        _dbContext.Languages.Update(language);
+        return Task.CompletedTask;
+    }
+
+    public Task DeleteLanguageAsync(Language language, CancellationToken cancellationToken = default)
+    {
+        _dbContext.Languages.Remove(language);
+        return Task.CompletedTask;
+    }
+
     public async Task<DocumentSource> AddDocumentSourceAsync(DocumentSource source, CancellationToken cancellationToken = default)
     {
         await _dbContext.DocumentSources.AddAsync(source, cancellationToken);
         return source;
+    }
+
+    public Task<DocumentSource?> GetDocumentSourceAsync(Guid id, CancellationToken cancellationToken = default)
+        => _dbContext.DocumentSources.FirstOrDefaultAsync(x => x.Id == id, cancellationToken);
+
+    public Task UpdateDocumentSourceAsync(DocumentSource source, CancellationToken cancellationToken = default)
+    {
+        _dbContext.DocumentSources.Update(source);
+        return Task.CompletedTask;
+    }
+
+    public Task DeleteDocumentSourceAsync(DocumentSource source, CancellationToken cancellationToken = default)
+    {
+        _dbContext.DocumentSources.Remove(source);
+        return Task.CompletedTask;
     }
 
     public async Task<AcademicTerm> AddAcademicTermAsync(AcademicTerm term, CancellationToken cancellationToken = default)

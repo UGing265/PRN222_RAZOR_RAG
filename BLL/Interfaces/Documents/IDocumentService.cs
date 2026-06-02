@@ -39,8 +39,17 @@ public interface IDocumentService
     Task<SubjectDto?> UpdateSubjectAsync(Guid id, string code, string name, Guid? academicTermId = null, CancellationToken cancellationToken = default);
     Task<bool> DeleteSubjectAsync(Guid id, CancellationToken cancellationToken = default);
     Task<DocumentTypeDto> CreateDocumentTypeAsync(string name, string? description, CancellationToken cancellationToken = default);
+    Task<DocumentTypeDto?> UpdateDocumentTypeAsync(Guid id, string name, string? description, CancellationToken cancellationToken = default);
+    Task<bool> DeleteDocumentTypeAsync(Guid id, CancellationToken cancellationToken = default);
+
     Task<LanguageDto> CreateLanguageAsync(string code, string name, CancellationToken cancellationToken = default);
+    Task<LanguageDto?> UpdateLanguageAsync(Guid id, string code, string name, CancellationToken cancellationToken = default);
+    Task<bool> DeleteLanguageAsync(Guid id, CancellationToken cancellationToken = default);
+
     Task<DocumentSourceDto> CreateDocumentSourceAsync(string name, CancellationToken cancellationToken = default);
+    Task<DocumentSourceDto?> UpdateDocumentSourceAsync(Guid id, string name, CancellationToken cancellationToken = default);
+    Task<bool> DeleteDocumentSourceAsync(Guid id, CancellationToken cancellationToken = default);
+
     Task<AcademicTermDto> CreateAcademicTermAsync(string name, int order, CancellationToken cancellationToken = default);
     Task<AcademicTermDto?> UpdateAcademicTermAsync(Guid id, string name, int order, CancellationToken cancellationToken = default);
     Task<bool> DeleteAcademicTermAsync(Guid id, CancellationToken cancellationToken = default);

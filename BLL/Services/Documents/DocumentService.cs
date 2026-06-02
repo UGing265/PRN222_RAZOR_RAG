@@ -819,6 +819,40 @@ public class DocumentService : IDocumentService
         return new DocumentTypeDto { Id = docType.Id, Name = docType.Name, Description = docType.Description, CreatedAt = docType.CreatedAt };
     }
 
+    public async Task<DocumentTypeDto?> UpdateDocumentTypeAsync(Guid id, string name, string? description, CancellationToken cancellationToken = default)
+    {
+        if (string.IsNullOrWhiteSpace(name)) throw new InvalidOperationException("Tên loại học liệu không được để trống.");
+
+        var trimmedName = name.Trim();
+        var docTypes = await _documentRepository.GetDocumentTypesAsync(cancellationToken);
+        if (docTypes.Any(x => x.Name.Equals(trimmedName, StringComparison.OrdinalIgnoreCase) && x.Id != id))
+        {
+            throw new InvalidOperationException("Tên loại học liệu đã tồn tại trong hệ thống.");
+        }
+
+        var docType = await _documentRepository.GetDocumentTypeAsync(id, cancellationToken);
+        if (docType == null) return null;
+
+        docType.Name = trimmedName;
+        docType.Description = description?.Trim();
+        
+        await _documentRepository.UpdateDocumentTypeAsync(docType, cancellationToken);
+        await _documentRepository.SaveChangesAsync(cancellationToken);
+        
+        return new DocumentTypeDto { Id = docType.Id, Name = docType.Name, Description = docType.Description, CreatedAt = docType.CreatedAt };
+    }
+
+    public async Task<bool> DeleteDocumentTypeAsync(Guid id, CancellationToken cancellationToken = default)
+    {
+        var docType = await _documentRepository.GetDocumentTypeAsync(id, cancellationToken);
+        if (docType == null) return false;
+
+        await _documentRepository.DeleteDocumentTypeAsync(docType, cancellationToken);
+        await _documentRepository.SaveChangesAsync(cancellationToken);
+        return true;
+    }
+
+
     public async Task<LanguageDto> CreateLanguageAsync(string code, string name, CancellationToken cancellationToken = default)
     {
         if (string.IsNullOrWhiteSpace(code)) throw new InvalidOperationException("Mã ngôn ngữ không được để trống.");
@@ -849,6 +883,45 @@ public class DocumentService : IDocumentService
         return new LanguageDto { Id = language.Id, Code = language.Code, Name = language.Name, CreatedAt = language.CreatedAt };
     }
 
+    public async Task<LanguageDto?> UpdateLanguageAsync(Guid id, string code, string name, CancellationToken cancellationToken = default)
+    {
+        if (string.IsNullOrWhiteSpace(code)) throw new InvalidOperationException("Mã ngôn ngữ không được để trống.");
+        if (string.IsNullOrWhiteSpace(name)) throw new InvalidOperationException("Tên ngôn ngữ không được để trống.");
+
+        var normalizedCode = code.Trim().ToLowerInvariant();
+        var trimmedName = name.Trim();
+        var languages = await _documentRepository.GetLanguagesAsync(cancellationToken);
+        if (languages.Any(x => x.Code.Equals(normalizedCode, StringComparison.OrdinalIgnoreCase) && x.Id != id))
+        {
+            throw new InvalidOperationException("Mã ngôn ngữ đã tồn tại trong hệ thống.");
+        }
+        if (languages.Any(x => x.Name.Equals(trimmedName, StringComparison.OrdinalIgnoreCase) && x.Id != id))
+        {
+            throw new InvalidOperationException("Tên ngôn ngữ đã tồn tại trong hệ thống.");
+        }
+
+        var language = await _documentRepository.GetLanguageAsync(id, cancellationToken);
+        if (language == null) return null;
+
+        language.Code = normalizedCode;
+        language.Name = trimmedName;
+
+        await _documentRepository.UpdateLanguageAsync(language, cancellationToken);
+        await _documentRepository.SaveChangesAsync(cancellationToken);
+        return new LanguageDto { Id = language.Id, Code = language.Code, Name = language.Name, CreatedAt = language.CreatedAt };
+    }
+
+    public async Task<bool> DeleteLanguageAsync(Guid id, CancellationToken cancellationToken = default)
+    {
+        var language = await _documentRepository.GetLanguageAsync(id, cancellationToken);
+        if (language == null) return false;
+
+        await _documentRepository.DeleteLanguageAsync(language, cancellationToken);
+        await _documentRepository.SaveChangesAsync(cancellationToken);
+        return true;
+    }
+
+
     public async Task<DocumentSourceDto> CreateDocumentSourceAsync(string name, CancellationToken cancellationToken = default)
     {
         if (string.IsNullOrWhiteSpace(name)) throw new InvalidOperationException("Tên nguồn tài liệu không được để trống.");
@@ -871,6 +944,38 @@ public class DocumentService : IDocumentService
         await _documentRepository.SaveChangesAsync(cancellationToken);
         return new DocumentSourceDto { Id = source.Id, Name = source.Name, CreatedAt = source.CreatedAt };
     }
+
+    public async Task<DocumentSourceDto?> UpdateDocumentSourceAsync(Guid id, string name, CancellationToken cancellationToken = default)
+    {
+        if (string.IsNullOrWhiteSpace(name)) throw new InvalidOperationException("Tên nguồn tài liệu không được để trống.");
+
+        var trimmedName = name.Trim();
+        var sources = await _documentRepository.GetDocumentSourcesAsync(cancellationToken);
+        if (sources.Any(x => x.Name.Equals(trimmedName, StringComparison.OrdinalIgnoreCase) && x.Id != id))
+        {
+            throw new InvalidOperationException("Tên nguồn tài liệu đã tồn tại trong hệ thống.");
+        }
+
+        var source = await _documentRepository.GetDocumentSourceAsync(id, cancellationToken);
+        if (source == null) return null;
+
+        source.Name = trimmedName;
+
+        await _documentRepository.UpdateDocumentSourceAsync(source, cancellationToken);
+        await _documentRepository.SaveChangesAsync(cancellationToken);
+        return new DocumentSourceDto { Id = source.Id, Name = source.Name, CreatedAt = source.CreatedAt };
+    }
+
+    public async Task<bool> DeleteDocumentSourceAsync(Guid id, CancellationToken cancellationToken = default)
+    {
+        var source = await _documentRepository.GetDocumentSourceAsync(id, cancellationToken);
+        if (source == null) return false;
+
+        await _documentRepository.DeleteDocumentSourceAsync(source, cancellationToken);
+        await _documentRepository.SaveChangesAsync(cancellationToken);
+        return true;
+    }
+
 
     public async Task<AcademicTermDto> CreateAcademicTermAsync(string name, int order, CancellationToken cancellationToken = default)
     {
