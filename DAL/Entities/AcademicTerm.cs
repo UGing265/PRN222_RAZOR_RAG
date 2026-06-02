@@ -3,19 +3,17 @@ using System.Collections.Generic;
 
 namespace DAL.Entities;
 
-public partial class Subject
+public partial class AcademicTerm
 {
     public Guid Id { get; set; }
 
-    public string Code { get; set; } = null!;
-
     public string Name { get; set; } = null!;
+
+    public int Order { get; set; }
 
     public DateTime CreatedAt { get; set; }
 
-    public Guid? AcademicTermId { get; set; }
-
-    public virtual AcademicTerm? AcademicTerm { get; set; }
+    public virtual ICollection<Subject> Subjects { get; set; } = new List<Subject>();
 
     public virtual ICollection<Document> Documents { get; set; } = new List<Document>();
 }

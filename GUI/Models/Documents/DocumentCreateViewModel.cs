@@ -13,14 +13,10 @@ public class DocumentCreateViewModel
     [Required(ErrorMessage = "Vui lòng chọn môn học.")]
     public Guid? SubjectId { get; set; }
 
-    [Required(ErrorMessage = "Vui lòng chọn ngành học.")]
-    public Guid? MajorId { get; set; }
-
     [Required(ErrorMessage = "Vui lòng chọn loại học liệu.")]
     public Guid? DocumentTypeId { get; set; }
 
-    [StringLength(50, ErrorMessage = "Học kỳ không được vượt quá 50 ký tự.")]
-    public string? AcademicTerm { get; set; }
+    public Guid? AcademicTermId { get; set; }
 
     [Required(ErrorMessage = "Vui lòng chọn ngôn ngữ.")]
     public Guid? LanguageId { get; set; }

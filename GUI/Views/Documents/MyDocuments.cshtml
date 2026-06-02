@@ -18,6 +18,21 @@
         "rejected" => "Từ Chối",
         _ => status
     };
+
+    var query = ViewBag.Query as string ?? "";
+    var selectedSubjectId = ViewBag.SelectedSubjectId as Guid?;
+    var selectedTermId = ViewBag.SelectedTermId as Guid?;
+    
+    var allTerms = ViewBag.AcademicTerms as List<BLL.DTOs.Documents.AcademicTermDto> ?? new List<BLL.DTOs.Documents.AcademicTermDto>();
+    var allSubjects = ViewBag.Subjects as List<BLL.DTOs.Documents.SubjectDto> ?? new List<BLL.DTOs.Documents.SubjectDto>();
+    
+    var selectedTypeId = ViewBag.SelectedTypeId as Guid?;
+    var selectedLangId = ViewBag.SelectedLangId as Guid?;
+    var selectedSource = ViewBag.SelectedSource as string ?? "";
+
+    var allTypes = ViewBag.DocumentTypes as List<BLL.DTOs.Documents.DocumentTypeDto> ?? new List<BLL.DTOs.Documents.DocumentTypeDto>();
+    var allLangs = ViewBag.Languages as List<BLL.DTOs.Documents.LanguageDto> ?? new List<BLL.DTOs.Documents.LanguageDto>();
+    var allSources = ViewBag.DocumentSources as List<BLL.DTOs.Documents.DocumentSourceDto> ?? new List<BLL.DTOs.Documents.DocumentSourceDto>();
 }
 
 <style>
@@ -119,42 +134,74 @@
         padding-top: 14px;
         margin-top: 16px;
         display: flex;
-        justify-content: space-between;
+        justify-content: flex-end;
         align-items: center;
+        gap: 8px;
+    }
+
+    .action-btn-primary {
+        border-radius: 99px;
+        font-size: 0.8rem;
+        font-weight: 600;
+        padding: 6px 16px;
+        transition: all 0.2s ease;
+        text-decoration: none;
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        background: var(--brown);
+        color: #fff !important;
+        border: none;
+        box-shadow: 0 4px 10px rgba(82, 39, 27, 0.15);
+    }
+    
+    .action-btn-primary:hover {
+        background: #3a1610;
+        transform: translateY(-1px);
+        box-shadow: 0 6px 14px rgba(82, 39, 27, 0.25);
     }
 
     .action-btn-outline {
         border-radius: 99px;
         font-size: 0.8rem;
         font-weight: 600;
-        padding: 6px 14px;
+        padding: 6px 16px;
         transition: all 0.2s ease;
         text-decoration: none;
         display: inline-flex;
         align-items: center;
         gap: 6px;
+        background: rgba(82, 39, 27, 0.05);
+        color: var(--brown) !important;
+        border: 1px solid rgba(82, 39, 27, 0.1);
+    }
+
+    .action-btn-outline:hover {
+        background: rgba(82, 39, 27, 0.1);
+        border-color: rgba(82, 39, 27, 0.15);
     }
 
     .action-btn-danger {
         border-radius: 99px;
         font-size: 0.8rem;
         font-weight: 600;
-        padding: 6px 14px;
+        padding: 6px 16px;
         transition: all 0.2s ease;
         text-decoration: none;
         display: inline-flex;
         align-items: center;
         gap: 6px;
-        color: #dc3545;
-        border: 1px solid rgba(220, 53, 69, 0.2);
-        background: transparent;
+        color: #dc3545 !important;
+        background: rgba(220, 53, 69, 0.08);
+        border: 1px solid rgba(220, 53, 69, 0.15);
     }
 
     .action-btn-danger:hover {
-        background: #dc3545;
-        color: #ffffff;
-        border-color: #dc3545;
+        background: rgba(220, 53, 69, 0.15);
+        border-color: rgba(220, 53, 69, 0.25);
     }
+
+
 
     .progress-glass {
         background: rgba(255, 255, 255, 0.45);
@@ -320,78 +367,157 @@
                     <div class="h2 fw-bold mb-0" style="color: var(--brown);">@Model.TotalDocuments</div>
                 </div>
             </div>
-            <div class="col-6 col-md-3">
-                <div class="metric-card h-100">
-                    <div class="font-mono-xs text-muted-foreground mb-1" style="font-size: 9px;">ĐANG CHỜ DUYỆT</div>
-                    <div class="h2 fw-bold mb-0" style="color: #ff9f1c;">@Model.PendingDocuments</div>
-                </div>
-            </div>
-            <div class="col-6 col-md-3">
-                <div class="metric-card h-100">
-                    <div class="font-mono-xs text-muted-foreground mb-1" style="font-size: 9px;">ĐÃ PHÊ DUYỆT</div>
-                    <div class="h2 fw-bold mb-0" style="color: #2ec4b6;">@Model.ApprovedDocuments</div>
-                </div>
-            </div>
-            <div class="col-6 col-md-3">
-                <div class="metric-card h-100">
-                    <div class="font-mono-xs text-muted-foreground mb-1" style="font-size: 9px;">BỊ TỪ CHỐI</div>
-                    <div class="h2 fw-bold mb-0" style="color: #e71d36;">@Model.RejectedDocuments</div>
-                </div>
-            </div>
         </div>
 
-        <!-- Sleek Unified Search & Reset bar -->
-        <form method="get" asp-action="MyDocuments" class="search-glass-panel p-2 mb-4 d-flex align-items-center gap-3">
-            <div class="d-flex align-items-center flex-grow-1 ps-2">
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--muted)" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" class="flex-shrink-0">
-                    <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
-                </svg>
-                <input type="text" name="q" value="@ViewBag.Query" class="form-control search-input-clean px-3 py-2 w-100" placeholder="Tìm tiêu đề tài liệu..." />
-            </div>
-
-            <!-- Subject Dropdown Filter -->
-            <input type="hidden" name="subjectId" id="selectedSubjectInput" value="@ViewBag.SelectedSubjectId" />
-            <div class="dropdown pe-2 border-start d-flex align-items-center" style="border-color: rgba(0,0,0,0.12) !important;">
-                <button class="dropdown-toggle-premium" type="button" id="subjectDropdown" data-bs-toggle="dropdown" aria-expanded="false">
-                    @(string.IsNullOrWhiteSpace(ViewBag.SelectedSubjectName) ? "Tất cả môn học" : ViewBag.SelectedSubjectName)
-                </button>
-                <ul class="dropdown-menu premium-dropdown-menu dropdown-menu-end shadow-lg" aria-labelledby="subjectDropdown">
-                    <li>
-                        <a class="dropdown-item premium-dropdown-item @(ViewBag.SelectedSubjectId == null ? "active" : "")" onclick="selectSubject('')">
-                            Tất cả môn học
-                        </a>
-                    </li>
-                    @if (ViewBag.Subjects is List<DAL.Entities.Subject> subjects)
+        <!-- Search & Filter Form (Matched with Explore) -->
+        <form method="get" asp-action="MyDocuments" class="mb-5">
+            <input type="hidden" name="termId" value="@selectedTermId" />
+            <div class="search-glass-container p-3 d-flex flex-column gap-3">
+                
+                <!-- ROW 1: Search Input & Search Button -->
+                <div class="d-flex flex-wrap gap-3 align-items-center justify-content-between">
+                    <!-- Search Input -->
+                    <div class="d-flex flex-grow-1 align-items-center px-3 gap-3 search-glass-container" style="min-width: 250px; background: rgba(255,255,255,0.4) !important; border-radius: 14px; box-shadow: none; border: 1px solid rgba(82, 39, 27, 0.04) !important;">
+                        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" class="text-muted-foreground"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
+                        <input type="text" name="q" value="@query" placeholder="Tìm Kiếm Tài Liệu..." class="form-control border-0 bg-transparent shadow-none px-0" style="font-size: 1.05rem; min-height: 44px;">
+                    </div>
+                    
+                    <button type="submit" class="btn btn-premium-primary pill-button px-5 py-2.5 font-mono-xs text-white flex-shrink-0" style="min-width: 120px; font-size: 0.85rem;">
+                        TÌM KIẾM
+                    </button>
+                    @if (!string.IsNullOrWhiteSpace(query) || selectedSubjectId != null || selectedTermId != null || selectedTypeId != null || selectedLangId != null || !string.IsNullOrWhiteSpace(selectedSource))
                     {
-                        foreach (var sub in subjects)
-                        {
-                            <li>
-                                <a class="dropdown-item premium-dropdown-item @(ViewBag.SelectedSubjectId == sub.Id ? "active" : "")" onclick="selectSubject('@sub.Id')">
-                                    @sub.Name
-                                </a>
-                            </li>
-                        }
+                        <a asp-action="MyDocuments" class="btn btn-link text-muted px-2 text-decoration-none small hover-text-dark" style="font-size: 0.88rem;">Xoá Lọc</a>
                     }
-                </ul>
-            </div>
-            
-            <div class="d-flex align-items-center gap-2 flex-shrink-0 pe-1">
-                @if (!string.IsNullOrWhiteSpace(ViewBag.Query) || ViewBag.SelectedSubjectId != null)
-                {
-                    <a asp-action="MyDocuments" class="btn btn-link text-muted px-2 text-decoration-none small hover-text-dark" style="font-size: 0.88rem;">Xoá Lọc</a>
-                }
-                <button type="submit" class="btn btn-premium-primary pill-button py-2 px-4" style="font-size: 0.88rem; min-height: 40px;">Tìm Kiếm</button>
+                </div>
+                
+                <!-- ROW 2: Structured Filters (Subject, Type, Language, Source, Sort) -->
+                <div class="d-flex flex-wrap gap-3 align-items-center">
+                    <!-- 1. Subject Select -->
+                    <div style="min-width: 160px; flex: 1;">
+                        <select name="subjectId" class="form-select form-glass-select" onchange="this.form.submit()">
+                            <option value="">Tất Cả Môn Học</option>
+                            @foreach (var subject in allSubjects)
+                            {
+                                if (selectedSubjectId.HasValue && selectedSubjectId.Value == subject.Id)
+                                {
+                                    <option value="@subject.Id" selected>@subject.Code</option>
+                                }
+                                else
+                                {
+                                    <option value="@subject.Id">@subject.Code</option>
+                                }
+                            }
+                        </select>
+                    </div>
+                    
+                    <!-- 2. Document Type (Loại học liệu) Select -->
+                    <div style="min-width: 160px; flex: 1;">
+                        <select name="documentTypeId" class="form-select form-glass-select" onchange="this.form.submit()">
+                            <option value="">Tất Cả Học Liệu</option>
+                            @foreach (var type in allTypes)
+                            {
+                                if (selectedTypeId.HasValue && selectedTypeId.Value == type.Id)
+                                {
+                                    <option value="@type.Id" selected>@type.Name</option>
+                                }
+                                else
+                                {
+                                    <option value="@type.Id">@type.Name</option>
+                                }
+                            }
+                        </select>
+                    </div>
+
+                    <!-- 3. Language (Ngôn ngữ) Select -->
+                    <div style="min-width: 140px; flex: 1;">
+                        <select name="languageId" class="form-select form-glass-select" onchange="this.form.submit()">
+                            <option value="">Tất Cả Ngôn Ngữ</option>
+                            @foreach (var lang in allLangs)
+                            {
+                                if (selectedLangId.HasValue && selectedLangId.Value == lang.Id)
+                                {
+                                    <option value="@lang.Id" selected>@lang.Name</option>
+                                }
+                                else
+                                {
+                                    <option value="@lang.Id">@lang.Name</option>
+                                }
+                            }
+                        </select>
+                    </div>
+
+                    <!-- 4. Document Source (Nguồn tài liệu) Select -->
+                    <div style="min-width: 150px; flex: 1;">
+                        <select name="sourceType" class="form-select form-glass-select" onchange="this.form.submit()">
+                            <option value="">Tất Cả Nguồn</option>
+                            @foreach (var src in allSources)
+                            {
+                                if (selectedSource == src.Name)
+                                {
+                                    <option value="@src.Name" selected>@src.Name</option>
+                                }
+                                else
+                                {
+                                    <option value="@src.Name">@src.Name</option>
+                                }
+                            }
+                        </select>
+                    </div>
+
+                    <!-- 5. Sort Dropdown -->
+                    <div style="min-width: 160px; flex: 1;">
+                        <select name="sortBy" class="form-select form-glass-select" onchange="this.form.submit()">
+                            @{
+                                var sortOptions = new Dictionary<string, string>
+                                {
+                                    { "date_desc", "Ngày Đăng ↓" },
+                                    { "date_asc", "Ngày Đăng ↑" },
+                                    { "title_asc", "A - Z ↑" },
+                                    { "title_desc", "Z - A ↓" },
+                                    { "views_desc", "Lượt Xem ↓" },
+                                    { "views_asc", "Lượt Xem ↑" }
+                                };
+                                
+                                string currentSort = ViewBag.SelectedSortBy ?? "date_desc";
+                                if (currentSort == "date") currentSort = "date_desc";
+                                if (currentSort == "title") currentSort = "title_asc";
+                                if (currentSort == "views") currentSort = "views_desc";
+
+                                foreach (var opt in sortOptions)
+                                {
+                                    if (currentSort == opt.Key)
+                                    {
+                                        <option value="@opt.Key" selected>@opt.Value</option>
+                                    }
+                                    else
+                                    {
+                                        <option value="@opt.Key">@opt.Value</option>
+                                    }
+                                }
+                            }
+                        </select>
+                    </div>
+                </div>
             </div>
         </form>
 
         <!-- Dynamic Filter Chips -->
         <div class="d-flex align-items-center gap-2 flex-wrap mb-5">
             <span class="text-muted small me-2" style="font-size: 0.8rem; font-weight: 500;">Gợi ý chủ đề:</span>
-            @if (ViewBag.Subjects is List<DAL.Entities.Subject> suggSubjects && suggSubjects.Any())
+            @if (ViewBag.Subjects != null)
             {
-                @foreach (var sub in suggSubjects.Take(5))
+                var suggSubjects = ((IEnumerable<dynamic>)ViewBag.Subjects).Take(5).ToList();
+                if (suggSubjects.Any())
                 {
-                    <a href="?subjectId=@sub.Id" class="filter-chip @(ViewBag.SelectedSubjectId == sub.Id ? "active" : "")">@sub.Name</a>
+                    foreach (var sub in suggSubjects)
+                    {
+                        <a href="?subjectId=@sub.Id" class="filter-chip @(ViewBag.SelectedSubjectId == sub.Id ? "active" : "")">@sub.Name</a>
+                    }
+                }
+                else
+                {
+                    <span class="text-muted small" style="font-size: 0.8rem; font-style: italic;">Chưa có chủ đề nào</span>
                 }
             }
             else
@@ -436,48 +562,45 @@
                     <div class="col-md-6 col-xl-4">
                         <div class="library-card h-100 p-4">
                             <div>
-                                <!-- Subject Badge and Status -->
-                                <div class="d-flex align-items-center justify-content-between gap-3 mb-3 flex-wrap">
-                                    <div class="d-flex align-items-center gap-1.5 flex-wrap">
-                                        <span class="subject-badge">
-                                            @(string.IsNullOrWhiteSpace(item.SubjectName) ? "Tài Liệu" : item.SubjectName)
-                                        </span>
-                                        @if (!string.IsNullOrWhiteSpace(item.MajorName))
-                                        {
-                                            <span class="premium-accent-chip" style="font-size: 0.7rem; border-radius: 99px; padding: 2px 10px; background: rgba(82, 39, 27, 0.05) !important; border: 1px solid rgba(82, 39, 27, 0.1) !important; color: var(--brown) !important; font-family: var(--font-mono) !important; font-weight: 600 !important;">
-                                                @item.MajorName
-                                            </span>
-                                        }
-                                    </div>
-                                    <span class="status-badge @GetStatusClass(item.Status)">
-                                        @GetStatusText(item.Status)
+                                <!-- Subject Badge -->
+                                <div class="d-flex align-items-center mb-3">
+                                    <span class="subject-badge">
+                                        @(string.IsNullOrWhiteSpace(item.SubjectName) ? "Tài Liệu" : item.SubjectName)
                                     </span>
                                 </div>
                                 
                                 <!-- Document Title -->
-                                <h3 class="fw-semibold text-foreground text-truncate-2" style="font-size: 1.15rem; color: var(--brown); margin-bottom: 12px; height: 2.8rem; line-height: 1.25; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;" title="@item.Title">
+                                <h3 class="fw-semibold text-foreground text-truncate-2" style="font-size: 1.15rem; color: var(--brown); margin-bottom: 8px; line-height: 1.3; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;" title="@item.Title">
                                     @item.Title
                                 </h3>
+
+                                <!-- Document Preview -->
+                                <p class="text-muted-foreground" style="font-size: 0.85rem; line-height: 1.5; margin-bottom: 12px; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; opacity: 0.85;" title="@item.PreviewText">
+                                    @(string.IsNullOrWhiteSpace(item.PreviewText) ? "Chưa có mô tả cho tài liệu này." : item.PreviewText)
+                                </p>
                             </div>
                             
                             <!-- Card Actions and Meta Details -->
                             <div>
-                                <div class="card-footer-action">
-                                    <span class="font-mono-xs text-muted-foreground" style="font-size: 0.72rem;">
-                                        @item.UpdatedAt.ToString("dd/MM/yyyy HH:mm")
+                                <!-- Metadata: Date & Views (placed above separator line) -->
+                                <div class="d-flex align-items-center justify-content-between font-mono-xs text-muted-foreground px-1 mb-2" style="font-size: 0.72rem;">
+                                    <span>@item.UpdatedAt.ToString("dd/MM/yyyy HH:mm")</span>
+                                    <span class="d-inline-flex align-items-center gap-1" title="Lượt xem">
+                                        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="opacity: 0.85;"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+                                        @item.ViewCount lượt xem
                                     </span>
-                                    
-                                    <div class="d-flex align-items-center gap-1">
-                                        <a asp-action="Details" asp-route-slug="@item.Slug" class="action-btn-outline btn btn-outline-dark" style="padding: 5px 12px;">
-                                            Xem
-                                        </a>
-                                        <a asp-action="Edit" asp-route-slug="@item.Slug" class="action-btn-outline btn btn-outline-secondary" style="padding: 5px 12px;">
-                                            Sửa
-                                        </a>
-                                        <a asp-action="Delete" asp-route-slug="@item.Slug" class="action-btn-danger" style="padding: 5px 12px;">
-                                            Xoá
-                                        </a>
-                                    </div>
+                                </div>
+                                
+                                <div class="card-footer-action">
+                                    <a asp-action="Details" asp-route-slug="@item.Slug" class="action-btn-primary">
+                                        Xem
+                                    </a>
+                                    <a asp-action="Edit" asp-route-slug="@item.Slug" class="action-btn-outline">
+                                        Sửa
+                                    </a>
+                                    <a asp-action="Delete" asp-route-slug="@item.Slug" class="action-btn-danger">
+                                        Xoá
+                                    </a>
                                 </div>
                             </div>
                         </div>
@@ -492,21 +615,21 @@
             <nav class="d-flex justify-content-center mt-5">
                 <ul class="pagination gap-2 border-0">
                     <li class="page-item @(Model.Page == 1 ? "disabled" : "")">
-                        <a class="page-link pill-button px-3 py-2 border-0" href="?q=@(ViewBag.Query)&subjectId=@(ViewBag.SelectedSubjectId)&page=@(Model.Page - 1)" style="border-radius: 12px; color: var(--brown); background: rgba(255,255,255,0.4); font-size: 0.85rem;">
+                        <a class="page-link pill-button px-3 py-2 border-0" href="?q=@(query)&termId=@(ViewBag.SelectedTermId)&subjectId=@(ViewBag.SelectedSubjectId)&documentTypeId=@(ViewBag.SelectedTypeId)&languageId=@(ViewBag.SelectedLangId)&sourceType=@(ViewBag.SelectedSource)&sortBy=@(ViewBag.SelectedSortBy)&page=@(Model.Page - 1)" style="border-radius: 12px; color: var(--brown); background: rgba(255,255,255,0.4); font-size: 0.85rem;">
                             Trước
                         </a>
                     </li>
                     @for (int i = 1; i <= Model.TotalPages; i++)
                     {
                         <li class="page-item @(Model.Page == i ? "active" : "")">
-                            <a class="page-link pill-button px-3.5 py-2 border-0" href="?q=@(ViewBag.Query)&subjectId=@(ViewBag.SelectedSubjectId)&page=@i" 
+                            <a class="page-link pill-button px-3.5 py-2 border-0" href="?q=@(query)&termId=@(ViewBag.SelectedTermId)&subjectId=@(ViewBag.SelectedSubjectId)&documentTypeId=@(ViewBag.SelectedTypeId)&languageId=@(ViewBag.SelectedLangId)&sourceType=@(ViewBag.SelectedSource)&sortBy=@(ViewBag.SelectedSortBy)&page=@i" 
                                style="border-radius: 12px; font-size: 0.85rem; font-weight: 600; @(Model.Page == i ? "background: var(--brown) !important; color: #fff !important;" : "color: var(--brown); background: rgba(255,255,255,0.4);")">
                                 @i
                             </a>
                         </li>
                     }
                     <li class="page-item @(Model.Page == Model.TotalPages ? "disabled" : "")">
-                        <a class="page-link pill-button px-3 py-2 border-0" href="?q=@(ViewBag.Query)&subjectId=@(ViewBag.SelectedSubjectId)&page=@(Model.Page + 1)" style="border-radius: 12px; color: var(--brown); background: rgba(255,255,255,0.4); font-size: 0.85rem;">
+                        <a class="page-link pill-button px-3 py-2 border-0" href="?q=@(query)&termId=@(ViewBag.SelectedTermId)&subjectId=@(ViewBag.SelectedSubjectId)&documentTypeId=@(ViewBag.SelectedTypeId)&languageId=@(ViewBag.SelectedLangId)&sourceType=@(ViewBag.SelectedSource)&sortBy=@(ViewBag.SelectedSortBy)&page=@(Model.Page + 1)" style="border-radius: 12px; color: var(--brown); background: rgba(255,255,255,0.4); font-size: 0.85rem;">
                             Sau
                         </a>
                     </li>
@@ -524,6 +647,20 @@
                 input.value = subject;
                 input.form.submit();
             }
+        }
+
+        function toggleSort(field) {
+            const input = document.getElementById('sortByInput');
+            if (!input) return;
+            let current = input.value;
+            let newSort = field + '_desc';
+            if (current === field + '_desc' || current === field) {
+                newSort = field + '_asc';
+            } else if (current === field + '_asc') {
+                newSort = field + '_desc';
+            }
+            input.value = newSort;
+            input.form.submit();
         }
 
         (function () {

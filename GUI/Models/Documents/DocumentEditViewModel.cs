@@ -14,14 +14,10 @@ public class DocumentEditViewModel
     [Required(ErrorMessage = "Vui lòng chọn môn học.")]
     public Guid? SubjectId { get; set; }
 
-    [Required(ErrorMessage = "Vui lòng chọn ngành học.")]
-    public Guid? MajorId { get; set; }
-
     [Required(ErrorMessage = "Vui lòng chọn loại học liệu.")]
     public Guid? DocumentTypeId { get; set; }
 
-    [StringLength(50, ErrorMessage = "Học kỳ không được vượt quá 50 ký tự.")]
-    public string? AcademicTerm { get; set; }
+    public Guid? AcademicTermId { get; set; }
 
     [Required(ErrorMessage = "Vui lòng chọn ngôn ngữ.")]
     public Guid? LanguageId { get; set; }
@@ -29,6 +25,9 @@ public class DocumentEditViewModel
     [Required(ErrorMessage = "Vui lòng chọn quyền hiển thị.")]
     [StringLength(30, ErrorMessage = "Quyền hiển thị không được vượt quá 30 ký tự.")]
     public string Visibility { get; set; } = "school_wide";
+
+    [StringLength(100, ErrorMessage = "Nguồn tài liệu không được vượt quá 100 ký tự.")]
+    public string? SourceType { get; set; }
 
     [StringLength(1000, ErrorMessage = "Mô tả không được vượt quá 1000 ký tự.")]
     public string? Description { get; set; }

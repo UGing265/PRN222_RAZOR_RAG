@@ -15,7 +15,7 @@ public class DocumentDetailsViewModel
     public string? MajorCode { get; set; }
     public Guid? DocumentTypeId { get; set; }
     public string? DocumentTypeName { get; set; }
-    public string? AcademicTerm { get; set; }
+    public string? AcademicTermName { get; set; }
     public string? Visibility { get; set; }
     public Guid? LanguageId { get; set; }
     public string? LanguageCode { get; set; }

@@ -13,5 +13,5 @@ public class MyDocumentsViewModel
     public int TotalPages { get; set; }
     public List<DocumentListItemViewModel> Documents { get; set; } = new();
     public List<UploadJobViewModel> ActiveUploadJobs { get; set; } = new();
-    public List<DAL.Entities.DocumentReport> PendingReports { get; set; } = new();
+    public List<BLL.DTOs.Documents.DocumentReportDto> PendingReports { get; set; } = new();
 }

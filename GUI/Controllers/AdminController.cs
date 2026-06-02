@@ -67,28 +67,81 @@ public class AdminController : Controller
         {
             Subjects = await _documentService.GetSubjectsAsync(cancellationToken),
             DocumentTypes = await _documentService.GetDocumentTypesAsync(cancellationToken),
-            Languages = await _documentService.GetLanguagesAsync(cancellationToken)
+            Languages = await _documentService.GetLanguagesAsync(cancellationToken),
+            DocumentSources = await _documentService.GetDocumentSourcesAsync(cancellationToken),
+            AcademicTerms = await _documentService.GetAcademicTermsAsync(cancellationToken)
         };
         return View(model);
     }
 
     [HttpPost]
     [ValidateAntiForgeryToken]
-    public async Task<IActionResult> CreateSubject(string code, string name, CancellationToken cancellationToken)
+    public async Task<IActionResult> CreateSubject(string code, string name, Guid? academicTermId, CancellationToken cancellationToken)
     {
         if (string.IsNullOrWhiteSpace(code) || string.IsNullOrWhiteSpace(name))
         {
             TempData["ErrorMessage"] = "Mã môn học và tên môn học không được để trống.";
             return RedirectToAction(nameof(Metadata), new { tab = "subjects" });
         }
+        if (!academicTermId.HasValue)
+        {
+            TempData["ErrorMessage"] = "Vui lòng chọn học kỳ cho môn học.";
+            return RedirectToAction(nameof(Metadata), new { tab = "subjects" });
+        }
         try
         {
-            await _documentService.CreateSubjectAsync(code, name, cancellationToken);
+            await _documentService.CreateSubjectAsync(code, name, academicTermId, cancellationToken);
             TempData["SuccessMessage"] = $"Đã tạo mới môn học '{code.ToUpper()}' thành công.";
         }
         catch (InvalidOperationException ex)
         {
             TempData["ErrorMessage"] = ex.Message;
+        }
+        return RedirectToAction(nameof(Metadata), new { tab = "subjects" });
+    }
+
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> UpdateSubject(Guid id, string code, string name, Guid? academicTermId, CancellationToken cancellationToken)
+    {
+        if (string.IsNullOrWhiteSpace(code) || string.IsNullOrWhiteSpace(name))
+        {
+            TempData["ErrorMessage"] = "Mã môn học và tên môn học không được để trống.";
+            return RedirectToAction(nameof(Metadata), new { tab = "subjects" });
+        }
+        if (!academicTermId.HasValue)
+        {
+            TempData["ErrorMessage"] = "Vui lòng chọn học kỳ cho môn học.";
+            return RedirectToAction(nameof(Metadata), new { tab = "subjects" });
+        }
+        try
+        {
+            await _documentService.UpdateSubjectAsync(id, code, name, academicTermId, cancellationToken);
+            TempData["SuccessMessage"] = $"Đã cập nhật môn học '{code.ToUpper()}' thành công.";
+        }
+        catch (InvalidOperationException ex)
+        {
+            TempData["ErrorMessage"] = ex.Message;
+        }
+        return RedirectToAction(nameof(Metadata), new { tab = "subjects" });
+    }
+
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> DeleteSubject(Guid id, CancellationToken cancellationToken)
+    {
+        try
+        {
+            var result = await _documentService.DeleteSubjectAsync(id, cancellationToken);
+            if (result)
+                TempData["SuccessMessage"] = "Đã xóa môn học thành công.";
+            else
+                TempData["ErrorMessage"] = "Không tìm thấy môn học.";
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error deleting subject {Id}", id);
+            TempData["ErrorMessage"] = "Có lỗi xảy ra khi xóa môn học. Đảm bảo môn học không bị ràng buộc dữ liệu.";
         }
         return RedirectToAction(nameof(Metadata), new { tab = "subjects" });
     }
@@ -135,6 +188,48 @@ public class AdminController : Controller
         return RedirectToAction(nameof(Metadata), new { tab = "languages" });
     }
 
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> CreateDocumentSource(string name, CancellationToken cancellationToken)
+    {
+        if (string.IsNullOrWhiteSpace(name))
+        {
+            TempData["ErrorMessage"] = "Tên nguồn tài liệu không được để trống.";
+            return RedirectToAction(nameof(Metadata), new { tab = "documentsources" });
+        }
+        try
+        {
+            await _documentService.CreateDocumentSourceAsync(name, cancellationToken);
+            TempData["SuccessMessage"] = $"Đã tạo mới nguồn tài liệu '{name}' thành công.";
+        }
+        catch (InvalidOperationException ex)
+        {
+            TempData["ErrorMessage"] = ex.Message;
+        }
+        return RedirectToAction(nameof(Metadata), new { tab = "documentsources" });
+    }
+
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> CreateAcademicTerm(string name, int order, CancellationToken cancellationToken)
+    {
+        if (string.IsNullOrWhiteSpace(name))
+        {
+            TempData["ErrorMessage"] = "Tên học kỳ không được để trống.";
+            return RedirectToAction(nameof(Metadata), new { tab = "academicterms" });
+        }
+        try
+        {
+            await _documentService.CreateAcademicTermAsync(name, order, cancellationToken);
+            TempData["SuccessMessage"] = $"Đã tạo mới học kỳ '{name}' thành công.";
+        }
+        catch (InvalidOperationException ex)
+        {
+            TempData["ErrorMessage"] = ex.Message;
+        }
+        return RedirectToAction(nameof(Metadata), new { tab = "academicterms" });
+    }
+
     [HttpGet]
     public async Task<IActionResult> Documents(string? tab, string? q, Guid? subjectId, int page = 1, int pageSize = 10, CancellationToken cancellationToken = default)
     {
@@ -149,11 +244,12 @@ public class AdminController : Controller
                 Id = x.Id,
                 Slug = x.Slug,
                 Title = x.Title,
+                SubjectCode = x.SubjectCode,
                 SubjectName = x.SubjectName,
-                MajorName = x.MajorName,
+
                 DocumentTypeId = x.DocumentTypeId,
                 DocumentTypeName = x.DocumentTypeName,
-                AcademicTerm = x.AcademicTerm,
+                AcademicTermName = x.AcademicTermName,
                 Status = x.Status,
                 Visibility = x.Visibility,
                 CreatedAt = x.CreatedAt,
@@ -161,7 +257,8 @@ public class AdminController : Controller
                 FileCount = x.FileCount,
                 ChunkCount = x.ChunkCount,
                 PreviewText = x.PreviewText,
-                OwnerEmail = x.OwnerEmail
+                OwnerEmail = x.OwnerEmail,
+                ViewCount = x.ViewCount
             }).ToList(),
             TotalDocuments = result.TotalDocuments,
             Page = result.Page,

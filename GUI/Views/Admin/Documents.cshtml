@@ -61,24 +61,24 @@
                     <form method="get" asp-action="Documents" class="row g-3 mb-4 align-items-end">
                         <input type="hidden" name="tab" value="files" />
                         <div class="col-md-5">
-                            <label class="form-label font-mono-xs text-muted-foreground">Tìm kiếm tài liệu</label>
+                            <label class="form-label font-mono-xs text-muted-foreground">Tìm Kiếm Tài Liệu</label>
                             <div class="position-relative">
                                 <input type="text" name="q" value="@ViewBag.Query" class="form-control pill-input" placeholder="Tiêu đề, Email GV, Môn học..." style="background: rgba(255,255,255,0.5); border: 1px solid rgba(0,0,0,0.08); border-radius: 12px; padding: 10px 16px; padding-left: 40px;" />
                                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" class="position-absolute" style="left: 14px; top: 50%; transform: translateY(-50%); color: var(--muted);"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
                             </div>
                         </div>
                         <div class="col-md-4">
-                            <label class="form-label font-mono-xs text-muted-foreground">Lọc theo môn học</label>
+                            <label class="form-label font-mono-xs text-muted-foreground">Lọc Theo Môn Học</label>
                             <select name="subjectId" class="form-select pill-input" style="background: rgba(255,255,255,0.5); border: 1px solid rgba(0,0,0,0.08); border-radius: 12px; padding: 10px 16px;">
-                                <option value="">Tất cả môn học</option>
-                                @foreach (var sub in ViewBag.Subjects as List<DAL.Entities.Subject> ?? new())
+                                <option value="">Tất Cả Môn Học</option>
+                                @foreach (var sub in ViewBag.Subjects as List<BLL.DTOs.Documents.SubjectDto> ?? new())
                                 {
                                     <!option value="@sub.Id" @(ViewBag.SelectedSubjectId == sub.Id ? "selected" : "")>[@sub.Code] @sub.Name</!option>
                                 }
                             </select>
                         </div>
                         <div class="col-md-3 d-flex gap-2">
-                            <button type="submit" class="btn btn-dark flex-grow-1 pill-button" style="border-radius: 100px; padding: 10px 20px; font-weight: 600;">Lọc dữ liệu</button>
+                            <button type="submit" class="btn btn-dark flex-grow-1 pill-button" style="border-radius: 100px; padding: 10px 20px; font-weight: 600;">Lọc Dữ Liệu</button>
                             <a asp-action="Documents" asp-route-tab="files" class="btn btn-outline-dark pill-button px-3" style="border-radius: 100px; padding: 10px 16px;" title="Reset bộ lọc">Reset</a>
                         </div>
                     </form>
@@ -118,7 +118,6 @@
                                             </td>
                                             <td class="py-3 border-0">
                                                 <div class="fw-semibold font-mono-xs text-dark" style="color: #4a1f16 !important;">[@item.SubjectName]</div>
-                                                <div class="text-muted-foreground small text-truncate" style="max-width: 200px;">@item.MajorName</div>
                                             </td>
                                             <td class="py-3 border-0 font-mono-xs text-muted-foreground text-truncate" style="max-width: 180px;">
                                                 @item.OwnerEmail
@@ -213,12 +212,12 @@
                                     {
                                         <tr class="glass-row" style="background: rgba(255, 255, 255, 0.4); border-radius: 16px; box-shadow: 0 4px 12px rgba(0,0,0,0.02); transition: all 0.2s ease;">
                                             <td class="ps-3 py-3 border-0 fw-bold text-foreground" style="border-radius: 12px 0 0 12px; max-width: 250px;">
-                                                <a href="/documents/@report.Document?.Slug" target="_blank" class="text-decoration-none text-dark hover-text-primary text-truncate d-block" title="@report.Document?.Title">
-                                                    @report.Document?.Title
+                                                <a href="/documents/@report.DocumentSlug" target="_blank" class="text-decoration-none text-dark hover-text-primary text-truncate d-block" title="@report.DocumentTitle">
+                                                    @report.DocumentTitle
                                                 </a>
                                             </td>
-                                            <td class="py-3 border-0 font-mono-xs text-muted-foreground text-truncate" style="max-width: 150px;" title="@report.ReporterUser?.Email">
-                                                @report.ReporterUser?.Email
+                                            <td class="py-3 border-0 font-mono-xs text-muted-foreground text-truncate" style="max-width: 150px;" title="@report.ReporterEmail">
+                                                @report.ReporterEmail
                                             </td>
                                             <td class="py-3 border-0 small text-danger fw-medium" style="max-width: 300px; word-wrap: break-word;">
                                                 @report.Reason

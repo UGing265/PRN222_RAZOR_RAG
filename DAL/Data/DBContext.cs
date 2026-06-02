@@ -29,7 +29,6 @@ public partial class DBContext : DbContext
 
     public virtual DbSet<User> Users { get; set; }
 
-    public virtual DbSet<Major> Majors { get; set; }
 
     public virtual DbSet<Subject> Subjects { get; set; }
 
@@ -43,23 +42,16 @@ public partial class DBContext : DbContext
 
     public virtual DbSet<Language> Languages { get; set; }
 
+    public virtual DbSet<DocumentSource> DocumentSources { get; set; }
+
+    public virtual DbSet<AcademicTerm> AcademicTerms { get; set; }
+
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         modelBuilder
             .HasPostgresExtension("pg_trgm")
             .HasPostgresExtension("uuid-ossp")
             .HasPostgresExtension("vector");
-
-        modelBuilder.Entity<Major>(entity =>
-        {
-            entity.HasKey(e => e.Id).HasName("majors_pkey");
-            entity.ToTable("majors");
-            entity.HasIndex(e => e.Code, "majors_code_key").IsUnique();
-            entity.Property(e => e.Id).HasDefaultValueSql("uuid_generate_v4()").HasColumnName("id");
-            entity.Property(e => e.Code).HasMaxLength(50).HasColumnName("code");
-            entity.Property(e => e.Name).HasMaxLength(200).HasColumnName("name");
-            entity.Property(e => e.CreatedAt).HasDefaultValueSql("now()").HasColumnName("created_at");
-        });
 
         modelBuilder.Entity<Subject>(entity =>
         {
@@ -69,7 +61,13 @@ public partial class DBContext : DbContext
             entity.Property(e => e.Id).HasDefaultValueSql("uuid_generate_v4()").HasColumnName("id");
             entity.Property(e => e.Code).HasMaxLength(50).HasColumnName("code");
             entity.Property(e => e.Name).HasMaxLength(200).HasColumnName("name");
+            entity.Property(e => e.AcademicTermId).HasColumnName("academic_term_id");
             entity.Property(e => e.CreatedAt).HasDefaultValueSql("now()").HasColumnName("created_at");
+
+            entity.HasOne(d => d.AcademicTerm).WithMany(p => p.Subjects)
+                .HasForeignKey(d => d.AcademicTermId)
+                .OnDelete(DeleteBehavior.SetNull)
+                .HasConstraintName("fk_subjects_academic_term");
         });
 
         modelBuilder.Entity<UserBookmark>(entity =>
@@ -137,8 +135,7 @@ public partial class DBContext : DbContext
 
             entity.HasIndex(e => e.OwnerUserId, "idx_documents_owner_user_id");
 
-            entity.HasIndex(e => e.MajorId, "idx_documents_major_id");
-
+        
             entity.HasIndex(e => e.Status, "idx_documents_status");
 
             entity.HasIndex(e => e.SubjectId, "idx_documents_subject_id");
@@ -149,6 +146,10 @@ public partial class DBContext : DbContext
                 .HasDefaultValueSql("uuid_generate_v4()")
                 .HasColumnName("id");
             entity.Property(e => e.ApprovedAt).HasColumnName("approved_at");
+            entity.Property(e => e.Md5Hash)
+                .HasMaxLength(32)
+                .HasColumnName("md5_hash");
+            entity.HasIndex(e => e.Md5Hash, "idx_documents_md5_hash");
             entity.Property(e => e.CreatedAt)
                 .HasDefaultValueSql("now()")
                 .HasColumnName("created_at");
@@ -156,10 +157,9 @@ public partial class DBContext : DbContext
             entity.Property(e => e.LanguageId).HasColumnName("language_id");
             entity.Property(e => e.OwnerUserId).HasColumnName("owner_user_id");
             entity.Property(e => e.PageCount).HasColumnName("page_count");
-            entity.Property(e => e.MajorId).HasColumnName("major_id");
-            entity.Property(e => e.SubjectId).HasColumnName("subject_id");
+                    entity.Property(e => e.SubjectId).HasColumnName("subject_id");
             entity.Property(e => e.DocumentTypeId).HasColumnName("document_type_id");
-            entity.Property(e => e.AcademicTerm).HasMaxLength(50).HasColumnName("academic_term");
+            entity.Property(e => e.AcademicTermId).HasColumnName("academic_term_id");
             entity.Property(e => e.ViewCount).HasDefaultValue(0).HasColumnName("view_count");
             entity.Property(e => e.DownloadCount).HasDefaultValue(0).HasColumnName("download_count");
             entity.Property(e => e.SearchText).HasColumnName("search_text");
@@ -196,11 +196,6 @@ public partial class DBContext : DbContext
                 .OnDelete(DeleteBehavior.Cascade)
                 .HasConstraintName("documents_owner_user_id_fkey");
 
-            entity.HasOne(d => d.Major).WithMany(p => p.Documents)
-                .HasForeignKey(d => d.MajorId)
-                .OnDelete(DeleteBehavior.SetNull)
-                .HasConstraintName("documents_major_id_fkey");
-
             entity.HasOne(d => d.Subject).WithMany(p => p.Documents)
                 .HasForeignKey(d => d.SubjectId)
                 .OnDelete(DeleteBehavior.SetNull)
@@ -215,6 +210,11 @@ public partial class DBContext : DbContext
                 .HasForeignKey(d => d.LanguageId)
                 .OnDelete(DeleteBehavior.SetNull)
                 .HasConstraintName("fk_documents_language");
+
+            entity.HasOne(d => d.AcademicTerm).WithMany(p => p.Documents)
+                .HasForeignKey(d => d.AcademicTermId)
+                .OnDelete(DeleteBehavior.SetNull)
+                .HasConstraintName("fk_documents_academic_term");
 
             entity.HasMany(d => d.Tags).WithMany(p => p.Documents)
                 .UsingEntity<Dictionary<string, object>>(
@@ -474,14 +474,6 @@ public partial class DBContext : DbContext
         var roleStudent = new Role { Id = 3, Name = "Student" };
         modelBuilder.Entity<Role>().HasData(roleAdmin, roleLecturer, roleStudent);
 
-        // Seed Majors
-        var majorSE = new Major { Id = Guid.Parse("11111111-1111-1111-1111-111111111111"), Code = "SE", Name = "Kỹ thuật phần mềm", CreatedAt = DateTime.UtcNow };
-        var majorIS = new Major { Id = Guid.Parse("22222222-2222-2222-2222-222222222222"), Code = "IS", Name = "Hệ thống thông tin", CreatedAt = DateTime.UtcNow };
-        var majorIA = new Major { Id = Guid.Parse("33333333-3333-3333-3333-333333333333"), Code = "IA", Name = "An toàn thông tin", CreatedAt = DateTime.UtcNow };
-        var majorGD = new Major { Id = Guid.Parse("44444444-4444-4444-4444-444444444444"), Code = "GD", Name = "Thiết kế đồ họa", CreatedAt = DateTime.UtcNow };
-
-        modelBuilder.Entity<Major>().HasData(majorSE, majorIS, majorIA, majorGD);
-
         // Seed Subjects
         var subjectPRN222 = new Subject { Id = Guid.Parse("55555555-5555-5555-5555-555555555555"), Code = "PRN222", Name = "Phát triển ứng dụng với .NET", CreatedAt = DateTime.UtcNow };
         var subjectSWD392 = new Subject { Id = Guid.Parse("66666666-6666-6666-6666-666666666666"), Code = "SWD392", Name = "Kỹ nghệ phần mềm", CreatedAt = DateTime.UtcNow };
@@ -511,6 +503,29 @@ public partial class DBContext : DbContext
             entity.Property(e => e.Id).HasDefaultValueSql("uuid_generate_v4()").HasColumnName("id");
             entity.Property(e => e.Code).HasMaxLength(10).HasColumnName("code");
             entity.Property(e => e.Name).HasMaxLength(50).HasColumnName("name");
+            entity.Property(e => e.CreatedAt).HasDefaultValueSql("now()").HasColumnName("created_at");
+        });
+
+        // Map DocumentSource table
+        modelBuilder.Entity<DocumentSource>(entity =>
+        {
+            entity.HasKey(e => e.Id).HasName("document_sources_pkey");
+            entity.ToTable("document_sources");
+            entity.HasIndex(e => e.Name, "document_sources_name_key").IsUnique();
+            entity.Property(e => e.Id).HasDefaultValueSql("uuid_generate_v4()").HasColumnName("id");
+            entity.Property(e => e.Name).HasMaxLength(200).HasColumnName("name");
+            entity.Property(e => e.CreatedAt).HasDefaultValueSql("now()").HasColumnName("created_at");
+        });
+
+        // Map AcademicTerm table
+        modelBuilder.Entity<AcademicTerm>(entity =>
+        {
+            entity.HasKey(e => e.Id).HasName("academic_terms_pkey");
+            entity.ToTable("academic_terms");
+            entity.HasIndex(e => e.Name, "academic_terms_name_key").IsUnique();
+            entity.Property(e => e.Id).HasDefaultValueSql("uuid_generate_v4()").HasColumnName("id");
+            entity.Property(e => e.Name).HasMaxLength(200).HasColumnName("name");
+            entity.Property(e => e.Order).HasColumnName("term_order");
             entity.Property(e => e.CreatedAt).HasDefaultValueSql("now()").HasColumnName("created_at");
         });
 

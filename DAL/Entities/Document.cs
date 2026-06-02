@@ -16,15 +16,13 @@ public partial class Document
 
     public string? Description { get; set; }
 
-    public Guid? MajorId { get; set; }
-
     public Guid? SubjectId { get; set; }
 
     [Column("document_type_id")]
     public Guid? DocumentTypeId { get; set; }
 
-    [Column("academic_term")]
-    public string? AcademicTerm { get; set; }
+    [Column("academic_term_id")]
+    public Guid? AcademicTermId { get; set; }
 
     public string Status { get; set; } = null!;
 
@@ -56,6 +54,9 @@ public partial class Document
 
     public DateTime? ApprovedAt { get; set; }
 
+    [Column("md5_hash")]
+    public string? Md5Hash { get; set; }
+
     public virtual ICollection<DocumentChapter> DocumentChapters { get; set; } = new List<DocumentChapter>();
 
     public virtual ICollection<DocumentChunk> DocumentChunks { get; set; } = new List<DocumentChunk>();
@@ -64,13 +65,13 @@ public partial class Document
 
     public virtual User OwnerUser { get; set; } = null!;
 
-    public virtual Major? Major { get; set; }
-
     public virtual Subject? Subject { get; set; }
 
     public virtual DocumentType? DocumentType { get; set; }
 
     public virtual Language? Language { get; set; }
+
+    public virtual AcademicTerm? AcademicTerm { get; set; }
 
     public virtual ICollection<Tag> Tags { get; set; } = new List<Tag>();
 

@@ -1,4 +1,3 @@
-using DAL.Entities;
 using System;
 using System.Collections.Generic;
 
@@ -9,10 +8,10 @@ public sealed class DocumentCreateInput
     public Guid OwnerUserId { get; init; }
     public string Title { get; init; } = string.Empty;
     public string? Description { get; init; }
-    public Guid? MajorId { get; init; }
+
     public Guid? SubjectId { get; init; }
     public Guid? DocumentTypeId { get; init; }
-    public string? AcademicTerm { get; init; }
+    public Guid? AcademicTermId { get; init; }
     public Guid? LanguageId { get; init; }
     public string? Visibility { get; init; }
     public string? SourceType { get; init; }
@@ -25,12 +24,13 @@ public sealed class DocumentEditInput
 {
     public string Title { get; init; } = string.Empty;
     public string? Description { get; init; }
-    public Guid? MajorId { get; init; }
+
     public Guid? SubjectId { get; init; }
     public Guid? DocumentTypeId { get; init; }
-    public string? AcademicTerm { get; init; }
+    public Guid? AcademicTermId { get; init; }
     public Guid? LanguageId { get; init; }
     public string Visibility { get; init; } = "private";
+    public string? SourceType { get; init; }
 }
 
 public sealed class DocumentListItemDto
@@ -38,14 +38,14 @@ public sealed class DocumentListItemDto
     public Guid Id { get; init; }
     public string Slug { get; init; } = string.Empty;
     public string Title { get; init; } = string.Empty;
-    public Guid? MajorId { get; init; }
-    public string? MajorName { get; init; }
+
+
     public Guid? SubjectId { get; init; }
     public string? SubjectName { get; init; }
     public string? SubjectCode { get; init; }
     public Guid? DocumentTypeId { get; init; }
     public string? DocumentTypeName { get; init; }
-    public string? AcademicTerm { get; init; }
+    public string? AcademicTermName { get; init; }
     public string Status { get; init; } = string.Empty;
     public int FileCount { get; init; }
     public int ChunkCount { get; init; }
@@ -54,6 +54,7 @@ public sealed class DocumentListItemDto
     public DateTime UpdatedAt { get; init; }
     public string? Visibility { get; init; }
     public string? OwnerEmail { get; init; }
+    public int ViewCount { get; init; }
 }
 
 public sealed class DocumentDetailsDto
@@ -61,15 +62,17 @@ public sealed class DocumentDetailsDto
     public Guid Id { get; init; }
     public Guid OwnerUserId { get; init; }
     public string Title { get; init; } = string.Empty;
-    public Guid? MajorId { get; init; }
-    public string? MajorName { get; init; }
-    public string? MajorCode { get; init; }
+
+
+
     public Guid? SubjectId { get; init; }
     public string? SubjectName { get; init; }
     public string? SubjectCode { get; init; }
     public Guid? DocumentTypeId { get; init; }
     public string? DocumentTypeName { get; init; }
-    public string? AcademicTerm { get; init; }
+    public string? AcademicTermName { get; init; }
+    public Guid? AcademicTermId { get; init; }
+    public string? SourceType { get; init; }
     public string? Visibility { get; init; }
     public Guid? LanguageId { get; init; }
     public string? LanguageCode { get; init; }
@@ -82,9 +85,9 @@ public sealed class DocumentDetailsDto
     public int DownloadCount { get; init; }
     public DateTime? ApprovedAt { get; init; }
     public int FileCount { get; init; }
-    public List<DocumentFile> Files { get; init; } = [];
-    public List<DocumentChunk> Chunks { get; init; } = [];
-    public List<DocumentChapter> Chapters { get; init; } = [];
+    public List<DocumentFileDto> Files { get; init; } = [];
+    public List<DocumentChunkDto> Chunks { get; init; } = [];
+    public List<DocumentChapterDto> Chapters { get; init; } = [];
 }
 
 public sealed class UploadJobSummaryDto
