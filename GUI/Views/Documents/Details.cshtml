@@ -199,6 +199,10 @@
                             <div class="file-meta-key">NGÔN NGỮ</div>
                             <div class="file-meta-value">@(string.IsNullOrWhiteSpace(Model.LanguageName) ? "—" : Model.LanguageName)</div>
                         </div>
+                        <div class="col-md-6">
+                            <div class="file-meta-key">NGUỒN TÀI LIỆU</div>
+                            <div class="file-meta-value">@(string.IsNullOrWhiteSpace(Model.DocumentSourceName) ? "—" : Model.DocumentSourceName)</div>
+                        </div>
                         <div class="col-12 mt-4 pt-3 border-top border-border">
                             <div class="file-meta-key">MÔ TẢ CHI TIẾT</div>
                             <div class="file-meta-value fw-normal text-muted-foreground text-overflow-safe" style="line-height: 1.6; font-size: 0.95rem;">

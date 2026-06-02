@@ -28,7 +28,7 @@
     
     var selectedTypeId = ViewBag.SelectedTypeId as Guid?;
     var selectedLangId = ViewBag.SelectedLangId as Guid?;
-    var selectedSource = ViewBag.SelectedSource as string ?? "";
+    var selectedSourceId = ViewBag.SelectedSourceId as Guid?;
 
     var allTypes = ViewBag.DocumentTypes as List<BLL.DTOs.Documents.DocumentTypeDto> ?? new List<BLL.DTOs.Documents.DocumentTypeDto>();
     var allLangs = ViewBag.Languages as List<BLL.DTOs.Documents.LanguageDto> ?? new List<BLL.DTOs.Documents.LanguageDto>();
@@ -385,7 +385,7 @@
                     <button type="submit" class="btn btn-premium-primary pill-button px-5 py-2.5 font-mono-xs text-white flex-shrink-0" style="min-width: 120px; font-size: 0.85rem;">
                         TÌM KIẾM
                     </button>
-                    @if (!string.IsNullOrWhiteSpace(query) || selectedSubjectId != null || selectedTermId != null || selectedTypeId != null || selectedLangId != null || !string.IsNullOrWhiteSpace(selectedSource))
+                    @if (!string.IsNullOrWhiteSpace(query) || selectedSubjectId != null || selectedTermId != null || selectedTypeId != null || selectedLangId != null || selectedSourceId != null)
                     {
                         <a asp-action="MyDocuments" class="btn btn-link text-muted px-2 text-decoration-none small hover-text-dark" style="font-size: 0.88rem;">Xoá Lọc</a>
                     }
@@ -449,17 +449,17 @@
 
                     <!-- 4. Document Source (Nguồn tài liệu) Select -->
                     <div style="min-width: 150px; flex: 1;">
-                        <select name="sourceType" class="form-select form-glass-select" onchange="this.form.submit()">
+                        <select name="documentSourceId" class="form-select form-glass-select" onchange="this.form.submit()">
                             <option value="">Tất Cả Nguồn</option>
                             @foreach (var src in allSources)
                             {
-                                if (selectedSource == src.Name)
+                                if (selectedSourceId.HasValue && selectedSourceId.Value == src.Id)
                                 {
-                                    <option value="@src.Name" selected>@src.Name</option>
+                                    <option value="@src.Id" selected>@src.Name</option>
                                 }
                                 else
                                 {
-                                    <option value="@src.Name">@src.Name</option>
+                                    <option value="@src.Id">@src.Name</option>
                                 }
                             }
                         </select>
@@ -615,21 +615,21 @@
             <nav class="d-flex justify-content-center mt-5">
                 <ul class="pagination gap-2 border-0">
                     <li class="page-item @(Model.Page == 1 ? "disabled" : "")">
-                        <a class="page-link pill-button px-3 py-2 border-0" href="?q=@(query)&termId=@(ViewBag.SelectedTermId)&subjectId=@(ViewBag.SelectedSubjectId)&documentTypeId=@(ViewBag.SelectedTypeId)&languageId=@(ViewBag.SelectedLangId)&sourceType=@(ViewBag.SelectedSource)&sortBy=@(ViewBag.SelectedSortBy)&page=@(Model.Page - 1)" style="border-radius: 12px; color: var(--brown); background: rgba(255,255,255,0.4); font-size: 0.85rem;">
+                        <a class="page-link pill-button px-3 py-2 border-0" href="?q=@(query)&termId=@(ViewBag.SelectedTermId)&subjectId=@(ViewBag.SelectedSubjectId)&documentTypeId=@(ViewBag.SelectedTypeId)&languageId=@(ViewBag.SelectedLangId)&documentSourceId=@(ViewBag.SelectedSourceId)&sortBy=@(ViewBag.SelectedSortBy)&page=@(Model.Page - 1)" style="border-radius: 12px; color: var(--brown); background: rgba(255,255,255,0.4); font-size: 0.85rem;">
                             Trước
                         </a>
                     </li>
                     @for (int i = 1; i <= Model.TotalPages; i++)
                     {
                         <li class="page-item @(Model.Page == i ? "active" : "")">
-                            <a class="page-link pill-button px-3.5 py-2 border-0" href="?q=@(query)&termId=@(ViewBag.SelectedTermId)&subjectId=@(ViewBag.SelectedSubjectId)&documentTypeId=@(ViewBag.SelectedTypeId)&languageId=@(ViewBag.SelectedLangId)&sourceType=@(ViewBag.SelectedSource)&sortBy=@(ViewBag.SelectedSortBy)&page=@i" 
+                            <a class="page-link pill-button px-3.5 py-2 border-0" href="?q=@(query)&termId=@(ViewBag.SelectedTermId)&subjectId=@(ViewBag.SelectedSubjectId)&documentTypeId=@(ViewBag.SelectedTypeId)&languageId=@(ViewBag.SelectedLangId)&documentSourceId=@(ViewBag.SelectedSourceId)&sortBy=@(ViewBag.SelectedSortBy)&page=@i" 
                                style="border-radius: 12px; font-size: 0.85rem; font-weight: 600; @(Model.Page == i ? "background: var(--brown) !important; color: #fff !important;" : "color: var(--brown); background: rgba(255,255,255,0.4);")">
                                 @i
                             </a>
                         </li>
                     }
                     <li class="page-item @(Model.Page == Model.TotalPages ? "disabled" : "")">
-                        <a class="page-link pill-button px-3 py-2 border-0" href="?q=@(query)&termId=@(ViewBag.SelectedTermId)&subjectId=@(ViewBag.SelectedSubjectId)&documentTypeId=@(ViewBag.SelectedTypeId)&languageId=@(ViewBag.SelectedLangId)&sourceType=@(ViewBag.SelectedSource)&sortBy=@(ViewBag.SelectedSortBy)&page=@(Model.Page + 1)" style="border-radius: 12px; color: var(--brown); background: rgba(255,255,255,0.4); font-size: 0.85rem;">
+                        <a class="page-link pill-button px-3 py-2 border-0" href="?q=@(query)&termId=@(ViewBag.SelectedTermId)&subjectId=@(ViewBag.SelectedSubjectId)&documentTypeId=@(ViewBag.SelectedTypeId)&languageId=@(ViewBag.SelectedLangId)&documentSourceId=@(ViewBag.SelectedSourceId)&sortBy=@(ViewBag.SelectedSortBy)&page=@(Model.Page + 1)" style="border-radius: 12px; color: var(--brown); background: rgba(255,255,255,0.4); font-size: 0.85rem;">
                             Sau
                         </a>
                     </li>

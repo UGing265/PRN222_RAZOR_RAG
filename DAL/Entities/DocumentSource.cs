@@ -10,4 +10,6 @@ public partial class DocumentSource
     public string Name { get; set; } = null!;
 
     public DateTime CreatedAt { get; set; }
+
+    public virtual ICollection<Document> Documents { get; set; } = new List<Document>();
 }

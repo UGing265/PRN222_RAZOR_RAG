@@ -76,7 +76,7 @@ public class DocumentsController : Controller
                 AcademicTermId = model.AcademicTermId,
                 LanguageId = model.LanguageId,
                 Visibility = model.Visibility,
-                SourceType = model.SourceType,
+                DocumentSourceId = model.DocumentSourceId,
                 FileName = model.UploadFile.FileName,
                 FileSizeBytes = model.UploadFile.Length,
                 FileContentType = model.UploadFile.ContentType
@@ -165,6 +165,7 @@ public class DocumentsController : Controller
                 LanguageId = documentDetails.LanguageId,
                 LanguageCode = documentDetails.LanguageCode,
                 LanguageName = documentDetails.LanguageName,
+                DocumentSourceName = documentDetails.DocumentSourceName,
                 Description = documentDetails.Description,
                 Status = documentDetails.Status,
                 TotalChunks = documentDetails.TotalChunks,
@@ -291,7 +292,7 @@ public class DocumentsController : Controller
             AcademicTermId = document.AcademicTermId,
             LanguageId = document.LanguageId,
             Visibility = document.Visibility,
-            SourceType = document.SourceType
+            DocumentSourceId = document.DocumentSourceId
         };
 
         return View(viewModel);
@@ -323,7 +324,7 @@ public class DocumentsController : Controller
             AcademicTermId = model.AcademicTermId,
             LanguageId = model.LanguageId,
             Visibility = model.Visibility,
-            SourceType = model.SourceType
+            DocumentSourceId = model.DocumentSourceId
         };
 
         try
@@ -377,12 +378,12 @@ public class DocumentsController : Controller
 
     [HttpGet("all")]
     [Authorize(Roles = "Lecturer,Student")]
-    public async Task<IActionResult> AllDocuments(string? q = null, Guid? subjectId = null, Guid? termId = null, string? sortBy = null, Guid? documentTypeId = null, Guid? languageId = null, string? sourceType = null, int page = 1, int pageSize = 6, CancellationToken cancellationToken = default)
+    public async Task<IActionResult> AllDocuments(string? q = null, Guid? subjectId = null, Guid? termId = null, string? sortBy = null, Guid? documentTypeId = null, Guid? languageId = null, Guid? documentSourceId = null, int page = 1, int pageSize = 6, CancellationToken cancellationToken = default)
     {
         try
         {
             var userId = Guid.TryParse(User.FindFirstValue(ClaimTypes.NameIdentifier), out var parsedUserId) ? parsedUserId : (Guid?)null;
-            var result = await _documentService.GetAllDocumentsAsync(q, subjectId, page, pageSize, userId, sortBy, documentTypeId, languageId, sourceType, cancellationToken);
+            var result = await _documentService.GetAllDocumentsAsync(q, subjectId, page, pageSize, userId, sortBy, documentTypeId, languageId, documentSourceId, cancellationToken);
 
             var viewModel = new AllDocumentsViewModel
             {
@@ -421,7 +422,7 @@ public class DocumentsController : Controller
             ViewBag.SelectedSortBy = sortBy;
             ViewBag.SelectedTypeId = documentTypeId;
             ViewBag.SelectedLangId = languageId;
-            ViewBag.SelectedSource = sourceType;
+            ViewBag.SelectedSourceId = documentSourceId;
 
             var allSubjects = await _documentService.GetSubjectsAsync(cancellationToken);
             ViewBag.Subjects = allSubjects;
@@ -450,7 +451,7 @@ public class DocumentsController : Controller
 
     [HttpGet("mine")]
     [Authorize(Roles = "Lecturer")]
-    public async Task<IActionResult> MyDocuments(string? q = null, Guid? subjectId = null, Guid? termId = null, string? sortBy = null, Guid? documentTypeId = null, Guid? languageId = null, string? sourceType = null, int page = 1, int pageSize = 6, CancellationToken cancellationToken = default)
+    public async Task<IActionResult> MyDocuments(string? q = null, Guid? subjectId = null, Guid? termId = null, string? sortBy = null, Guid? documentTypeId = null, Guid? languageId = null, Guid? documentSourceId = null, int page = 1, int pageSize = 6, CancellationToken cancellationToken = default)
     {
         if (!Guid.TryParse(User.FindFirstValue(ClaimTypes.NameIdentifier), out var userId))
         {
@@ -459,7 +460,7 @@ public class DocumentsController : Controller
 
         try
         {
-            var result = await _documentService.GetMyDocumentsAsync(userId, q, subjectId, termId, sortBy, documentTypeId, languageId, sourceType, page, pageSize, cancellationToken);
+            var result = await _documentService.GetMyDocumentsAsync(userId, q, subjectId, termId, sortBy, documentTypeId, languageId, documentSourceId, page, pageSize, cancellationToken);
 
             var viewModel = new MyDocumentsViewModel
             {
@@ -514,7 +515,7 @@ public class DocumentsController : Controller
             ViewBag.SelectedSortBy = sortBy;
             ViewBag.SelectedTypeId = documentTypeId;
             ViewBag.SelectedLangId = languageId;
-            ViewBag.SelectedSource = sourceType;
+            ViewBag.SelectedSourceId = documentSourceId;
 
             var allSubjects = await _documentService.GetSubjectsByOwnerAsync(userId, cancellationToken);
             ViewBag.Subjects = allSubjects;

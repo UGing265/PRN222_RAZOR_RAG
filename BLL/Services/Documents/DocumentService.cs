@@ -107,7 +107,7 @@ public class DocumentService : IDocumentService
             AcademicTermId = input.AcademicTermId,
             LanguageId = input.LanguageId,
             Visibility = input.Visibility ?? "school_wide",
-            SourceType = input.SourceType,
+            DocumentSourceId = input.DocumentSourceId,
             Status = "processing",
             TotalChunks = 0,
             TotalChapters = 0,
@@ -194,7 +194,8 @@ public class DocumentService : IDocumentService
                         chunkOrder = chunkIndex,
                         language = document.Language?.Name,
                         visibility = document.Visibility,
-                        sourceType = document.SourceType
+                        DocumentSourceId = document.DocumentSourceId,
+                        DocumentSourceName = document.DocumentSource?.Name,
                     }));
 
                     chunkEntities.Add(new DocumentChunk
@@ -305,7 +306,8 @@ public class DocumentService : IDocumentService
             DocumentTypeName = document.DocumentType?.Name,
             AcademicTermName = document.AcademicTerm?.Name,
             AcademicTermId = document.AcademicTermId,
-            SourceType = document.SourceType,
+            DocumentSourceId = document.DocumentSourceId,
+            DocumentSourceName = document.DocumentSource?.Name,
             Visibility = document.Visibility,
             LanguageId = document.LanguageId,
             LanguageCode = document.Language?.Code,
@@ -380,15 +382,15 @@ public class DocumentService : IDocumentService
 
 
 
-    public async Task<MyDocumentsDto> GetMyDocumentsAsync(Guid ownerUserId, string? query, Guid? subjectId, Guid? termId, string? sortBy, Guid? documentTypeId, Guid? languageId, string? sourceType, int page = 1, int pageSize = 6, CancellationToken cancellationToken = default)
+    public async Task<MyDocumentsDto> GetMyDocumentsAsync(Guid ownerUserId, string? query, Guid? subjectId, Guid? termId, string? sortBy, Guid? documentTypeId, Guid? languageId, Guid? documentSourceId, int page = 1, int pageSize = 6, CancellationToken cancellationToken = default)
     {
         pageSize = Math.Clamp(pageSize, 6, 12);
         page = Math.Max(page, 1);
-        var totalDocuments = await _documentRepository.CountDocumentsByOwnerAsync(ownerUserId, query, subjectId, termId, documentTypeId, languageId, sourceType, cancellationToken);
+        var totalDocuments = await _documentRepository.CountDocumentsByOwnerAsync(ownerUserId, query, subjectId, termId, documentTypeId, languageId, documentSourceId, cancellationToken);
         var totalPages = Math.Max(1, (int)Math.Ceiling(totalDocuments / (double)pageSize));
         page = Math.Clamp(page, 1, totalPages);
 
-        var documents = await _documentRepository.GetDocumentsByOwnerAsync(ownerUserId, query, subjectId, termId, sortBy, documentTypeId, languageId, sourceType, page, pageSize, cancellationToken);
+        var documents = await _documentRepository.GetDocumentsByOwnerAsync(ownerUserId, query, subjectId, termId, sortBy, documentTypeId, languageId, documentSourceId, page, pageSize, cancellationToken);
         var activeUploadJobs = await _documentRepository.GetActiveUploadJobsByOwnerAsync(ownerUserId, cancellationToken);
 
         var documentIds = documents.Select(x => x.Id).ToList();
@@ -442,15 +444,15 @@ public class DocumentService : IDocumentService
         };
     }
 
-    public async Task<MyDocumentsDto> GetAllDocumentsAsync(string? query, Guid? subjectId, int page = 1, int pageSize = 6, Guid? requesterUserId = null, string? sortBy = null, Guid? documentTypeId = null, Guid? languageId = null, string? sourceType = null, CancellationToken cancellationToken = default)
+    public async Task<MyDocumentsDto> GetAllDocumentsAsync(string? query, Guid? subjectId, int page = 1, int pageSize = 6, Guid? requesterUserId = null, string? sortBy = null, Guid? documentTypeId = null, Guid? languageId = null, Guid? documentSourceId = null, CancellationToken cancellationToken = default)
     {
         pageSize = Math.Clamp(pageSize, 6, 12);
         page = Math.Max(page, 1);
-        var totalDocuments = await _documentRepository.CountDocumentsAsync(query, subjectId, requesterUserId, documentTypeId, languageId, sourceType, cancellationToken);
+        var totalDocuments = await _documentRepository.CountDocumentsAsync(query, subjectId, requesterUserId, documentTypeId, languageId, documentSourceId, cancellationToken);
         var totalPages = Math.Max(1, (int)Math.Ceiling(totalDocuments / (double)pageSize));
         page = Math.Clamp(page, 1, totalPages);
 
-        var documents = await _documentRepository.GetDocumentsAsync(query, subjectId, page, pageSize, requesterUserId, sortBy, documentTypeId, languageId, sourceType, cancellationToken);
+        var documents = await _documentRepository.GetDocumentsAsync(query, subjectId, page, pageSize, requesterUserId, sortBy, documentTypeId, languageId, documentSourceId, cancellationToken);
 
         var documentIds = documents.Select(x => x.Id).ToList();
         var previewTexts = await _documentRepository.GetPreviewTextsAsync(documentIds, cancellationToken);
@@ -669,7 +671,7 @@ public class DocumentService : IDocumentService
         document.AcademicTermId = input.AcademicTermId;
         document.LanguageId = input.LanguageId;
         document.Visibility = input.Visibility;
-        document.SourceType = input.SourceType;
+        document.DocumentSourceId = input.DocumentSourceId;
         document.UpdatedAt = DateTime.UtcNow;
 
         await _documentRepository.SaveChangesAsync(cancellationToken);

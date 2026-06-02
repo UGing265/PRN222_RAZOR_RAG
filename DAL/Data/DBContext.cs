@@ -166,10 +166,7 @@ public partial class DBContext : DbContext
             entity.Property(e => e.Slug)
                 .HasMaxLength(255)
                 .HasColumnName("slug");
-            entity.Property(e => e.SourceType)
-                .HasMaxLength(30)
-                .HasDefaultValueSql("'upload'::character varying")
-                .HasColumnName("source_type");
+            entity.Property(e => e.DocumentSourceId).HasColumnName("document_source_id");
             entity.Property(e => e.Status)
                 .HasMaxLength(50)
                 .HasDefaultValueSql("'pending'::character varying")
@@ -215,6 +212,11 @@ public partial class DBContext : DbContext
                 .HasForeignKey(d => d.AcademicTermId)
                 .OnDelete(DeleteBehavior.SetNull)
                 .HasConstraintName("fk_documents_academic_term");
+
+            entity.HasOne(d => d.DocumentSource).WithMany(p => p.Documents)
+                .HasForeignKey(d => d.DocumentSourceId)
+                .OnDelete(DeleteBehavior.SetNull)
+                .HasConstraintName("fk_documents_document_source");
 
             entity.HasMany(d => d.Tags).WithMany(p => p.Documents)
                 .UsingEntity<Dictionary<string, object>>(

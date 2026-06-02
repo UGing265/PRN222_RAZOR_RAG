@@ -26,8 +26,7 @@ public class DocumentEditViewModel
     [StringLength(30, ErrorMessage = "Quyền hiển thị không được vượt quá 30 ký tự.")]
     public string Visibility { get; set; } = "school_wide";
 
-    [StringLength(100, ErrorMessage = "Nguồn tài liệu không được vượt quá 100 ký tự.")]
-    public string? SourceType { get; set; }
+    public Guid? DocumentSourceId { get; set; }
 
     [StringLength(1000, ErrorMessage = "Mô tả không được vượt quá 1000 ký tự.")]
     public string? Description { get; set; }

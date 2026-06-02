@@ -25,8 +25,7 @@ public class DocumentCreateViewModel
     [StringLength(30, ErrorMessage = "Quyền hiển thị không được vượt quá 30 ký tự.")]
     public string Visibility { get; set; } = "school_wide";
 
-    [StringLength(30, ErrorMessage = "Source type không được vượt quá 30 ký tự.")]
-    public string? SourceType { get; set; } = "upload";
+    public Guid? DocumentSourceId { get; set; }
 
     [StringLength(1000, ErrorMessage = "Mô tả không được vượt quá 1000 ký tự.")]
     public string? Description { get; set; }

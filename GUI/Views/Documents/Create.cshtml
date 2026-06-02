@@ -237,11 +237,11 @@
                         <span asp-validation-for="LanguageId" class="text-danger small"></span>
                     </div>
                     <div class="col-md-6">
-                        <label asp-for="SourceType" class="form-label font-mono-xs text-muted-foreground mb-1" style="font-size: 9px; letter-spacing: 0.08em;">NGUỒN TÀI LIỆU</label>
-                        <select asp-for="SourceType" class="form-select form-glass-select" asp-items="@(new SelectList(ViewBag.DocumentSources, "Name", "Name"))">
-                            <option value="">Chọn Nguồn Tài Liệu</option>
+                        <label asp-for="DocumentSourceId" class="form-label font-mono-xs text-muted-foreground mb-1" style="font-size: 9px; letter-spacing: 0.08em;">NGUỒN TÀI LIỆU</label>
+                        <select asp-for="DocumentSourceId" class="form-select form-glass-select" asp-items="@(new SelectList(ViewBag.DocumentSources, "Id", "Name"))">
+                            <option value="">-- Chọn nguồn (tuỳ chọn) --</option>
                         </select>
-                        <span asp-validation-for="SourceType" class="text-danger small"></span>
+                        <span asp-validation-for="DocumentSourceId" class="text-danger small"></span>
                     </div>
                     
                     <div class="col-12 my-3">

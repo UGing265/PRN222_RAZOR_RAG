@@ -17,8 +17,8 @@ public interface IDocumentService
     Task<DocumentDetailsDto?> GetDocumentDetailsAsync(Guid documentId, int chunkPage = 1, int chunkPageSize = 10, bool incrementViewCount = true, CancellationToken cancellationToken = default);
     Task<DocumentDetailsDto?> GetDocumentDetailsBySlugAsync(string slug, Guid? requesterUserId = null, bool incrementViewCount = true, bool isAdmin = false, CancellationToken cancellationToken = default);
     Task<DocumentDetailsDto?> GetOwnedDocumentDetailsBySlugAsync(string slug, Guid ownerUserId, CancellationToken cancellationToken = default);
-    Task<MyDocumentsDto> GetMyDocumentsAsync(Guid ownerUserId, string? query, Guid? subjectId, Guid? termId, string? sortBy, Guid? documentTypeId, Guid? languageId, string? sourceType, int page = 1, int pageSize = 6, CancellationToken cancellationToken = default);
-    Task<MyDocumentsDto> GetAllDocumentsAsync(string? query, Guid? subjectId, int page = 1, int pageSize = 6, Guid? requesterUserId = null, string? sortBy = null, Guid? documentTypeId = null, Guid? languageId = null, string? sourceType = null, CancellationToken cancellationToken = default);
+    Task<MyDocumentsDto> GetMyDocumentsAsync(Guid ownerUserId, string? query, Guid? subjectId, Guid? termId, string? sortBy, Guid? documentTypeId, Guid? languageId, Guid? documentSourceId, int page = 1, int pageSize = 6, CancellationToken cancellationToken = default);
+    Task<MyDocumentsDto> GetAllDocumentsAsync(string? query, Guid? subjectId, int page = 1, int pageSize = 6, Guid? requesterUserId = null, string? sortBy = null, Guid? documentTypeId = null, Guid? languageId = null, Guid? documentSourceId = null, CancellationToken cancellationToken = default);
     Task<List<UploadJobSummaryDto>> GetActiveUploadJobsAsync(Guid ownerUserId, CancellationToken cancellationToken = default);
     Task<DeleteDocumentViewData?> GetDeleteDocumentViewDataBySlugAsync(string slug, Guid ownerUserId, CancellationToken cancellationToken = default);
     Task DeleteDocumentAsync(Guid documentId, CancellationToken cancellationToken = default);

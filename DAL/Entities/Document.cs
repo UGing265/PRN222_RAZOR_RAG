@@ -31,8 +31,8 @@ public partial class Document
 
     public string Visibility { get; set; } = null!;
 
-    [Column("source_type")]
-    public string? SourceType { get; set; }
+    [Column("document_source_id")]
+    public Guid? DocumentSourceId { get; set; }
 
     public int? PageCount { get; set; }
 
@@ -72,6 +72,8 @@ public partial class Document
     public virtual Language? Language { get; set; }
 
     public virtual AcademicTerm? AcademicTerm { get; set; }
+
+    public virtual DocumentSource? DocumentSource { get; set; }
 
     public virtual ICollection<Tag> Tags { get; set; } = new List<Tag>();
 

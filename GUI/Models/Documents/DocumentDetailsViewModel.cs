@@ -20,6 +20,7 @@ public class DocumentDetailsViewModel
     public Guid? LanguageId { get; set; }
     public string? LanguageCode { get; set; }
     public string? LanguageName { get; set; }
+    public string? DocumentSourceName { get; set; }
     public string? Description { get; set; }
     public string? Status { get; set; }
     public int TotalChunks { get; set; }

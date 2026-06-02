@@ -14,7 +14,7 @@ public sealed class DocumentCreateInput
     public Guid? AcademicTermId { get; init; }
     public Guid? LanguageId { get; init; }
     public string? Visibility { get; init; }
-    public string? SourceType { get; init; }
+    public Guid? DocumentSourceId { get; init; }
     public string FileName { get; init; } = string.Empty;
     public long FileSizeBytes { get; init; }
     public string FileContentType { get; init; } = string.Empty;
@@ -30,7 +30,7 @@ public sealed class DocumentEditInput
     public Guid? AcademicTermId { get; init; }
     public Guid? LanguageId { get; init; }
     public string Visibility { get; init; } = "private";
-    public string? SourceType { get; init; }
+    public Guid? DocumentSourceId { get; init; }
 }
 
 public sealed class DocumentListItemDto
@@ -46,6 +46,8 @@ public sealed class DocumentListItemDto
     public Guid? DocumentTypeId { get; init; }
     public string? DocumentTypeName { get; init; }
     public string? AcademicTermName { get; init; }
+    public Guid? DocumentSourceId { get; init; }
+    public string? DocumentSourceName { get; init; }
     public string Status { get; init; } = string.Empty;
     public int FileCount { get; init; }
     public int ChunkCount { get; init; }
@@ -72,7 +74,8 @@ public sealed class DocumentDetailsDto
     public string? DocumentTypeName { get; init; }
     public string? AcademicTermName { get; init; }
     public Guid? AcademicTermId { get; init; }
-    public string? SourceType { get; init; }
+    public Guid? DocumentSourceId { get; init; }
+    public string? DocumentSourceName { get; init; }
     public string? Visibility { get; init; }
     public Guid? LanguageId { get; init; }
     public string? LanguageCode { get; init; }

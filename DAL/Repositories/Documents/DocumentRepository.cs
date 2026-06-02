@@ -122,7 +122,7 @@ public class DocumentRepository : IDocumentRepository
     public Task<List<DocumentChapter>> GetDocumentChaptersAsync(Guid documentId, CancellationToken cancellationToken = default)
         => _dbContext.DocumentChapters.Where(x => x.DocumentId == documentId).ToListAsync(cancellationToken);
 
-    public Task<List<Document>> GetDocumentsByOwnerAsync(Guid ownerUserId, string? query, Guid? subjectId, Guid? termId, string? sortBy, Guid? documentTypeId, Guid? languageId, string? sourceType, int page, int pageSize, CancellationToken cancellationToken = default)
+    public Task<List<Document>> GetDocumentsByOwnerAsync(Guid ownerUserId, string? query, Guid? subjectId, Guid? termId, string? sortBy, Guid? documentTypeId, Guid? languageId, Guid? documentSourceId, int page, int pageSize, CancellationToken cancellationToken = default)
     {
         var q = _dbContext.Documents.AsNoTracking()
             .Include(x => x.DocumentFiles)
@@ -158,9 +158,9 @@ public class DocumentRepository : IDocumentRepository
             q = q.Where(x => x.LanguageId == languageId.Value);
         }
 
-        if (!string.IsNullOrWhiteSpace(sourceType))
+        if (documentSourceId.HasValue)
         {
-            q = q.Where(x => x.SourceType == sourceType);
+            q = q.Where(x => x.DocumentSourceId == documentSourceId.Value);
         }
 
         q = sortBy switch
@@ -179,7 +179,7 @@ public class DocumentRepository : IDocumentRepository
             .ToListAsync(cancellationToken);
     }
 
-    public Task<int> CountDocumentsByOwnerAsync(Guid ownerUserId, string? query, Guid? subjectId, Guid? termId, Guid? documentTypeId, Guid? languageId, string? sourceType, CancellationToken cancellationToken = default)
+    public Task<int> CountDocumentsByOwnerAsync(Guid ownerUserId, string? query, Guid? subjectId, Guid? termId, Guid? documentTypeId, Guid? languageId, Guid? documentSourceId, CancellationToken cancellationToken = default)
     {
         var q = _dbContext.Documents.AsNoTracking()
             
@@ -211,15 +211,15 @@ public class DocumentRepository : IDocumentRepository
             q = q.Where(x => x.LanguageId == languageId.Value);
         }
 
-        if (!string.IsNullOrWhiteSpace(sourceType))
+        if (documentSourceId.HasValue)
         {
-            q = q.Where(x => x.SourceType == sourceType);
+            q = q.Where(x => x.DocumentSourceId == documentSourceId.Value);
         }
 
         return q.CountAsync(cancellationToken);
     }
 
-    public Task<List<Document>> GetDocumentsAsync(string? query, Guid? subjectId, int page, int pageSize, Guid? requesterUserId = null, string? sortBy = null, Guid? documentTypeId = null, Guid? languageId = null, string? sourceType = null, CancellationToken cancellationToken = default)
+    public Task<List<Document>> GetDocumentsAsync(string? query, Guid? subjectId, int page, int pageSize, Guid? requesterUserId = null, string? sortBy = null, Guid? documentTypeId = null, Guid? languageId = null, Guid? documentSourceId = null, CancellationToken cancellationToken = default)
     {
         var q = _dbContext.Documents.AsNoTracking()
             .Include(x => x.DocumentFiles)
@@ -253,9 +253,9 @@ public class DocumentRepository : IDocumentRepository
             q = q.Where(x => x.LanguageId == languageId.Value);
         }
 
-        if (!string.IsNullOrWhiteSpace(sourceType))
+        if (documentSourceId.HasValue)
         {
-            q = q.Where(x => x.SourceType == sourceType);
+            q = q.Where(x => x.DocumentSourceId == documentSourceId.Value);
         }
 
         if (string.Equals(sortBy, "title", StringComparison.OrdinalIgnoreCase) || string.Equals(sortBy, "title_asc", StringComparison.OrdinalIgnoreCase))
@@ -292,7 +292,7 @@ public class DocumentRepository : IDocumentRepository
             .ToListAsync(cancellationToken);
     }
 
-    public Task<int> CountDocumentsAsync(string? query, Guid? subjectId, Guid? requesterUserId = null, Guid? documentTypeId = null, Guid? languageId = null, string? sourceType = null, CancellationToken cancellationToken = default)
+    public Task<int> CountDocumentsAsync(string? query, Guid? subjectId, Guid? requesterUserId = null, Guid? documentTypeId = null, Guid? languageId = null, Guid? documentSourceId = null, CancellationToken cancellationToken = default)
     {
         var q = _dbContext.Documents.AsNoTracking()
             .Include(x => x.OwnerUser)
@@ -322,9 +322,9 @@ public class DocumentRepository : IDocumentRepository
             q = q.Where(x => x.LanguageId == languageId.Value);
         }
 
-        if (!string.IsNullOrWhiteSpace(sourceType))
+        if (documentSourceId.HasValue)
         {
-            q = q.Where(x => x.SourceType == sourceType);
+            q = q.Where(x => x.DocumentSourceId == documentSourceId.Value);
         }
 
         return q.CountAsync(cancellationToken);
