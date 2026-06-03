@@ -176,7 +176,7 @@ public class DocumentsController : Controller
                 FileCount = documentDetails.FileCount,
                 ChunkPage = chunkPage,
                 ChunkPageSize = chunkPageSize,
-                TotalChunkPages = Math.Max(1, (int)Math.Ceiling(documentDetails.Chunks.Count / (double)Math.Clamp(chunkPageSize, 8, 10))),
+                TotalChunkPages = Math.Max(1, (int)Math.Ceiling(documentDetails.TotalChunks / (double)Math.Clamp(chunkPageSize, 8, 10))),
                 Files = documentDetails.Files.Select(file => new DocumentFileViewModel
                 {
                     Id = file.Id,
