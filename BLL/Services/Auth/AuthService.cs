@@ -71,6 +71,11 @@ public class AuthService : IAuthService
             return null;
         }
 
+        if (user.IsBlocked)
+        {
+            throw new InvalidOperationException("Tài khoản của bạn đã bị khóa.");
+        }
+
         if (!user.IsActive)
         {
             throw new InvalidOperationException("Tài khoản của bạn chưa được kích hoạt hoặc đang chờ Admin phê duyệt.");
@@ -94,6 +99,7 @@ public class AuthService : IAuthService
         }
 
         user.IsActive = true;
+        user.IsBlocked = false;
         user.UpdatedAt = DateTime.UtcNow;
         await _authRepository.UpdateUserAsync(user, cancellationToken);
         return true;
@@ -107,16 +113,32 @@ public class AuthService : IAuthService
             return false;
         }
 
-        if (!user.IsActive)
+        if (!user.IsActive && !user.IsBlocked)
         {
             await _authRepository.DeleteUserAsync(user, cancellationToken);
         }
         else
         {
             user.IsActive = false;
+            user.IsBlocked = true;
             user.UpdatedAt = DateTime.UtcNow;
             await _authRepository.UpdateUserAsync(user, cancellationToken);
         }
+        return true;
+    }
+
+    public async Task<bool> UnblockUserAsync(Guid userId, CancellationToken cancellationToken = default)
+    {
+        var user = await _authRepository.GetUserByIdAsync(userId, cancellationToken);
+        if (user is null)
+        {
+            return false;
+        }
+
+        user.IsBlocked = false;
+        user.IsActive = true;
+        user.UpdatedAt = DateTime.UtcNow;
+        await _authRepository.UpdateUserAsync(user, cancellationToken);
         return true;
     }
 
@@ -127,7 +149,8 @@ public class AuthService : IAuthService
         Email = user.Email,
         RoleId = user.RoleId,
         RoleName = user.Role?.Name ?? user.RoleId.ToString(),
-        IsActive = user.IsActive
+        IsActive = user.IsActive,
+        IsBlocked = user.IsBlocked
     };
 
     private static string HashPassword(string password)

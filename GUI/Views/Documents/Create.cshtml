@@ -361,12 +361,121 @@
                 });
             }
 
+            let lastAutoFilledTitle = '';
+            let lastAutoFilledDesc = '';
+
             const updateLabel = () => {
-                fileLabel.textContent = input.files && input.files.length ? input.files[0].name : 'Chưa chọn tệp nào';
                 if (input.files && input.files.length) {
+                    const file = input.files[0];
+                    fileLabel.textContent = file.name;
                     fileLabel.classList.remove('text-muted-foreground');
                     fileLabel.classList.add('text-dark', 'fw-semibold');
                     fileLabel.style.borderColor = 'rgba(216, 106, 88, 0.3)';
+
+                    // Extract file name without extension
+                    const lastDot = file.name.lastIndexOf('.');
+                    const fileNameWithoutExt = lastDot !== -1 ? file.name.substring(0, lastDot) : file.name;
+
+                    // Clean the filename for the Title field (replace hyphens/underscores with spaces)
+                    let cleanTitle = fileNameWithoutExt
+                        .replace(/[-_]+/g, ' ')
+                        .replace(/\s+/g, ' ')
+                        .trim();
+
+                    // Capitalize the first letter if it is lowercase
+                    if (cleanTitle.length > 0) {
+                        cleanTitle = cleanTitle.charAt(0).toUpperCase() + cleanTitle.slice(1);
+                    }
+
+                    // Auto-fill Title if empty or matches last auto-filled title
+                    const titleInput = document.getElementById('Title');
+                    if (titleInput && (!titleInput.value || titleInput.value === lastAutoFilledTitle)) {
+                        titleInput.value = cleanTitle;
+                        lastAutoFilledTitle = cleanTitle;
+                        // Trigger input event in case validation is listening
+                        titleInput.dispatchEvent(new Event('input'));
+                    }
+
+                    // Auto-fill Description if empty or matches last auto-filled description
+                    const descInput = document.getElementById('Description');
+                    if (descInput && (!descInput.value || descInput.value === lastAutoFilledDesc)) {
+                        const newDesc = `Tài liệu học tập: ${cleanTitle}`;
+                        descInput.value = newDesc;
+                        lastAutoFilledDesc = newDesc;
+                        descInput.dispatchEvent(new Event('input'));
+                    }
+
+                    // Auto-detect Subject (Môn Học) from filename (e.g. PRN222, SWD392, etc.)
+                    const subjectSelect = document.getElementById('SubjectId');
+                    if (subjectSelect) {
+                        const fileNameLower = file.name.toLowerCase();
+                        let foundSubject = false;
+                        
+                        // First, try matching options by value/code
+                        for (let i = 1; i < subjectSelect.options.length; i++) {
+                            const option = subjectSelect.options[i];
+                            const subjectCode = option.text.toLowerCase().trim();
+                            // Exact match or contains code (e.g. "prn222" in "prn222_rag")
+                            if (subjectCode && (fileNameLower.includes(subjectCode) || subjectCode.includes(fileNameLower))) {
+                                subjectSelect.selectedIndex = i;
+                                subjectSelect.dispatchEvent(new Event('change'));
+                                foundSubject = true;
+                                break;
+                            }
+                        }
+                    }
+
+                    // Auto-detect Document Type from filename keywords
+                    const docTypeSelect = document.getElementById('DocumentTypeId');
+                    if (docTypeSelect) {
+                        const fileNameLower = file.name.toLowerCase();
+                        const docTypes = [
+                            { keywords: ['slide', 'lecture', 'bài giảng', 'pptx', 'ppt'], type: 'Slide' },
+                            { keywords: ['syllabus', 'đề cương'], type: 'Syllabus' },
+                            { keywords: ['report', 'báo cáo', 'đề tài', 'luận văn', 'thesis', 'rp'], type: 'Báo cáo' },
+                            { keywords: ['assignment', 'asm', 'bài tập', 'exercise', 'homework', 'ex'], type: 'Assignment' },
+                            { keywords: ['lab', 'thực hành'], type: 'Lab' },
+                            { keywords: ['exam', 'test', 'quiz', 'đề thi', 'kiểm tra'], type: 'Đề thi' },
+                            { keywords: ['book', 'textbook', 'sách', 'giáo trình'], type: 'Giáo trình' }
+                        ];
+
+                        for (const dt of docTypes) {
+                            if (dt.keywords.some(kw => fileNameLower.includes(kw))) {
+                                for (let i = 1; i < docTypeSelect.options.length; i++) {
+                                    const option = docTypeSelect.options[i];
+                                    if (option.text.toLowerCase().includes(dt.type.toLowerCase()) || 
+                                        dt.type.toLowerCase().includes(option.text.toLowerCase())) {
+                                        docTypeSelect.selectedIndex = i;
+                                        docTypeSelect.dispatchEvent(new Event('change'));
+                                        break;
+                                    }
+                                }
+                                break;
+                            }
+                        }
+                    }
+
+                    // Auto-detect Language
+                    const langSelect = document.getElementById('LanguageId');
+                    if (langSelect) {
+                        const fileNameLower = file.name.toLowerCase();
+                        const enKeywords = ['english', 'en', 'report', 'assignment', 'syllabus', 'lecture', 'slide'];
+                        const isEnglish = enKeywords.some(kw => fileNameLower.includes(kw)) && !/[áàảãạăắằẳẵặâấầẩẫậéèẻẽẹêếềểễệíìỉĩịóòỏõọôốồổỗộơớờởỡợúùủũụưứừửữựýỳỷỹỵđ]/i.test(file.name);
+                        
+                        const targetLang = isEnglish ? 'English' : 'Tiếng Việt';
+                        for (let i = 1; i < langSelect.options.length; i++) {
+                            const option = langSelect.options[i];
+                            if (option.text.toLowerCase().includes(targetLang.toLowerCase())) {
+                                langSelect.selectedIndex = i;
+                                langSelect.dispatchEvent(new Event('change'));
+                                break;
+                            }
+                        }
+                    }
+                } else {
+                    fileLabel.textContent = 'Chưa chọn tệp nào';
+                    fileLabel.classList.add('text-muted-foreground');
+                    fileLabel.classList.remove('text-dark', 'fw-semibold');
                 }
             };
 

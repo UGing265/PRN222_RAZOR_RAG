@@ -59,6 +59,22 @@ public class AdminController : Controller
         return RedirectToAction(nameof(Users));
     }
 
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> Unblock(Guid id, CancellationToken cancellationToken)
+    {
+        var success = await _authService.UnblockUserAsync(id, cancellationToken);
+        if (success)
+        {
+            TempData["SuccessMessage"] = "Đã mở khóa tài khoản người dùng thành công.";
+        }
+        else
+        {
+            TempData["ErrorMessage"] = "Không thể mở khóa tài khoản.";
+        }
+        return RedirectToAction(nameof(Users));
+    }
+
     [HttpGet]
     public async Task<IActionResult> Metadata(string? tab, CancellationToken cancellationToken)
     {

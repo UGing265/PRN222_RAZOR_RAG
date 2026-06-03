@@ -13,7 +13,7 @@
         -webkit-backdrop-filter: blur(20px) !important;
         border: 1px solid rgba(255, 255, 255, 0.8) !important;
         box-shadow: 0 20px 40px rgba(74, 31, 22, 0.04) !important;
-        border-radius: 28px !important;
+        border-radius: 24px !important;
         transition: all 0.3s ease;
     }
     .metadata-panel:hover {
@@ -21,7 +21,7 @@
     }
     
     .glass-table-row {
-        background: rgba(255, 255, 255, 0.5) !important;
+        background: rgba(255, 255, 255, 0.4) !important;
         border-radius: 16px !important;
         transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1) !important;
         border: 1px solid transparent;
@@ -34,88 +34,123 @@
     .glass-table-row td:last-child { border-radius: 0 16px 16px 0; }
     
     .glass-table-row:hover {
-        background: rgba(255, 255, 255, 0.95) !important;
-        transform: translateY(-3px);
-        box-shadow: 0 15px 35px rgba(216, 106, 88, 0.1) !important;
-        border-color: rgba(216, 106, 88, 0.2) !important;
-        z-index: 10;
+        background: rgba(255, 255, 255, 0.85) !important;
+        transform: translateY(-2px);
+        box-shadow: 0 15px 35px rgba(74, 31, 22, 0.05) !important;
         position: relative;
     }
 
     .metadata-tab-btn {
-        background: rgba(255, 255, 255, 0.4) !important;
+        font-family: inherit;
+        font-size: 14px;
+        font-weight: 600;
+        text-transform: none;
+        letter-spacing: normal;
+        background: rgba(255, 255, 255, 0.45) !important;
         color: var(--brown) !important;
-        border: 1px solid rgba(82, 39, 27, 0.05) !important;
+        border: 1px solid rgba(82, 39, 27, 0.08) !important;
         backdrop-filter: blur(8px);
-        transition: all 0.3s ease !important;
+        transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1) !important;
+        border-radius: 100px;
     }
     .metadata-tab-btn:hover {
-        background: rgba(255, 255, 255, 0.8) !important;
-        transform: translateY(-2px);
-        box-shadow: 0 6px 15px rgba(82, 39, 27, 0.05) !important;
+        background: rgba(255, 255, 255, 0.75) !important;
+        border-color: rgba(216, 106, 88, 0.25) !important;
     }
+    
     .metadata-tab-btn.active {
-        background: var(--coral) !important;
         color: #fff !important;
-        border-color: var(--coral) !important;
-        box-shadow: 0 10px 25px rgba(216, 106, 88, 0.3) !important;
+        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.15) !important;
+    }
+    
+    #subjects-tab.active {
+        background: #4a1f16 !important;
+        border-color: #4a1f16 !important;
+        box-shadow: 0 4px 15px rgba(74, 31, 22, 0.2) !important;
+    }
+    #documenttypes-tab.active {
+        background: #2b5c43 !important;
+        border-color: #2b5c43 !important;
+        box-shadow: 0 4px 15px rgba(43, 92, 67, 0.2) !important;
+    }
+    #languages-tab.active {
+        background: #1e3e62 !important;
+        border-color: #1e3e62 !important;
+        box-shadow: 0 4px 15px rgba(30, 62, 98, 0.2) !important;
+    }
+    #documentsources-tab.active {
+        background: #4b5563 !important;
+        border-color: #4b5563 !important;
+        box-shadow: 0 4px 15px rgba(75, 85, 99, 0.2) !important;
+    }
+    #academicterms-tab.active {
+        background: #d97706 !important;
+        border-color: #d97706 !important;
+        box-shadow: 0 4px 15px rgba(217, 119, 6, 0.2) !important;
     }
     
     .table-container {
         border-collapse: separate;
         border-spacing: 0 12px;
     }
+    
+    .pill-input:focus {
+        background: rgb(255, 255, 255) !important;
+        border-color: rgba(216, 106, 88, 0.25) !important;
+        box-shadow: 0 6px 18px rgba(216, 106, 88, 0.15) !important;
+        outline: none;
+    }
 </style>
 
 <div class="page-shell">
-    <main class="container-fluid px-4 px-md-5 py-5" style="max-width: 1200px;">
+    <main class="container-fluid px-4 px-md-5 py-5" style="max-width: 1250px;">
         <!-- Top Heading Area -->
         <div class="d-flex align-items-center justify-content-between mb-5">
             <div>
-                <h1 class="hero-title mb-1" style="font-size: clamp(2rem, 4vw, 3rem);">Quản Lý Danh Mục</h1>
-                <p class="text-muted-foreground font-mono-xs">Cấu hình các danh mục Môn học, Loại tài liệu và Ngôn ngữ trong hệ thống</p>
+                <h1 class="hero-title mb-1" style="font-size: clamp(2rem, 4vw, 2.75rem); font-family: inherit;">Quản Lý Danh Mục</h1>
+                <p class="text-muted-foreground" style="font-size: 15px; font-weight: 400; margin-bottom: 0;">Cấu hình các danh mục Môn học, Loại tài liệu, Ngôn ngữ, Nguồn và Học kỳ trong hệ thống.</p>
             </div>
         </div>
 
         @if (TempData["SuccessMessage"] != null)
         {
-            <div class="alert alert-success pill-input border-0 mb-4 px-4 py-3 d-flex align-items-center gap-2" style="background: rgba(43, 92, 67, 0.12); color: #1e3f2e;">
+            <div class="alert alert-success pill-input border-0 mb-4 px-4 py-3 d-flex align-items-center gap-2" style="background: rgba(43, 92, 67, 0.12); color: #1e3f2e; border-radius: 12px; font-family: inherit;">
                 <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
                 <span>@TempData["SuccessMessage"]</span>
             </div>
         }
         @if (TempData["ErrorMessage"] != null)
         {
-            <div class="alert alert-danger pill-input border-0 mb-4 px-4 py-3 d-flex align-items-center gap-2" style="background: rgba(139, 0, 0, 0.08); color: #8b0000;">
+            <div class="alert alert-danger pill-input border-0 mb-4 px-4 py-3 d-flex align-items-center gap-2" style="background: rgba(139, 0, 0, 0.08); color: #8b0000; border-radius: 12px; font-family: inherit;">
                 <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
                 <span>@TempData["ErrorMessage"]</span>
             </div>
         }
 
         <!-- Tabs Area -->
-        <ul class="nav nav-tabs border-0 mb-4 d-flex gap-2 font-mono-xs" id="metadataTabs" role="tablist">
+        <ul class="nav nav-tabs border-0 mb-4 d-flex gap-2" id="metadataTabs" role="tablist" style="font-family: inherit;">
             <li class="nav-item" role="presentation">
-                <button class="nav-link pill-button px-4 py-2 text-decoration-none border-0 metadata-tab-btn @(activeTab == "subjects" ? "active" : "")" id="subjects-tab" data-bs-toggle="tab" data-bs-target="#subjects-pane" type="button" role="tab" aria-controls="subjects-pane" aria-selected="@(activeTab == "subjects" ? "true" : "false")" style="border-radius: 100px;">
+                <button class="nav-link pill-button px-4 py-2 text-decoration-none border-0 metadata-tab-btn @(activeTab == "subjects" ? "active" : "")" id="subjects-tab" data-bs-toggle="tab" data-bs-target="#subjects-pane" type="button" role="tab" aria-controls="subjects-pane" aria-selected="@(activeTab == "subjects" ? "true" : "false")">
                     Môn Học (@Model.Subjects.Count)
                 </button>
             </li>
             <li class="nav-item" role="presentation">
-                <button class="nav-link pill-button px-4 py-2 text-decoration-none border-0 metadata-tab-btn @(activeTab == "documenttypes" ? "active" : "")" id="documenttypes-tab" data-bs-toggle="tab" data-bs-target="#documenttypes-pane" type="button" role="tab" aria-controls="documenttypes-pane" aria-selected="@(activeTab == "documenttypes" ? "true" : "false")" style="border-radius: 100px;">
+                <button class="nav-link pill-button px-4 py-2 text-decoration-none border-0 metadata-tab-btn @(activeTab == "documenttypes" ? "active" : "")" id="documenttypes-tab" data-bs-toggle="tab" data-bs-target="#documenttypes-pane" type="button" role="tab" aria-controls="documenttypes-pane" aria-selected="@(activeTab == "documenttypes" ? "true" : "false")">
                     Loại Học Liệu (@Model.DocumentTypes.Count)
                 </button>
             </li>
             <li class="nav-item" role="presentation">
-                <button class="nav-link pill-button px-4 py-2 text-decoration-none border-0 metadata-tab-btn @(activeTab == "languages" ? "active" : "")" id="languages-tab" data-bs-toggle="tab" data-bs-target="#languages-pane" type="button" role="tab" aria-controls="languages-pane" aria-selected="@(activeTab == "languages" ? "true" : "false")" style="border-radius: 100px;">
+                <button class="nav-link pill-button px-4 py-2 text-decoration-none border-0 metadata-tab-btn @(activeTab == "languages" ? "active" : "")" id="languages-tab" data-bs-toggle="tab" data-bs-target="#languages-pane" type="button" role="tab" aria-controls="languages-pane" aria-selected="@(activeTab == "languages" ? "true" : "false")">
                     Ngôn Ngữ (@Model.Languages.Count)
                 </button>
             </li>
             <li class="nav-item" role="presentation">
-                <button class="nav-link pill-button px-4 py-2 text-decoration-none border-0 metadata-tab-btn @(activeTab == "documentsources" ? "active" : "")" id="documentsources-tab" data-bs-toggle="tab" data-bs-target="#documentsources-pane" type="button" role="tab" aria-controls="documentsources-pane" aria-selected="@(activeTab == "documentsources" ? "true" : "false")" style="border-radius: 100px;">
+                <button class="nav-link pill-button px-4 py-2 text-decoration-none border-0 metadata-tab-btn @(activeTab == "documentsources" ? "active" : "")" id="documentsources-tab" data-bs-toggle="tab" data-bs-target="#documentsources-pane" type="button" role="tab" aria-controls="documentsources-pane" aria-selected="@(activeTab == "documentsources" ? "true" : "false")">
                     Nguồn Tài Liệu (@Model.DocumentSources.Count)
                 </button>
             </li>
             <li class="nav-item" role="presentation">
-                <button class="nav-link pill-button px-4 py-2 text-decoration-none border-0 metadata-tab-btn @(activeTab == "academicterms" ? "active" : "")" id="academicterms-tab" data-bs-toggle="tab" data-bs-target="#academicterms-pane" type="button" role="tab" aria-controls="academicterms-pane" aria-selected="@(activeTab == "academicterms" ? "true" : "false")" style="border-radius: 100px;">
+                <button class="nav-link pill-button px-4 py-2 text-decoration-none border-0 metadata-tab-btn @(activeTab == "academicterms" ? "active" : "")" id="academicterms-tab" data-bs-toggle="tab" data-bs-target="#academicterms-pane" type="button" role="tab" aria-controls="academicterms-pane" aria-selected="@(activeTab == "academicterms" ? "true" : "false")">
                     Học Kỳ (@Model.AcademicTerms.Count)
                 </button>
             </li>
@@ -128,45 +163,45 @@
                     <!-- List of Subjects -->
                     <div class="col-lg-8">
                         <div class="metadata-panel p-4 p-md-5">
-                            <h2 class="h4 fw-bold text-foreground mb-4 font-mono-xs">Danh Sách Môn Học</h2>
+                            <h2 class="h4 fw-bold text-foreground mb-4" style="font-family: inherit;">Danh Sách Môn Học</h2>
                             @if (!Model.Subjects.Any())
                             {
                                 <div class="text-center py-5">
                                     <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.2" class="text-muted mb-3"><path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/></svg>
-                                    <h3 class="font-mono-xs text-muted-foreground">Chưa có môn học nào trong hệ thống.</h3>
+                                    <h3 class="text-muted-foreground" style="font-size: 15px; font-weight: 500; font-family: inherit;">Chưa có môn học nào trong hệ thống.</h3>
                                 </div>
                             }
                             else
                             {
                                 <div class="table-responsive">
-                                    <table class="table table-hover align-middle mb-0 table-container">
+                                    <table class="table table-hover align-middle mb-0 table-container" style="font-family: inherit;">
                                         <thead>
-                                            <tr class="font-mono-xs text-muted-foreground" style="border: none;">
-                                                <th scope="col" class="pb-3 border-0 ps-3">Mã Môn</th>
-                                                <th scope="col" class="pb-3 border-0">Tên Môn Học</th>
-                                                <th scope="col" class="pb-3 border-0">Thuộc Kỳ</th>
-                                                <th scope="col" class="pb-3 border-0 text-end pe-3">Ngày Tạo</th>
-                                                <th scope="col" class="pb-3 border-0 text-end pe-3">Thao Tác</th>
+                                            <tr class="text-muted-foreground" style="border: none; font-size: 13px; font-weight: 600; letter-spacing: 0.02em;">
+                                                <th scope="col" class="pb-2 border-0 ps-3">Mã Môn</th>
+                                                <th scope="col" class="pb-2 border-0">Tên Môn Học</th>
+                                                <th scope="col" class="pb-2 border-0">Thuộc Kỳ</th>
+                                                <th scope="col" class="pb-2 border-0 text-end pe-3">Ngày Tạo</th>
+                                                <th scope="col" class="pb-2 border-0 text-end pe-3">Thao Tác</th>
                                             </tr>
                                         </thead>
                                         <tbody>
                                             @foreach (var item in Model.Subjects)
                                             {
                                                 <tr class="glass-table-row">
-                                                    <td class="ps-3 py-3 border-0 fw-bold font-mono-xs text-foreground" style="border-radius: 12px 0 0 12px; color: #4a1f16 !important;">
+                                                    <td class="ps-3 py-3 border-0 fw-bold text-foreground" style="border-radius: 12px 0 0 12px; color: #4a1f16 !important; font-size: 14px;">
                                                         @item.Code
                                                     </td>
-                                                    <td class="py-3 border-0 fw-medium text-muted-foreground">@item.Name</td>
-                                                    <td class="py-3 border-0 text-muted-foreground">@(Model.AcademicTerms.FirstOrDefault(t => t.Id == item.AcademicTermId)?.Name ?? "Chưa phân bổ")</td>
-                                                    <td class="py-3 border-0 text-end text-muted font-mono-xs pe-3">
+                                                    <td class="py-3 border-0 fw-medium text-muted-foreground" style="font-size: 14px;">@item.Name</td>
+                                                    <td class="py-3 border-0 text-muted-foreground" style="font-size: 14px;">@(Model.AcademicTerms.FirstOrDefault(t => t.Id == item.AcademicTermId)?.Name ?? "Chưa phân bổ")</td>
+                                                    <td class="py-3 border-0 text-end text-muted pe-3" style="font-size: 12px;">
                                                         @item.CreatedAt.ToLocalTime().ToString("dd/MM/yyyy HH:mm")
                                                     </td>
                                                     <td class="py-3 border-0 text-end pe-3" style="border-radius: 0 12px 12px 0; width: 100px;">
                                                         <div class="d-flex gap-2 justify-content-end">
-                                                            <button type="button" class="btn btn-sm btn-outline-secondary" onclick="openEditSubjectModal('@item.Id', '@item.Code', '@item.Name', '@item.AcademicTermId')" style="border-radius: 8px; border-color: rgba(0,0,0,0.1);">
+                                                            <button type="button" class="btn btn-sm btn-outline-secondary d-flex align-items-center justify-content-center" onclick="openEditSubjectModal('@item.Id', '@item.Code', '@item.Name', '@item.AcademicTermId')" style="border-radius: 8px; border-color: rgba(0,0,0,0.1); width: 30px; height: 30px; padding: 0;">
                                                                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
                                                             </button>
-                                                            <button type="button" class="btn btn-sm btn-outline-danger" onclick="openDeleteSubjectModal('@item.Id', '@item.Code')" style="border-radius: 8px;">
+                                                            <button type="button" class="btn btn-sm btn-outline-danger d-flex align-items-center justify-content-center" onclick="openDeleteSubjectModal('@item.Id', '@item.Code')" style="border-radius: 8px; width: 30px; height: 30px; padding: 0;">
                                                                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
                                                             </button>
                                                         </div>
@@ -182,22 +217,22 @@
                     <!-- Creation Form -->
                     <div class="col-lg-4">
                         <div class="metadata-panel p-4">
-                            <h2 class="h5 fw-bold text-foreground mb-4 d-flex align-items-center gap-2 font-mono-xs">
+                            <h2 class="h5 fw-bold text-foreground mb-4 d-flex align-items-center gap-2" style="font-family: inherit;">
                                 <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M12 5v14M5 12h14"/></svg>
                                 Thêm Môn Học Mới
                             </h2>
-                            <form asp-action="CreateSubject" method="post">
+                            <form asp-action="CreateSubject" method="post" style="font-family: inherit;">
                                 <div class="mb-3">
-                                    <label for="subjectCode" class="form-label font-mono-xs text-muted-foreground">Mã Môn Học</label>
-                                    <input type="text" class="form-control pill-input" id="subjectCode" name="code" placeholder="Ví dụ: PRN222" required style="background: rgba(255,255,255,0.5); border: 1px solid rgba(0,0,0,0.08); border-radius: 12px; padding: 12px 16px;" oninput="this.value = this.value.toUpperCase()" />
+                                    <label for="subjectCode" class="form-label text-muted-foreground" style="font-size: 13px; font-weight: 600;">Mã Môn Học</label>
+                                    <input type="text" class="form-control pill-input" id="subjectCode" name="code" placeholder="Ví dụ: PRN222" required style="background: rgba(255,255,255,0.5); border: 1px solid rgba(82, 39, 27, 0.08); border-radius: 12px; padding: 12px 16px; font-size: 14px;" oninput="this.value = this.value.toUpperCase()" />
+                                </div>
+                                <div class="mb-3">
+                                    <label for="subjectName" class="form-label text-muted-foreground" style="font-size: 13px; font-weight: 600;">Tên môn học</label>
+                                    <input type="text" class="form-control pill-input" id="subjectName" name="name" placeholder="Ví dụ: C# và ứng dụng" required style="background: rgba(255,255,255,0.5); border: 1px solid rgba(82, 39, 27, 0.08); border-radius: 12px; padding: 12px 16px; font-size: 14px;" />
                                 </div>
                                 <div class="mb-4">
-                                    <label for="subjectName" class="form-label font-mono-xs text-muted-foreground">Tên môn học</label>
-                                    <input type="text" class="form-control pill-input" id="subjectName" name="name" placeholder="Ví dụ: C# và ứng dụng" required style="background: rgba(255,255,255,0.5); border: 1px solid rgba(0,0,0,0.08); border-radius: 12px; padding: 12px 16px;" />
-                                </div>
-                                <div class="mb-4">
-                                    <label for="academicTermId" class="form-label font-mono-xs text-muted-foreground">Học Kỳ</label>
-                                    <select class="form-select pill-input" id="academicTermId" name="academicTermId" required style="background: rgba(255,255,255,0.5); border: 1px solid rgba(0,0,0,0.08); border-radius: 12px; padding: 12px 16px;">
+                                    <label for="academicTermId" class="form-label text-muted-foreground" style="font-size: 13px; font-weight: 600;">Học Kỳ</label>
+                                    <select class="form-select pill-input" id="academicTermId" name="academicTermId" required style="background: rgba(255,255,255,0.5); border: 1px solid rgba(82, 39, 27, 0.08); border-radius: 12px; padding: 12px 16px; font-size: 14px;">
                                         <option value="">Chọn Học Kỳ</option>
                                         @foreach (var term in Model.AcademicTerms)
                                         {
@@ -205,7 +240,7 @@
                                         }
                                     </select>
                                 </div>
-                                <button type="submit" class="btn btn-dark w-100 pill-button py-2.5 font-mono-xs text-white" style="background: #4a1f16; border: none; border-radius: 100px; font-weight: 600; box-shadow: 0 4px 12px rgba(74, 31, 22, 0.2); transition: all 0.2s;">
+                                <button type="submit" class="btn btn-dark w-100 pill-button py-2.5 text-white" style="background: #4a1f16; border: none; border-radius: 100px; font-size: 14px; font-weight: 600; box-shadow: 0 4px 12px rgba(74, 31, 22, 0.2); transition: all 0.2s;">
                                     Tạo Môn Học
                                 </button>
                             </form>
@@ -220,43 +255,43 @@
                     <!-- List of Document Types -->
                     <div class="col-lg-8">
                         <div class="metadata-panel p-4 p-md-5">
-                            <h2 class="h4 fw-bold text-foreground mb-4 font-mono-xs">Danh Sách Loại Học Liệu</h2>
+                            <h2 class="h4 fw-bold text-foreground mb-4" style="font-family: inherit;">Danh Sách Loại Học Liệu</h2>
                             @if (!Model.DocumentTypes.Any())
                             {
                                 <div class="text-center py-5">
                                     <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.2" class="text-muted mb-3"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
-                                    <h3 class="font-mono-xs text-muted-foreground">Chưa có loại học liệu nào trong hệ thống.</h3>
+                                    <h3 class="text-muted-foreground" style="font-size: 15px; font-weight: 500; font-family: inherit;">Chưa có loại học liệu nào trong hệ thống.</h3>
                                 </div>
                             }
                             else
                             {
                                 <div class="table-responsive">
-                                    <table class="table table-hover align-middle mb-0 table-container">
+                                    <table class="table table-hover align-middle mb-0 table-container" style="font-family: inherit;">
                                         <thead>
-                                            <tr class="font-mono-xs text-muted-foreground" style="border: none;">
-                                                <th scope="col" class="pb-3 border-0 ps-3">Tên Loại</th>
-                                                <th scope="col" class="pb-3 border-0">Mô Tả</th>
-                                                <th scope="col" class="pb-3 border-0 text-end pe-3">Ngày Tạo</th>
-                                                <th scope="col" class="pb-3 border-0 text-end pe-3">Thao Tác</th>
+                                            <tr class="text-muted-foreground" style="border: none; font-size: 13px; font-weight: 600; letter-spacing: 0.02em;">
+                                                <th scope="col" class="pb-2 border-0 ps-3">Tên Loại</th>
+                                                <th scope="col" class="pb-2 border-0">Mô Tả</th>
+                                                <th scope="col" class="pb-2 border-0 text-end pe-3">Ngày Tạo</th>
+                                                <th scope="col" class="pb-2 border-0 text-end pe-3">Thao Tác</th>
                                             </tr>
                                         </thead>
                                         <tbody>
                                             @foreach (var item in Model.DocumentTypes)
                                             {
                                                 <tr class="glass-table-row">
-                                                    <td class="ps-3 py-3 border-0 fw-bold font-mono-xs text-foreground" style="border-radius: 12px 0 0 12px; color: #2b5c43 !important;">
+                                                    <td class="ps-3 py-3 border-0 fw-bold text-foreground" style="border-radius: 12px 0 0 12px; color: #2b5c43 !important; font-size: 14px;">
                                                         @item.Name
                                                     </td>
-                                                    <td class="py-3 border-0 fw-medium text-muted-foreground">@(item.Description ?? "Không có mô tả")</td>
-                                                    <td class="py-3 border-0 text-end text-muted font-mono-xs pe-3">
+                                                    <td class="py-3 border-0 fw-medium text-muted-foreground" style="font-size: 14px;">@(item.Description ?? "Không có mô tả")</td>
+                                                    <td class="py-3 border-0 text-end text-muted pe-3" style="font-size: 12px;">
                                                         @item.CreatedAt.ToLocalTime().ToString("dd/MM/yyyy HH:mm")
                                                     </td>
                                                     <td class="py-3 border-0 text-end pe-3" style="border-radius: 0 12px 12px 0; width: 100px;">
                                                         <div class="d-flex gap-2 justify-content-end">
-                                                            <button type="button" class="btn btn-sm btn-outline-secondary" onclick="openEditDocumentTypeModal('@item.Id', '@item.Name', '@(item.Description ?? "")')" style="border-radius: 8px; border-color: rgba(0,0,0,0.1);">
+                                                            <button type="button" class="btn btn-sm btn-outline-secondary d-flex align-items-center justify-content-center" onclick="openEditDocumentTypeModal('@item.Id', '@item.Name', '@(item.Description ?? "")')" style="border-radius: 8px; border-color: rgba(0,0,0,0.1); width: 30px; height: 30px; padding: 0;">
                                                                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
                                                             </button>
-                                                            <button type="button" class="btn btn-sm btn-outline-danger" onclick="openDeleteDocumentTypeModal('@item.Id', '@item.Name')" style="border-radius: 8px;">
+                                                            <button type="button" class="btn btn-sm btn-outline-danger d-flex align-items-center justify-content-center" onclick="openDeleteDocumentTypeModal('@item.Id', '@item.Name')" style="border-radius: 8px; width: 30px; height: 30px; padding: 0;">
                                                                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
                                                             </button>
                                                         </div>
@@ -272,20 +307,20 @@
                     <!-- Creation Form -->
                     <div class="col-lg-4">
                         <div class="metadata-panel p-4">
-                            <h2 class="h5 fw-bold text-foreground mb-4 d-flex align-items-center gap-2 font-mono-xs">
+                            <h2 class="h5 fw-bold text-foreground mb-4 d-flex align-items-center gap-2" style="font-family: inherit;">
                                 <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M12 5v14M5 12h14"/></svg>
                                 Thêm Loại Học Liệu Mới
                             </h2>
-                            <form asp-action="CreateDocumentType" method="post">
+                            <form asp-action="CreateDocumentType" method="post" style="font-family: inherit;">
                                 <div class="mb-3">
-                                    <label for="docTypeName" class="form-label font-mono-xs text-muted-foreground">Tên loại học liệu</label>
-                                    <input type="text" class="form-control pill-input" id="docTypeName" name="name" placeholder="Ví dụ: Đề thi thử, Slide bài giảng" required style="background: rgba(255,255,255,0.5); border: 1px solid rgba(0,0,0,0.08); border-radius: 12px; padding: 12px 16px;" />
+                                    <label for="docTypeName" class="form-label text-muted-foreground" style="font-size: 13px; font-weight: 600;">Tên loại học liệu</label>
+                                    <input type="text" class="form-control pill-input" id="docTypeName" name="name" placeholder="Ví dụ: Đề thi thử, Slide bài giảng" required style="background: rgba(255,255,255,0.5); border: 1px solid rgba(82, 39, 27, 0.08); border-radius: 12px; padding: 12px 16px; font-size: 14px;" />
                                 </div>
                                 <div class="mb-4">
-                                    <label for="docTypeDesc" class="form-label font-mono-xs text-muted-foreground">Mô tả chi tiết</label>
-                                    <textarea class="form-control pill-input" id="docTypeDesc" name="description" placeholder="Mô tả công dụng hoặc phạm vi của loại học liệu này..." rows="3" style="background: rgba(255,255,255,0.5); border: 1px solid rgba(0,0,0,0.08); border-radius: 12px; padding: 12px 16px; resize: none;"></textarea>
+                                    <label for="docTypeDesc" class="form-label text-muted-foreground" style="font-size: 13px; font-weight: 600;">Mô tả chi tiết</label>
+                                    <textarea class="form-control pill-input" id="docTypeDesc" name="description" placeholder="Mô tả công dụng hoặc phạm vi của loại học liệu này..." rows="3" style="background: rgba(255,255,255,0.5); border: 1px solid rgba(82, 39, 27, 0.08); border-radius: 12px; padding: 12px 16px; resize: none; font-size: 14px;"></textarea>
                                 </div>
-                                <button type="submit" class="btn btn-dark w-100 pill-button py-2.5 font-mono-xs text-white" style="background: #2b5c43; border: none; border-radius: 100px; font-weight: 600; box-shadow: 0 4px 12px rgba(43, 92, 67, 0.2); transition: all 0.2s;">
+                                <button type="submit" class="btn btn-dark w-100 pill-button py-2.5 text-white" style="background: #2b5c43; border: none; border-radius: 100px; font-size: 14px; font-weight: 600; box-shadow: 0 4px 12px rgba(43, 92, 67, 0.2); transition: all 0.2s;">
                                     Tạo Loại Học Liệu
                                 </button>
                             </form>
@@ -300,43 +335,43 @@
                     <!-- List of Languages -->
                     <div class="col-lg-8">
                         <div class="metadata-panel p-4 p-md-5">
-                            <h2 class="h4 fw-bold text-foreground mb-4 font-mono-xs">Danh Sách Ngôn Ngữ</h2>
+                            <h2 class="h4 fw-bold text-foreground mb-4" style="font-family: inherit;">Danh Sách Ngôn Ngữ</h2>
                             @if (!Model.Languages.Any())
                             {
                                 <div class="text-center py-5">
                                     <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.2" class="text-muted mb-3"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>
-                                    <h3 class="font-mono-xs text-muted-foreground">Chưa có ngôn ngữ nào trong hệ thống.</h3>
+                                    <h3 class="text-muted-foreground" style="font-size: 15px; font-weight: 500; font-family: inherit;">Chưa có ngôn ngữ nào trong hệ thống.</h3>
                                 </div>
                             }
                             else
                             {
                                 <div class="table-responsive">
-                                    <table class="table table-hover align-middle mb-0 table-container">
+                                    <table class="table table-hover align-middle mb-0 table-container" style="font-family: inherit;">
                                         <thead>
-                                            <tr class="font-mono-xs text-muted-foreground" style="border: none;">
-                                                <th scope="col" class="pb-3 border-0 ps-3">Mã Ngôn Ngữ</th>
-                                                <th scope="col" class="pb-3 border-0">Tên Ngôn Ngữ</th>
-                                                <th scope="col" class="pb-3 border-0 text-end pe-3">Ngày Tạo</th>
-                                                <th scope="col" class="pb-3 border-0 text-end pe-3">Thao Tác</th>
+                                            <tr class="text-muted-foreground" style="border: none; font-size: 13px; font-weight: 600; letter-spacing: 0.02em;">
+                                                <th scope="col" class="pb-2 border-0 ps-3">Mã Ngôn Ngữ</th>
+                                                <th scope="col" class="pb-2 border-0">Tên Ngôn Ngữ</th>
+                                                <th scope="col" class="pb-2 border-0 text-end pe-3">Ngày Tạo</th>
+                                                <th scope="col" class="pb-2 border-0 text-end pe-3">Thao Tác</th>
                                             </tr>
                                         </thead>
                                         <tbody>
                                             @foreach (var item in Model.Languages)
                                             {
                                                 <tr class="glass-table-row">
-                                                    <td class="ps-3 py-3 border-0 fw-bold font-mono-xs text-foreground" style="border-radius: 12px 0 0 12px; color: #1e3e62 !important;">
+                                                    <td class="ps-3 py-3 border-0 fw-bold text-foreground" style="border-radius: 12px 0 0 12px; color: #1e3e62 !important; font-size: 14px;">
                                                         @item.Code
                                                     </td>
-                                                    <td class="py-3 border-0 fw-medium text-muted-foreground">@item.Name</td>
-                                                    <td class="py-3 border-0 text-end text-muted font-mono-xs pe-3">
+                                                    <td class="py-3 border-0 fw-medium text-muted-foreground" style="font-size: 14px;">@item.Name</td>
+                                                    <td class="py-3 border-0 text-end text-muted pe-3" style="font-size: 12px;">
                                                         @item.CreatedAt.ToLocalTime().ToString("dd/MM/yyyy HH:mm")
                                                     </td>
                                                     <td class="py-3 border-0 text-end pe-3" style="border-radius: 0 12px 12px 0; width: 100px;">
                                                         <div class="d-flex gap-2 justify-content-end">
-                                                            <button type="button" class="btn btn-sm btn-outline-secondary" onclick="openEditLanguageModal('@item.Id', '@item.Code', '@item.Name')" style="border-radius: 8px; border-color: rgba(0,0,0,0.1);">
+                                                            <button type="button" class="btn btn-sm btn-outline-secondary d-flex align-items-center justify-content-center" onclick="openEditLanguageModal('@item.Id', '@item.Code', '@item.Name')" style="border-radius: 8px; border-color: rgba(0,0,0,0.1); width: 30px; height: 30px; padding: 0;">
                                                                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
                                                             </button>
-                                                            <button type="button" class="btn btn-sm btn-outline-danger" onclick="openDeleteLanguageModal('@item.Id', '@item.Name')" style="border-radius: 8px;">
+                                                            <button type="button" class="btn btn-sm btn-outline-danger d-flex align-items-center justify-content-center" onclick="openDeleteLanguageModal('@item.Id', '@item.Name')" style="border-radius: 8px; width: 30px; height: 30px; padding: 0;">
                                                                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
                                                             </button>
                                                         </div>
@@ -352,20 +387,20 @@
                     <!-- Creation Form -->
                     <div class="col-lg-4">
                         <div class="metadata-panel p-4">
-                            <h2 class="h5 fw-bold text-foreground mb-4 d-flex align-items-center gap-2 font-mono-xs">
+                            <h2 class="h5 fw-bold text-foreground mb-4 d-flex align-items-center gap-2" style="font-family: inherit;">
                                 <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M12 5v14M5 12h14"/></svg>
                                 Thêm Ngôn Ngữ Mới
                             </h2>
-                            <form asp-action="CreateLanguage" method="post">
+                            <form asp-action="CreateLanguage" method="post" style="font-family: inherit;">
                                 <div class="mb-3">
-                                    <label for="langCode" class="form-label font-mono-xs text-muted-foreground">Mã Ngôn Ngữ</label>
-                                    <input type="text" class="form-control pill-input" id="langCode" name="code" placeholder="Ví dụ: vi, en, ja" required style="background: rgba(255,255,255,0.5); border: 1px solid rgba(0,0,0,0.08); border-radius: 12px; padding: 12px 16px;" oninput="this.value = this.value.toLowerCase()" />
+                                    <label for="langCode" class="form-label text-muted-foreground" style="font-size: 13px; font-weight: 600;">Mã Ngôn Ngữ</label>
+                                    <input type="text" class="form-control pill-input" id="langCode" name="code" placeholder="Ví dụ: vi, en, ja" required style="background: rgba(255,255,255,0.5); border: 1px solid rgba(82, 39, 27, 0.08); border-radius: 12px; padding: 12px 16px; font-size: 14px;" oninput="this.value = this.value.toLowerCase()" />
                                 </div>
                                 <div class="mb-4">
-                                    <label for="langName" class="form-label font-mono-xs text-muted-foreground">Tên ngôn ngữ</label>
-                                    <input type="text" class="form-control pill-input" id="langName" name="name" placeholder="Ví dụ: Tiếng Việt, English" required style="background: rgba(255,255,255,0.5); border: 1px solid rgba(0,0,0,0.08); border-radius: 12px; padding: 12px 16px;" />
+                                    <label for="langName" class="form-label text-muted-foreground" style="font-size: 13px; font-weight: 600;">Tên ngôn ngữ</label>
+                                    <input type="text" class="form-control pill-input" id="langName" name="name" placeholder="Ví dụ: Tiếng Việt, English" required style="background: rgba(255,255,255,0.5); border: 1px solid rgba(82, 39, 27, 0.08); border-radius: 12px; padding: 12px 16px; font-size: 14px;" />
                                 </div>
-                                <button type="submit" class="btn btn-dark w-100 pill-button py-2.5 font-mono-xs text-white" style="background: #1e3e62; border: none; border-radius: 100px; font-weight: 600; box-shadow: 0 4px 12px rgba(30, 62, 98, 0.2); transition: all 0.2s;">
+                                <button type="submit" class="btn btn-dark w-100 pill-button py-2.5 text-white" style="background: #1e3e62; border: none; border-radius: 100px; font-size: 14px; font-weight: 600; box-shadow: 0 4px 12px rgba(30, 62, 98, 0.2); transition: all 0.2s;">
                                     Tạo Ngôn Ngữ
                                 </button>
                             </form>
@@ -380,41 +415,41 @@
                     <!-- List of Document Sources -->
                     <div class="col-lg-8">
                         <div class="metadata-panel p-4 p-md-5">
-                            <h2 class="h4 fw-bold text-foreground mb-4 font-mono-xs">Danh Sách Nguồn Tài Liệu</h2>
+                            <h2 class="h4 fw-bold text-foreground mb-4" style="font-family: inherit;">Danh Sách Nguồn Tài Liệu</h2>
                             @if (!Model.DocumentSources.Any())
                             {
                                 <div class="text-center py-5">
                                     <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.2" class="text-muted mb-3"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20M4 19.5A2.5 2.5 0 0 0 6.5 22H20M4 19.5V3a1 1 0 0 1 1-1h15v20H5a1 1 0 0 1-1-1z"/></svg>
-                                    <h3 class="font-mono-xs text-muted-foreground">Chưa có nguồn tài liệu nào trong hệ thống.</h3>
+                                    <h3 class="text-muted-foreground" style="font-size: 15px; font-weight: 500; font-family: inherit;">Chưa có nguồn tài liệu nào trong hệ thống.</h3>
                                 </div>
                             }
                             else
                             {
                                 <div class="table-responsive">
-                                    <table class="table table-hover align-middle mb-0 table-container">
+                                    <table class="table table-hover align-middle mb-0 table-container" style="font-family: inherit;">
                                         <thead>
-                                            <tr class="font-mono-xs text-muted-foreground" style="border: none;">
-                                                <th scope="col" class="pb-3 border-0 ps-3">Tên Nguồn</th>
-                                                <th scope="col" class="pb-3 border-0 text-end pe-3">Ngày Tạo</th>
-                                                <th scope="col" class="pb-3 border-0 text-end pe-3">Thao Tác</th>
+                                            <tr class="text-muted-foreground" style="border: none; font-size: 13px; font-weight: 600; letter-spacing: 0.02em;">
+                                                <th scope="col" class="pb-2 border-0 ps-3">Tên Nguồn</th>
+                                                <th scope="col" class="pb-2 border-0 text-end pe-3">Ngày Tạo</th>
+                                                <th scope="col" class="pb-2 border-0 text-end pe-3">Thao Tác</th>
                                             </tr>
                                         </thead>
                                         <tbody>
                                             @foreach (var item in Model.DocumentSources)
                                             {
                                                 <tr class="glass-table-row">
-                                                    <td class="ps-3 py-3 border-0 fw-bold font-mono-xs text-foreground" style="border-radius: 12px 0 0 12px; color: #4b5563 !important;">
+                                                    <td class="ps-3 py-3 border-0 fw-bold text-foreground" style="border-radius: 12px 0 0 12px; color: #4b5563 !important; font-size: 14px;">
                                                         @item.Name
                                                     </td>
-                                                    <td class="py-3 border-0 text-end text-muted font-mono-xs pe-3">
+                                                    <td class="py-3 border-0 text-end text-muted pe-3" style="font-size: 12px;">
                                                         @item.CreatedAt.ToLocalTime().ToString("dd/MM/yyyy HH:mm")
                                                     </td>
                                                     <td class="py-3 border-0 text-end pe-3" style="border-radius: 0 12px 12px 0; width: 100px;">
                                                         <div class="d-flex gap-2 justify-content-end">
-                                                            <button type="button" class="btn btn-sm btn-outline-secondary" onclick="openEditDocumentSourceModal('@item.Id', '@item.Name')" style="border-radius: 8px; border-color: rgba(0,0,0,0.1);">
+                                                            <button type="button" class="btn btn-sm btn-outline-secondary d-flex align-items-center justify-content-center" onclick="openEditDocumentSourceModal('@item.Id', '@item.Name')" style="border-radius: 8px; border-color: rgba(0,0,0,0.1); width: 30px; height: 30px; padding: 0;">
                                                                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
                                                             </button>
-                                                            <button type="button" class="btn btn-sm btn-outline-danger" onclick="openDeleteDocumentSourceModal('@item.Id', '@item.Name')" style="border-radius: 8px;">
+                                                            <button type="button" class="btn btn-sm btn-outline-danger d-flex align-items-center justify-content-center" onclick="openDeleteDocumentSourceModal('@item.Id', '@item.Name')" style="border-radius: 8px; width: 30px; height: 30px; padding: 0;">
                                                                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
                                                             </button>
                                                         </div>
@@ -430,16 +465,16 @@
                     <!-- Creation Form -->
                     <div class="col-lg-4">
                         <div class="metadata-panel p-4">
-                            <h2 class="h5 fw-bold text-foreground mb-4 d-flex align-items-center gap-2 font-mono-xs">
+                            <h2 class="h5 fw-bold text-foreground mb-4 d-flex align-items-center gap-2" style="font-family: inherit;">
                                 <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M12 5v14M5 12h14"/></svg>
                                 Thêm Nguồn Tài Liệu Mới
                             </h2>
-                            <form asp-action="CreateDocumentSource" method="post">
+                            <form asp-action="CreateDocumentSource" method="post" style="font-family: inherit;">
                                 <div class="mb-4">
-                                    <label for="sourceName" class="form-label font-mono-xs text-muted-foreground">Tên nguồn tài liệu</label>
-                                    <input type="text" class="form-control pill-input" id="sourceName" name="name" placeholder="Ví dụ: Tự soạn, Sưu tầm" required style="background: rgba(255,255,255,0.5); border: 1px solid rgba(0,0,0,0.08); border-radius: 12px; padding: 12px 16px;" />
+                                    <label for="sourceName" class="form-label text-muted-foreground" style="font-size: 13px; font-weight: 600;">Tên nguồn tài liệu</label>
+                                    <input type="text" class="form-control pill-input" id="sourceName" name="name" placeholder="Ví dụ: Tự soạn, Sưu tầm" required style="background: rgba(255,255,255,0.5); border: 1px solid rgba(82, 39, 27, 0.08); border-radius: 12px; padding: 12px 16px; font-size: 14px;" />
                                 </div>
-                                <button type="submit" class="btn btn-dark w-100 pill-button py-2.5 font-mono-xs text-white" style="background: #4b5563; border: none; border-radius: 100px; font-weight: 600; box-shadow: 0 4px 12px rgba(75, 85, 99, 0.2); transition: all 0.2s;">
+                                <button type="submit" class="btn btn-dark w-100 pill-button py-2.5 text-white" style="background: #4b5563; border: none; border-radius: 100px; font-size: 14px; font-weight: 600; box-shadow: 0 4px 12px rgba(75, 85, 99, 0.2); transition: all 0.2s;">
                                     Tạo Nguồn Tài Liệu
                                 </button>
                             </form>
@@ -454,43 +489,43 @@
                     <!-- List of Academic Terms -->
                     <div class="col-lg-8">
                         <div class="metadata-panel p-4 p-md-5">
-                            <h2 class="h4 fw-bold text-foreground mb-4 font-mono-xs">Danh Sách Học Kỳ</h2>
+                            <h2 class="h4 fw-bold text-foreground mb-4" style="font-family: inherit;">Danh Sách Học Kỳ</h2>
                             @if (!Model.AcademicTerms.Any())
                             {
                                 <div class="text-center py-5">
                                     <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.2" class="text-muted mb-3"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
-                                    <h3 class="font-mono-xs text-muted-foreground">Chưa có học kỳ nào trong hệ thống.</h3>
+                                    <h3 class="text-muted-foreground" style="font-size: 15px; font-weight: 500; font-family: inherit;">Chưa có học kỳ nào trong hệ thống.</h3>
                                 </div>
                             }
                             else
                             {
                                 <div class="table-responsive">
-                                    <table class="table table-hover align-middle mb-0 table-container">
+                                    <table class="table table-hover align-middle mb-0 table-container" style="font-family: inherit;">
                                         <thead>
-                                            <tr class="font-mono-xs text-muted-foreground" style="border: none;">
-                                                <th scope="col" class="pb-3 border-0 ps-3">Thứ Tự</th>
-                                                <th scope="col" class="pb-3 border-0">Tên Học Kỳ</th>
-                                                <th scope="col" class="pb-3 border-0 text-end pe-3">Ngày Tạo</th>
-                                                <th scope="col" class="pb-3 border-0 text-end pe-3">Thao Tác</th>
+                                            <tr class="text-muted-foreground" style="border: none; font-size: 13px; font-weight: 600; letter-spacing: 0.02em;">
+                                                <th scope="col" class="pb-2 border-0 ps-3">Thứ Tự</th>
+                                                <th scope="col" class="pb-2 border-0">Tên Học Kỳ</th>
+                                                <th scope="col" class="pb-2 border-0 text-end pe-3">Ngày Tạo</th>
+                                                <th scope="col" class="pb-2 border-0 text-end pe-3">Thao Tác</th>
                                             </tr>
                                         </thead>
                                         <tbody>
                                             @foreach (var item in Model.AcademicTerms)
                                             {
                                                 <tr class="glass-table-row">
-                                                    <td class="ps-3 py-3 border-0 fw-bold font-mono-xs text-foreground" style="border-radius: 12px 0 0 12px; color: #d97706 !important; width: 100px;">
+                                                    <td class="ps-3 py-3 border-0 fw-bold text-foreground" style="border-radius: 12px 0 0 12px; color: #d97706 !important; width: 100px; font-size: 14px;">
                                                         @item.Order
                                                     </td>
-                                                    <td class="py-3 border-0 fw-medium text-muted-foreground">@item.Name</td>
-                                                    <td class="py-3 border-0 text-end text-muted font-mono-xs pe-3">
+                                                    <td class="py-3 border-0 fw-medium text-muted-foreground" style="font-size: 14px;">@item.Name</td>
+                                                    <td class="py-3 border-0 text-end text-muted pe-3" style="font-size: 12px;">
                                                         @item.CreatedAt.ToLocalTime().ToString("dd/MM/yyyy HH:mm")
                                                     </td>
                                                     <td class="py-3 border-0 text-end pe-3" style="border-radius: 0 12px 12px 0; width: 100px;">
                                                         <div class="d-flex gap-2 justify-content-end">
-                                                            <button type="button" class="btn btn-sm btn-outline-secondary" onclick="openEditTermModal('@item.Id', '@item.Name', @item.Order)" style="border-radius: 8px; border-color: rgba(0,0,0,0.1);">
+                                                            <button type="button" class="btn btn-sm btn-outline-secondary d-flex align-items-center justify-content-center" onclick="openEditTermModal('@item.Id', '@item.Name', @item.Order)" style="border-radius: 8px; border-color: rgba(0,0,0,0.1); width: 30px; height: 30px; padding: 0;">
                                                                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
                                                             </button>
-                                                            <button type="button" class="btn btn-sm btn-outline-danger" onclick="openDeleteTermModal('@item.Id', '@item.Name')" style="border-radius: 8px;">
+                                                            <button type="button" class="btn btn-sm btn-outline-danger d-flex align-items-center justify-content-center" onclick="openDeleteTermModal('@item.Id', '@item.Name')" style="border-radius: 8px; width: 30px; height: 30px; padding: 0;">
                                                                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
                                                             </button>
                                                         </div>
@@ -506,21 +541,21 @@
                     <!-- Creation Form -->
                     <div class="col-lg-4">
                         <div class="metadata-panel p-4">
-                            <h2 class="h5 fw-bold text-foreground mb-4 d-flex align-items-center gap-2 font-mono-xs">
+                            <h2 class="h5 fw-bold text-foreground mb-4 d-flex align-items-center gap-2" style="font-family: inherit;">
                                 <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M12 5v14M5 12h14"/></svg>
                                 Thêm Học Kỳ Mới
                             </h2>
-                            <form asp-action="CreateAcademicTerm" method="post">
+                            <form asp-action="CreateAcademicTerm" method="post" style="font-family: inherit;">
                                 <div class="mb-3">
-                                    <label for="termName" class="form-label font-mono-xs text-muted-foreground">Tên học kỳ</label>
-                                    <input type="text" class="form-control pill-input" id="termName" name="name" placeholder="Ví dụ: Tiếng Anh Chuẩn Bị, Kỳ 1" required style="background: rgba(255,255,255,0.5); border: 1px solid rgba(0,0,0,0.08); border-radius: 12px; padding: 12px 16px;" />
+                                    <label for="termName" class="form-label text-muted-foreground" style="font-size: 13px; font-weight: 600;">Tên học kỳ</label>
+                                    <input type="text" class="form-control pill-input" id="termName" name="name" placeholder="Ví dụ: Tiếng Anh Chuẩn Bị, Kỳ 1" required style="background: rgba(255,255,255,0.5); border: 1px solid rgba(82, 39, 27, 0.08); border-radius: 12px; padding: 12px 16px; font-size: 14px;" />
                                 </div>
                                 <div class="mb-4">
-                                    <label for="termOrder" class="form-label font-mono-xs text-muted-foreground">Thứ Tự Sắp Xếp (Số)</label>
-                                    <input type="number" class="form-control pill-input" id="termOrder" name="order" value="0" min="0" required style="background: rgba(255,255,255,0.5); border: 1px solid rgba(0,0,0,0.08); border-radius: 12px; padding: 12px 16px;" />
-                                    <div class="form-text text-muted-xs mt-1" style="font-size: 0.75rem; color: #a1a1aa !important;">Sử dụng để sắp xếp danh sách (0 là Tiếng Anh Chuẩn Bị, Kỳ 1 -> 9 là 1 -> 9).</div>
+                                    <label for="termOrder" class="form-label text-muted-foreground" style="font-size: 13px; font-weight: 600;">Thứ Tự Sắp Xếp (Số)</label>
+                                    <input type="number" class="form-control pill-input" id="termOrder" name="order" value="0" min="0" required style="background: rgba(255,255,255,0.5); border: 1px solid rgba(82, 39, 27, 0.08); border-radius: 12px; padding: 12px 16px; font-size: 14px;" />
+                                    <div class="form-text mt-1" style="font-size: 0.75rem; color: #a1a1aa !important;">Sử dụng để sắp xếp danh sách (0 là Tiếng Anh Chuẩn Bị, Kỳ 1 -> 9 là 1 -> 9).</div>
                                 </div>
-                                <button type="submit" class="btn btn-dark w-100 pill-button py-2.5 font-mono-xs text-white" style="background: #d97706; border: none; border-radius: 100px; font-weight: 600; box-shadow: 0 4px 12px rgba(217, 119, 6, 0.2); transition: all 0.2s;">
+                                <button type="submit" class="btn btn-dark w-100 pill-button py-2.5 text-white" style="background: #d97706; border: none; border-radius: 100px; font-size: 14px; font-weight: 600; box-shadow: 0 4px 12px rgba(217, 119, 6, 0.2); transition: all 0.2s;">
                                     Tạo Học Kỳ
                                 </button>
                             </form>
@@ -533,27 +568,27 @@
 </div>
 
 <!-- Subject Modals -->
-<div class="modal fade" id="editSubjectModal" tabindex="-1" aria-hidden="true">
+<div class="modal fade" id="editSubjectModal" tabindex="-1" aria-hidden="true" style="backdrop-filter: blur(8px); background: rgba(74, 31, 22, 0.03);">
     <div class="modal-dialog modal-dialog-centered">
-        <div class="modal-content" style="border-radius: 20px; border: none; box-shadow: 0 20px 40px rgba(0,0,0,0.1);">
-            <div class="modal-header border-0 pb-0">
-                <h5 class="modal-title font-mono-xs fw-bold">Chỉnh Sửa Môn Học</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+        <div class="modal-content border-0 shadow-lg" style="border-radius: 24px; overflow: hidden; font-family: inherit;">
+            <div class="modal-header border-0 p-4 pb-0 d-flex justify-content-between align-items-center">
+                <h5 class="modal-title fw-bold" style="font-size: 1.2rem; color: #4a1f16;">Chỉnh Sửa Môn Học</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close" style="background-color: rgba(0, 0, 0, 0.05); padding: 0.75rem; border-radius: 50%;"></button>
             </div>
             <form asp-action="UpdateSubject" method="post">
-                <div class="modal-body">
+                <div class="modal-body p-4">
                     <input type="hidden" id="editSubjectId" name="id" />
                     <div class="mb-3">
-                        <label class="form-label font-mono-xs text-muted-foreground">Mã Môn Học</label>
-                        <input type="text" class="form-control pill-input" id="editSubjectCode" name="code" required oninput="this.value = this.value.toUpperCase()" />
+                        <label class="form-label text-muted-foreground" style="font-size: 13px; font-weight: 600;">Mã Môn Học</label>
+                        <input type="text" class="form-control pill-input" id="editSubjectCode" name="code" required style="border-radius: 12px; padding: 10px 16px; font-size: 14px;" oninput="this.value = this.value.toUpperCase()" />
                     </div>
                     <div class="mb-3">
-                        <label class="form-label font-mono-xs text-muted-foreground">Tên môn học</label>
-                        <input type="text" class="form-control pill-input" id="editSubjectName" name="name" required />
+                        <label class="form-label text-muted-foreground" style="font-size: 13px; font-weight: 600;">Tên môn học</label>
+                        <input type="text" class="form-control pill-input" id="editSubjectName" name="name" required style="border-radius: 12px; padding: 10px 16px; font-size: 14px;" />
                     </div>
                     <div class="mb-3">
-                        <label class="form-label font-mono-xs text-muted-foreground">Học Kỳ</label>
-                        <select class="form-select pill-input" id="editSubjectTermId" name="academicTermId" required>
+                        <label class="form-label text-muted-foreground" style="font-size: 13px; font-weight: 600;">Học Kỳ</label>
+                        <select class="form-select pill-input" id="editSubjectTermId" name="academicTermId" required style="border-radius: 12px; padding: 10px 16px; font-size: 14px;">
                             <option value="">Chọn Học Kỳ</option>
                             @foreach (var term in Model.AcademicTerms)
                             {
@@ -562,27 +597,27 @@
                         </select>
                     </div>
                 </div>
-                <div class="modal-footer border-0 pt-0">
-                    <button type="button" class="btn btn-light pill-button font-mono-xs" data-bs-dismiss="modal">Hủy</button>
-                    <button type="submit" class="btn btn-dark pill-button font-mono-xs text-white" style="background: #4a1f16;">Lưu Thay Đổi</button>
+                <div class="modal-footer border-0 p-4 pt-0 d-flex justify-content-end gap-2">
+                    <button type="button" class="btn btn-outline-dark pill-button px-4 py-2" data-bs-dismiss="modal" style="font-size: 0.85rem; border-color: rgba(0,0,0,0.15); border-radius: 100px;">Hủy</button>
+                    <button type="submit" class="btn btn-dark pill-button px-4 py-2 text-white" style="font-size: 0.85rem; background: #4a1f16; border: none; border-radius: 100px;">Lưu Thay Đổi</button>
                 </div>
             </form>
         </div>
     </div>
 </div>
 
-<div class="modal fade" id="deleteSubjectModal" tabindex="-1" aria-hidden="true">
+<div class="modal fade" id="deleteSubjectModal" tabindex="-1" aria-hidden="true" style="backdrop-filter: blur(8px); background: rgba(220, 53, 69, 0.03);">
     <div class="modal-dialog modal-dialog-centered modal-sm">
-        <div class="modal-content" style="border-radius: 20px; border: none; box-shadow: 0 20px 40px rgba(0,0,0,0.1);">
+        <div class="modal-content border-0 shadow-lg" style="border-radius: 24px; overflow: hidden; font-family: inherit;">
             <form asp-action="DeleteSubject" method="post">
                 <div class="modal-body text-center p-4">
                     <input type="hidden" id="deleteSubjectId" name="id" />
-                    <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="#dc3545" stroke-width="2" class="mb-3"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
-                    <h5 class="fw-bold mb-2">Xác nhận xóa?</h5>
+                    <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="#dc3545" stroke-width="2.2" class="mb-3"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
+                    <h5 class="fw-bold mb-2" style="font-size: 1.15rem;">Xác nhận xóa?</h5>
                     <p class="text-muted small mb-4">Bạn có chắc chắn muốn xóa môn học <strong id="deleteSubjectCodeDisplay"></strong> không?</p>
                     <div class="d-flex gap-2 justify-content-center">
-                        <button type="button" class="btn btn-light pill-button" data-bs-dismiss="modal">Hủy</button>
-                        <button type="submit" class="btn btn-danger pill-button">Xóa</button>
+                        <button type="button" class="btn btn-outline-dark pill-button px-3.5 py-1.5" data-bs-dismiss="modal" style="font-size: 0.85rem; border-radius: 100px;">Hủy</button>
+                        <button type="submit" class="btn btn-danger pill-button px-3.5 py-1.5" style="font-size: 0.85rem; background-color: #dc3545; border: none; border-radius: 100px;">Xóa</button>
                     </div>
                 </div>
             </form>
@@ -591,46 +626,46 @@
 </div>
 
 <!-- Academic Term Modals -->
-<div class="modal fade" id="editTermModal" tabindex="-1" aria-hidden="true">
+<div class="modal fade" id="editTermModal" tabindex="-1" aria-hidden="true" style="backdrop-filter: blur(8px); background: rgba(217, 119, 6, 0.03);">
     <div class="modal-dialog modal-dialog-centered">
-        <div class="modal-content" style="border-radius: 20px; border: none; box-shadow: 0 20px 40px rgba(0,0,0,0.1);">
-            <div class="modal-header border-0 pb-0">
-                <h5 class="modal-title font-mono-xs fw-bold">Chỉnh Sửa Học Kỳ</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+        <div class="modal-content border-0 shadow-lg" style="border-radius: 24px; overflow: hidden; font-family: inherit;">
+            <div class="modal-header border-0 p-4 pb-0 d-flex justify-content-between align-items-center">
+                <h5 class="modal-title fw-bold" style="font-size: 1.2rem; color: #d97706;">Chỉnh Sửa Học Kỳ</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close" style="background-color: rgba(0, 0, 0, 0.05); padding: 0.75rem; border-radius: 50%;"></button>
             </div>
             <form asp-action="UpdateAcademicTerm" method="post">
-                <div class="modal-body">
+                <div class="modal-body p-4">
                     <input type="hidden" id="editTermId" name="id" />
                     <div class="mb-3">
-                        <label class="form-label font-mono-xs text-muted-foreground">Tên học kỳ</label>
-                        <input type="text" class="form-control pill-input" id="editTermName" name="name" required />
+                        <label class="form-label text-muted-foreground" style="font-size: 13px; font-weight: 600;">Tên học kỳ</label>
+                        <input type="text" class="form-control pill-input" id="editTermName" name="name" required style="border-radius: 12px; padding: 10px 16px; font-size: 14px;" />
                     </div>
                     <div class="mb-3">
-                        <label class="form-label font-mono-xs text-muted-foreground">Thứ Tự</label>
-                        <input type="number" class="form-control pill-input" id="editTermOrder" name="order" required min="0" />
+                        <label class="form-label text-muted-foreground" style="font-size: 13px; font-weight: 600;">Thứ Tự</label>
+                        <input type="number" class="form-control pill-input" id="editTermOrder" name="order" required min="0" style="border-radius: 12px; padding: 10px 16px; font-size: 14px;" />
                     </div>
                 </div>
-                <div class="modal-footer border-0 pt-0">
-                    <button type="button" class="btn btn-light pill-button font-mono-xs" data-bs-dismiss="modal">Hủy</button>
-                    <button type="submit" class="btn btn-dark pill-button font-mono-xs text-white" style="background: #d97706;">Lưu Thay Đổi</button>
+                <div class="modal-footer border-0 p-4 pt-0 d-flex justify-content-end gap-2">
+                    <button type="button" class="btn btn-outline-dark pill-button px-4 py-2" data-bs-dismiss="modal" style="font-size: 0.85rem; border-color: rgba(0,0,0,0.15); border-radius: 100px;">Hủy</button>
+                    <button type="submit" class="btn btn-dark pill-button px-4 py-2 text-white" style="font-size: 0.85rem; background: #d97706; border: none; border-radius: 100px;">Lưu Thay Đổi</button>
                 </div>
             </form>
         </div>
     </div>
 </div>
 
-<div class="modal fade" id="deleteTermModal" tabindex="-1" aria-hidden="true">
+<div class="modal fade" id="deleteTermModal" tabindex="-1" aria-hidden="true" style="backdrop-filter: blur(8px); background: rgba(220, 53, 69, 0.03);">
     <div class="modal-dialog modal-dialog-centered modal-sm">
-        <div class="modal-content" style="border-radius: 20px; border: none; box-shadow: 0 20px 40px rgba(0,0,0,0.1);">
+        <div class="modal-content border-0 shadow-lg" style="border-radius: 24px; overflow: hidden; font-family: inherit;">
             <form asp-action="DeleteAcademicTerm" method="post">
                 <div class="modal-body text-center p-4">
                     <input type="hidden" id="deleteTermId" name="id" />
-                    <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="#dc3545" stroke-width="2" class="mb-3"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
-                    <h5 class="fw-bold mb-2">Xác nhận xóa?</h5>
+                    <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="#dc3545" stroke-width="2.2" class="mb-3"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
+                    <h5 class="fw-bold mb-2" style="font-size: 1.15rem;">Xác nhận xóa?</h5>
                     <p class="text-muted small mb-4">Bạn có chắc chắn muốn xóa học kỳ <strong id="deleteTermNameDisplay"></strong> không?</p>
                     <div class="d-flex gap-2 justify-content-center">
-                        <button type="button" class="btn btn-light pill-button" data-bs-dismiss="modal">Hủy</button>
-                        <button type="submit" class="btn btn-danger pill-button">Xóa</button>
+                        <button type="button" class="btn btn-outline-dark pill-button px-3.5 py-1.5" data-bs-dismiss="modal" style="font-size: 0.85rem; border-radius: 100px;">Hủy</button>
+                        <button type="submit" class="btn btn-danger pill-button px-3.5 py-1.5" style="font-size: 0.85rem; background-color: #dc3545; border: none; border-radius: 100px;">Xóa</button>
                     </div>
                 </div>
             </form>
@@ -639,46 +674,46 @@
 </div>
 
 <!-- Document Type Modals -->
-<div class="modal fade" id="editDocumentTypeModal" tabindex="-1" aria-hidden="true">
+<div class="modal fade" id="editDocumentTypeModal" tabindex="-1" aria-hidden="true" style="backdrop-filter: blur(8px); background: rgba(43, 92, 67, 0.03);">
     <div class="modal-dialog modal-dialog-centered">
-        <div class="modal-content" style="border-radius: 20px; border: none; box-shadow: 0 20px 40px rgba(0,0,0,0.1);">
-            <div class="modal-header border-0 pb-0">
-                <h5 class="modal-title font-mono-xs fw-bold">Chỉnh Sửa Loại Học Liệu</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+        <div class="modal-content border-0 shadow-lg" style="border-radius: 24px; overflow: hidden; font-family: inherit;">
+            <div class="modal-header border-0 p-4 pb-0 d-flex justify-content-between align-items-center">
+                <h5 class="modal-title fw-bold" style="font-size: 1.2rem; color: #2b5c43;">Chỉnh Sửa Loại Học Liệu</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close" style="background-color: rgba(0, 0, 0, 0.05); padding: 0.75rem; border-radius: 50%;"></button>
             </div>
             <form asp-action="UpdateDocumentType" method="post">
-                <div class="modal-body">
+                <div class="modal-body p-4">
                     <input type="hidden" id="editDocumentTypeId" name="id" />
                     <div class="mb-3">
-                        <label class="form-label font-mono-xs text-muted-foreground">Tên Loại Học Liệu</label>
-                        <input type="text" class="form-control pill-input" id="editDocumentTypeName" name="name" required />
+                        <label class="form-label text-muted-foreground" style="font-size: 13px; font-weight: 600;">Tên Loại Học Liệu</label>
+                        <input type="text" class="form-control pill-input" id="editDocumentTypeName" name="name" required style="border-radius: 12px; padding: 10px 16px; font-size: 14px;" />
                     </div>
                     <div class="mb-3">
-                        <label class="form-label font-mono-xs text-muted-foreground">Mô Tả</label>
-                        <textarea class="form-control pill-input" id="editDocumentTypeDescription" name="description" rows="3"></textarea>
+                        <label class="form-label text-muted-foreground" style="font-size: 13px; font-weight: 600;">Mô Tả</label>
+                        <textarea class="form-control pill-input" id="editDocumentTypeDescription" name="description" rows="3" style="border-radius: 12px; padding: 10px 16px; font-size: 14px; resize: none;"></textarea>
                     </div>
                 </div>
-                <div class="modal-footer border-0 pt-0">
-                    <button type="button" class="btn btn-light pill-button font-mono-xs" data-bs-dismiss="modal">Hủy</button>
-                    <button type="submit" class="btn btn-dark pill-button font-mono-xs text-white" style="background: #2b5c43;">Lưu Thay Đổi</button>
+                <div class="modal-footer border-0 p-4 pt-0 d-flex justify-content-end gap-2">
+                    <button type="button" class="btn btn-outline-dark pill-button px-4 py-2" data-bs-dismiss="modal" style="font-size: 0.85rem; border-color: rgba(0,0,0,0.15); border-radius: 100px;">Hủy</button>
+                    <button type="submit" class="btn btn-dark pill-button px-4 py-2 text-white" style="font-size: 0.85rem; background: #2b5c43; border: none; border-radius: 100px;">Lưu Thay Đổi</button>
                 </div>
             </form>
         </div>
     </div>
 </div>
 
-<div class="modal fade" id="deleteDocumentTypeModal" tabindex="-1" aria-hidden="true">
+<div class="modal fade" id="deleteDocumentTypeModal" tabindex="-1" aria-hidden="true" style="backdrop-filter: blur(8px); background: rgba(220, 53, 69, 0.03);">
     <div class="modal-dialog modal-dialog-centered modal-sm">
-        <div class="modal-content" style="border-radius: 20px; border: none; box-shadow: 0 20px 40px rgba(0,0,0,0.1);">
+        <div class="modal-content border-0 shadow-lg" style="border-radius: 24px; overflow: hidden; font-family: inherit;">
             <form asp-action="DeleteDocumentType" method="post">
                 <div class="modal-body text-center p-4">
                     <input type="hidden" id="deleteDocumentTypeId" name="id" />
-                    <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="#dc3545" stroke-width="2" class="mb-3"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
-                    <h5 class="fw-bold mb-2">Xác nhận xóa?</h5>
+                    <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="#dc3545" stroke-width="2.2" class="mb-3"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
+                    <h5 class="fw-bold mb-2" style="font-size: 1.15rem;">Xác nhận xóa?</h5>
                     <p class="text-muted small mb-4">Bạn có chắc chắn muốn xóa loại học liệu <strong id="deleteDocumentTypeNameDisplay"></strong> không?</p>
                     <div class="d-flex gap-2 justify-content-center">
-                        <button type="button" class="btn btn-light pill-button" data-bs-dismiss="modal">Hủy</button>
-                        <button type="submit" class="btn btn-danger pill-button">Xóa</button>
+                        <button type="button" class="btn btn-outline-dark pill-button px-3.5 py-1.5" data-bs-dismiss="modal" style="font-size: 0.85rem; border-radius: 100px;">Hủy</button>
+                        <button type="submit" class="btn btn-danger pill-button px-3.5 py-1.5" style="font-size: 0.85rem; background-color: #dc3545; border: none; border-radius: 100px;">Xóa</button>
                     </div>
                 </div>
             </form>
@@ -687,46 +722,46 @@
 </div>
 
 <!-- Language Modals -->
-<div class="modal fade" id="editLanguageModal" tabindex="-1" aria-hidden="true">
+<div class="modal fade" id="editLanguageModal" tabindex="-1" aria-hidden="true" style="backdrop-filter: blur(8px); background: rgba(30, 62, 98, 0.03);">
     <div class="modal-dialog modal-dialog-centered">
-        <div class="modal-content" style="border-radius: 20px; border: none; box-shadow: 0 20px 40px rgba(0,0,0,0.1);">
-            <div class="modal-header border-0 pb-0">
-                <h5 class="modal-title font-mono-xs fw-bold">Chỉnh Sửa Ngôn Ngữ</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+        <div class="modal-content border-0 shadow-lg" style="border-radius: 24px; overflow: hidden; font-family: inherit;">
+            <div class="modal-header border-0 p-4 pb-0 d-flex justify-content-between align-items-center">
+                <h5 class="modal-title fw-bold" style="font-size: 1.2rem; color: #1e3e62;">Chỉnh Sửa Ngôn Ngữ</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close" style="background-color: rgba(0, 0, 0, 0.05); padding: 0.75rem; border-radius: 50%;"></button>
             </div>
             <form asp-action="UpdateLanguage" method="post">
-                <div class="modal-body">
+                <div class="modal-body p-4">
                     <input type="hidden" id="editLanguageId" name="id" />
                     <div class="mb-3">
-                        <label class="form-label font-mono-xs text-muted-foreground">Mã Ngôn Ngữ</label>
-                        <input type="text" class="form-control pill-input" id="editLanguageCode" name="code" required />
+                        <label class="form-label text-muted-foreground" style="font-size: 13px; font-weight: 600;">Mã Ngôn Ngữ</label>
+                        <input type="text" class="form-control pill-input" id="editLanguageCode" name="code" required style="border-radius: 12px; padding: 10px 16px; font-size: 14px;" oninput="this.value = this.value.toLowerCase()" />
                     </div>
                     <div class="mb-3">
-                        <label class="form-label font-mono-xs text-muted-foreground">Tên Ngôn Ngữ</label>
-                        <input type="text" class="form-control pill-input" id="editLanguageName" name="name" required />
+                        <label class="form-label text-muted-foreground" style="font-size: 13px; font-weight: 600;">Tên Ngôn Ngữ</label>
+                        <input type="text" class="form-control pill-input" id="editLanguageName" name="name" required style="border-radius: 12px; padding: 10px 16px; font-size: 14px;" />
                     </div>
                 </div>
-                <div class="modal-footer border-0 pt-0">
-                    <button type="button" class="btn btn-light pill-button font-mono-xs" data-bs-dismiss="modal">Hủy</button>
-                    <button type="submit" class="btn btn-dark pill-button font-mono-xs text-white" style="background: #1e3e62;">Lưu Thay Đổi</button>
+                <div class="modal-footer border-0 p-4 pt-0 d-flex justify-content-end gap-2">
+                    <button type="button" class="btn btn-outline-dark pill-button px-4 py-2" data-bs-dismiss="modal" style="font-size: 0.85rem; border-color: rgba(0,0,0,0.15); border-radius: 100px;">Hủy</button>
+                    <button type="submit" class="btn btn-dark pill-button px-4 py-2 text-white" style="font-size: 0.85rem; background: #1e3e62; border: none; border-radius: 100px;">Lưu Thay Đổi</button>
                 </div>
             </form>
         </div>
     </div>
 </div>
 
-<div class="modal fade" id="deleteLanguageModal" tabindex="-1" aria-hidden="true">
+<div class="modal fade" id="deleteLanguageModal" tabindex="-1" aria-hidden="true" style="backdrop-filter: blur(8px); background: rgba(220, 53, 69, 0.03);">
     <div class="modal-dialog modal-dialog-centered modal-sm">
-        <div class="modal-content" style="border-radius: 20px; border: none; box-shadow: 0 20px 40px rgba(0,0,0,0.1);">
+        <div class="modal-content border-0 shadow-lg" style="border-radius: 24px; overflow: hidden; font-family: inherit;">
             <form asp-action="DeleteLanguage" method="post">
                 <div class="modal-body text-center p-4">
                     <input type="hidden" id="deleteLanguageId" name="id" />
-                    <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="#dc3545" stroke-width="2" class="mb-3"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
-                    <h5 class="fw-bold mb-2">Xác nhận xóa?</h5>
+                    <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="#dc3545" stroke-width="2.2" class="mb-3"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
+                    <h5 class="fw-bold mb-2" style="font-size: 1.15rem;">Xác nhận xóa?</h5>
                     <p class="text-muted small mb-4">Bạn có chắc chắn muốn xóa ngôn ngữ <strong id="deleteLanguageNameDisplay"></strong> không?</p>
                     <div class="d-flex gap-2 justify-content-center">
-                        <button type="button" class="btn btn-light pill-button" data-bs-dismiss="modal">Hủy</button>
-                        <button type="submit" class="btn btn-danger pill-button">Xóa</button>
+                        <button type="button" class="btn btn-outline-dark pill-button px-3.5 py-1.5" data-bs-dismiss="modal" style="font-size: 0.85rem; border-radius: 100px;">Hủy</button>
+                        <button type="submit" class="btn btn-danger pill-button px-3.5 py-1.5" style="font-size: 0.85rem; background-color: #dc3545; border: none; border-radius: 100px;">Xóa</button>
                     </div>
                 </div>
             </form>
@@ -735,103 +770,48 @@
 </div>
 
 <!-- Document Source Modals -->
-<div class="modal fade" id="editDocumentSourceModal" tabindex="-1" aria-hidden="true">
+<div class="modal fade" id="editDocumentSourceModal" tabindex="-1" aria-hidden="true" style="backdrop-filter: blur(8px); background: rgba(75, 85, 99, 0.03);">
     <div class="modal-dialog modal-dialog-centered">
-        <div class="modal-content" style="border-radius: 20px; border: none; box-shadow: 0 20px 40px rgba(0,0,0,0.1);">
-            <div class="modal-header border-0 pb-0">
-                <h5 class="modal-title font-mono-xs fw-bold">Chỉnh Sửa Nguồn Tài Liệu</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+        <div class="modal-content border-0 shadow-lg" style="border-radius: 24px; overflow: hidden; font-family: inherit;">
+            <div class="modal-header border-0 p-4 pb-0 d-flex justify-content-between align-items-center">
+                <h5 class="modal-title fw-bold" style="font-size: 1.2rem; color: #4b5563;">Chỉnh Sửa Nguồn Tài Liệu</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close" style="background-color: rgba(0, 0, 0, 0.05); padding: 0.75rem; border-radius: 50%;"></button>
             </div>
             <form asp-action="UpdateDocumentSource" method="post">
-                <div class="modal-body">
+                <div class="modal-body p-4">
                     <input type="hidden" id="editDocumentSourceId" name="id" />
                     <div class="mb-3">
-                        <label class="form-label font-mono-xs text-muted-foreground">Tên Nguồn Tài Liệu</label>
-                        <input type="text" class="form-control pill-input" id="editDocumentSourceName" name="name" required />
+                        <label class="form-label text-muted-foreground" style="font-size: 13px; font-weight: 600;">Tên Nguồn Tài Liệu</label>
+                        <input type="text" class="form-control pill-input" id="editDocumentSourceName" name="name" required style="border-radius: 12px; padding: 10px 16px; font-size: 14px;" />
                     </div>
                 </div>
-                <div class="modal-footer border-0 pt-0">
-                    <button type="button" class="btn btn-light pill-button font-mono-xs" data-bs-dismiss="modal">Hủy</button>
-                    <button type="submit" class="btn btn-dark pill-button font-mono-xs text-white" style="background: #4b5563;">Lưu Thay Đổi</button>
+                <div class="modal-footer border-0 p-4 pt-0 d-flex justify-content-end gap-2">
+                    <button type="button" class="btn btn-outline-dark pill-button px-4 py-2" data-bs-dismiss="modal" style="font-size: 0.85rem; border-color: rgba(0,0,0,0.15); border-radius: 100px;">Hủy</button>
+                    <button type="submit" class="btn btn-dark pill-button px-4 py-2 text-white" style="font-size: 0.85rem; background: #4b5563; border: none; border-radius: 100px;">Lưu Thay Đổi</button>
                 </div>
             </form>
         </div>
     </div>
 </div>
 
-<div class="modal fade" id="deleteDocumentSourceModal" tabindex="-1" aria-hidden="true">
+<div class="modal fade" id="deleteDocumentSourceModal" tabindex="-1" aria-hidden="true" style="backdrop-filter: blur(8px); background: rgba(220, 53, 69, 0.03);">
     <div class="modal-dialog modal-dialog-centered modal-sm">
-        <div class="modal-content" style="border-radius: 20px; border: none; box-shadow: 0 20px 40px rgba(0,0,0,0.1);">
+        <div class="modal-content border-0 shadow-lg" style="border-radius: 24px; overflow: hidden; font-family: inherit;">
             <form asp-action="DeleteDocumentSource" method="post">
                 <div class="modal-body text-center p-4">
                     <input type="hidden" id="deleteDocumentSourceId" name="id" />
-                    <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="#dc3545" stroke-width="2" class="mb-3"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
-                    <h5 class="fw-bold mb-2">Xác nhận xóa?</h5>
+                    <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="#dc3545" stroke-width="2.2" class="mb-3"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
+                    <h5 class="fw-bold mb-2" style="font-size: 1.15rem;">Xác nhận xóa?</h5>
                     <p class="text-muted small mb-4">Bạn có chắc chắn muốn xóa nguồn tài liệu <strong id="deleteDocumentSourceNameDisplay"></strong> không?</p>
                     <div class="d-flex gap-2 justify-content-center">
-                        <button type="button" class="btn btn-light pill-button" data-bs-dismiss="modal">Hủy</button>
-                        <button type="submit" class="btn btn-danger pill-button">Xóa</button>
+                        <button type="button" class="btn btn-outline-dark pill-button px-3.5 py-1.5" data-bs-dismiss="modal" style="font-size: 0.85rem; border-radius: 100px;">Hủy</button>
+                        <button type="submit" class="btn btn-danger pill-button px-3.5 py-1.5" style="font-size: 0.85rem; background-color: #dc3545; border: none; border-radius: 100px;">Xóa</button>
                     </div>
                 </div>
             </form>
         </div>
     </div>
 </div>
-
-<style>
-    .nav-tabs .nav-link {
-        color: #666;
-        background: rgba(255,255,255,.4);
-        border: 1px solid rgba(0,0,0,.08) !important;
-        transition: all .2s;
-    }
-    .nav-tabs .nav-link:hover {
-        background: rgba(255,255,255,.7);
-        color: #111;
-    }
-    .nav-tabs .nav-link.active {
-        color: #fff !important;
-        background: #111 !important;
-        border-color: #111 !important;
-        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
-    }
-    .nav-tabs #subjects-tab.active {
-        background: #4a1f16 !important;
-        border-color: #4a1f16 !important;
-        box-shadow: 0 4px 12px rgba(74, 31, 22, 0.2);
-    }
-    .nav-tabs #documenttypes-tab.active {
-        background: #2b5c43 !important;
-        border-color: #2b5c43 !important;
-        box-shadow: 0 4px 12px rgba(43, 92, 67, 0.2);
-    }
-    .nav-tabs #languages-tab.active {
-        background: #1e3e62 !important;
-        border-color: #1e3e62 !important;
-        box-shadow: 0 4px 12px rgba(30, 62, 98, 0.2);
-    }
-    .nav-tabs #documentsources-tab.active {
-        background: #4b5563 !important;
-        border-color: #4b5563 !important;
-        box-shadow: 0 4px 12px rgba(75, 85, 99, 0.2);
-    }
-    .nav-tabs #academicterms-tab.active {
-        background: #d97706 !important;
-        border-color: #d97706 !important;
-        box-shadow: 0 4px 12px rgba(217, 119, 6, 0.2);
-    }
-    .glass-row:hover {
-        transform: translateY(-2px);
-        background: rgba(255, 255, 255, 0.72) !important;
-        box-shadow: 0 8px 20px rgba(0, 0, 0, 0.04) !important;
-    }
-    .pill-input:focus {
-        background: rgb(255, 255, 255) !important;
-        border-color: rgba(0, 0, 0, 0.2) !important;
-        box-shadow: 0 0 0 3px rgba(0, 0, 0, 0.05) !important;
-        outline: none;
-    }
-</style>
 
 @section Scripts {
     <script>

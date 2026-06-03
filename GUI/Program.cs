@@ -106,6 +106,11 @@ app.MapControllerRoute(
     defaults: new { controller = "Admin", action = "RejectOrBlock" });
 
 app.MapControllerRoute(
+    name: "admin-unblock",
+    pattern: "admin/users/unblock/{id:guid}",
+    defaults: new { controller = "Admin", action = "Unblock" });
+
+app.MapControllerRoute(
     name: "default",
     pattern: "{controller=Home}/{action=Index}/{id?}");
 

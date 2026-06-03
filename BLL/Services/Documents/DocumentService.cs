@@ -1184,6 +1184,8 @@ public class DocumentService : IDocumentService
         string ddlSql = @"
             CREATE EXTENSION IF NOT EXISTS ""uuid-ossp"";
 
+            ALTER TABLE public.users ADD COLUMN IF NOT EXISTS is_blocked boolean DEFAULT false NOT NULL;
+
             CREATE TABLE IF NOT EXISTS public.document_sources (
                 id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
                 name VARCHAR(200) NOT NULL UNIQUE,
