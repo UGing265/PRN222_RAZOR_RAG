@@ -138,7 +138,7 @@
                                                 }
                                             </td>
                                             <td class="py-3 border-0 text-end pe-3" style="border-radius: 0 12px 12px 0;">
-                                                <button type="button" class="btn btn-outline-danger btn-sm rounded-pill px-3 py-1.5 d-inline-flex align-items-center gap-1" onclick="confirmDelete('@item.Id', '@Html.Raw(System.Text.Encodings.Web.JavaScriptEncoder.Default.Encode(item.Title))')" style="font-size: 13px; font-weight: 500; text-transform: none; letter-spacing: normal; border-color: rgba(220, 53, 69, 0.35); color: #dc3545; transition: transform 0.2s;" onmouseover="this.style.transform='scale(1.05)'" onmouseout="this.style.transform='scale(1)'">
+                                                <button type="button" class="btn btn-outline-danger btn-sm rounded-pill px-3 py-1.5 d-inline-flex align-items-center gap-1" onclick="confirmDelete('@item.Id', '@Html.Raw(System.Text.Encodings.Web.JavaScriptEncoder.Default.Encode(item.Title))')">
                                                     <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>Xóa
                                                 </button>
                                             </td>
@@ -231,7 +231,7 @@
                                                     <form asp-action="ResolveReport" method="post" class="d-inline">
                                                         <input type="hidden" name="id" value="@report.Id" />
                                                         <input type="hidden" name="resolution" value="dismiss" />
-                                                        <button type="submit" class="btn btn-outline-dark btn-sm rounded-pill px-3 py-1.5 d-flex align-items-center gap-1" style="font-size: 13px; font-weight: 500; border-color: rgba(74, 31, 22, 0.2); color: #4a1f16; transition: transform 0.2s;" onmouseover="this.style.transform='scale(1.05)'" onmouseout="this.style.transform='scale(1)'">
+                                                        <button type="submit" class="btn btn-outline-dark btn-sm rounded-pill px-3 py-1.5 d-flex align-items-center gap-1">
                                                             <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>Bỏ qua
                                                         </button>
                                                     </form>
@@ -300,6 +300,7 @@
         background: rgba(255,255,255,.45);
         border: 1px solid rgba(82, 39, 27, 0.08) !important;
         transition: all .2s cubic-bezier(0.16, 1, 0.3, 1);
+        border-radius: 100px !important;
     }
     .nav-tabs .nav-link:hover {
         opacity: 1;
@@ -330,6 +331,37 @@
         border-color: var(--coral) !important;
         box-shadow: 0 6px 18px rgba(216, 106, 88, 0.15) !important;
         outline: none;
+    }
+
+    /* Button Utilities */
+    .btn-outline-danger {
+        border-color: rgba(220, 53, 69, 0.35);
+        color: #dc3545;
+        background: transparent;
+        font-size: 13px;
+        font-weight: 500;
+        transition: all 0.2s;
+    }
+    .btn-outline-danger:hover {
+        background-color: #dc3545;
+        color: #fff;
+        border-color: #dc3545;
+        transform: scale(1.05);
+    }
+
+    .btn-outline-dark {
+        border-color: rgba(74, 31, 22, 0.2);
+        color: #4a1f16;
+        background: transparent;
+        font-size: 13px;
+        font-weight: 500;
+        transition: all 0.2s;
+    }
+    .btn-outline-dark:hover {
+        background-color: #4a1f16;
+        color: #fff;
+        border-color: #4a1f16;
+        transform: scale(1.05);
     }
 </style>
 
