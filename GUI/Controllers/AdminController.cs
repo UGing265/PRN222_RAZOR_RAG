@@ -1,4 +1,6 @@
 using BLL.Interfaces.Auth;
+using BLL.Interfaces.Documents;
+using GUI.Models.Documents;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
@@ -8,11 +10,13 @@ namespace GUI.Controllers;
 public class AdminController : Controller
 {
     private readonly IAuthService _authService;
+    private readonly IDocumentService _documentService;
     private readonly ILogger<AdminController> _logger;
 
-    public AdminController(IAuthService authService, ILogger<AdminController> logger)
+    public AdminController(IAuthService authService, IDocumentService documentService, ILogger<AdminController> logger)
     {
         _authService = authService;
+        _documentService = documentService;
         _logger = logger;
     }
 
@@ -53,5 +57,418 @@ public class AdminController : Controller
             TempData["ErrorMessage"] = "Không thể xử lý yêu cầu.";
         }
         return RedirectToAction(nameof(Users));
+    }
+
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> Unblock(Guid id, CancellationToken cancellationToken)
+    {
+        var success = await _authService.UnblockUserAsync(id, cancellationToken);
+        if (success)
+        {
+            TempData["SuccessMessage"] = "Đã mở khóa tài khoản người dùng thành công.";
+        }
+        else
+        {
+            TempData["ErrorMessage"] = "Không thể mở khóa tài khoản.";
+        }
+        return RedirectToAction(nameof(Users));
+    }
+
+    [HttpGet]
+    public async Task<IActionResult> Metadata(string? tab, CancellationToken cancellationToken)
+    {
+        ViewBag.ActiveTab = tab ?? "subjects";
+        var model = new AdminMetadataViewModel
+        {
+            Subjects = await _documentService.GetSubjectsAsync(cancellationToken),
+            DocumentTypes = await _documentService.GetDocumentTypesAsync(cancellationToken),
+            Languages = await _documentService.GetLanguagesAsync(cancellationToken),
+            DocumentSources = await _documentService.GetDocumentSourcesAsync(cancellationToken),
+            AcademicTerms = await _documentService.GetAcademicTermsAsync(cancellationToken)
+        };
+        return View(model);
+    }
+
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> CreateSubject(string code, string name, Guid? academicTermId, CancellationToken cancellationToken)
+    {
+        if (string.IsNullOrWhiteSpace(code) || string.IsNullOrWhiteSpace(name))
+        {
+            TempData["ErrorMessage"] = "Mã môn học và tên môn học không được để trống.";
+            return RedirectToAction(nameof(Metadata), new { tab = "subjects" });
+        }
+        if (!academicTermId.HasValue)
+        {
+            TempData["ErrorMessage"] = "Vui lòng chọn học kỳ cho môn học.";
+            return RedirectToAction(nameof(Metadata), new { tab = "subjects" });
+        }
+        try
+        {
+            await _documentService.CreateSubjectAsync(code, name, academicTermId, cancellationToken);
+            TempData["SuccessMessage"] = $"Đã tạo mới môn học '{code.ToUpper()}' thành công.";
+        }
+        catch (InvalidOperationException ex)
+        {
+            TempData["ErrorMessage"] = ex.Message;
+        }
+        return RedirectToAction(nameof(Metadata), new { tab = "subjects" });
+    }
+
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> UpdateSubject(Guid id, string code, string name, Guid? academicTermId, CancellationToken cancellationToken)
+    {
+        if (string.IsNullOrWhiteSpace(code) || string.IsNullOrWhiteSpace(name))
+        {
+            TempData["ErrorMessage"] = "Mã môn học và tên môn học không được để trống.";
+            return RedirectToAction(nameof(Metadata), new { tab = "subjects" });
+        }
+        if (!academicTermId.HasValue)
+        {
+            TempData["ErrorMessage"] = "Vui lòng chọn học kỳ cho môn học.";
+            return RedirectToAction(nameof(Metadata), new { tab = "subjects" });
+        }
+        try
+        {
+            await _documentService.UpdateSubjectAsync(id, code, name, academicTermId, cancellationToken);
+            TempData["SuccessMessage"] = $"Đã cập nhật môn học '{code.ToUpper()}' thành công.";
+        }
+        catch (InvalidOperationException ex)
+        {
+            TempData["ErrorMessage"] = ex.Message;
+        }
+        return RedirectToAction(nameof(Metadata), new { tab = "subjects" });
+    }
+
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> DeleteSubject(Guid id, CancellationToken cancellationToken)
+    {
+        try
+        {
+            var result = await _documentService.DeleteSubjectAsync(id, cancellationToken);
+            if (result)
+                TempData["SuccessMessage"] = "Đã xóa môn học thành công.";
+            else
+                TempData["ErrorMessage"] = "Không tìm thấy môn học.";
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error deleting subject {Id}", id);
+            TempData["ErrorMessage"] = "Có lỗi xảy ra khi xóa môn học. Đảm bảo môn học không bị ràng buộc dữ liệu.";
+        }
+        return RedirectToAction(nameof(Metadata), new { tab = "subjects" });
+    }
+
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> CreateDocumentType(string name, string? description, CancellationToken cancellationToken)
+    {
+        if (string.IsNullOrWhiteSpace(name))
+        {
+            TempData["ErrorMessage"] = "Tên loại học liệu không được để trống.";
+            return RedirectToAction(nameof(Metadata), new { tab = "documenttypes" });
+        }
+        try
+        {
+            await _documentService.CreateDocumentTypeAsync(name, description, cancellationToken);
+            TempData["SuccessMessage"] = $"Đã tạo mới loại học liệu '{name}' thành công.";
+        }
+        catch (InvalidOperationException ex)
+        {
+            TempData["ErrorMessage"] = ex.Message;
+        }
+        return RedirectToAction(nameof(Metadata), new { tab = "documenttypes" });
+    }
+
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> UpdateDocumentType(Guid id, string name, string? description, CancellationToken cancellationToken)
+    {
+        if (string.IsNullOrWhiteSpace(name))
+        {
+            TempData["ErrorMessage"] = "Tên loại học liệu không được để trống.";
+            return RedirectToAction(nameof(Metadata), new { tab = "documenttypes" });
+        }
+        try
+        {
+            var result = await _documentService.UpdateDocumentTypeAsync(id, name, description, cancellationToken);
+            if (result != null)
+                TempData["SuccessMessage"] = $"Đã cập nhật loại học liệu '{name}' thành công.";
+            else
+                TempData["ErrorMessage"] = "Không tìm thấy loại học liệu này.";
+        }
+        catch (InvalidOperationException ex)
+        {
+            TempData["ErrorMessage"] = ex.Message;
+        }
+        return RedirectToAction(nameof(Metadata), new { tab = "documenttypes" });
+    }
+
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> DeleteDocumentType(Guid id, CancellationToken cancellationToken)
+    {
+        try
+        {
+            var success = await _documentService.DeleteDocumentTypeAsync(id, cancellationToken);
+            if (success)
+                TempData["SuccessMessage"] = "Đã xóa loại học liệu thành công.";
+            else
+                TempData["ErrorMessage"] = "Không tìm thấy loại học liệu này.";
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error deleting document type {Id}", id);
+            TempData["ErrorMessage"] = "Có lỗi xảy ra khi xóa loại học liệu. Đảm bảo dữ liệu không bị ràng buộc.";
+        }
+        return RedirectToAction(nameof(Metadata), new { tab = "documenttypes" });
+    }
+
+
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> CreateLanguage(string code, string name, CancellationToken cancellationToken)
+    {
+        if (string.IsNullOrWhiteSpace(code) || string.IsNullOrWhiteSpace(name))
+        {
+            TempData["ErrorMessage"] = "Mã ngôn ngữ và tên ngôn ngữ không được để trống.";
+            return RedirectToAction(nameof(Metadata), new { tab = "languages" });
+        }
+        try
+        {
+            await _documentService.CreateLanguageAsync(code, name, cancellationToken);
+            TempData["SuccessMessage"] = $"Đã tạo mới ngôn ngữ '{name}' thành công.";
+        }
+        catch (InvalidOperationException ex)
+        {
+            TempData["ErrorMessage"] = ex.Message;
+        }
+        return RedirectToAction(nameof(Metadata), new { tab = "languages" });
+    }
+
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> UpdateLanguage(Guid id, string code, string name, CancellationToken cancellationToken)
+    {
+        if (string.IsNullOrWhiteSpace(code) || string.IsNullOrWhiteSpace(name))
+        {
+            TempData["ErrorMessage"] = "Mã ngôn ngữ và tên ngôn ngữ không được để trống.";
+            return RedirectToAction(nameof(Metadata), new { tab = "languages" });
+        }
+        try
+        {
+            var result = await _documentService.UpdateLanguageAsync(id, code, name, cancellationToken);
+            if (result != null)
+                TempData["SuccessMessage"] = $"Đã cập nhật ngôn ngữ '{name}' thành công.";
+            else
+                TempData["ErrorMessage"] = "Không tìm thấy ngôn ngữ này.";
+        }
+        catch (InvalidOperationException ex)
+        {
+            TempData["ErrorMessage"] = ex.Message;
+        }
+        return RedirectToAction(nameof(Metadata), new { tab = "languages" });
+    }
+
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> DeleteLanguage(Guid id, CancellationToken cancellationToken)
+    {
+        try
+        {
+            var success = await _documentService.DeleteLanguageAsync(id, cancellationToken);
+            if (success)
+                TempData["SuccessMessage"] = "Đã xóa ngôn ngữ thành công.";
+            else
+                TempData["ErrorMessage"] = "Không tìm thấy ngôn ngữ này.";
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error deleting language {Id}", id);
+            TempData["ErrorMessage"] = "Có lỗi xảy ra khi xóa ngôn ngữ. Đảm bảo dữ liệu không bị ràng buộc.";
+        }
+        return RedirectToAction(nameof(Metadata), new { tab = "languages" });
+    }
+
+
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> CreateDocumentSource(string name, CancellationToken cancellationToken)
+    {
+        if (string.IsNullOrWhiteSpace(name))
+        {
+            TempData["ErrorMessage"] = "Tên nguồn tài liệu không được để trống.";
+            return RedirectToAction(nameof(Metadata), new { tab = "documentsources" });
+        }
+        try
+        {
+            await _documentService.CreateDocumentSourceAsync(name, cancellationToken);
+            TempData["SuccessMessage"] = $"Đã tạo mới nguồn tài liệu '{name}' thành công.";
+        }
+        catch (InvalidOperationException ex)
+        {
+            TempData["ErrorMessage"] = ex.Message;
+        }
+        return RedirectToAction(nameof(Metadata), new { tab = "documentsources" });
+    }
+
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> UpdateDocumentSource(Guid id, string name, CancellationToken cancellationToken)
+    {
+        if (string.IsNullOrWhiteSpace(name))
+        {
+            TempData["ErrorMessage"] = "Tên nguồn tài liệu không được để trống.";
+            return RedirectToAction(nameof(Metadata), new { tab = "documentsources" });
+        }
+        try
+        {
+            var result = await _documentService.UpdateDocumentSourceAsync(id, name, cancellationToken);
+            if (result != null)
+                TempData["SuccessMessage"] = $"Đã cập nhật nguồn tài liệu '{name}' thành công.";
+            else
+                TempData["ErrorMessage"] = "Không tìm thấy nguồn tài liệu này.";
+        }
+        catch (InvalidOperationException ex)
+        {
+            TempData["ErrorMessage"] = ex.Message;
+        }
+        return RedirectToAction(nameof(Metadata), new { tab = "documentsources" });
+    }
+
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> DeleteDocumentSource(Guid id, CancellationToken cancellationToken)
+    {
+        try
+        {
+            var success = await _documentService.DeleteDocumentSourceAsync(id, cancellationToken);
+            if (success)
+                TempData["SuccessMessage"] = "Đã xóa nguồn tài liệu thành công.";
+            else
+                TempData["ErrorMessage"] = "Không tìm thấy nguồn tài liệu này.";
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error deleting document source {Id}", id);
+            TempData["ErrorMessage"] = "Có lỗi xảy ra khi xóa nguồn tài liệu. Đảm bảo dữ liệu không bị ràng buộc.";
+        }
+        return RedirectToAction(nameof(Metadata), new { tab = "documentsources" });
+    }
+
+
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> CreateAcademicTerm(string name, int order, CancellationToken cancellationToken)
+    {
+        if (string.IsNullOrWhiteSpace(name))
+        {
+            TempData["ErrorMessage"] = "Tên học kỳ không được để trống.";
+            return RedirectToAction(nameof(Metadata), new { tab = "academicterms" });
+        }
+        try
+        {
+            await _documentService.CreateAcademicTermAsync(name, order, cancellationToken);
+            TempData["SuccessMessage"] = $"Đã tạo mới học kỳ '{name}' thành công.";
+        }
+        catch (InvalidOperationException ex)
+        {
+            TempData["ErrorMessage"] = ex.Message;
+        }
+        return RedirectToAction(nameof(Metadata), new { tab = "academicterms" });
+    }
+
+    [HttpGet]
+    public async Task<IActionResult> Documents(string? tab, string? q, Guid? subjectId, int page = 1, int pageSize = 10, CancellationToken cancellationToken = default)
+    {
+        ViewBag.ActiveTab = tab ?? "files";
+        var result = await _documentService.GetAdminDocumentsAsync(q, subjectId, page, pageSize, cancellationToken);
+        var reports = await _documentService.GetPendingReportsAsync(cancellationToken);
+        
+        var viewModel = new MyDocumentsViewModel
+        {
+            Documents = result.Documents.Select(x => new DocumentListItemViewModel
+            {
+                Id = x.Id,
+                Slug = x.Slug,
+                Title = x.Title,
+                SubjectCode = x.SubjectCode,
+                SubjectName = x.SubjectName,
+
+                DocumentTypeId = x.DocumentTypeId,
+                DocumentTypeName = x.DocumentTypeName,
+                AcademicTermName = x.AcademicTermName,
+                Status = x.Status,
+                Visibility = x.Visibility,
+                CreatedAt = x.CreatedAt,
+                UpdatedAt = x.UpdatedAt,
+                FileCount = x.FileCount,
+                ChunkCount = x.ChunkCount,
+                PreviewText = x.PreviewText,
+                OwnerEmail = x.OwnerEmail,
+                ViewCount = x.ViewCount
+            }).ToList(),
+            TotalDocuments = result.TotalDocuments,
+            Page = result.Page,
+            PageSize = result.PageSize,
+            TotalPages = result.TotalPages,
+            PendingReports = reports
+        };
+
+        ViewBag.Query = q;
+        ViewBag.SelectedSubjectId = subjectId;
+        var allSubjects = await _documentService.GetSubjectsAsync(cancellationToken);
+        ViewBag.Subjects = allSubjects;
+        if (subjectId.HasValue)
+        {
+            var selectedSub = allSubjects.FirstOrDefault(x => x.Id == subjectId.Value);
+            ViewBag.SelectedSubjectName = selectedSub?.Name;
+        }
+
+        return View(viewModel);
+    }
+
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> DeleteDocument(Guid id, string? q, Guid? subjectId, int page = 1, CancellationToken cancellationToken = default)
+    {
+        try
+        {
+            await _documentService.DeleteDocumentAsync(id, cancellationToken);
+            TempData["SuccessMessage"] = "Đã xóa tài liệu khỏi hệ thống thành công.";
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error deleting document {Id} by Admin", id);
+            TempData["ErrorMessage"] = "Có lỗi xảy ra khi xóa tài liệu: " + ex.Message;
+        }
+        return RedirectToAction(nameof(Documents), new { tab = "files", q, subjectId, page });
+    }
+
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> ResolveReport(Guid id, string resolution, CancellationToken cancellationToken)
+    {
+        try
+        {
+            await _documentService.ResolveReportAsync(id, resolution, cancellationToken);
+            if (resolution.Equals("delete", StringComparison.OrdinalIgnoreCase))
+            {
+                TempData["SuccessMessage"] = "Đã xóa tài liệu bị báo cáo và giải quyết các báo cáo liên quan.";
+            }
+            else
+            {
+                TempData["SuccessMessage"] = "Đã bỏ qua báo cáo vi phạm thành công.";
+            }
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error resolving report {Id}", id);
+            TempData["ErrorMessage"] = "Có lỗi xảy ra khi xử lý báo cáo: " + ex.Message;
+        }
+        return RedirectToAction(nameof(Documents), new { tab = "reports" });
     }
 }

@@ -1,4 +1,5 @@
-using DAL.Entities;
+using System;
+using System.Collections.Generic;
 
 namespace BLL.DTOs.Documents;
 
@@ -7,12 +8,13 @@ public sealed class DocumentCreateInput
     public Guid OwnerUserId { get; init; }
     public string Title { get; init; } = string.Empty;
     public string? Description { get; init; }
-    public string? Subject { get; init; }
-    public string? School { get; init; }
-    public string? Department { get; init; }
-    public string? Language { get; init; }
+
+    public Guid? SubjectId { get; init; }
+    public Guid? DocumentTypeId { get; init; }
+    public Guid? AcademicTermId { get; init; }
+    public Guid? LanguageId { get; init; }
     public string? Visibility { get; init; }
-    public string? SourceType { get; init; }
+    public Guid? DocumentSourceId { get; init; }
     public string FileName { get; init; } = string.Empty;
     public long FileSizeBytes { get; init; }
     public string FileContentType { get; init; } = string.Empty;
@@ -22,11 +24,13 @@ public sealed class DocumentEditInput
 {
     public string Title { get; init; } = string.Empty;
     public string? Description { get; init; }
-    public string? Subject { get; init; }
-    public string? School { get; init; }
-    public string? Department { get; init; }
-    public string? Language { get; init; }
+
+    public Guid? SubjectId { get; init; }
+    public Guid? DocumentTypeId { get; init; }
+    public Guid? AcademicTermId { get; init; }
+    public Guid? LanguageId { get; init; }
     public string Visibility { get; init; } = "private";
+    public Guid? DocumentSourceId { get; init; }
 }
 
 public sealed class DocumentListItemDto
@@ -34,7 +38,16 @@ public sealed class DocumentListItemDto
     public Guid Id { get; init; }
     public string Slug { get; init; } = string.Empty;
     public string Title { get; init; } = string.Empty;
-    public string? Subject { get; init; }
+
+
+    public Guid? SubjectId { get; init; }
+    public string? SubjectName { get; init; }
+    public string? SubjectCode { get; init; }
+    public Guid? DocumentTypeId { get; init; }
+    public string? DocumentTypeName { get; init; }
+    public string? AcademicTermName { get; init; }
+    public Guid? DocumentSourceId { get; init; }
+    public string? DocumentSourceName { get; init; }
     public string Status { get; init; } = string.Empty;
     public int FileCount { get; init; }
     public int ChunkCount { get; init; }
@@ -42,28 +55,42 @@ public sealed class DocumentListItemDto
     public DateTime CreatedAt { get; init; }
     public DateTime UpdatedAt { get; init; }
     public string? Visibility { get; init; }
-    public string? School { get; init; }
     public string? OwnerEmail { get; init; }
+    public int ViewCount { get; init; }
 }
 
 public sealed class DocumentDetailsDto
 {
     public Guid Id { get; init; }
+    public Guid OwnerUserId { get; init; }
     public string Title { get; init; } = string.Empty;
-    public string? Subject { get; init; }
-    public string? School { get; init; }
-    public string? Department { get; init; }
+
+
+
+    public Guid? SubjectId { get; init; }
+    public string? SubjectName { get; init; }
+    public string? SubjectCode { get; init; }
+    public Guid? DocumentTypeId { get; init; }
+    public string? DocumentTypeName { get; init; }
+    public string? AcademicTermName { get; init; }
+    public Guid? AcademicTermId { get; init; }
+    public Guid? DocumentSourceId { get; init; }
+    public string? DocumentSourceName { get; init; }
     public string? Visibility { get; init; }
-    public string? Language { get; init; }
+    public Guid? LanguageId { get; init; }
+    public string? LanguageCode { get; init; }
+    public string? LanguageName { get; init; }
     public string? Description { get; init; }
     public string? Status { get; init; }
     public int TotalChunks { get; init; }
     public int TotalChapters { get; init; }
+    public int ViewCount { get; init; }
+    public int DownloadCount { get; init; }
     public DateTime? ApprovedAt { get; init; }
     public int FileCount { get; init; }
-    public List<DocumentFile> Files { get; init; } = [];
-    public List<DocumentChunk> Chunks { get; init; } = [];
-    public List<DocumentChapter> Chapters { get; init; } = [];
+    public List<DocumentFileDto> Files { get; init; } = [];
+    public List<DocumentChunkDto> Chunks { get; init; } = [];
+    public List<DocumentChapterDto> Chapters { get; init; } = [];
 }
 
 public sealed class UploadJobSummaryDto

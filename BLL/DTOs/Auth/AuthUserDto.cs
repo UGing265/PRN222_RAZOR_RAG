@@ -8,4 +8,5 @@ public sealed class AuthUserDto
     public short RoleId { get; init; }
     public string RoleName { get; init; } = string.Empty;
     public bool IsActive { get; init; }
+    public bool IsBlocked { get; init; }
 }

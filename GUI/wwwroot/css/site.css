@@ -42,7 +42,10 @@ h1, h2, h3, h4, h5, h6, .hero-title, .font-display { font-family: Inter, ui-sans
 .main-stage { padding: 22px 24px 28px; }
 .topbar { display: flex; align-items: center; justify-content: space-between; margin-bottom: 18px; }
 .topbar-title { font-size: 18px; font-weight: 500; }
-.pill-input, .form-control, .form-select { border-radius: 9999px; min-height: 42px; border-color: var(--border); box-shadow: none !important; background: rgba(255,255,255,.8); }
+.pill-input, .form-control, .form-select { border-radius: 9999px; min-height: 42px; border-color: var(--border); box-shadow: none !important; background: rgba(255,255,255,.8); transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1); }
+.pill-input:hover, .form-control:hover, .form-select:hover { background: rgba(255, 255, 255, 0.95); border-color: rgba(216, 106, 88, 0.3); box-shadow: 0 4px 15px rgba(82, 39, 27, 0.05) !important; transform: translateY(-1px); }
+.pill-input:focus, .form-control:focus, .form-select:focus { background: #ffffff; border-color: var(--coral) !important; box-shadow: 0 6px 18px rgba(216, 106, 88, 0.15) !important; }
+
 .pill-button { border-radius: 9999px; }
 .soft-panel { background: rgba(255,255,255,.72); backdrop-filter: blur(12px); border: 1px solid var(--border); border-radius: 1.5rem; }
 .link-plain { text-decoration: none; }
@@ -157,6 +160,25 @@ h1, h2, h3, h4, h5, h6, .hero-title, .font-display { font-family: Inter, ui-sans
     background: #5d291e;
     transform: translateY(-2px);
     box-shadow: 0 15px 30px rgba(74, 31, 22, 0.25);
+}
+
+.btn-premium-danger {
+    background: #dc3545;
+    color: #fff !important;
+    border: none;
+    padding: 0.8rem 2.2rem;
+    font-weight: 600;
+    box-shadow: 0 10px 25px rgba(220, 53, 69, 0.15);
+    transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+    position: relative;
+    overflow: hidden;
+    z-index: 1;
+}
+
+.btn-premium-danger:hover {
+    background: #bd2130;
+    transform: translateY(-2px);
+    box-shadow: 0 15px 30px rgba(220, 53, 69, 0.25);
 }
 
 .btn-premium-secondary {

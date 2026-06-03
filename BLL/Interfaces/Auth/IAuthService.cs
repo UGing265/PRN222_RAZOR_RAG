@@ -10,4 +10,5 @@ public interface IAuthService
     Task<List<AuthUserDto>> GetAllUsersAsync(CancellationToken cancellationToken = default);
     Task<bool> ApproveUserAsync(Guid userId, CancellationToken cancellationToken = default);
     Task<bool> RejectOrBlockUserAsync(Guid userId, CancellationToken cancellationToken = default);
+    Task<bool> UnblockUserAsync(Guid userId, CancellationToken cancellationToken = default);
 }

@@ -18,6 +18,10 @@ namespace GUI.Controllers
         {
             if (User.Identity?.IsAuthenticated == true)
             {
+                if (User.IsInRole("Admin"))
+                {
+                    return RedirectToAction("Users", "Admin");
+                }
                 return RedirectToAction("AllDocuments", "Documents");
             }
             return View();

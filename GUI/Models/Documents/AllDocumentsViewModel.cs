@@ -7,5 +7,6 @@ public class AllDocumentsViewModel
     public int PageSize { get; set; }
     public int TotalPages { get; set; }
     public string? Query { get; set; }
+    public string? SortBy { get; set; }
     public List<DocumentListItemViewModel> Documents { get; set; } = new();
 }

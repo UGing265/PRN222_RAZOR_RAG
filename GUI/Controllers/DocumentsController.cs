@@ -20,20 +20,34 @@ public class DocumentsController : Controller
         _logger = logger;
     }
 
-    [HttpGet]
-    [Authorize(Roles = "Admin,Lecturer")]
-    public IActionResult Create()
+    private async Task PopulateLookupsAsync(CancellationToken cancellationToken)
     {
+
+        var subjects = await _documentService.GetSubjectsAsync(cancellationToken);
+        ViewBag.Subjects = subjects;
+        ViewBag.DocumentTypes = await _documentService.GetDocumentTypesAsync(cancellationToken);
+        ViewBag.Languages = await _documentService.GetLanguagesAsync(cancellationToken);
+        ViewBag.DocumentSources = await _documentService.GetDocumentSourcesAsync(cancellationToken);
+        ViewBag.AcademicTerms = await _documentService.GetAcademicTermsAsync(cancellationToken);
+        ViewBag.SubjectTermMap = System.Text.Json.JsonSerializer.Serialize(subjects.Where(s => s.AcademicTermId.HasValue).ToDictionary(s => s.Id.ToString().ToLowerInvariant(), s => s.AcademicTermId.Value.ToString().ToLowerInvariant()));
+    }
+
+    [HttpGet]
+    [Authorize(Roles = "Lecturer")]
+    public async Task<IActionResult> Create(CancellationToken cancellationToken)
+    {
+        await PopulateLookupsAsync(cancellationToken);
         return View(new DocumentCreateViewModel());
     }
 
     [HttpPost]
-    [Authorize(Roles = "Admin,Lecturer")]
+    [Authorize(Roles = "Lecturer")]
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> Create(DocumentCreateViewModel model)
     {
         if (!ModelState.IsValid)
         {
+            await PopulateLookupsAsync(CancellationToken.None);
             return View(model);
         }
 
@@ -47,6 +61,7 @@ public class DocumentsController : Controller
             if (model.UploadFile is null || model.UploadFile.Length == 0)
             {
                 TempData["ErrorMessage"] = "Vui lòng chọn file để tạo tài liệu. Không có file thì sẽ không tạo document.";
+                await PopulateLookupsAsync(CancellationToken.None);
                 return View(model);
             }
 
@@ -55,12 +70,13 @@ public class DocumentsController : Controller
                 OwnerUserId = ownerUserId,
                 Title = model.Title,
                 Description = model.Description,
-                Subject = model.Subject,
-                School = model.School,
-                Department = model.Department,
-                Language = model.Language,
+                SubjectId = model.SubjectId,
+
+                DocumentTypeId = model.DocumentTypeId,
+                AcademicTermId = model.AcademicTermId,
+                LanguageId = model.LanguageId,
                 Visibility = model.Visibility,
-                SourceType = model.SourceType,
+                DocumentSourceId = model.DocumentSourceId,
                 FileName = model.UploadFile.FileName,
                 FileSizeBytes = model.UploadFile.Length,
                 FileContentType = model.UploadFile.ContentType
@@ -87,12 +103,14 @@ public class DocumentsController : Controller
         catch (InvalidOperationException ex)
         {
             ModelState.AddModelError(string.Empty, ex.Message);
+            await PopulateLookupsAsync(CancellationToken.None);
             return View(model);
         }
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error while creating document");
-            ModelState.AddModelError(string.Empty, "Có lỗi xảy ra khi tạo tài liệu. Vui lòng thử lại.");
+            ModelState.AddModelError(string.Empty, "CÃ³ lá»—i xáº£y ra khi táº¡o tÃ i liá»‡u. Vui lÃ²ng thá»­ láº¡i.");
+            await PopulateLookupsAsync(CancellationToken.None);
             return View(model);
         }
     }
@@ -108,43 +126,57 @@ public class DocumentsController : Controller
                 return Unauthorized();
             }
 
-            var document = await _documentService.GetDocumentBySlugAsync(slug, userId, cancellationToken);
-            if (document is null)
-            {
-                return NotFound();
-            }
+            string cookieKey = $"ViewedDoc_{userId}_{slug}";
+            bool hasViewed = Request.Cookies.ContainsKey(cookieKey);
+            bool isAdmin = User.IsInRole("Admin");
 
-            var documentWithFiles = await _documentService.GetDocumentWithFilesBySlugAsync(slug, cancellationToken);
-            if (documentWithFiles is null)
-            {
-                return NotFound();
-            }
-
-            var documentDetails = await _documentService.GetDocumentDetailsAsync(documentWithFiles.Id, chunkPage, chunkPageSize, cancellationToken);
+            var documentDetails = await _documentService.GetDocumentDetailsBySlugAsync(slug, userId, chunkPage, chunkPageSize, !hasViewed && chunkPage == 1, isAdmin, cancellationToken);
             if (documentDetails is null)
             {
                 return NotFound();
             }
 
+            if (!hasViewed && documentDetails.OwnerUserId != userId)
+            {
+                var cookieOptions = new Microsoft.AspNetCore.Http.CookieOptions
+                {
+                    Expires = DateTimeOffset.UtcNow.AddHours(24),
+                    HttpOnly = true,
+                    Secure = true,
+                    SameSite = Microsoft.AspNetCore.Http.SameSiteMode.Strict
+                };
+                Response.Cookies.Append(cookieKey, "1", cookieOptions);
+            }
+
             var viewModel = new DocumentDetailsViewModel
             {
                 Id = documentDetails.Id,
+                OwnerUserId = documentDetails.OwnerUserId,
                 Slug = slug,
                 Title = documentDetails.Title,
-                Subject = documentDetails.Subject,
-                School = documentDetails.School,
-                Department = documentDetails.Department,
+                SubjectName = documentDetails.SubjectName,
+                SubjectCode = documentDetails.SubjectCode,
+
+
+                DocumentTypeId = documentDetails.DocumentTypeId,
+                DocumentTypeName = documentDetails.DocumentTypeName,
+                AcademicTermName = documentDetails.AcademicTermName,
                 Visibility = documentDetails.Visibility,
-                Language = documentDetails.Language,
+                LanguageId = documentDetails.LanguageId,
+                LanguageCode = documentDetails.LanguageCode,
+                LanguageName = documentDetails.LanguageName,
+                DocumentSourceName = documentDetails.DocumentSourceName,
                 Description = documentDetails.Description,
                 Status = documentDetails.Status,
                 TotalChunks = documentDetails.TotalChunks,
                 TotalChapters = documentDetails.TotalChapters,
+                ViewCount = documentDetails.ViewCount,
+                DownloadCount = documentDetails.DownloadCount,
                 ApprovedAt = documentDetails.ApprovedAt,
                 FileCount = documentDetails.FileCount,
                 ChunkPage = chunkPage,
                 ChunkPageSize = chunkPageSize,
-                TotalChunkPages = Math.Max(1, (int)Math.Ceiling(documentDetails.Chunks.Count / (double)Math.Clamp(chunkPageSize, 8, 10))),
+                TotalChunkPages = Math.Max(1, (int)Math.Ceiling(documentDetails.TotalChunks / (double)Math.Clamp(chunkPageSize, 8, 10))),
                 Files = documentDetails.Files.Select(file => new DocumentFileViewModel
                 {
                     Id = file.Id,
@@ -170,7 +202,8 @@ public class DocumentsController : Controller
                     ChunkOrder = x.ChunkOrder,
                     Content = x.Content,
                     WordCount = x.Content.Split((char[]?)null, StringSplitOptions.RemoveEmptyEntries).Length,
-                    ChunkHash = x.ChunkHash
+                    ChunkHash = x.ChunkHash,
+                    HasEmbedding = x.HasEmbedding
                 }).ToList()
             };
 
@@ -179,12 +212,12 @@ public class DocumentsController : Controller
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error while loading document details for {Slug}", slug);
-            return StatusCode(500, "Không thể tải chi tiết tài liệu.");
+            return StatusCode(500, "KhÃ´ng thá»ƒ táº£i chi tiáº¿t tÃ i liá»‡u.");
         }
     }
 
     [HttpGet("{slug}/delete")]
-    [Authorize(Roles = "Admin,Lecturer")]
+    [Authorize(Roles = "Lecturer")]
     public async Task<IActionResult> Delete(string slug, CancellationToken cancellationToken = default)
     {
         if (!Guid.TryParse(User.FindFirstValue(ClaimTypes.NameIdentifier), out var userId))
@@ -211,7 +244,7 @@ public class DocumentsController : Controller
     }
 
     [HttpPost("{slug}/delete")]
-    [Authorize(Roles = "Admin,Lecturer")]
+    [Authorize(Roles = "Lecturer")]
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> DeleteConfirmed(string slug, CancellationToken cancellationToken = default)
     {
@@ -220,7 +253,7 @@ public class DocumentsController : Controller
             return Unauthorized();
         }
 
-        var canDelete = await _documentService.GetOwnedDocumentBySlugAsync(slug, userId, cancellationToken);
+        var canDelete = await _documentService.GetOwnedDocumentDetailsBySlugAsync(slug, userId, cancellationToken);
         if (canDelete is null)
         {
             return NotFound();
@@ -233,7 +266,7 @@ public class DocumentsController : Controller
     }
 
     [HttpGet("{slug}/edit")]
-    [Authorize(Roles = "Admin,Lecturer")]
+    [Authorize(Roles = "Lecturer")]
     public async Task<IActionResult> Edit(string slug, CancellationToken cancellationToken = default)
     {
         if (!Guid.TryParse(User.FindFirstValue(ClaimTypes.NameIdentifier), out var userId))
@@ -241,34 +274,39 @@ public class DocumentsController : Controller
             return Unauthorized();
         }
 
-        var document = await _documentService.GetOwnedDocumentBySlugAsync(slug, userId, cancellationToken);
+        var document = await _documentService.GetOwnedDocumentDetailsBySlugAsync(slug, userId, cancellationToken);
         if (document is null)
         {
             return NotFound();
         }
+
+        await PopulateLookupsAsync(cancellationToken);
 
         var viewModel = new DocumentEditViewModel
         {
             Id = document.Id,
             Title = document.Title,
             Description = document.Description,
-            Subject = document.Subject,
-            School = document.School,
-            Department = document.Department,
-            Language = document.Language,
-            Visibility = document.Visibility
+            SubjectId = document.SubjectId,
+
+            DocumentTypeId = document.DocumentTypeId,
+            AcademicTermId = document.AcademicTermId,
+            LanguageId = document.LanguageId,
+            Visibility = document.Visibility,
+            DocumentSourceId = document.DocumentSourceId
         };
 
         return View(viewModel);
     }
 
     [HttpPost("{slug}/edit")]
-    [Authorize(Roles = "Admin,Lecturer")]
+    [Authorize(Roles = "Lecturer")]
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> Edit(string slug, DocumentEditViewModel model, CancellationToken cancellationToken = default)
     {
         if (!ModelState.IsValid)
         {
+            await PopulateLookupsAsync(cancellationToken);
             return View(model);
         }
 
@@ -281,15 +319,20 @@ public class DocumentsController : Controller
         {
             Title = model.Title,
             Description = model.Description,
-            Subject = model.Subject,
-            School = model.School,
-            Department = model.Department,
-            Language = model.Language,
-            Visibility = model.Visibility
+            SubjectId = model.SubjectId,
+
+            DocumentTypeId = model.DocumentTypeId,
+            AcademicTermId = model.AcademicTermId,
+            LanguageId = model.LanguageId,
+            Visibility = model.Visibility,
+            DocumentSourceId = model.DocumentSourceId
         };
 
-        var updated = await _documentService.UpdateDocumentAsync(model.Id, userId, editInput, cancellationToken);
-        if (updated is null)
+        try
+        {
+            await _documentService.UpdateDocumentAsync(model.Id, userId, editInput, cancellationToken);
+        }
+        catch (InvalidOperationException)
         {
             return NotFound();
         }
@@ -298,14 +341,50 @@ public class DocumentsController : Controller
         return RedirectToAction(nameof(MyDocuments));
     }
 
+    [HttpPost("{slug}/report")]
+    [Authorize(Roles = "Lecturer,Student")]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> Report(string slug, string reason, CancellationToken cancellationToken)
+    {
+        if (string.IsNullOrWhiteSpace(reason))
+        {
+            TempData["ErrorMessage"] = "Lý do báo cáo không được để trống.";
+            return RedirectToAction(nameof(Details), new { slug });
+        }
+        
+        if (!Guid.TryParse(User.FindFirstValue(ClaimTypes.NameIdentifier), out var userId))
+        {
+            return Unauthorized();
+        }
+
+        var document = await _documentService.GetDocumentDetailsBySlugAsync(slug, userId, 1, 10, false, false, cancellationToken);
+        if (document is null)
+        {
+            return NotFound();
+        }
+
+        try
+        {
+            await _documentService.ReportDocumentAsync(document.Id, userId, reason, cancellationToken);
+            TempData["SuccessMessage"] = "Báo cáo tài liệu thành công. Ban quản trị sẽ sớm xử lý.";
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error reporting document {Slug}", slug);
+            TempData["ErrorMessage"] = "Không thể gửi báo cáo: " + ex.Message;
+        }
+
+        return RedirectToAction(nameof(Details), new { slug });
+    }
+
     [HttpGet("all")]
-    [Authorize(Roles = "Admin,Lecturer,Student")]
-    public async Task<IActionResult> AllDocuments(string? q = null, string? subject = null, int page = 1, int pageSize = 6, CancellationToken cancellationToken = default)
+    [Authorize(Roles = "Lecturer,Student")]
+    public async Task<IActionResult> AllDocuments(string? q = null, Guid? subjectId = null, Guid? termId = null, string? sortBy = null, Guid? documentTypeId = null, Guid? languageId = null, Guid? documentSourceId = null, int page = 1, int pageSize = 6, CancellationToken cancellationToken = default)
     {
         try
         {
             var userId = Guid.TryParse(User.FindFirstValue(ClaimTypes.NameIdentifier), out var parsedUserId) ? parsedUserId : (Guid?)null;
-            var result = await _documentService.GetAllDocumentsAsync(q, subject, page, pageSize, userId, cancellationToken);
+            var result = await _documentService.GetAllDocumentsAsync(q, subjectId, page, pageSize, userId, sortBy, documentTypeId, languageId, documentSourceId, cancellationToken);
 
             var viewModel = new AllDocumentsViewModel
             {
@@ -314,27 +393,53 @@ public class DocumentsController : Controller
                     Id = x.Id,
                     Slug = x.Slug,
                     Title = x.Title,
-                    Subject = x.Subject,
+                    SubjectCode = x.SubjectCode,
+                    SubjectName = x.SubjectName,
+
+                    DocumentTypeId = x.DocumentTypeId,
+                    DocumentTypeName = x.DocumentTypeName,
+                    AcademicTermName = x.AcademicTermName,
                     Status = x.Status,
                     Visibility = x.Visibility,
-                    School = x.School,
                     CreatedAt = x.CreatedAt,
                     UpdatedAt = x.UpdatedAt,
                     FileCount = x.FileCount,
                     ChunkCount = x.ChunkCount,
                     PreviewText = x.PreviewText,
-                    OwnerEmail = x.OwnerEmail
+                    OwnerEmail = x.OwnerEmail,
+                    ViewCount = x.ViewCount
                 }).ToList(),
                 TotalDocuments = result.TotalDocuments,
                 Page = result.Page,
                 PageSize = result.PageSize,
                 TotalPages = result.TotalPages,
-                Query = q
+                Query = q,
+                SortBy = sortBy
             };
 
             ViewBag.Query = q;
-            ViewBag.SelectedSubject = subject;
-            ViewBag.Subjects = await _documentService.GetDistinctSubjectsAsync(null, cancellationToken);
+            ViewBag.SelectedSubjectId = subjectId;
+            ViewBag.SelectedTermId = termId;
+            ViewBag.SelectedSortBy = sortBy;
+            ViewBag.SelectedTypeId = documentTypeId;
+            ViewBag.SelectedLangId = languageId;
+            ViewBag.SelectedSourceId = documentSourceId;
+
+            var allSubjects = await _documentService.GetSubjectsAsync(cancellationToken);
+            ViewBag.Subjects = allSubjects;
+            var allTerms = await _documentService.GetAcademicTermsAsync(cancellationToken);
+            ViewBag.AcademicTerms = allTerms;
+            var allTypes = await _documentService.GetDocumentTypesAsync(cancellationToken);
+            ViewBag.DocumentTypes = allTypes;
+            var allLangs = await _documentService.GetLanguagesAsync(cancellationToken);
+            ViewBag.Languages = allLangs;
+            var allSources = await _documentService.GetDocumentSourcesAsync(cancellationToken);
+            ViewBag.DocumentSources = allSources;
+            if (subjectId.HasValue)
+            {
+                var selectedSub = allSubjects.FirstOrDefault(x => x.Id == subjectId.Value);
+                ViewBag.SelectedSubjectName = selectedSub?.Code;
+            }
             return View(viewModel);
         }
         catch (Exception ex)
@@ -346,8 +451,8 @@ public class DocumentsController : Controller
     }
 
     [HttpGet("mine")]
-    [Authorize(Roles = "Admin,Lecturer")]
-    public async Task<IActionResult> MyDocuments(string? q = null, string? subject = null, int page = 1, int pageSize = 6, CancellationToken cancellationToken = default)
+    [Authorize(Roles = "Lecturer")]
+    public async Task<IActionResult> MyDocuments(string? q = null, Guid? subjectId = null, Guid? termId = null, string? sortBy = null, Guid? documentTypeId = null, Guid? languageId = null, Guid? documentSourceId = null, int page = 1, int pageSize = 6, CancellationToken cancellationToken = default)
     {
         if (!Guid.TryParse(User.FindFirstValue(ClaimTypes.NameIdentifier), out var userId))
         {
@@ -356,7 +461,7 @@ public class DocumentsController : Controller
 
         try
         {
-            var result = await _documentService.GetMyDocumentsAsync(userId, q, subject, page, pageSize, cancellationToken);
+            var result = await _documentService.GetMyDocumentsAsync(userId, q, subjectId, termId, sortBy, documentTypeId, languageId, documentSourceId, page, pageSize, cancellationToken);
 
             var viewModel = new MyDocumentsViewModel
             {
@@ -365,16 +470,21 @@ public class DocumentsController : Controller
                     Id = x.Id,
                     Slug = x.Slug,
                     Title = x.Title,
-                    Subject = x.Subject,
+                    SubjectCode = x.SubjectCode,
+                    SubjectName = x.SubjectName,
+
+                    DocumentTypeId = x.DocumentTypeId,
+                    DocumentTypeName = x.DocumentTypeName,
+                    AcademicTermName = x.AcademicTermName,
                     Status = x.Status,
                     Visibility = x.Visibility,
-                    School = x.School,
                     CreatedAt = x.CreatedAt,
                     UpdatedAt = x.UpdatedAt,
                     FileCount = x.FileCount,
                     ChunkCount = x.ChunkCount,
                     PreviewText = x.PreviewText,
-                    OwnerEmail = x.OwnerEmail
+                    OwnerEmail = x.OwnerEmail,
+                    ViewCount = x.ViewCount
                 }).ToList(),
                 TotalDocuments = result.TotalDocuments,
                 PendingDocuments = result.PendingDocuments,
@@ -401,8 +511,29 @@ public class DocumentsController : Controller
             }).ToList();
 
             ViewBag.Query = q;
-            ViewBag.SelectedSubject = subject;
-            ViewBag.Subjects = await _documentService.GetDistinctSubjectsAsync(userId, cancellationToken);
+            ViewBag.SelectedSubjectId = subjectId;
+            ViewBag.SelectedTermId = termId;
+            ViewBag.SelectedSortBy = sortBy;
+            ViewBag.SelectedTypeId = documentTypeId;
+            ViewBag.SelectedLangId = languageId;
+            ViewBag.SelectedSourceId = documentSourceId;
+
+            var allSubjects = await _documentService.GetSubjectsByOwnerAsync(userId, cancellationToken);
+            ViewBag.Subjects = allSubjects;
+            var allTerms = await _documentService.GetAcademicTermsAsync(cancellationToken);
+            ViewBag.AcademicTerms = allTerms;
+            var allTypes = await _documentService.GetDocumentTypesAsync(cancellationToken);
+            ViewBag.DocumentTypes = allTypes;
+            var allLangs = await _documentService.GetLanguagesAsync(cancellationToken);
+            ViewBag.Languages = allLangs;
+            var allSources = await _documentService.GetDocumentSourcesAsync(cancellationToken);
+            ViewBag.DocumentSources = allSources;
+            
+            if (subjectId.HasValue)
+            {
+                var selectedSub = allSubjects.FirstOrDefault(x => x.Id == subjectId.Value);
+                ViewBag.SelectedSubjectName = selectedSub?.Code;
+            }
 
             if (Request.Headers.TryGetValue("X-Requested-With", out var requestedWith) && requestedWith == "XMLHttpRequest")
             {

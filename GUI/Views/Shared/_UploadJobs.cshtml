@@ -1,6 +1,6 @@
-@using DAL.Entities
+@using BLL.DTOs.Documents
 @{
-    var jobs = ViewBag.ActiveUploadJobs as List<UploadJob> ?? new List<UploadJob>();
+    var jobs = ViewBag.ActiveUploadJobs as List<UploadJobSummaryDto> ?? new List<UploadJobSummaryDto>();
 }
 
 <div id="upload-jobs-wrapper-content">

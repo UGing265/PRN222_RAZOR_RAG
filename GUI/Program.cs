@@ -32,6 +32,19 @@ builder.Services.AddAuthorization();
 
 var app = builder.Build();
 
+using (var scope = app.Services.CreateScope())
+{
+    var documentService = scope.ServiceProvider.GetRequiredService<BLL.Interfaces.Documents.IDocumentService>();
+    try
+    {
+        await documentService.SeedInitialDataAsync();
+    }
+    catch (Exception ex)
+    {
+        Console.WriteLine($"Database initialization failed: {ex.Message}");
+    }
+}
+
 if (!app.Environment.IsDevelopment())
 {
     app.UseExceptionHandler("/error");
@@ -91,6 +104,11 @@ app.MapControllerRoute(
     name: "admin-reject-block",
     pattern: "admin/users/reject-block/{id:guid}",
     defaults: new { controller = "Admin", action = "RejectOrBlock" });
+
+app.MapControllerRoute(
+    name: "admin-unblock",
+    pattern: "admin/users/unblock/{id:guid}",
+    defaults: new { controller = "Admin", action = "Unblock" });
 
 app.MapControllerRoute(
     name: "default",
