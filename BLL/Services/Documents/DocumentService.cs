@@ -361,6 +361,7 @@ public class DocumentService : IDocumentService
                 ContentTokens = ch.ContentTokens,
                 Metadata = ch.Metadata,
                 ChunkHash = ch.ChunkHash,
+                HasEmbedding = ch.Embedding != null,
                 CreatedAt = ch.CreatedAt
             }).ToList()
         };

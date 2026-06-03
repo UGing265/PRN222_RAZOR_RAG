@@ -6,4 +6,5 @@ public class DocumentChunkViewModel
     public string Content { get; set; } = string.Empty;
     public int WordCount { get; set; }
     public string? ChunkHash { get; set; }
+    public bool HasEmbedding { get; set; }
 }

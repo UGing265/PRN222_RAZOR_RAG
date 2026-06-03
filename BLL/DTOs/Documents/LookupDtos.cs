@@ -73,6 +73,7 @@ public sealed class DocumentChunkDto
     public int? ContentTokens { get; init; }
     public string Metadata { get; init; } = string.Empty;
     public string? ChunkHash { get; init; }
+    public bool HasEmbedding { get; init; }
     public DateTime CreatedAt { get; init; }
 }
 

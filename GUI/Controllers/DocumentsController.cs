@@ -202,7 +202,8 @@ public class DocumentsController : Controller
                     ChunkOrder = x.ChunkOrder,
                     Content = x.Content,
                     WordCount = x.Content.Split((char[]?)null, StringSplitOptions.RemoveEmptyEntries).Length,
-                    ChunkHash = x.ChunkHash
+                    ChunkHash = x.ChunkHash,
+                    HasEmbedding = x.HasEmbedding
                 }).ToList()
             };
 
