@@ -130,7 +130,7 @@ public class DocumentsController : Controller
             bool hasViewed = Request.Cookies.ContainsKey(cookieKey);
             bool isAdmin = User.IsInRole("Admin");
 
-            var documentDetails = await _documentService.GetDocumentDetailsBySlugAsync(slug, userId, !hasViewed && chunkPage == 1, isAdmin, cancellationToken);
+            var documentDetails = await _documentService.GetDocumentDetailsBySlugAsync(slug, userId, chunkPage, chunkPageSize, !hasViewed && chunkPage == 1, isAdmin, cancellationToken);
             if (documentDetails is null)
             {
                 return NotFound();
@@ -356,7 +356,7 @@ public class DocumentsController : Controller
             return Unauthorized();
         }
 
-        var document = await _documentService.GetDocumentDetailsBySlugAsync(slug, userId, false, false, cancellationToken);
+        var document = await _documentService.GetDocumentDetailsBySlugAsync(slug, userId, 1, 10, false, false, cancellationToken);
         if (document is null)
         {
             return NotFound();

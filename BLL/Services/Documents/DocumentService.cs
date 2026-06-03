@@ -366,11 +366,11 @@ public class DocumentService : IDocumentService
         };
     }
 
-    public async Task<DocumentDetailsDto?> GetDocumentDetailsBySlugAsync(string slug, Guid? requesterUserId = null, bool incrementViewCount = true, bool isAdmin = false, CancellationToken cancellationToken = default)
+    public async Task<DocumentDetailsDto?> GetDocumentDetailsBySlugAsync(string slug, Guid? requesterUserId = null, int chunkPage = 1, int chunkPageSize = 10, bool incrementViewCount = true, bool isAdmin = false, CancellationToken cancellationToken = default)
     {
         var document = await _documentRepository.GetDocumentBySlugAsync(slug, requesterUserId, isAdmin, cancellationToken);
         if (document is null) return null;
-        return await GetDocumentDetailsAsync(document.Id, 1, 10, incrementViewCount, cancellationToken);
+        return await GetDocumentDetailsAsync(document.Id, chunkPage, chunkPageSize, incrementViewCount, cancellationToken);
     }
 
     public async Task<DocumentDetailsDto?> GetOwnedDocumentDetailsBySlugAsync(string slug, Guid ownerUserId, CancellationToken cancellationToken = default)
