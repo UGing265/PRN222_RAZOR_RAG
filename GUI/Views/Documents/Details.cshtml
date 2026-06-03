@@ -318,7 +318,7 @@
                 </div>
 
                 <!-- Chunks Card -->
-                <div class="details-panel-glass shadow-sm p-0 overflow-hidden">
+                <div id="chunks-card" class="details-panel-glass shadow-sm p-0 overflow-hidden" style="transition: opacity 0.25s ease;">
                     <div class="p-4 border-bottom border-border d-flex justify-content-between align-items-center gap-3 flex-wrap">
                         <div>
                             <div class="kicker mb-1">— Các phân đoạn</div>
@@ -451,20 +451,73 @@
 @section Scripts {
     <script>
         (() => {
-            // Smooth accordion rotation indicator logic for details summary elements
-            document.querySelectorAll('details').forEach(det => {
-                const icon = det.querySelector('.chevron-icon');
-                if (!icon) return;
-                det.addEventListener('toggle', () => {
-                    if (det.open) {
-                        icon.style.transform = 'rotate(180deg)';
-                        icon.style.color = 'var(--coral)';
-                    } else {
-                        icon.style.transform = 'rotate(0deg)';
-                        icon.style.color = '';
+            function bindAccordionRotate(container) {
+                container.querySelectorAll('details').forEach(det => {
+                    const icon = det.querySelector('.chevron-icon');
+                    if (!icon) return;
+                    det.addEventListener('toggle', () => {
+                        if (det.open) {
+                            icon.style.transform = 'rotate(180deg)';
+                            icon.style.color = 'var(--coral)';
+                        } else {
+                            icon.style.transform = 'rotate(0deg)';
+                            icon.style.color = '';
+                        }
+                    });
+                });
+            }
+
+            // Initial binding for accordion details elements
+            const chunksCard = document.getElementById('chunks-card');
+            if (chunksCard) {
+                bindAccordionRotate(chunksCard);
+
+                // AJAX pagination logic
+                chunksCard.addEventListener('click', async (e) => {
+                    const link = e.target.closest('a');
+                    if (link && (link.textContent.trim() === 'Trước' || link.textContent.trim() === 'Sau')) {
+                        if (link.classList.contains('disabled')) {
+                            e.preventDefault();
+                            return;
+                        }
+                        e.preventDefault();
+                        const href = link.getAttribute('href');
+                        if (!href) return;
+
+                        try {
+                            // Fade out transition
+                            chunksCard.style.opacity = '0.5';
+                            chunksCard.style.pointerEvents = 'none';
+
+                            const response = await fetch(href);
+                            if (!response.ok) throw new Error('Failed to fetch data.');
+
+                            const htmlText = await response.text();
+                            const parser = new DOMParser();
+                            const doc = parser.parseFromString(htmlText, 'text/html');
+                            const newChunksCard = doc.getElementById('chunks-card');
+
+                            if (newChunksCard) {
+                                // Replace content dynamically
+                                chunksCard.innerHTML = newChunksCard.innerHTML;
+                                
+                                // Update URL without refreshing the whole page
+                                window.history.pushState(null, '', href);
+
+                                // Re-bind accordion events on the new HTML elements
+                                bindAccordionRotate(chunksCard);
+                            }
+                        } catch (err) {
+                            console.error('AJAX Pagination error, falling back to full refresh:', err);
+                            window.location.href = href;
+                        } finally {
+                            // Fade back in
+                            chunksCard.style.opacity = '1';
+                            chunksCard.style.pointerEvents = 'auto';
+                        }
                     }
                 });
-            });
+            }
         })();
     </script>
 }
