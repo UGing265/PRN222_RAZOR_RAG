@@ -21,14 +21,6 @@ public class AuthService : IAuthService
     public async Task<AuthUserDto> RegisterAsync(string fullName, string email, string password, short roleId, CancellationToken cancellationToken = default)
     {
         var normalizedEmail = email.Trim().ToLowerInvariant();
-        if (roleId == 2 && !normalizedEmail.EndsWith("@fe.edu.vn"))
-        {
-            throw new InvalidOperationException("Giảng viên bắt buộc sử dụng email đuôi @fe.edu.vn.");
-        }
-        if (roleId == 3 && !normalizedEmail.EndsWith("@fpt.edu.vn"))
-        {
-            throw new InvalidOperationException("Sinh viên bắt buộc sử dụng email đuôi @fpt.edu.vn.");
-        }
 
         var existingUser = await _authRepository.EmailExistsAsync(normalizedEmail, cancellationToken);
         if (existingUser)
@@ -50,7 +42,7 @@ public class AuthService : IAuthService
             Email = normalizedEmail,
             PasswordHash = HashPassword(password),
             RoleId = roleId,
-            IsActive = false,
+            IsActive = true,
             CreatedAt = now,
             UpdatedAt = now
         };

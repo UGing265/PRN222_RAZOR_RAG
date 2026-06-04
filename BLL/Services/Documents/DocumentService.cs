@@ -1223,4 +1223,30 @@ public class DocumentService : IDocumentService
         ";
         await Microsoft.EntityFrameworkCore.RelationalDatabaseFacadeExtensions.ExecuteSqlRawAsync(dbContext.Database, ddlSql, cancellationToken);
     }
+
+    public async Task<List<SubjectDto>> GetSubjectsAssignedToLecturerAsync(Guid userId, CancellationToken cancellationToken = default)
+    {
+        var subjects = await _documentRepository.GetSubjectsAssignedToLecturerAsync(userId, cancellationToken);
+        return subjects.Select(s => new SubjectDto 
+        { 
+            Id = s.Id, 
+            Code = s.Code, 
+            Name = s.Name, 
+            AcademicTermId = s.AcademicTermId, 
+            CreatedAt = s.CreatedAt 
+        }).ToList();
+    }
+
+    public async Task AssignSubjectsToLecturerAsync(Guid userId, List<Guid> subjectIds, CancellationToken cancellationToken = default)
+    {
+        await _documentRepository.AssignSubjectsToLecturerAsync(userId, subjectIds, cancellationToken);
+        await _documentRepository.SaveChangesAsync(cancellationToken);
+    }
+
+    public Task<bool> IsSubjectAssignedToLecturerAsync(Guid userId, Guid subjectId, CancellationToken cancellationToken = default)
+        => _documentRepository.IsSubjectAssignedToLecturerAsync(userId, subjectId, cancellationToken);
+
+    public Task<Dictionary<Guid, (Guid UserId, string FullName)>> GetSubjectLecturerMapAsync(CancellationToken cancellationToken = default)
+        => _documentRepository.GetSubjectLecturerMapAsync(cancellationToken);
 }
+

@@ -58,4 +58,10 @@ public interface IDocumentService
     Task ResolveReportAsync(Guid reportId, string action, CancellationToken cancellationToken = default);
     Task<MyDocumentsDto> GetAdminDocumentsAsync(string? query, Guid? subjectId, int page = 1, int pageSize = 10, CancellationToken cancellationToken = default);
     Task SeedInitialDataAsync(CancellationToken cancellationToken = default);
+
+    Task<List<SubjectDto>> GetSubjectsAssignedToLecturerAsync(Guid userId, CancellationToken cancellationToken = default);
+    Task AssignSubjectsToLecturerAsync(Guid userId, List<Guid> subjectIds, CancellationToken cancellationToken = default);
+    Task<bool> IsSubjectAssignedToLecturerAsync(Guid userId, Guid subjectId, CancellationToken cancellationToken = default);
+    Task<Dictionary<Guid, (Guid UserId, string FullName)>> GetSubjectLecturerMapAsync(CancellationToken cancellationToken = default);
 }
+
