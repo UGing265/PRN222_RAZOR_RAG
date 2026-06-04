@@ -46,6 +46,10 @@ public partial class DBContext : DbContext
 
     public virtual DbSet<AcademicTerm> AcademicTerms { get; set; }
 
+    public virtual DbSet<ChatSession> ChatSessions { get; set; }
+
+    public virtual DbSet<ChatMessage> ChatMessages { get; set; }
+
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         modelBuilder
@@ -549,6 +553,61 @@ public partial class DBContext : DbContext
         var langJa = new Language { Id = Guid.Parse("bbbbbbbb-bbbb-bbbb-bbbb-333333333333"), Code = "ja", Name = "Tiếng Nhật", CreatedAt = DateTime.UtcNow };
 
         modelBuilder.Entity<Language>().HasData(langVi, langEn, langJa);
+
+        modelBuilder.Entity<ChatSession>(entity =>
+        {
+            entity.HasKey(e => e.Id).HasName("chat_sessions_pkey");
+
+            entity.ToTable("chat_sessions");
+
+            entity.HasIndex(e => e.UserId, "idx_chat_sessions_user_id");
+
+            entity.HasIndex(e => e.CreatedAt, "idx_chat_sessions_created_at");
+
+            entity.Property(e => e.Id)
+                .HasDefaultValueSql("uuid_generate_v4()")
+                .HasColumnName("id");
+            entity.Property(e => e.UserId).HasColumnName("user_id");
+            entity.Property(e => e.Title)
+                .HasMaxLength(500)
+                .HasColumnName("title");
+            entity.Property(e => e.CreatedAt)
+                .HasDefaultValueSql("now()")
+                .HasColumnName("created_at");
+
+            entity.HasOne(d => d.User).WithMany(p => p.ChatSessions)
+                .HasForeignKey(d => d.UserId)
+                .OnDelete(DeleteBehavior.Cascade)
+                .HasConstraintName("chat_sessions_user_id_fkey");
+        });
+
+        modelBuilder.Entity<ChatMessage>(entity =>
+        {
+            entity.HasKey(e => e.Id).HasName("chat_messages_pkey");
+
+            entity.ToTable("chat_messages");
+
+            entity.HasIndex(e => e.SessionId, "idx_chat_messages_session_id");
+
+            entity.HasIndex(e => e.CreatedAt, "idx_chat_messages_created_at");
+
+            entity.Property(e => e.Id)
+                .HasDefaultValueSql("uuid_generate_v4()")
+                .HasColumnName("id");
+            entity.Property(e => e.SessionId).HasColumnName("session_id");
+            entity.Property(e => e.Role)
+                .HasMaxLength(20)
+                .HasColumnName("role");
+            entity.Property(e => e.Content).HasColumnName("content");
+            entity.Property(e => e.CreatedAt)
+                .HasDefaultValueSql("now()")
+                .HasColumnName("created_at");
+
+            entity.HasOne(d => d.Session).WithMany(p => p.ChatMessages)
+                .HasForeignKey(d => d.SessionId)
+                .OnDelete(DeleteBehavior.Cascade)
+                .HasConstraintName("chat_messages_session_id_fkey");
+        });
 
         OnModelCreatingPartial(modelBuilder);
     }
