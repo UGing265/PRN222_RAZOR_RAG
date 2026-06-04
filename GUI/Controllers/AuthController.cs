@@ -4,6 +4,7 @@ using BLL.Interfaces.Auth;
 using GUI.Models.Auth;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.Cookies;
+using Microsoft.AspNetCore.Authentication.Google;
 using Microsoft.AspNetCore.Mvc;
 
 namespace GUI.Controllers;
@@ -11,11 +12,13 @@ namespace GUI.Controllers;
 public class AuthController : Controller
 {
     private readonly IAuthService _authService;
+    private readonly IEmailService _emailService;
     private readonly ILogger<AuthController> _logger;
 
-    public AuthController(IAuthService authService, ILogger<AuthController> logger)
+    public AuthController(IAuthService authService, IEmailService emailService, ILogger<AuthController> logger)
     {
         _authService = authService;
+        _emailService = emailService;
         _logger = logger;
     }
 
@@ -53,7 +56,33 @@ public class AuthController : Controller
             }
 
             var user = await _authService.RegisterAsync(model.FullName, model.Email, model.Password, model.RoleId, cancellationToken);
-            TempData["SuccessMessage"] = "Đăng ký thành công! Tài khoản của bạn đang chờ Admin phê duyệt.";
+            
+            // Sinh token xác thực email
+            var token = _authService.GenerateEmailVerificationToken(model.Email);
+            
+            // Tạo link kích hoạt tài khoản
+            var callbackUrl = Url.Action("VerifyEmail", "Auth", new { token }, Request.Scheme);
+            
+            // Gửi email xác thực
+            var subject = "Kích hoạt tài khoản FPT RAG";
+            var body = $@"
+                <div style='font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #eee; border-radius: 5px;'>
+                    <h2 style='color: #4a1f16; text-align: center;'>Kích hoạt tài khoản FPT RAG</h2>
+                    <p>Chào <strong>{model.FullName}</strong>,</p>
+                    <p>Cảm ơn bạn đã đăng ký tài khoản tại hệ thống FPT RAG.</p>
+                    <p>Vui lòng click vào nút bên dưới để xác thực email và kích hoạt tài khoản của bạn (liên kết có hiệu lực trong 15 phút):</p>
+                    <div style='text-align: center; margin: 30px 0;'>
+                        <a href='{callbackUrl}' style='display: inline-block; background-color: #4a1f16; color: white; padding: 12px 25px; text-decoration: none; font-weight: bold; border-radius: 5px;'>Kích hoạt tài khoản</a>
+                    </div>
+                    <p>Hoặc sao chép và dán liên kết này vào trình duyệt của bạn:</p>
+                    <p style='background: #f9f9f9; padding: 10px; word-break: break-all; border-left: 3px solid #4a1f16;'>{callbackUrl}</p>
+                    <br/>
+                    <p>Trân trọng,<br/><strong>FPT RAG Team</strong></p>
+                </div>";
+                
+            await _emailService.SendEmailAsync(model.Email, subject, body, cancellationToken);
+
+            TempData["SuccessMessage"] = "Đăng ký thành công! Vui lòng kiểm tra email trường để kích hoạt tài khoản. (Nếu chạy thử ở localhost, hãy kiểm tra Console/Terminal để lấy link kích hoạt).";
             return RedirectToAction(nameof(Login));
         }
         catch (InvalidOperationException ex)
@@ -114,6 +143,84 @@ public class AuthController : Controller
         await HttpContext.SignOutAsync(CookieAuthenticationDefaults.AuthenticationScheme);
         Response.Cookies.Delete(".AspNetCore.Cookies");
         TempData["SuccessMessage"] = "Đã đăng xuất.";
+        return RedirectToAction(nameof(Login));
+    }
+
+    [HttpGet]
+    public IActionResult GoogleLogin()
+    {
+        var properties = new AuthenticationProperties { RedirectUri = Url.Action(nameof(GoogleCallback)) };
+        return Challenge(properties, GoogleDefaults.AuthenticationScheme);
+    }
+
+    [HttpGet]
+    public async Task<IActionResult> GoogleCallback(CancellationToken cancellationToken)
+    {
+        var result = await HttpContext.AuthenticateAsync("TempExternalCookie");
+        if (!result.Succeeded)
+        {
+            TempData["ErrorMessage"] = "Xác thực qua Google thất bại.";
+            return RedirectToAction(nameof(Login));
+        }
+
+        var email = result.Principal?.FindFirstValue(ClaimTypes.Email);
+        if (string.IsNullOrEmpty(email))
+        {
+            await HttpContext.SignOutAsync("TempExternalCookie");
+            TempData["ErrorMessage"] = "Không thể lấy email từ tài khoản Google của bạn.";
+            return RedirectToAction(nameof(Login));
+        }
+
+        var name = result.Principal?.FindFirstValue(ClaimTypes.Name) ?? email;
+        await HttpContext.SignOutAsync("TempExternalCookie");
+
+        try
+        {
+            var user = await _authService.LoginOrRegisterExternalAsync(email, name, cancellationToken);
+            await SignInAsync(user, isPersistent: true);
+            TempData["SuccessMessage"] = "Đăng nhập bằng Google thành công.";
+            return RedirectToAction("Index", "Home");
+        }
+        catch (InvalidOperationException ex)
+        {
+            TempData["ErrorMessage"] = ex.Message;
+            return RedirectToAction(nameof(Login));
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Google login failed for {Email}", email);
+            TempData["ErrorMessage"] = "Lỗi hệ thống khi đăng nhập bằng Google.";
+            return RedirectToAction(nameof(Login));
+        }
+    }
+
+    [HttpGet]
+    public async Task<IActionResult> VerifyEmail(string token, CancellationToken cancellationToken)
+    {
+        if (string.IsNullOrEmpty(token))
+        {
+            TempData["ErrorMessage"] = "Mã xác thực không hợp lệ.";
+            return RedirectToAction(nameof(Login));
+        }
+
+        try
+        {
+            var verified = await _authService.VerifyEmailTokenAsync(token, cancellationToken);
+            if (verified)
+            {
+                TempData["SuccessMessage"] = "Xác thực email thành công! Tài khoản của bạn đã được kích hoạt. Hãy đăng nhập.";
+            }
+            else
+            {
+                TempData["ErrorMessage"] = "Mã xác thực không hợp lệ hoặc đã hết hạn. Vui lòng thử đăng ký lại.";
+            }
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Lỗi khi xác thực email với token {Token}", token);
+            TempData["ErrorMessage"] = "Đã xảy ra lỗi trong quá trình xác thực email.";
+        }
+
         return RedirectToAction(nameof(Login));
     }
 
