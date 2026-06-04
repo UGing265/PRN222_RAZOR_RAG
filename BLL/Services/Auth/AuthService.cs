@@ -2,6 +2,7 @@ using BLL.DTOs.Auth;
 using BLL.Interfaces.Auth;
 using DAL.Entities;
 using DAL.Interfaces.Auth;
+using Microsoft.AspNetCore.DataProtection;
 using System.Security.Cryptography;
 
 namespace BLL.Services.Auth;
@@ -9,10 +10,12 @@ namespace BLL.Services.Auth;
 public class AuthService : IAuthService
 {
     private readonly IAuthRepository _authRepository;
+    private readonly ITimeLimitedDataProtector _protector;
 
-    public AuthService(IAuthRepository authRepository)
+    public AuthService(IAuthRepository authRepository, IDataProtectionProvider dataProtectionProvider)
     {
         _authRepository = authRepository;
+        _protector = dataProtectionProvider.CreateProtector("FptStudentEmailVerification").ToTimeLimitedDataProtector();
     }
 
     public async Task<AuthUserDto> RegisterAsync(string fullName, string email, string password, short roleId, CancellationToken cancellationToken = default)
@@ -82,6 +85,99 @@ public class AuthService : IAuthService
         }
 
         return Map(user);
+    }
+
+    public async Task<AuthUserDto> LoginOrRegisterExternalAsync(string email, string fullName, CancellationToken cancellationToken = default)
+    {
+        var normalizedEmail = email.Trim().ToLowerInvariant();
+        short roleId;
+        if (normalizedEmail.EndsWith("@fe.edu.vn"))
+        {
+            roleId = 2; // Lecturer
+        }
+        else if (normalizedEmail.EndsWith("@fpt.edu.vn"))
+        {
+            roleId = 3; // Student
+        }
+        else
+        {
+            throw new InvalidOperationException("Chỉ chấp nhận email giảng viên (@fe.edu.vn) hoặc sinh viên FPT (@fpt.edu.vn).");
+        }
+
+        var user = await _authRepository.GetUserByEmailWithRoleAsync(normalizedEmail, cancellationToken);
+        if (user is null)
+        {
+            var now = DateTime.UtcNow;
+            user = new User
+            {
+                Id = Guid.NewGuid(),
+                FullName = fullName.Trim(),
+                Email = normalizedEmail,
+                PasswordHash = "EXTERNAL_OAUTH_GOOGLE",
+                RoleId = roleId,
+                IsActive = true, // Tự kích hoạt vì đã đăng nhập bằng mail trường qua Google
+                IsBlocked = false,
+                CreatedAt = now,
+                UpdatedAt = now
+            };
+            var created = await _authRepository.AddUserAsync(user, cancellationToken);
+            user = await _authRepository.GetUserByIdAsync(created.Id, cancellationToken);
+        }
+        else
+        {
+            if (user.IsBlocked)
+            {
+                throw new InvalidOperationException("Tài khoản của bạn đã bị khóa.");
+            }
+
+            if (!user.IsActive)
+            {
+                user.IsActive = true;
+                user.UpdatedAt = DateTime.UtcNow;
+                await _authRepository.UpdateUserAsync(user, cancellationToken);
+            }
+        }
+
+        return Map(user!);
+    }
+
+    public string GenerateEmailVerificationToken(string email)
+    {
+        var normalizedEmail = email.Trim().ToLowerInvariant();
+        return _protector.Protect(normalizedEmail, DateTimeOffset.UtcNow.AddMinutes(15));
+    }
+
+    public async Task<bool> VerifyEmailTokenAsync(string token, CancellationToken cancellationToken = default)
+    {
+        try
+        {
+            var email = _protector.Unprotect(token);
+            var normalizedEmail = email.Trim().ToLowerInvariant();
+
+            var user = await _authRepository.GetUserByEmailWithRoleAsync(normalizedEmail, cancellationToken);
+            if (user is null)
+            {
+                return false;
+            }
+
+            if (user.IsBlocked)
+            {
+                throw new InvalidOperationException("Tài khoản của bạn đã bị khóa.");
+            }
+
+            if (!user.IsActive)
+            {
+                user.IsActive = true;
+                user.UpdatedAt = DateTime.UtcNow;
+                await _authRepository.UpdateUserAsync(user, cancellationToken);
+            }
+
+            return true;
+        }
+        catch (System.Security.Cryptography.CryptographicException)
+        {
+            return false;
+        }
     }
 
     public async Task<List<AuthUserDto>> GetAllUsersAsync(CancellationToken cancellationToken = default)

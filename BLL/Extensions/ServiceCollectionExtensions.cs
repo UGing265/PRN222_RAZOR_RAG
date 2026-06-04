@@ -25,9 +25,11 @@ public static class ServiceCollectionExtensions
     public static IServiceCollection AddBusinessLayer(this IServiceCollection services, IConfiguration configuration)
     {
         services.AddDbContext<DBContext>(options =>
-            options.UseNpgsql(configuration.GetConnectionString("DefaultConnection"), o => o.UseVector())
+            options.UseNpgsql(configuration.GetConnectionString("DefaultConnection"), o => o.UseVector().EnableRetryOnFailure())
                 .ConfigureWarnings(w => w.Ignore(RelationalEventId.MultipleCollectionIncludeWarning)));
 
+        services.AddDataProtection();
+        services.AddScoped<IEmailService, SmtpEmailService>();
         services.AddScoped<IAuthRepository, AuthRepository>();
         services.AddScoped<IDocumentRepository, DocumentRepository>();
         services.AddScoped<IUploadJobRepository, UploadJobRepository>();
