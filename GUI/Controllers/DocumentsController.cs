@@ -20,15 +20,25 @@ public class DocumentsController : Controller
         _logger = logger;
     }
 
-    private async Task PopulateLookupsAsync(CancellationToken cancellationToken)
+    private async Task PopulateLookupsAsync(CancellationToken cancellationToken, Guid? userId = null)
     {
+        List<SubjectDto> subjects;
+        if (userId.HasValue && User.IsInRole("Lecturer"))
+        {
+            subjects = await _documentService.GetSubjectsAssignedToLecturerAsync(userId.Value, cancellationToken);
+        }
+        else
+        {
+            subjects = await _documentService.GetSubjectsAsync(cancellationToken);
+        }
 
-        var subjects = await _documentService.GetSubjectsAsync(cancellationToken);
         ViewBag.Subjects = subjects;
         ViewBag.DocumentTypes = await _documentService.GetDocumentTypesAsync(cancellationToken);
         ViewBag.Languages = await _documentService.GetLanguagesAsync(cancellationToken);
         ViewBag.DocumentSources = await _documentService.GetDocumentSourcesAsync(cancellationToken);
-        ViewBag.AcademicTerms = await _documentService.GetAcademicTermsAsync(cancellationToken);
+        var terms = await _documentService.GetAcademicTermsAsync(cancellationToken);
+        var subjectTermIds = subjects.Where(s => s.AcademicTermId.HasValue).Select(s => s.AcademicTermId.Value).ToHashSet();
+        ViewBag.AcademicTerms = terms.Where(t => subjectTermIds.Contains(t.Id)).ToList();
         ViewBag.SubjectTermMap = System.Text.Json.JsonSerializer.Serialize(subjects.Where(s => s.AcademicTermId.HasValue).ToDictionary(s => s.Id.ToString().ToLowerInvariant(), s => s.AcademicTermId.Value.ToString().ToLowerInvariant()));
     }
 
@@ -36,7 +46,14 @@ public class DocumentsController : Controller
     [Authorize(Roles = "Lecturer")]
     public async Task<IActionResult> Create(CancellationToken cancellationToken)
     {
-        await PopulateLookupsAsync(cancellationToken);
+        if (Guid.TryParse(User.FindFirstValue(ClaimTypes.NameIdentifier), out var userId))
+        {
+            await PopulateLookupsAsync(cancellationToken, userId);
+        }
+        else
+        {
+            await PopulateLookupsAsync(cancellationToken);
+        }
         return View(new DocumentCreateViewModel());
     }
 
@@ -45,15 +62,26 @@ public class DocumentsController : Controller
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> Create(DocumentCreateViewModel model)
     {
-        if (!ModelState.IsValid)
-        {
-            await PopulateLookupsAsync(CancellationToken.None);
-            return View(model);
-        }
-
         if (!Guid.TryParse(User.FindFirstValue(ClaimTypes.NameIdentifier), out var ownerUserId))
         {
             return Unauthorized();
+        }
+
+        if (!ModelState.IsValid)
+        {
+            await PopulateLookupsAsync(CancellationToken.None, ownerUserId);
+            return View(model);
+        }
+
+        if (model.SubjectId.HasValue)
+        {
+            var isAssigned = await _documentService.IsSubjectAssignedToLecturerAsync(ownerUserId, model.SubjectId.Value, CancellationToken.None);
+            if (!isAssigned)
+            {
+                TempData["ErrorMessage"] = "Bạn không có quyền upload học liệu cho môn học này.";
+                await PopulateLookupsAsync(CancellationToken.None, ownerUserId);
+                return View(model);
+            }
         }
 
         try
@@ -61,7 +89,7 @@ public class DocumentsController : Controller
             if (model.UploadFile is null || model.UploadFile.Length == 0)
             {
                 TempData["ErrorMessage"] = "Vui lòng chọn file để tạo tài liệu. Không có file thì sẽ không tạo document.";
-                await PopulateLookupsAsync(CancellationToken.None);
+                await PopulateLookupsAsync(CancellationToken.None, ownerUserId);
                 return View(model);
             }
 
@@ -103,17 +131,18 @@ public class DocumentsController : Controller
         catch (InvalidOperationException ex)
         {
             ModelState.AddModelError(string.Empty, ex.Message);
-            await PopulateLookupsAsync(CancellationToken.None);
+            await PopulateLookupsAsync(CancellationToken.None, ownerUserId);
             return View(model);
         }
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error while creating document");
-            ModelState.AddModelError(string.Empty, "CÃ³ lá»—i xáº£y ra khi táº¡o tÃ i liá»‡u. Vui lÃ²ng thá»­ láº¡i.");
-            await PopulateLookupsAsync(CancellationToken.None);
+            ModelState.AddModelError(string.Empty, "Có lỗi xảy ra khi tạo tài liệu. Vui lòng thử lại.");
+            await PopulateLookupsAsync(CancellationToken.None, ownerUserId);
             return View(model);
         }
     }
+
 
     [HttpGet("{slug}")]
     [Authorize(Roles = "Admin,Lecturer,Student")]
@@ -280,7 +309,7 @@ public class DocumentsController : Controller
             return NotFound();
         }
 
-        await PopulateLookupsAsync(cancellationToken);
+        await PopulateLookupsAsync(cancellationToken, userId);
 
         var viewModel = new DocumentEditViewModel
         {
@@ -304,15 +333,26 @@ public class DocumentsController : Controller
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> Edit(string slug, DocumentEditViewModel model, CancellationToken cancellationToken = default)
     {
-        if (!ModelState.IsValid)
-        {
-            await PopulateLookupsAsync(cancellationToken);
-            return View(model);
-        }
-
         if (!Guid.TryParse(User.FindFirstValue(ClaimTypes.NameIdentifier), out var userId))
         {
             return Unauthorized();
+        }
+
+        if (!ModelState.IsValid)
+        {
+            await PopulateLookupsAsync(cancellationToken, userId);
+            return View(model);
+        }
+
+        if (model.SubjectId.HasValue)
+        {
+            var isAssigned = await _documentService.IsSubjectAssignedToLecturerAsync(userId, model.SubjectId.Value, cancellationToken);
+            if (!isAssigned)
+            {
+                TempData["ErrorMessage"] = "Bạn không có quyền quản lý học liệu cho môn học này.";
+                await PopulateLookupsAsync(cancellationToken, userId);
+                return View(model);
+            }
         }
 
         var editInput = new DocumentEditInput
@@ -340,6 +380,7 @@ public class DocumentsController : Controller
         TempData["SuccessMessage"] = "Đã cập nhật thông tin tài liệu.";
         return RedirectToAction(nameof(MyDocuments));
     }
+
 
     [HttpPost("{slug}/report")]
     [Authorize(Roles = "Lecturer,Student")]
@@ -428,7 +469,8 @@ public class DocumentsController : Controller
             var allSubjects = await _documentService.GetSubjectsAsync(cancellationToken);
             ViewBag.Subjects = allSubjects;
             var allTerms = await _documentService.GetAcademicTermsAsync(cancellationToken);
-            ViewBag.AcademicTerms = allTerms;
+            var subjectTermIds = allSubjects.Where(s => s.AcademicTermId.HasValue).Select(s => s.AcademicTermId.Value).ToHashSet();
+            ViewBag.AcademicTerms = allTerms.Where(t => subjectTermIds.Contains(t.Id)).ToList();
             var allTypes = await _documentService.GetDocumentTypesAsync(cancellationToken);
             ViewBag.DocumentTypes = allTypes;
             var allLangs = await _documentService.GetLanguagesAsync(cancellationToken);
@@ -521,7 +563,8 @@ public class DocumentsController : Controller
             var allSubjects = await _documentService.GetSubjectsByOwnerAsync(userId, cancellationToken);
             ViewBag.Subjects = allSubjects;
             var allTerms = await _documentService.GetAcademicTermsAsync(cancellationToken);
-            ViewBag.AcademicTerms = allTerms;
+            var subjectTermIds = allSubjects.Where(s => s.AcademicTermId.HasValue).Select(s => s.AcademicTermId.Value).ToHashSet();
+            ViewBag.AcademicTerms = allTerms.Where(t => subjectTermIds.Contains(t.Id)).ToList();
             var allTypes = await _documentService.GetDocumentTypesAsync(cancellationToken);
             ViewBag.DocumentTypes = allTypes;
             var allLangs = await _documentService.GetLanguagesAsync(cancellationToken);

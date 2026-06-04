@@ -18,4 +18,7 @@ public partial class Subject
     public virtual AcademicTerm? AcademicTerm { get; set; }
 
     public virtual ICollection<Document> Documents { get; set; } = new List<Document>();
+
+    public virtual ICollection<UserSubject> UserSubjects { get; set; } = new List<UserSubject>();
 }
+

@@ -191,6 +191,13 @@ CREATE TABLE public.user_bookmarks (
     created_at timestamp with time zone DEFAULT now() NOT NULL
 );
 
+CREATE TABLE public.user_subjects (
+    user_id uuid NOT NULL,
+    subject_id uuid NOT NULL,
+    created_at timestamp with time zone DEFAULT now() NOT NULL
+);
+
+
 CREATE TABLE public.users (
     id uuid DEFAULT public.uuid_generate_v4() NOT NULL,
     role_id smallint NOT NULL,
@@ -236,7 +243,9 @@ ALTER TABLE ONLY public.tags ADD CONSTRAINT tags_pkey PRIMARY KEY (id);
 ALTER TABLE ONLY public.tags ADD CONSTRAINT tags_slug_key UNIQUE (slug);
 ALTER TABLE ONLY public.upload_jobs ADD CONSTRAINT upload_jobs_pkey PRIMARY KEY (id);
 ALTER TABLE ONLY public.user_bookmarks ADD CONSTRAINT user_bookmarks_pkey PRIMARY KEY (user_id, document_id);
+ALTER TABLE ONLY public.user_subjects ADD CONSTRAINT user_subjects_pkey PRIMARY KEY (user_id, subject_id);
 ALTER TABLE ONLY public.users ADD CONSTRAINT users_email_key UNIQUE (email);
+
 ALTER TABLE ONLY public.users ADD CONSTRAINT users_pkey PRIMARY KEY (id);
 
 -- ==========================================
@@ -259,6 +268,9 @@ CREATE INDEX idx_documents_subject_id ON public.documents USING btree (subject_i
 CREATE INDEX idx_users_role_id ON public.users USING btree (role_id);
 CREATE INDEX island_docs_visibility ON public.documents USING btree (visibility);
 CREATE UNIQUE INDEX ix_documents_slug ON public.documents USING btree (slug);
+CREATE INDEX idx_user_subjects_user_id ON public.user_subjects USING btree (user_id);
+CREATE INDEX idx_user_subjects_subject_id ON public.user_subjects USING btree (subject_id);
+
 
 -- ==========================================
 -- 7. FOREIGN KEYS
@@ -284,7 +296,10 @@ ALTER TABLE ONLY public.upload_jobs ADD CONSTRAINT upload_jobs_document_id_fkey 
 ALTER TABLE ONLY public.upload_jobs ADD CONSTRAINT upload_jobs_owner_user_id_fkey FOREIGN KEY (owner_user_id) REFERENCES public.users(id) ON DELETE CASCADE;
 ALTER TABLE ONLY public.user_bookmarks ADD CONSTRAINT user_bookmarks_document_id_fkey FOREIGN KEY (document_id) REFERENCES public.documents(id) ON DELETE CASCADE;
 ALTER TABLE ONLY public.user_bookmarks ADD CONSTRAINT user_bookmarks_user_id_fkey FOREIGN KEY (user_id) REFERENCES public.users(id) ON DELETE CASCADE;
+ALTER TABLE ONLY public.user_subjects ADD CONSTRAINT user_subjects_user_id_fkey FOREIGN KEY (user_id) REFERENCES public.users(id) ON DELETE CASCADE;
+ALTER TABLE ONLY public.user_subjects ADD CONSTRAINT user_subjects_subject_id_fkey FOREIGN KEY (subject_id) REFERENCES public.subjects(id) ON DELETE CASCADE;
 ALTER TABLE ONLY public.users ADD CONSTRAINT users_role_id_fkey FOREIGN KEY (role_id) REFERENCES public.roles(id);
+
 
 -- ==========================================
 -- 8. INSERT DATA

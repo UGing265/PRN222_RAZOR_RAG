@@ -73,4 +73,10 @@ public interface IDocumentRepository
     Task<List<DocumentReport>> GetDocumentReportsByDocumentAsync(Guid documentId, CancellationToken cancellationToken = default);
     Task RemoveDocumentReportsByDocumentAsync(Guid documentId, CancellationToken cancellationToken = default);
     Task SaveChangesAsync(CancellationToken cancellationToken = default);
+
+    Task<List<Subject>> GetSubjectsAssignedToLecturerAsync(Guid userId, CancellationToken cancellationToken = default);
+    Task AssignSubjectsToLecturerAsync(Guid userId, List<Guid> subjectIds, CancellationToken cancellationToken = default);
+    Task<bool> IsSubjectAssignedToLecturerAsync(Guid userId, Guid subjectId, CancellationToken cancellationToken = default);
+    Task<Dictionary<Guid, (Guid UserId, string FullName)>> GetSubjectLecturerMapAsync(CancellationToken cancellationToken = default);
 }
+

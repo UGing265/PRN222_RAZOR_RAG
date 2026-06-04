@@ -34,4 +34,7 @@ public partial class User
     public virtual ICollection<DocumentReport> DocumentReports { get; set; } = new List<DocumentReport>();
 
     public virtual ICollection<AuditLog> AuditLogs { get; set; } = new List<AuditLog>();
+
+    public virtual ICollection<UserSubject> UserSubjects { get; set; } = new List<UserSubject>();
 }
+

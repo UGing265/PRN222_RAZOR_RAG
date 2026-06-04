@@ -630,4 +630,48 @@ public class DocumentRepository : IDocumentRepository
 
     public Task SaveChangesAsync(CancellationToken cancellationToken = default)
         => _dbContext.SaveChangesAsync(cancellationToken);
+
+    public Task<List<Subject>> GetSubjectsAssignedToLecturerAsync(Guid userId, CancellationToken cancellationToken = default)
+        => _dbContext.Subjects.AsNoTracking()
+            .Include(x => x.AcademicTerm)
+            .Where(x => x.UserSubjects.Any(us => us.UserId == userId))
+            .OrderBy(x => x.Code)
+            .ToListAsync(cancellationToken);
+
+
+    public async Task AssignSubjectsToLecturerAsync(Guid userId, List<Guid> subjectIds, CancellationToken cancellationToken = default)
+    {
+        var currentAssignments = await _dbContext.UserSubjects
+            .Where(x => x.UserId == userId)
+            .ToListAsync(cancellationToken);
+
+        _dbContext.UserSubjects.RemoveRange(currentAssignments);
+
+        var newAssignments = subjectIds.Select(subjectId => new UserSubject
+        {
+            UserId = userId,
+            SubjectId = subjectId,
+            CreatedAt = DateTime.UtcNow
+        });
+
+        await _dbContext.UserSubjects.AddRangeAsync(newAssignments, cancellationToken);
+    }
+
+    public Task<bool> IsSubjectAssignedToLecturerAsync(Guid userId, Guid subjectId, CancellationToken cancellationToken = default)
+        => _dbContext.UserSubjects.AnyAsync(x => x.UserId == userId && x.SubjectId == subjectId, cancellationToken);
+
+    public async Task<Dictionary<Guid, (Guid UserId, string FullName)>> GetSubjectLecturerMapAsync(CancellationToken cancellationToken = default)
+    {
+        var list = await _dbContext.UserSubjects.AsNoTracking()
+            .Include(x => x.User)
+            .ToListAsync(cancellationToken);
+        
+        var dict = new Dictionary<Guid, (Guid UserId, string FullName)>();
+        foreach (var item in list)
+        {
+            dict[item.SubjectId] = (item.UserId, item.User.FullName);
+        }
+        return dict;
+    }
 }
+

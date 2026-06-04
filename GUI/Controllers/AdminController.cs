@@ -29,6 +29,34 @@ public class AdminController : Controller
 
     [HttpPost]
     [ValidateAntiForgeryToken]
+    public async Task<IActionResult> CreateUser(string fullName, string email, string password, short roleId, CancellationToken cancellationToken)
+    {
+        if (string.IsNullOrWhiteSpace(fullName) || string.IsNullOrWhiteSpace(email) || string.IsNullOrWhiteSpace(password))
+        {
+            TempData["ErrorMessage"] = "Vui lòng điền đầy đủ thông tin để tạo tài khoản.";
+            return RedirectToAction(nameof(Users));
+        }
+
+        try
+        {
+            await _authService.RegisterAsync(fullName, email, password, roleId, cancellationToken);
+            TempData["SuccessMessage"] = $"Đã tạo tài khoản cho '{fullName}' thành công.";
+        }
+        catch (InvalidOperationException ex)
+        {
+            TempData["ErrorMessage"] = ex.Message;
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Admin failed to create user {Email}", email);
+            TempData["ErrorMessage"] = "Có lỗi xảy ra khi tạo tài khoản. Vui lòng thử lại.";
+        }
+
+        return RedirectToAction(nameof(Users));
+    }
+
+    [HttpPost]
+    [ValidateAntiForgeryToken]
     public async Task<IActionResult> Approve(Guid id, CancellationToken cancellationToken)
     {
         var success = await _authService.ApproveUserAsync(id, cancellationToken);
@@ -471,4 +499,55 @@ public class AdminController : Controller
         }
         return RedirectToAction(nameof(Documents), new { tab = "reports" });
     }
+
+    [HttpGet]
+    public async Task<IActionResult> AssignSubjects(Guid userId, CancellationToken cancellationToken)
+    {
+        var users = await _authService.GetAllUsersAsync(cancellationToken);
+        var user = users.FirstOrDefault(u => u.Id == userId);
+        if (user is null || user.RoleId != 2)
+        {
+            return NotFound();
+        }
+
+        var allSubjects = await _documentService.GetSubjectsAsync(cancellationToken);
+        var assignedSubjects = await _documentService.GetSubjectsAssignedToLecturerAsync(userId, cancellationToken);
+        var subjectLecturerMap = await _documentService.GetSubjectLecturerMapAsync(cancellationToken);
+
+        ViewBag.Lecturer = user;
+        ViewBag.AssignedSubjectIds = assignedSubjects.Select(s => s.Id).ToList();
+        ViewBag.SubjectLecturerMap = subjectLecturerMap;
+
+        return View(allSubjects);
+    }
+
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> AssignSubjects(Guid userId, List<Guid> subjectIds, CancellationToken cancellationToken)
+    {
+        var users = await _authService.GetAllUsersAsync(cancellationToken);
+        var user = users.FirstOrDefault(u => u.Id == userId);
+        if (user is null || user.RoleId != 2)
+        {
+            return NotFound();
+        }
+
+        if (subjectIds != null && subjectIds.Any())
+        {
+            var lecturerMap = await _documentService.GetSubjectLecturerMapAsync(cancellationToken);
+            foreach (var subId in subjectIds)
+            {
+                if (lecturerMap.TryGetValue(subId, out var info) && info.UserId != userId)
+                {
+                    TempData["ErrorMessage"] = "Không thể phân công: Một hoặc nhiều môn học đã được phân công cho giảng viên khác.";
+                    return RedirectToAction(nameof(Users));
+                }
+            }
+        }
+
+        await _documentService.AssignSubjectsToLecturerAsync(userId, subjectIds ?? new List<Guid>(), cancellationToken);
+        TempData["SuccessMessage"] = $"Đã cập nhật danh sách môn học phân công cho giảng viên '{user.FullName}' thành công.";
+        return RedirectToAction(nameof(Users));
+    }
 }
+

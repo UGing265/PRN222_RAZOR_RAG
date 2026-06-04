@@ -42,47 +42,9 @@ public class AuthController : Controller
                 return View(model);
             }
 
-            var emailLower = model.Email.Trim().ToLowerInvariant();
-            if (model.RoleId == 2 && !emailLower.EndsWith("@fe.edu.vn"))
-            {
-                ModelState.AddModelError(nameof(model.Email), "Giảng viên bắt buộc sử dụng email đuôi @fe.edu.vn.");
-                return View(model);
-            }
-
-            if (model.RoleId == 3 && !emailLower.EndsWith("@fpt.edu.vn"))
-            {
-                ModelState.AddModelError(nameof(model.Email), "Sinh viên bắt buộc sử dụng email đuôi @fpt.edu.vn.");
-                return View(model);
-            }
-
             var user = await _authService.RegisterAsync(model.FullName, model.Email, model.Password, model.RoleId, cancellationToken);
-            
-            // Sinh token xác thực email
-            var token = _authService.GenerateEmailVerificationToken(model.Email);
-            
-            // Tạo link kích hoạt tài khoản
-            var callbackUrl = Url.Action("VerifyEmail", "Auth", new { token }, Request.Scheme);
-            
-            // Gửi email xác thực
-            var subject = "Kích hoạt tài khoản FPT RAG";
-            var body = $@"
-                <div style='font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #eee; border-radius: 5px;'>
-                    <h2 style='color: #4a1f16; text-align: center;'>Kích hoạt tài khoản FPT RAG</h2>
-                    <p>Chào <strong>{model.FullName}</strong>,</p>
-                    <p>Cảm ơn bạn đã đăng ký tài khoản tại hệ thống FPT RAG.</p>
-                    <p>Vui lòng click vào nút bên dưới để xác thực email và kích hoạt tài khoản của bạn (liên kết có hiệu lực trong 15 phút):</p>
-                    <div style='text-align: center; margin: 30px 0;'>
-                        <a href='{callbackUrl}' style='display: inline-block; background-color: #4a1f16; color: white; padding: 12px 25px; text-decoration: none; font-weight: bold; border-radius: 5px;'>Kích hoạt tài khoản</a>
-                    </div>
-                    <p>Hoặc sao chép và dán liên kết này vào trình duyệt của bạn:</p>
-                    <p style='background: #f9f9f9; padding: 10px; word-break: break-all; border-left: 3px solid #4a1f16;'>{callbackUrl}</p>
-                    <br/>
-                    <p>Trân trọng,<br/><strong>FPT RAG Team</strong></p>
-                </div>";
-                
-            await _emailService.SendEmailAsync(model.Email, subject, body, cancellationToken);
 
-            TempData["SuccessMessage"] = "Đăng ký thành công! Vui lòng kiểm tra email trường để kích hoạt tài khoản. (Nếu chạy thử ở localhost, hãy kiểm tra Console/Terminal để lấy link kích hoạt).";
+            TempData["SuccessMessage"] = "Đăng ký thành công! Bạn có thể đăng nhập ngay lập tức.";
             return RedirectToAction(nameof(Login));
         }
         catch (InvalidOperationException ex)

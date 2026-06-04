@@ -50,6 +50,9 @@ public partial class DBContext : DbContext
 
     public virtual DbSet<ChatMessage> ChatMessages { get; set; }
 
+    public virtual DbSet<UserSubject> UserSubjects { get; set; }
+
+
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         modelBuilder
@@ -90,6 +93,24 @@ public partial class DBContext : DbContext
                 .HasForeignKey(d => d.DocumentId)
                 .HasConstraintName("user_bookmarks_document_id_fkey");
         });
+
+        modelBuilder.Entity<UserSubject>(entity =>
+        {
+            entity.HasKey(e => new { e.UserId, e.SubjectId }).HasName("user_subjects_pkey");
+            entity.ToTable("user_subjects");
+            entity.Property(e => e.UserId).HasColumnName("user_id");
+            entity.Property(e => e.SubjectId).HasColumnName("subject_id");
+            entity.Property(e => e.CreatedAt).HasDefaultValueSql("now()").HasColumnName("created_at");
+
+            entity.HasOne(d => d.User).WithMany(p => p.UserSubjects)
+                .HasForeignKey(d => d.UserId)
+                .HasConstraintName("user_subjects_user_id_fkey");
+
+            entity.HasOne(d => d.Subject).WithMany(p => p.UserSubjects)
+                .HasForeignKey(d => d.SubjectId)
+                .HasConstraintName("user_subjects_subject_id_fkey");
+        });
+
 
         modelBuilder.Entity<DocumentReport>(entity =>
         {
