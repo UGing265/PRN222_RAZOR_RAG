@@ -25,12 +25,12 @@ public class IndexModel : MetadataPageModelBase
         if (string.IsNullOrWhiteSpace(name))
         {
             SetError("Tên loại học liệu không được để trống.");
-            return Task.FromResult<IActionResult>(RedirectToPage("/Admin/Metadata/DocumentTypes"));
+            return Task.FromResult<IActionResult>(RedirectToPage("/Admin/Metadata/DocumentTypes/Index"));
         }
         return ExecuteCreateAsync(
             () => DocumentService.CreateDocumentTypeAsync(name, description, ct),
             $"Đã tạo mới loại học liệu '{name}' thành công.",
-            "/Admin/Metadata/DocumentTypes");
+            "/Admin/Metadata/DocumentTypes/Index");
     }
 
     public Task<IActionResult> OnPostUpdateAsync(Guid id, string name, string? description, CancellationToken ct)
@@ -38,13 +38,13 @@ public class IndexModel : MetadataPageModelBase
         if (string.IsNullOrWhiteSpace(name))
         {
             SetError("Tên loại học liệu không được để trống.");
-            return Task.FromResult<IActionResult>(RedirectToPage("/Admin/Metadata/DocumentTypes"));
+            return Task.FromResult<IActionResult>(RedirectToPage("/Admin/Metadata/DocumentTypes/Index"));
         }
         return ExecuteUpdateAsync(
             async () => await DocumentService.UpdateDocumentTypeAsync(id, name, description, ct),
             "Không tìm thấy loại học liệu này.",
             $"Đã cập nhật loại học liệu '{name}' thành công.",
-            "/Admin/Metadata/DocumentTypes");
+            "/Admin/Metadata/DocumentTypes/Index");
     }
 
     public Task<IActionResult> OnPostDeleteAsync(Guid id, CancellationToken ct) =>
@@ -55,5 +55,5 @@ public class IndexModel : MetadataPageModelBase
             "Có lỗi xảy ra khi xóa loại học liệu. Đảm bảo dữ liệu không bị ràng buộc.",
             "document type",
             id,
-            "/Admin/Metadata/DocumentTypes");
+            "/Admin/Metadata/DocumentTypes/Index");
 }

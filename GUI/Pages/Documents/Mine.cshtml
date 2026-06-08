@@ -2,22 +2,6 @@
 @model GUI.Pages.Documents.MineModel
 @{
     ViewData["Title"] = "Thư viện của tôi";
-    
-    string GetStatusClass(string status) => status?.ToLower() switch
-    {
-        "pending" => "status-pending",
-        "approved" => "status-approved",
-        "rejected" => "status-rejected",
-        _ => "bg-light text-dark"
-    };
-
-    string GetStatusText(string status) => status?.ToLower() switch
-    {
-        "pending" => "Chờ Duyệt",
-        "approved" => "Đã Duyệt",
-        "rejected" => "Từ Chối",
-        _ => status
-    };
 
     var query = Model.Q ?? "";
     var selectedSubjectId = Model.SubjectId;

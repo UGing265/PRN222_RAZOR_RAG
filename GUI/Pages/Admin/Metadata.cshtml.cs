@@ -16,12 +16,12 @@ public class MetadataModel : PageModel
     {
         var target = tab?.ToLowerInvariant() switch
         {
-            "subjects"         => "/Admin/Metadata/Subjects",
-            "documenttypes"    => "/Admin/Metadata/DocumentTypes",
-            "languages"        => "/Admin/Metadata/Languages",
-            "documentsources"  => "/Admin/Metadata/DocumentSources",
-            "academicterms"    => "/Admin/Metadata/AcademicTerms",
-            _                  => "/Admin/Metadata/Subjects",
+            "subjects"         => "/Admin/Metadata/Subjects/Index",
+            "documenttypes"    => "/Admin/Metadata/DocumentTypes/Index",
+            "languages"        => "/Admin/Metadata/Languages/Index",
+            "documentsources"  => "/Admin/Metadata/DocumentSources/Index",
+            "academicterms"    => "/Admin/Metadata/AcademicTerms/Index",
+            _                  => "/Admin/Metadata/Subjects/Index",
         };
         return RedirectToPage(target);
     }

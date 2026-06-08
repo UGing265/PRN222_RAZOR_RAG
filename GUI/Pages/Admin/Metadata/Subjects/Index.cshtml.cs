@@ -25,17 +25,17 @@ public class IndexModel : MetadataPageModelBase
         if (string.IsNullOrWhiteSpace(code) || string.IsNullOrWhiteSpace(name))
         {
             SetError("Mã môn học và tên môn học không được để trống.");
-            return Task.FromResult<IActionResult>(RedirectToPage("/Admin/Metadata/Subjects"));
+            return Task.FromResult<IActionResult>(RedirectToPage("/Admin/Metadata/Subjects/Index"));
         }
         if (!academicTermId.HasValue)
         {
             SetError("Vui lòng chọn học kỳ cho môn học.");
-            return Task.FromResult<IActionResult>(RedirectToPage("/Admin/Metadata/Subjects"));
+            return Task.FromResult<IActionResult>(RedirectToPage("/Admin/Metadata/Subjects/Index"));
         }
         return ExecuteCreateAsync(
             () => DocumentService.CreateSubjectAsync(code, name, academicTermId, ct),
             $"Đã tạo mới môn học '{code.ToUpper()}' thành công.",
-            "/Admin/Metadata/Subjects");
+            "/Admin/Metadata/Subjects/Index");
     }
 
     public Task<IActionResult> OnPostUpdateAsync(Guid id, string code, string name, Guid? academicTermId, CancellationToken ct)
@@ -43,27 +43,27 @@ public class IndexModel : MetadataPageModelBase
         if (string.IsNullOrWhiteSpace(code) || string.IsNullOrWhiteSpace(name))
         {
             SetError("Mã môn học và tên môn học không được để trống.");
-            return Task.FromResult<IActionResult>(RedirectToPage("/Admin/Metadata/Subjects"));
+            return Task.FromResult<IActionResult>(RedirectToPage("/Admin/Metadata/Subjects/Index"));
         }
         if (!academicTermId.HasValue)
         {
             SetError("Vui lòng chọn học kỳ cho môn học.");
-            return Task.FromResult<IActionResult>(RedirectToPage("/Admin/Metadata/Subjects"));
+            return Task.FromResult<IActionResult>(RedirectToPage("/Admin/Metadata/Subjects/Index"));
         }
         return ExecuteUpdateAsync(
             async () => await DocumentService.UpdateSubjectAsync(id, code, name, academicTermId, ct),
             "Không tìm thấy môn học.",
             $"Đã cập nhật môn học '{code.ToUpper()}' thành công.",
-            "/Admin/Metadata/Subjects");
+            "/Admin/Metadata/Subjects/Index");
     }
 
     public Task<IActionResult> OnPostDeleteAsync(Guid id, CancellationToken ct) =>
-        ExecuteDeleteAsync(
-            () => DocumentService.DeleteSubjectAsync(id, ct),
-            "Không tìm thấy môn học.",
-            "Đã xóa môn học thành công.",
-            "Có lỗi xảy ra khi xóa môn học. Đảm bảo môn học không bị ràng buộc dữ liệu.",
-            "subject",
-            id,
-            "/Admin/Metadata/Subjects");
+         ExecuteDeleteAsync(
+             () => DocumentService.DeleteSubjectAsync(id, ct),
+             "Không tìm thấy môn học.",
+             "Đã xóa môn học thành công.",
+             "Có lỗi xảy ra khi xóa môn học. Đảm bảo môn học không bị ràng buộc dữ liệu.",
+             "subject",
+             id,
+             "/Admin/Metadata/Subjects/Index");
 }

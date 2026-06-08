@@ -24,21 +24,6 @@
             </div>
         </div>
 
-        @if (TempData["SuccessMessage"] != null)
-        {
-            <div class="alert alert-success pill-input border-0 mb-4 px-4 py-3 d-flex align-items-center gap-2" style="background: rgba(43, 92, 67, 0.12); color: #1e3f2e; border-radius: 12px; font-family: inherit;">
-                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
-                <span>@TempData["SuccessMessage"]</span>
-            </div>
-        }
-        @if (TempData["ErrorMessage"] != null)
-        {
-            <div class="alert alert-danger pill-input border-0 mb-4 px-4 py-3 d-flex align-items-center gap-2" style="background: rgba(139, 0, 0, 0.08); color: #8b0000; border-radius: 12px; font-family: inherit;">
-                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
-                <span>@TempData["ErrorMessage"]</span>
-            </div>
-        }
-
         <!-- Tabs Area -->
         <ul class="nav nav-tabs border-0 mb-4 d-flex gap-2" id="adminDocsTabs" role="tablist" style="font-family: inherit;">
             <li class="nav-item" role="presentation">

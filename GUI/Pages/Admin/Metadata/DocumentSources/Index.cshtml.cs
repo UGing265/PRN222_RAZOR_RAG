@@ -25,12 +25,12 @@ public class IndexModel : MetadataPageModelBase
         if (string.IsNullOrWhiteSpace(name))
         {
             SetError("Tên nguồn tài liệu không được để trống.");
-            return Task.FromResult<IActionResult>(RedirectToPage("/Admin/Metadata/DocumentSources"));
+            return Task.FromResult<IActionResult>(RedirectToPage("/Admin/Metadata/DocumentSources/Index"));
         }
         return ExecuteCreateAsync(
             () => DocumentService.CreateDocumentSourceAsync(name, ct),
             $"Đã tạo mới nguồn tài liệu '{name}' thành công.",
-            "/Admin/Metadata/DocumentSources");
+            "/Admin/Metadata/DocumentSources/Index");
     }
 
     public Task<IActionResult> OnPostUpdateAsync(Guid id, string name, CancellationToken ct)
@@ -38,13 +38,13 @@ public class IndexModel : MetadataPageModelBase
         if (string.IsNullOrWhiteSpace(name))
         {
             SetError("Tên nguồn tài liệu không được để trống.");
-            return Task.FromResult<IActionResult>(RedirectToPage("/Admin/Metadata/DocumentSources"));
+            return Task.FromResult<IActionResult>(RedirectToPage("/Admin/Metadata/DocumentSources/Index"));
         }
         return ExecuteUpdateAsync(
             async () => await DocumentService.UpdateDocumentSourceAsync(id, name, ct),
             "Không tìm thấy nguồn tài liệu này.",
             $"Đã cập nhật nguồn tài liệu '{name}' thành công.",
-            "/Admin/Metadata/DocumentSources");
+            "/Admin/Metadata/DocumentSources/Index");
     }
 
     public Task<IActionResult> OnPostDeleteAsync(Guid id, CancellationToken ct) =>
@@ -55,5 +55,5 @@ public class IndexModel : MetadataPageModelBase
             "Có lỗi xảy ra khi xóa nguồn tài liệu. Đảm bảo dữ liệu không bị ràng buộc.",
             "document source",
             id,
-            "/Admin/Metadata/DocumentSources");
+            "/Admin/Metadata/DocumentSources/Index");
 }

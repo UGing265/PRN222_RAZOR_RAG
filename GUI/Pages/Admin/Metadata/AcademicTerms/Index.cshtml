@@ -45,27 +45,41 @@
 
 <div class="page-shell">
     <main class="container-fluid px-4 px-md-5 py-5" style="max-width: 1250px;">
-        <div class="d-flex align-items-center justify-content-between mb-5">
+        <div class="d-flex align-items-center justify-content-between mb-4">
             <div>
-                <h1 class="hero-title mb-1" style="font-size: clamp(2rem, 4vw, 2.75rem); font-family: inherit;">Quản Lý Học Kỳ</h1>
-                <p class="text-muted-foreground" style="font-size: 15px; font-weight: 400; margin-bottom: 0;">Cấu hình danh sách học kỳ trong hệ thống.</p>
+                <h1 class="hero-title mb-1" style="font-size: clamp(2rem, 4vw, 2.75rem); font-family: inherit;">Quản Lý Danh Mục</h1>
+                <p class="text-muted-foreground" style="font-size: 15px; font-weight: 400; margin-bottom: 0;">Cấu hình các danh mục Môn học, Loại tài liệu, Ngôn ngữ, Nguồn và Học kỳ trong hệ thống.</p>
             </div>
         </div>
 
-        @if (TempData["SuccessMessage"] != null)
-        {
-            <div class="alert alert-success pill-input border-0 mb-4 px-4 py-3 d-flex align-items-center gap-2" style="background: rgba(43, 92, 67, 0.12); color: #1e3f2e; border-radius: 12px; font-family: inherit;">
-                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
-                <span>@TempData["SuccessMessage"]</span>
-            </div>
-        }
-        @if (TempData["ErrorMessage"] != null)
-        {
-            <div class="alert alert-danger pill-input border-0 mb-4 px-4 py-3 d-flex align-items-center gap-2" style="background: rgba(139, 0, 0, 0.08); color: #8b0000; border-radius: 12px; font-family: inherit;">
-                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
-                <span>@TempData["ErrorMessage"]</span>
-            </div>
-        }
+        <!-- Tabs Area -->
+        <ul class="nav nav-tabs border-0 mb-5 d-flex gap-2" id="metadataTabs" role="tablist" style="font-family: inherit;">
+            <li class="nav-item">
+                <a class="nav-link pill-button px-4 py-2 text-decoration-none border-0 metadata-tab-btn @(ViewContext.RouteData.Values["page"]?.ToString()?.Contains("Subjects") == true ? "active" : "")" id="subjects-tab" href="/Admin/Metadata/Subjects/Index">
+                    Môn Học (@Model.SubjectsCount)
+                </a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link pill-button px-4 py-2 text-decoration-none border-0 metadata-tab-btn @(ViewContext.RouteData.Values["page"]?.ToString()?.Contains("DocumentTypes") == true ? "active" : "")" id="documenttypes-tab" href="/Admin/Metadata/DocumentTypes/Index">
+                    Loại Học Liệu (@Model.DocumentTypesCount)
+                </a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link pill-button px-4 py-2 text-decoration-none border-0 metadata-tab-btn @(ViewContext.RouteData.Values["page"]?.ToString()?.Contains("Languages") == true ? "active" : "")" id="languages-tab" href="/Admin/Metadata/Languages/Index">
+                    Ngôn Ngữ (@Model.LanguagesCount)
+                </a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link pill-button px-4 py-2 text-decoration-none border-0 metadata-tab-btn @(ViewContext.RouteData.Values["page"]?.ToString()?.Contains("DocumentSources") == true ? "active" : "")" id="documentsources-tab" href="/Admin/Metadata/DocumentSources/Index">
+                    Nguồn Tài Liệu (@Model.DocumentSourcesCount)
+                </a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link pill-button px-4 py-2 text-decoration-none border-0 metadata-tab-btn @(ViewContext.RouteData.Values["page"]?.ToString()?.Contains("AcademicTerms") == true ? "active" : "")" id="academicterms-tab" href="/Admin/Metadata/AcademicTerms/Index">
+                    Học Kỳ (@Model.AcademicTermsCount)
+                </a>
+            </li>
+        </ul>
 
         <div class="row g-4">
             <div class="col-lg-8">

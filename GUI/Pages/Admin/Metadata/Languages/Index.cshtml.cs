@@ -25,12 +25,12 @@ public class IndexModel : MetadataPageModelBase
         if (string.IsNullOrWhiteSpace(code) || string.IsNullOrWhiteSpace(name))
         {
             SetError("Mã ngôn ngữ và tên ngôn ngữ không được để trống.");
-            return Task.FromResult<IActionResult>(RedirectToPage("/Admin/Metadata/Languages"));
+            return Task.FromResult<IActionResult>(RedirectToPage("/Admin/Metadata/Languages/Index"));
         }
         return ExecuteCreateAsync(
             () => DocumentService.CreateLanguageAsync(code, name, ct),
             $"Đã tạo mới ngôn ngữ '{name}' thành công.",
-            "/Admin/Metadata/Languages");
+            "/Admin/Metadata/Languages/Index");
     }
 
     public Task<IActionResult> OnPostUpdateAsync(Guid id, string code, string name, CancellationToken ct)
@@ -38,13 +38,13 @@ public class IndexModel : MetadataPageModelBase
         if (string.IsNullOrWhiteSpace(code) || string.IsNullOrWhiteSpace(name))
         {
             SetError("Mã ngôn ngữ và tên ngôn ngữ không được để trống.");
-            return Task.FromResult<IActionResult>(RedirectToPage("/Admin/Metadata/Languages"));
+            return Task.FromResult<IActionResult>(RedirectToPage("/Admin/Metadata/Languages/Index"));
         }
         return ExecuteUpdateAsync(
             async () => await DocumentService.UpdateLanguageAsync(id, code, name, ct),
             "Không tìm thấy ngôn ngữ này.",
             $"Đã cập nhật ngôn ngữ '{name}' thành công.",
-            "/Admin/Metadata/Languages");
+            "/Admin/Metadata/Languages/Index");
     }
 
     public Task<IActionResult> OnPostDeleteAsync(Guid id, CancellationToken ct) =>
@@ -55,5 +55,5 @@ public class IndexModel : MetadataPageModelBase
             "Có lỗi xảy ra khi xóa ngôn ngữ. Đảm bảo dữ liệu không bị ràng buộc.",
             "language",
             id,
-            "/Admin/Metadata/Languages");
+            "/Admin/Metadata/Languages/Index");
 }

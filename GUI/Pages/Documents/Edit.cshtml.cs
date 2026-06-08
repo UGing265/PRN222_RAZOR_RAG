@@ -147,7 +147,7 @@ public class EditModel : PageModel
         Subjects = allSubjects;
 
         var allTerms = await _documentService.GetAcademicTermsAsync(cancellationToken);
-        var subjectTermIds = allSubjects.Where(s => s.AcademicTermId.HasValue).Select(s => s.AcademicTermId.Value).ToHashSet();
+        var subjectTermIds = allSubjects.Where(s => s.AcademicTermId.HasValue).Select(s => s.AcademicTermId!.Value).ToHashSet();
         AcademicTerms = allTerms.Where(t => subjectTermIds.Contains(t.Id)).ToList();
 
         DocumentTypes = await _documentService.GetDocumentTypesAsync(cancellationToken);

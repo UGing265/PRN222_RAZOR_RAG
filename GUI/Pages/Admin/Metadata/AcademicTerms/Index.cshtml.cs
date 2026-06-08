@@ -25,12 +25,12 @@ public class IndexModel : MetadataPageModelBase
         if (string.IsNullOrWhiteSpace(name))
         {
             SetError("Tên học kỳ không được để trống.");
-            return Task.FromResult<IActionResult>(RedirectToPage("/Admin/Metadata/AcademicTerms"));
+            return Task.FromResult<IActionResult>(RedirectToPage("/Admin/Metadata/AcademicTerms/Index"));
         }
         return ExecuteCreateAsync(
             () => DocumentService.CreateAcademicTermAsync(name, order, ct),
             $"Đã tạo mới học kỳ '{name}' thành công.",
-            "/Admin/Metadata/AcademicTerms");
+            "/Admin/Metadata/AcademicTerms/Index");
     }
 
     public Task<IActionResult> OnPostUpdateAsync(Guid id, string name, int order, CancellationToken ct)
@@ -38,13 +38,13 @@ public class IndexModel : MetadataPageModelBase
         if (string.IsNullOrWhiteSpace(name))
         {
             SetError("Tên học kỳ không được để trống.");
-            return Task.FromResult<IActionResult>(RedirectToPage("/Admin/Metadata/AcademicTerms"));
+            return Task.FromResult<IActionResult>(RedirectToPage("/Admin/Metadata/AcademicTerms/Index"));
         }
         return ExecuteUpdateAsync(
             async () => await DocumentService.UpdateAcademicTermAsync(id, name, order, ct),
             "Không tìm thấy học kỳ này.",
             $"Đã cập nhật học kỳ '{name}' thành công.",
-            "/Admin/Metadata/AcademicTerms");
+            "/Admin/Metadata/AcademicTerms/Index");
     }
 
     public Task<IActionResult> OnPostDeleteAsync(Guid id, CancellationToken ct) =>
@@ -55,5 +55,5 @@ public class IndexModel : MetadataPageModelBase
             "Có lỗi xảy ra khi xóa học kỳ. Đảm bảo dữ liệu không bị ràng buộc.",
             "academic term",
             id,
-            "/Admin/Metadata/AcademicTerms");
+            "/Admin/Metadata/AcademicTerms/Index");
 }
