@@ -18,7 +18,7 @@ public static class ChatEndpoints
 {
     public static IEndpointRouteBuilder MapChatEndpoints(this IEndpointRouteBuilder routes)
     {
-        var group = routes.MapGroup("/api/chat").RequireAuthorization("Lecturer,Student");
+        var group = routes.MapGroup("/api/chat");
 
         // The role check is enforced via the [Authorize] attribute on the original
         // PageModel; mirror it here. Build a policy name that matches roles.

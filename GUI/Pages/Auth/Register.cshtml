@@ -83,7 +83,7 @@
             const username = email.split('@@')[0];
             
             try {
-                const response = await fetch('http://localhost:5000/api/auth/sign-up/email', {
+                const response = await fetch('/api/auth/sign-up/email', {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json'

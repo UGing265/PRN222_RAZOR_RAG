@@ -82,4 +82,12 @@ public class AuthRepository : IAuthRepository
             await _dbContext.SaveChangesAsync(cancellationToken);
         }
     }
+
+    public async Task CreateAccountAsync(Guid userId, string email, string passwordHash, CancellationToken cancellationToken = default)
+    {
+        await _dbContext.Database.ExecuteSqlRawAsync(
+            "INSERT INTO accounts (id, account_id, provider_id, user_id, password, created_at, updated_at) VALUES ({0}, {1}, 'credential', {2}, {3}, now(), now())",
+            new object[] { Guid.NewGuid(), userId.ToString(), userId, passwordHash },
+            cancellationToken);
+    }
 }

@@ -7,6 +7,7 @@ using Microsoft.AspNetCore.Mvc.RazorPages;
 
 namespace GUI.Pages.Auth;
 
+[IgnoreAntiforgeryToken]
 public class CallbackModel : PageModel
 {
     private readonly IAuthService _authService;
@@ -51,6 +52,7 @@ public class CallbackModel : PageModel
                 new(ClaimTypes.Email, session.Email),
                 new(ClaimTypes.Name, session.FullName),
                 new(ClaimTypes.Role, session.RoleName),
+                new("role_id", session.RoleId.ToString()),
                 // Store the raw Better Auth token so we can use it for API calls if needed
                 new("better_auth_token", request.Token),
             };

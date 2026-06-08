@@ -10,10 +10,15 @@ const app = new Hono();
 app.use(
   "*",
   cors({
-    origin: ["http://localhost:5155", "https://localhost:7065", "http://localhost:3000"],
-    allowMethods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
-    allowHeaders: ["Content-Type", "Authorization", "X-Requested-With"],
+    origin: (origin) => {
+      const allowed = ["http://localhost:5155", "https://localhost:7065", "http://localhost:3000", "http://localhost:5000"];
+      return allowed.includes(origin) ? origin : allowed[0];
+    },
+    allowMethods: ["GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH"],
+    allowHeaders: ["Content-Type", "Authorization", "X-Requested-With", "Cookie", "Set-Cookie"],
+    exposeHeaders: ["Set-Cookie"],
     credentials: true,
+    maxAge: 86400,
   })
 );
 

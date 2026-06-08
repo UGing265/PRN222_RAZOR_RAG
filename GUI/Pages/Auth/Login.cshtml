@@ -13,15 +13,6 @@
                 <a asp-page="/Index" class="link-plain text-muted-foreground font-mono-xs">Trang Chủ</a>
             </div>
 
-            @if (TempData["ErrorMessage"] != null)
-            {
-                <div class="alert alert-danger py-2 mb-3">@TempData["ErrorMessage"]</div>
-            }
-            @if (TempData["SuccessMessage"] != null)
-            {
-                <div class="alert alert-success py-2 mb-3">@TempData["SuccessMessage"]</div>
-            }
-
             <div id="error-alert" class="alert alert-danger py-2 mb-3" style="display: none;"></div>
 
             <form id="login-form">
@@ -73,8 +64,8 @@
             errorAlert.innerText = '';
             
             try {
-                // Step 1: Authenticate against Better Auth (port 5000)
-                const response = await fetch('http://localhost:5000/api/auth/sign-in/email', {
+                // Step 1: Authenticate against Better Auth (proxied through .NET to avoid Mixed Content)
+                const response = await fetch('/api/auth/sign-in/email', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ email, password }),
@@ -127,7 +118,7 @@
             errorAlert.innerText = '';
             
             try {
-                const response = await fetch('http://localhost:5000/api/auth/sign-in/social', {
+                const response = await fetch('/api/auth/sign-in/social', {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json'

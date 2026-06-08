@@ -35,12 +35,12 @@ public class AuthService : IAuthService
         }
 
         var now = DateTime.UtcNow;
+        var hashedPassword = HashPassword(password);
         var user = new User
         {
             Id = Guid.NewGuid(),
             FullName = fullName.Trim(),
             Email = normalizedEmail,
-            PasswordHash = HashPassword(password),
             RoleId = roleId,
             IsActive = true,
             CreatedAt = now,
@@ -48,6 +48,7 @@ public class AuthService : IAuthService
         };
 
         var created = await _authRepository.AddUserAsync(user, cancellationToken);
+        await _authRepository.CreateAccountAsync(created.Id, created.Email, hashedPassword, cancellationToken);
         return Map(created);
     }
 
@@ -244,6 +245,7 @@ public class AuthService : IAuthService
             Email = session.User.Email,
             FullName = session.User.FullName,
             RoleName = session.User.Role?.Name ?? session.User.RoleId.ToString(),
+            RoleId = session.User.RoleId,
             Username = session.User.Username,
             IsActive = session.User.IsActive,
             IsBlocked = session.User.IsBlocked,

@@ -1,4 +1,6 @@
 using BLL.Interfaces.Auth;
+using Microsoft.AspNetCore.Authentication;
+using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 
@@ -28,6 +30,9 @@ namespace GUI.Pages.Auth
                 // Delete cookie from browser
                 Response.Cookies.Delete("better-auth.session_token");
             }
+
+            // Sign out from ASP.NET Core Cookie authentication middleware
+            await HttpContext.SignOutAsync(CookieAuthenticationDefaults.AuthenticationScheme);
 
             TempData["SuccessMessage"] = "Đã đăng xuất.";
             return RedirectToPage("/Auth/Login");

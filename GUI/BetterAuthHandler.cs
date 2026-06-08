@@ -56,7 +56,8 @@ public class BetterAuthHandler : AuthenticationHandler<AuthenticationSchemeOptio
                 new Claim(ClaimTypes.NameIdentifier, session.UserId.ToString()),
                 new Claim(ClaimTypes.Email, session.Email),
                 new Claim(ClaimTypes.Name, session.FullName),
-                new Claim(ClaimTypes.Role, session.RoleName)
+                new Claim(ClaimTypes.Role, session.RoleName),
+                new Claim("role_id", session.RoleId.ToString())
             };
 
             // Add username claim if present

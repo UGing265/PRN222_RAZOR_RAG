@@ -42,7 +42,10 @@ public sealed class NavViewComponent : ViewComponent
         if (isAuthenticated)
         {
             var principal = HttpContext.User!;
-            _ = short.TryParse(principal.FindFirstValue("role_id"), out roleId);
+            var roleIdClaim = principal.FindFirstValue("role_id");
+            _ = short.TryParse(roleIdClaim, out roleId);
+            _logger.LogInformation("NavViewComponent: isAuthenticated={IsAuthenticated}, userId={UserId}, roleIdClaim={RoleIdClaim}, parsedRoleId={ParsedRoleId}", 
+                isAuthenticated, userId, roleIdClaim, roleId);
             fullName = principal.FindFirstValue(ClaimTypes.Name) ?? fullName;
             email = principal.FindFirstValue(ClaimTypes.Email) ?? string.Empty;
             cacheUser = !string.IsNullOrWhiteSpace(userId)
@@ -94,7 +97,7 @@ public sealed class NavViewComponent : ViewComponent
         {
             model.NavLinks.Add(new NavLink { Page = "/Admin/Documents", Label = "Quản Lý Tài Liệu", IconKey = "doc" });
             model.NavLinks.Add(new NavLink { Page = "/Admin/Users", Label = "Quản Lý Thành Viên", IconKey = "users" });
-            model.NavLinks.Add(new NavLink { Page = "/Admin/Metadata/Subjects", Label = "Quản Lý Danh Mục", IconKey = "metadata" });
+            model.NavLinks.Add(new NavLink { Page = "/Admin/Metadata/Subjects/Index", Label = "Quản Lý Danh Mục", IconKey = "metadata" });
         }
         else
         {

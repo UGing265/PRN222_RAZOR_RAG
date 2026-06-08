@@ -2,10 +2,48 @@ import { betterAuth } from "better-auth";
 import { username } from "better-auth/plugins";
 import pg from "pg";
 import dotenv from "dotenv";
+import crypto from "crypto";
 
 dotenv.config();
 
 const { Pool } = pg;
+
+// Helper functions for PBKDF2 hashing matching .NET logic
+const hashPasswordPbkdf2 = (password: string): Promise<string> => {
+  return new Promise((resolve, reject) => {
+    const salt = crypto.randomBytes(16);
+    crypto.pbkdf2(password, salt, 100000, 32, "sha256", (err, derivedKey) => {
+      if (err) return reject(err);
+      const saltB64 = salt.toString("base64");
+      const hashB64 = derivedKey.toString("base64");
+      resolve(`${saltB64}.${hashB64}`);
+    });
+  });
+};
+
+const verifyPasswordPbkdf2 = (password: string, storedHash: string): Promise<boolean> => {
+  return new Promise((resolve, reject) => {
+    const parts = storedHash.split(".");
+    if (parts.length !== 2) {
+      return resolve(false);
+    }
+    const salt = Buffer.from(parts[0], "base64");
+    const expectedHash = Buffer.from(parts[1], "base64");
+    
+    crypto.pbkdf2(password, salt, 100000, expectedHash.length, "sha256", (err, derivedKey) => {
+      if (err) return reject(err);
+      try {
+        if (derivedKey.length !== expectedHash.length) {
+          return resolve(false);
+        }
+        resolve(crypto.timingSafeEqual(derivedKey, expectedHash));
+      } catch {
+        resolve(false);
+      }
+    });
+  });
+};
+
 
 export const auth = betterAuth({
   baseURL: process.env.BETTER_AUTH_URL || "http://localhost:5000",
@@ -73,6 +111,14 @@ export const auth = betterAuth({
   emailAndPassword: {
     enabled: true,
     requireEmailVerification: false,
+    password: {
+      hash: async (password) => {
+        return hashPasswordPbkdf2(password);
+      },
+      verify: async ({ hash, password }) => {
+        return verifyPasswordPbkdf2(password, hash);
+      },
+    },
   },
   socialProviders: {
     google: {

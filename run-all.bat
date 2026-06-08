@@ -3,13 +3,20 @@ title PRN222 RAG App
 echo ====================================================
 echo  PRN222 RAG App - Starting All Services
 echo ====================================================
-
-echo [0/2] Checking port 5000...
-powershell -NoProfile -ExecutionPolicy Bypass -File "%~dp0kill-port.ps1"
-
 echo.
+
+echo [*] Killing processes on ports 5000, 5155, 7065...
+for %%P in (5000 5155 7065) do (
+    for /f "tokens=5" %%i in ('netstat -ano ^| findstr ":%%P " ^| findstr "LISTENING"') do (
+        echo     Killing PID %%i on port %%P
+        taskkill /PID %%i /F >nul 2>&1
+    )
+)
+echo [*] Done. Starting services...
+echo.
+
 echo [1/2] Better Auth  : http://localhost:5000
-echo [2/2] .NET GUI     : http://localhost:5155
+echo [2/2] .NET GUI     : https://localhost:7065
 echo ====================================================
 echo.
 

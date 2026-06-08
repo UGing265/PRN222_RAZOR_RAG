@@ -8,6 +8,14 @@ builder.Services.AddRazorPages();
 builder.Services.AddMemoryCache();
 builder.Services.AddBusinessLayer(builder.Configuration);
 
+// HttpClient for proxying requests to Better Auth service (avoids Mixed Content on HTTPS)
+var betterAuthUrl = builder.Configuration["BetterAuth:BaseUrl"] ?? "http://localhost:5000";
+builder.Services.AddHttpClient("BetterAuth", client =>
+{
+    client.BaseAddress = new Uri(betterAuthUrl);
+    client.Timeout = TimeSpan.FromSeconds(30);
+});
+
 builder.Services.AddAuthentication(options =>
     {
         options.DefaultScheme = Microsoft.AspNetCore.Authentication.Cookies.CookieAuthenticationDefaults.AuthenticationScheme;
@@ -44,7 +52,6 @@ using (var scope = app.Services.CreateScope())
 if (!app.Environment.IsDevelopment())
 {
     app.UseExceptionHandler("/Error");
-    // The default HSTS value is 30 days. You may want to change this for production scenarios, see https://aka.ms/aspnetcore-hsts.
     app.UseHsts();
 }
 
@@ -58,6 +65,7 @@ app.UseAuthorization();
 
 app.MapRazorPages();
 app.MapChatEndpoints();
+app.MapAuthProxyEndpoints();
 
 app.Run();
 
