@@ -73,21 +73,43 @@
             errorAlert.innerText = '';
             
             try {
+                // Step 1: Authenticate against Better Auth (port 5000)
                 const response = await fetch('http://localhost:5000/api/auth/sign-in/email', {
                     method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json'
-                    },
+                    headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ email, password }),
                     credentials: 'include'
                 });
                 
                 const data = await response.json();
                 
-                if (response.ok) {
-                    window.location.href = '/';
-                } else {
+                if (!response.ok) {
                     errorAlert.innerText = data.message || 'Email hoặc mật khẩu không đúng.';
+                    errorAlert.style.display = 'block';
+                    return;
+                }
+
+                // Step 2: Extract the session token from Better Auth response
+                const token = data?.token;
+                if (!token) {
+                    errorAlert.innerText = 'Không nhận được phiên đăng nhập. Vui lòng thử lại.';
+                    errorAlert.style.display = 'block';
+                    return;
+                }
+
+                // Step 3: Send token to .NET app so it can create a proper server-side cookie
+                const callbackResponse = await fetch('/Auth/Callback', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ token: token })
+                });
+
+                const callbackData = await callbackResponse.json();
+
+                if (callbackResponse.ok && callbackData.success) {
+                    window.location.href = callbackData.redirectUrl || '/';
+                } else {
+                    errorAlert.innerText = callbackData.message || 'Đăng nhập thất bại.';
                     errorAlert.style.display = 'block';
                 }
             } catch (err) {

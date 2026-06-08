@@ -10,9 +10,17 @@ builder.Services.AddBusinessLayer(builder.Configuration);
 
 builder.Services.AddAuthentication(options =>
     {
-        options.DefaultScheme = "BetterAuth";
+        options.DefaultScheme = Microsoft.AspNetCore.Authentication.Cookies.CookieAuthenticationDefaults.AuthenticationScheme;
+        options.DefaultChallengeScheme = Microsoft.AspNetCore.Authentication.Cookies.CookieAuthenticationDefaults.AuthenticationScheme;
     })
-    .AddScheme<Microsoft.AspNetCore.Authentication.AuthenticationSchemeOptions, GUI.BetterAuthHandler>("BetterAuth", null);
+    .AddCookie(options =>
+    {
+        options.LoginPath = "/Auth/Login";
+        options.LogoutPath = "/Auth/Logout";
+        options.AccessDeniedPath = "/Auth/Login";
+        options.ExpireTimeSpan = TimeSpan.FromDays(7);
+        options.SlidingExpiration = true;
+    });
 
 builder.Services.AddAuthorization();
 
