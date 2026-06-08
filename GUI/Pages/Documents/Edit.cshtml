@@ -1,0 +1,331 @@
+@page "/documents/{slug}/edit"
+@model GUI.Pages.Documents.EditModel
+@{
+    ViewData["Title"] = "Chỉnh Sửa Tài Liệu";
+}
+
+<style>
+    /* Premium Edit Form Glassmorphism Styling */
+    .edit-card-glass {
+        background: rgba(255, 255, 255, 0.55);
+        backdrop-filter: blur(16px);
+        -webkit-backdrop-filter: blur(16px);
+        border: 1px solid rgba(82, 39, 27, 0.06);
+        border-radius: 24px;
+        padding: 32px;
+        transition: all 0.3s ease;
+    }
+
+    .form-glass-input {
+        background: rgba(255, 255, 255, 0.65) !important;
+        backdrop-filter: blur(8px) !important;
+        border: 1px solid rgba(82, 39, 27, 0.08) !important;
+        border-radius: 14px !important;
+        padding: 12px 16px !important;
+        font-size: 0.92rem !important;
+        color: var(--foreground) !important;
+        transition: all 0.25s ease !important;
+        box-shadow: none !important;
+    }
+
+    .form-glass-input:focus {
+        background: rgba(255, 255, 255, 0.95) !important;
+        border-color: var(--coral) !important;
+        box-shadow: 0 6px 18px rgba(216, 106, 88, 0.06) !important;
+    }
+
+    .form-glass-select {
+        background: rgba(255, 255, 255, 0.65) !important;
+        backdrop-filter: blur(8px) !important;
+        border: 1px solid rgba(82, 39, 27, 0.08) !important;
+        border-radius: 14px !important;
+        padding: 12px 16px !important;
+        font-size: 0.92rem !important;
+        color: var(--foreground) !important;
+        transition: all 0.25s ease !important;
+        box-shadow: none !important;
+        height: auto !important;
+    }
+
+    .form-glass-select:focus {
+        background: rgba(255, 255, 255, 0.95) !important;
+        border-color: var(--coral) !important;
+        box-shadow: 0 6px 18px rgba(216, 106, 88, 0.06) !important;
+    }
+
+    /* Premium Interactive Visibility Selection Cards */
+    .visibility-option-card {
+        background: rgba(255, 255, 255, 0.45);
+        backdrop-filter: blur(12px);
+        -webkit-backdrop-filter: blur(12px);
+        border: 1.5px solid rgba(82, 39, 27, 0.08);
+        border-radius: 18px;
+        padding: 18px 20px;
+        cursor: pointer;
+        transition: all 0.35s cubic-bezier(0.16, 1, 0.3, 1);
+        display: flex;
+        align-items: center;
+        gap: 16px;
+        position: relative;
+        overflow: hidden;
+        user-select: none;
+    }
+
+    .visibility-option-card:hover {
+        background: rgba(255, 255, 255, 0.75);
+        border-color: rgba(216, 106, 88, 0.3);
+        transform: translateY(-2px);
+        box-shadow: 0 8px 20px rgba(82, 39, 27, 0.04);
+    }
+
+    .visibility-option-card.active {
+        background: rgba(255, 255, 255, 0.95);
+        border-color: var(--coral);
+        box-shadow: 0 10px 25px rgba(216, 106, 88, 0.08);
+    }
+
+    .visibility-option-card.active::after {
+        content: '';
+        position: absolute;
+        top: 0;
+        right: 0;
+        width: 0;
+        height: 0;
+        border-style: solid;
+        border-width: 0 24px 24px 0;
+        border-color: transparent var(--coral) transparent transparent;
+    }
+
+    .visibility-option-title {
+        font-size: 0.95rem;
+        font-weight: 700;
+        color: var(--brown);
+        margin-bottom: 3px;
+    }
+
+    .visibility-option-desc {
+        font-size: 0.78rem;
+        color: var(--muted-foreground);
+        line-height: 1.3;
+    }
+</style>
+
+<div class="page-shell grain">
+    <div class="container-fluid px-4 px-md-5 py-4 py-md-5" style="max-width: 900px;">
+        
+        <!-- Header -->
+        <div class="d-flex align-items-center justify-content-between mb-5 flex-wrap gap-3">
+            <div>
+                <span class="font-mono-xs text-coral-deep" style="font-weight: 700; letter-spacing: 0.15em;">QUẢN LÝ TÀI LIỆU</span>
+                <h1 class="hero-title mt-2 mb-0" style="font-size: clamp(2.2rem, 5vw, 3.2rem); color: var(--brown); line-height: 1.1;">Chỉnh Sửa Tài Liệu</h1>
+            </div>
+            <div>
+                <a asp-page="/Documents/Mine" class="btn btn-outline-dark pill-button px-4 py-2 d-inline-flex align-items-center gap-2" style="font-size: 0.88rem;">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/>
+                    </svg>
+                    Quay Lại Thư Viện
+                </a>
+            </div>
+        </div>
+
+        @if (TempData["ErrorMessage"] != null)
+        {
+            <div class="alert alert-danger pill-input border-0 mb-4 px-4 py-3 d-flex align-items-center gap-2" style="background: rgba(139, 0, 0, 0.08); color: #8b0000; border-radius: 100px;">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+                <span>@TempData["ErrorMessage"]</span>
+            </div>
+        }
+
+        <div class="edit-card-glass shadow-sm">
+            <form method="post" id="editForm">
+                <input type="hidden" asp-for="EditModelData.Id" />
+                <div asp-validation-summary="ModelOnly" class="alert alert-danger py-2 rounded-3 mb-4"></div>
+
+                <!-- Form Fields -->
+                <div class="row g-3">
+                    <div class="col-md-12">
+                        <label asp-for="EditModelData.Title" class="form-label font-mono-xs text-muted-foreground mb-1" style="font-size: 9px; letter-spacing: 0.08em;">TIÊU ĐỀ TÀI LIỆU</label>
+                        <input asp-for="EditModelData.Title" class="form-control form-glass-input" placeholder="Nhập tiêu đề tài liệu..." />
+                        <span asp-validation-for="EditModelData.Title" class="text-danger small"></span>
+                    </div>
+
+                    <div class="col-md-6">
+                        <label asp-for="EditModelData.SubjectId" class="form-label font-mono-xs text-muted-foreground mb-1" style="font-size: 9px; letter-spacing: 0.08em;">MÔN HỌC</label>
+                        <select asp-for="EditModelData.SubjectId" class="form-select form-glass-select" asp-items="@(new SelectList(Model.Subjects, "Id", "Name"))">
+                            <option value="">-- Chọn môn học --</option>
+                        </select>
+                        <span asp-validation-for="EditModelData.SubjectId" class="text-danger small"></span>
+                    </div>
+
+                    <div class="col-md-6">
+                        <label asp-for="EditModelData.DocumentTypeId" class="form-label font-mono-xs text-muted-foreground mb-1" style="font-size: 9px; letter-spacing: 0.08em;">LOẠI HỌC LIỆU</label>
+                        <select asp-for="EditModelData.DocumentTypeId" class="form-select form-glass-select" asp-items="@(new SelectList(Model.DocumentTypes, "Id", "Name"))">
+                            <option value="">-- Chọn loại học liệu --</option>
+                        </select>
+                        <span asp-validation-for="EditModelData.DocumentTypeId" class="text-danger small"></span>
+                    </div>
+
+                    <div class="col-md-6">
+                        <label asp-for="EditModelData.AcademicTermId" class="form-label font-mono-xs text-muted-foreground mb-1" style="font-size: 9px; letter-spacing: 0.08em;">HỌC KỲ</label>
+                        <select asp-for="EditModelData.AcademicTermId" class="form-select form-glass-select" asp-items="@(new SelectList(Model.AcademicTerms, "Id", "Name"))">
+                            <option value="">Chọn Học Kỳ</option>
+                        </select>
+                        <span asp-validation-for="EditModelData.AcademicTermId" class="text-danger small"></span>
+                    </div>
+
+                    <div class="col-md-6">
+                        <label asp-for="EditModelData.LanguageId" class="form-label font-mono-xs text-muted-foreground mb-1" style="font-size: 9px; letter-spacing: 0.08em;">NGÔN NGỮ</label>
+                        <select asp-for="EditModelData.LanguageId" class="form-select form-glass-select" asp-items="@(new SelectList(Model.Languages, "Id", "Name"))">
+                            <option value="">Chọn Ngôn Ngữ</option>
+                        </select>
+                        <span asp-validation-for="EditModelData.LanguageId" class="text-danger small"></span>
+                    </div>
+
+                    <div class="col-md-6">
+                        <label asp-for="EditModelData.DocumentSourceId" class="form-label font-mono-xs text-muted-foreground mb-1" style="font-size: 9px; letter-spacing: 0.08em;">NGUỒN TÀI LIỆU</label>
+                        <select asp-for="EditModelData.DocumentSourceId" class="form-select form-glass-select" asp-items="@(new SelectList(Model.DocumentSources, "Id", "Name"))">
+                            <option value="">-- Chọn nguồn (tuỳ chọn) --</option>
+                        </select>
+                        <span asp-validation-for="EditModelData.DocumentSourceId" class="text-danger small"></span>
+                    </div>
+
+                    <div class="col-12 my-3">
+                        <label class="form-label font-mono-xs text-muted-foreground mb-2" style="font-size: 9px; letter-spacing: 0.08em;">QUYỀN RIÊNG TƯ</label>
+                        <input type="hidden" asp-for="EditModelData.Visibility" id="visibilityInput" />
+                        
+                        <div class="row g-3">
+                            <!-- Private Card -->
+                            <div class="col-md-4">
+                                <div class="visibility-option-card" data-value="private" tabindex="0">
+                                    <div>
+                                        <div class="visibility-option-title">Riêng Tư</div>
+                                        <div class="visibility-option-desc">Chỉ mình bạn có thể xem và trò chuyện.</div>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <!-- Public Card -->
+                            <div class="col-md-4">
+                                <div class="visibility-option-card" data-value="public" tabindex="0">
+                                    <div>
+                                        <div class="visibility-option-title">Công Khai</div>
+                                        <div class="visibility-option-desc">Mọi thành viên đều có thể xem và tham khảo.</div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Internal Card -->
+                            <div class="col-md-4">
+                                <div class="visibility-option-card" data-value="internal" tabindex="0">
+                                    <div>
+                                        <div class="visibility-option-title">Nội Bộ</div>
+                                        <div class="visibility-option-desc">Chỉ chia sẻ nội bộ giảng viên và quản trị viên.</div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <span asp-validation-for="EditModelData.Visibility" class="text-danger small"></span>
+                    </div>
+
+                    <div class="col-12">
+                        <label asp-for="EditModelData.Description" class="form-label font-mono-xs text-muted-foreground mb-1" style="font-size: 9px; letter-spacing: 0.08em;">MÔ TẢ CHI TIẾT</label>
+                        <textarea asp-for="EditModelData.Description" class="form-control form-glass-input" placeholder="Nhập tóm tắt mô tả ngắn gọn về tài liệu này..." rows="4" style="height: auto; resize: vertical;"></textarea>
+                        <span asp-validation-for="EditModelData.Description" class="text-danger small"></span>
+                    </div>
+                </div>
+
+                <!-- Action Buttons -->
+                <div class="d-flex align-items-center gap-2 mt-5">
+                    <button type="submit" class="btn btn-premium-primary pill-button px-5 py-3 w-100 w-md-auto d-inline-flex align-items-center justify-content-center gap-2" style="font-size: 0.95rem;">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/>
+                        </svg>
+                        Lưu Thay Đổi
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+    <script>
+        (() => {
+            // Visibility Card Selection Logic
+            const visibilityCards = document.querySelectorAll('.visibility-option-card');
+            const visibilityInput = document.getElementById('visibilityInput');
+            if (visibilityCards.length && visibilityInput) {
+                const initVal = visibilityInput.value;
+                visibilityCards.forEach(card => {
+                    if (card.dataset.value === initVal) {
+                        card.classList.add('active');
+                    } else {
+                        card.classList.remove('active');
+                    }
+
+                    const selectCard = () => {
+                        visibilityCards.forEach(c => c.classList.remove('active'));
+                        card.classList.add('active');
+                        visibilityInput.value = card.dataset.value;
+                    };
+
+                    card.addEventListener('click', selectCard);
+                    card.addEventListener('keydown', (e) => {
+                        if (e.key === 'Enter' || e.key === ' ') {
+                            e.preventDefault();
+                            selectCard();
+                        }
+                    });
+                });
+            }
+
+            // Dynamic binding between Subject and Academic Term
+            const subjectTermMap = @Html.Raw(Model.SubjectTermMapJson);
+            const subjectSelect = document.getElementById('EditModelData_SubjectId');
+            const termSelect = document.getElementById('EditModelData_AcademicTermId');
+
+            if (subjectSelect && termSelect) {
+                const originalSubjectOptions = Array.from(subjectSelect.options).map(opt => ({
+                    value: opt.value,
+                    text: opt.text,
+                    termId: opt.value ? subjectTermMap[opt.value] : null
+                }));
+
+                const updateSubjectDropdown = () => {
+                    const currentSubjectValue = subjectSelect.value;
+                    const selectedTerm = termSelect.value;
+                    
+                    // Clear existing options
+                    subjectSelect.innerHTML = '';
+                    
+                    // Re-populate options based on term
+                    originalSubjectOptions.forEach(opt => {
+                        if (!opt.value || !selectedTerm || opt.termId === selectedTerm) {
+                            const newOption = new Option(opt.text, opt.value);
+                            subjectSelect.appendChild(newOption);
+                        }
+                    });
+
+                    // Restore selected value if it's still valid
+                    if (currentSubjectValue && (!selectedTerm || subjectTermMap[currentSubjectValue] === selectedTerm)) {
+                        subjectSelect.value = currentSubjectValue;
+                    } else {
+                        subjectSelect.value = '';
+                    }
+                };
+
+                subjectSelect.addEventListener('change', function() {
+                    const selectedSubject = this.value;
+                    if (selectedSubject && subjectTermMap[selectedSubject]) {
+                        termSelect.value = subjectTermMap[selectedSubject];
+                        updateSubjectDropdown();
+                    }
+                });
+
+                termSelect.addEventListener('change', updateSubjectDropdown);
+            }
+        })();
+    </script>
+}

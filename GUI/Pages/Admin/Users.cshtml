@@ -1,0 +1,333 @@
+@page "/Admin/Users"
+@model GUI.Pages.Admin.UsersModel
+
+@{
+    ViewData["Title"] = "Quản Lý Người Dùng";
+    var pendingUsers = Model.UsersList.Where(u => !u.IsActive && !u.IsBlocked).ToList();
+    var activeUsers = Model.UsersList.Where(u => u.IsActive && !u.IsBlocked).ToList();
+    var blockedUsers = Model.UsersList.Where(u => u.IsBlocked).ToList();
+}
+
+<div class="page-shell">
+    <main class="container-fluid px-4 px-md-5 py-5" style="max-width: 1200px;">
+        <!-- Top Heading Area -->
+        <div class="d-flex align-items-center justify-content-between mb-5">
+            <div>
+                <h1 class="hero-title mb-1" style="font-size: clamp(2rem, 4vw, 2.75rem); font-family: inherit;">Quản Lý Thành Viên</h1>
+                <p class="text-muted-foreground" style="font-size: 15px; font-weight: 400; margin-bottom: 0;">Quản lý và cấp quyền tài khoản giảng viên, học sinh trên hệ thống.</p>
+            </div>
+            <div class="d-flex align-items-center gap-3">
+                <button type="button" class="btn btn-dark pill-button px-4 py-2.5 d-flex align-items-center gap-2" style="background: #4a1f16; border-color: #4a1f16; font-size: 14px; font-weight: 500;" data-bs-toggle="modal" data-bs-target="#createUserModal">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+                    Tạo Tài Khoản
+                </button>
+                <div class="d-flex gap-2">
+                    <span class="badge px-3.5 py-2 border-0 rounded-pill text-white" style="background-color: #2b5c43 !important; font-size: 13px; font-weight: 500; font-family: inherit; text-transform: none; letter-spacing: normal;">
+                        @activeUsers.Count Đang Hoạt Động
+                    </span>
+                    <span class="badge px-3.5 py-2 border-0 rounded-pill text-white" style="background-color: #dc3545 !important; font-size: 13px; font-weight: 500; font-family: inherit; text-transform: none; letter-spacing: normal;">
+                        @blockedUsers.Count Đã Khóa
+                    </span>
+                </div>
+            </div>
+        </div>
+
+        @if (TempData["SuccessMessage"] != null)
+        {
+            <div class="alert alert-success pill-input border-0 mb-4 px-4 py-3 d-flex align-items-center gap-2" style="background: rgba(43, 92, 67, 0.12); color: #1e3f2e; border-radius: 12px; font-family: inherit;">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
+                <span>@TempData["SuccessMessage"]</span>
+            </div>
+        }
+        @if (TempData["ErrorMessage"] != null)
+        {
+            <div class="alert alert-danger pill-input border-0 mb-4 px-4 py-3 d-flex align-items-center gap-2" style="background: rgba(139, 0, 0, 0.08); color: #8b0000; border-radius: 12px; font-family: inherit;">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+                <span>@TempData["ErrorMessage"]</span>
+            </div>
+        }
+
+        <!-- Tabs Area -->
+        <ul class="nav nav-tabs border-0 mb-4 d-flex gap-2" id="adminTabs" role="tablist" style="font-family: inherit;">
+            <li class="nav-item" role="presentation">
+                <button class="nav-link active pill-button px-4 py-2 text-decoration-none border-0" id="active-tab" data-bs-toggle="tab" data-bs-target="#active" type="button" role="tab" aria-controls="active" aria-selected="true" style="border-radius: 100px;">
+                    Đang Hoạt Động (@activeUsers.Count)
+                </button>
+            </li>
+            <li class="nav-item" role="presentation">
+                <button class="nav-link pill-button px-4 py-2 text-decoration-none border-0" id="blocked-tab" data-bs-toggle="tab" data-bs-target="#blocked" type="button" role="tab" aria-controls="blocked" aria-selected="false" style="border-radius: 100px;">
+                    Đã Khóa (@blockedUsers.Count)
+                </button>
+            </li>
+        </ul>
+
+        <div class="tab-content" id="adminTabsContent">
+            <!-- Active Users Tab -->
+            <div class="tab-pane fade show active" id="active" role="tabpanel" aria-labelledby="active-tab">
+                <div class="soft-panel editorial-shadow p-4 p-md-5" style="background: rgba(255,255,255,.72); border-radius: 24px;">
+                    @if (!activeUsers.Any())
+                    {
+                        <div class="text-center py-5">
+                            <h3 class="text-muted-foreground" style="font-size: 15px; font-weight: 500; font-family: inherit;">Chưa có người dùng nào được kích hoạt.</h3>
+                        </div>
+                    }
+                    else
+                    {
+                        <div class="table-responsive">
+                            <table class="table table-hover align-middle mb-0" style="border-collapse: separate; border-spacing: 0 12px; font-family: inherit;">
+                                <thead>
+                                    <tr class="text-muted-foreground" style="border: none; font-size: 13px; font-weight: 600; letter-spacing: 0.02em;">
+                                        <th scope="col" class="pb-2 border-0 ps-3">Họ và Tên</th>
+                                        <th scope="col" class="pb-2 border-0">Email</th>
+                                        <th scope="col" class="pb-2 border-0">Vai Trò</th>
+                                        <th scope="col" class="pb-2 border-0 text-end pe-3">Hành Động</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    @foreach (var user in activeUsers)
+                                    {
+                                        <tr class="glass-row" style="background: rgba(255, 255, 255, 0.4); border-radius: 16px; box-shadow: 0 4px 12px rgba(0,0,0,0.02); transition: all 0.2s ease;">
+                                            <td class="ps-3 py-3 border-0 fw-medium text-foreground" style="border-radius: 12px 0 0 12px;">
+                                                <div class="d-flex align-items-center gap-3">
+                                                    @if (user.RoleId == 1)
+                                                    {
+                                                        <div class="avatar-circle d-flex align-items-center justify-content-center text-white fw-bold" style="width: 38px; height: 38px; border-radius: 50%; background: #111; font-size: 14px;">
+                                                            @user.FullName.Substring(0, Math.Min(2, user.FullName.Length)).ToUpper()
+                                                        </div>
+                                                    }
+                                                    else if (user.RoleId == 2)
+                                                    {
+                                                        <div class="avatar-circle d-flex align-items-center justify-content-center text-white fw-bold" style="width: 38px; height: 38px; border-radius: 50%; background: #4a1f16; font-size: 14px;">
+                                                            @user.FullName.Substring(0, Math.Min(2, user.FullName.Length)).ToUpper()
+                                                        </div>
+                                                    }
+                                                    else
+                                                    {
+                                                        <div class="avatar-circle d-flex align-items-center justify-content-center text-white fw-bold" style="width: 38px; height: 38px; border-radius: 50%; background: #2b5c43; font-size: 14px;">
+                                                            @user.FullName.Substring(0, Math.Min(2, user.FullName.Length)).ToUpper()
+                                                        </div>
+                                                    }
+                                                    <span style="font-size: 15px;">@user.FullName</span>
+                                                </div>
+                                            </td>
+                                            <td class="py-3 border-0 text-muted-foreground" style="font-size: 14px;">@user.Email.ToLower()</td>
+                                            <td class="py-3 border-0">
+                                                @if (user.RoleId == 1)
+                                                {
+                                                    <span class="badge bg-dark px-3 py-2 rounded-pill text-white" style="background: #111 !important; border: 1px solid #333; font-size: 12px; font-weight: 500; text-transform: none; letter-spacing: normal;">Admin</span>
+                                                }
+                                                else if (user.RoleId == 2)
+                                                {
+                                                    <span class="badge px-3 py-2 rounded-pill" style="background: rgba(74, 31, 22, 0.08); color: #4a1f16; border: 1px solid rgba(74, 31, 22, 0.15); font-size: 12px; font-weight: 500; text-transform: none; letter-spacing: normal;">Giảng Viên</span>
+                                                }
+                                                else
+                                                {
+                                                    <span class="badge px-3 py-2 rounded-pill" style="background: rgba(43, 92, 67, 0.08); color: #2b5c43; border: 1px solid rgba(43, 92, 67, 0.15); font-size: 12px; font-weight: 500; text-transform: none; letter-spacing: normal;">Sinh Viên</span>
+                                                }
+                                            </td>
+                                            <td class="py-3 border-0 text-end pe-3" style="border-radius: 0 12px 12px 0;">
+                                                <div class="d-flex justify-content-end align-items-center gap-2">
+                                                    @if (user.RoleId == 2)
+                                                    {
+                                                        <a asp-page="/Admin/AssignSubjects" asp-route-userId="@user.Id" class="btn btn-sm rounded-pill px-3 py-1.5 d-flex align-items-center gap-1" style="background: rgba(74, 31, 22, 0.08); color: #4a1f16; border: 1px solid rgba(74, 31, 22, 0.15); font-size: 13px; font-weight: 500; text-decoration: none;">
+                                                            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" class="me-1"><path d="M12 20h9"/><path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg>Phân môn
+                                                        </a>
+                                                    }
+                                                    @if (user.RoleId != 1) 
+                                                    {
+                                                        <form asp-page-handler="RejectOrBlock" method="post" class="d-inline">
+                                                            @Html.AntiForgeryToken()
+                                                            <input type="hidden" name="id" value="@user.Id" />
+                                                            <button type="submit" class="btn btn-outline-danger btn-sm rounded-pill px-3 py-1.5 d-flex align-items-center gap-1">
+                                                                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" class="me-1"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>Khóa
+                                                            </button>
+                                                        </form>
+                                                    }
+                                                    else
+                                                    {
+                                                        <span class="text-muted" style="font-size: 13px; font-weight: 500;">Không thể khóa</span>
+                                                    }
+                                                </div>
+                                            </td>
+                                        </tr>
+                                    }
+                                </tbody>
+                            </table>
+                        </div>
+                    }
+                </div>
+            </div>
+
+            <!-- Blocked Users Tab -->
+            <div class="tab-pane fade" id="blocked" role="tabpanel" aria-labelledby="blocked-tab">
+                <div class="soft-panel editorial-shadow p-4 p-md-5" style="background: rgba(255,255,255,.72); border-radius: 24px;">
+                    @if (!blockedUsers.Any())
+                    {
+                        <div class="text-center py-5">
+                            <h3 class="text-muted-foreground" style="font-size: 15px; font-weight: 500; font-family: inherit;">Không có người dùng nào bị khóa.</h3>
+                        </div>
+                    }
+                    else
+                    {
+                        <div class="table-responsive">
+                            <table class="table table-hover align-middle mb-0" style="border-collapse: separate; border-spacing: 0 12px; font-family: inherit;">
+                                <thead>
+                                    <tr class="text-muted-foreground" style="border: none; font-size: 13px; font-weight: 600; letter-spacing: 0.02em;">
+                                        <th scope="col" class="pb-2 border-0 ps-3">Họ và Tên</th>
+                                        <th scope="col" class="pb-2 border-0">Email</th>
+                                        <th scope="col" class="pb-2 border-0">Vai Trò</th>
+                                        <th scope="col" class="pb-2 border-0 text-end pe-3">Hành Động</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    @foreach (var user in blockedUsers)
+                                    {
+                                        <tr class="glass-row" style="background: rgba(255, 255, 255, 0.4); border-radius: 16px; box-shadow: 0 4px 12px rgba(0,0,0,0.02); transition: all 0.2s ease;">
+                                            <td class="ps-3 py-3 border-0 fw-medium text-foreground" style="border-radius: 12px 0 0 12px;">
+                                                <div class="d-flex align-items-center gap-3">
+                                                    <div class="avatar-circle d-flex align-items-center justify-content-center text-white fw-bold" style="width: 38px; height: 38px; border-radius: 50%; background: #dc3545; font-size: 14px;">
+                                                        @user.FullName.Substring(0, Math.Min(2, user.FullName.Length)).ToUpper()
+                                                    </div>
+                                                    <span style="font-size: 15px;">@user.FullName</span>
+                                                </div>
+                                            </td>
+                                            <td class="py-3 border-0 text-muted-foreground" style="font-size: 14px;">@user.Email.ToLower()</td>
+                                            <td class="py-3 border-0">
+                                                @if (user.RoleId == 1)
+                                                {
+                                                    <span class="badge bg-dark px-3 py-2 rounded-pill text-white" style="background: #111 !important; border: 1px solid #333; font-size: 12px; font-weight: 500; text-transform: none; letter-spacing: normal;">Admin</span>
+                                                }
+                                                else if (user.RoleId == 2)
+                                                {
+                                                    <span class="badge px-3 py-2 rounded-pill" style="background: rgba(74, 31, 22, 0.08); color: #4a1f16; border: 1px solid rgba(74, 31, 22, 0.15); font-size: 12px; font-weight: 500; text-transform: none; letter-spacing: normal;">Giảng Viên</span>
+                                                }
+                                                else
+                                                {
+                                                    <span class="badge px-3 py-2 rounded-pill" style="background: rgba(43, 92, 67, 0.08); color: #2b5c43; border: 1px solid rgba(43, 92, 67, 0.15); font-size: 12px; font-weight: 500; text-transform: none; letter-spacing: normal;">Sinh Viên</span>
+                                                }
+                                            </td>
+                                            <td class="py-3 border-0 text-end pe-3" style="border-radius: 0 12px 12px 0;">
+                                                <div class="d-flex justify-content-end">
+                                                    <form asp-page-handler="Unblock" method="post" class="d-inline">
+                                                        @Html.AntiForgeryToken()
+                                                        <input type="hidden" name="id" value="@user.Id" />
+                                                        <button type="submit" class="btn btn-outline-success btn-sm rounded-pill px-3 py-1.5 d-flex align-items-center gap-1">
+                                                            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" class="me-1"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 9.9-1"/></svg>Mở Khóa
+                                                        </button>
+                                                    </form>
+                                                </div>
+                                            </td>
+                                        </tr>
+                                    }
+                                </tbody>
+                            </table>
+                        </div>
+                    }
+                </div>
+            </div>
+        </div>
+    </main>
+</div>
+
+<!-- Create User Modal -->
+<div class="modal fade" id="createUserModal" tabindex="-1" aria-labelledby="createUserModalLabel" aria-hidden="true" style="font-family: inherit;">
+    <div class="modal-dialog modal-dialog-centered" style="max-width: 500px;">
+        <div class="modal-content border-0 shadow-lg" style="border-radius: 20px; background: rgba(255, 255, 255, 0.95); backdrop-filter: blur(10px);">
+            <div class="modal-header border-0 pb-0 pt-4 px-4 d-flex justify-content-between align-items-center">
+                <h5 class="modal-title fw-bold text-foreground" id="createUserModalLabel" style="font-size: 1.25rem;">Tạo Tài Khoản Mới</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <form asp-page-handler="CreateUser" method="post">
+                @Html.AntiForgeryToken()
+                <div class="modal-body p-4">
+                    <div class="mb-3">
+                        <label for="fullName" class="form-label font-mono-xs text-muted-foreground" style="font-size: 12px; font-weight: 600; letter-spacing: 0.05em;">HỌ VÀ TÊN</label>
+                        <input type="text" id="fullName" name="fullName" class="form-control pill-input" placeholder="Họ và tên người dùng" required />
+                    </div>
+                    <div class="mb-3">
+                        <label for="email" class="form-label font-mono-xs text-muted-foreground" style="font-size: 12px; font-weight: 600; letter-spacing: 0.05em;">EMAIL</label>
+                        <input type="email" id="email" name="email" class="form-control pill-input" placeholder="name@example.com" required />
+                    </div>
+                    <div class="mb-3">
+                        <label for="password" class="form-label font-mono-xs text-muted-foreground" style="font-size: 12px; font-weight: 600; letter-spacing: 0.05em;">MẬT KHẨU</label>
+                        <input type="password" id="password" name="password" class="form-control pill-input" placeholder="Tối thiểu 6 ký tự" minlength="6" required />
+                    </div>
+                    <div class="mb-3">
+                        <label for="roleId" class="form-label font-mono-xs text-muted-foreground" style="font-size: 12px; font-weight: 600; letter-spacing: 0.05em;">VAI TRÒ</label>
+                        <select id="roleId" name="roleId" class="form-select pill-input">
+                            <option value="3">Sinh Viên</option>
+                            <option value="2">Giảng Viên</option>
+                            <option value="1">Admin</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="modal-footer border-0 pt-0 pb-4 px-4 d-flex gap-2 justify-content-end">
+                    <button type="button" class="btn btn-light rounded-pill px-4 py-2" data-bs-dismiss="modal" style="font-size: 14px; font-weight: 500;">Hủy</button>
+                    <button type="submit" class="btn btn-dark rounded-pill px-4 py-2" style="background: #4a1f16; border-color: #4a1f16; font-size: 14px; font-weight: 500;">Tạo Mới</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<style>
+    .nav-tabs .nav-link {
+        font-family: inherit;
+        font-size: 14px;
+        font-weight: 600;
+        text-transform: none;
+        letter-spacing: normal;
+        color: var(--foreground);
+        opacity: 0.8;
+        background: rgba(255,255,255,.45);
+        border: 1px solid rgba(82, 39, 27, 0.08) !important;
+        transition: all .2s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+    .nav-tabs .nav-link:hover {
+        opacity: 1;
+        background: rgba(255,255,255,.75);
+        border-color: rgba(216, 106, 88, 0.25) !important;
+    }
+    .nav-tabs .nav-link.active {
+        opacity: 1;
+        color: #fff !important;
+        background: #4a1f16 !important;
+        border-color: #4a1f16 !important;
+        box-shadow: 0 4px 15px rgba(74, 31, 22, 0.18);
+    }
+    .glass-row:hover {
+        transform: translateY(-2px);
+        background: rgba(255, 255, 255, 0.72) !important;
+        box-shadow: 0 8px 20px rgba(74, 31, 22, 0.05) !important;
+    }
+
+    /* Button Utilities */
+    .btn-outline-danger {
+        border-color: rgba(220, 53, 69, 0.35);
+        color: #dc3545;
+        background: transparent;
+        font-size: 13px;
+        font-weight: 500;
+        transition: all 0.2s;
+    }
+    .btn-outline-danger:hover {
+        background-color: #dc3545;
+        color: #fff;
+        border-color: #dc3545;
+        transform: scale(1.05);
+    }
+    .btn-outline-success {
+        border-color: rgba(43, 92, 67, 0.35);
+        color: #2b5c43;
+        background: transparent;
+        font-size: 13px;
+        font-weight: 500;
+        transition: all 0.2s;
+    }
+    .btn-outline-success:hover {
+        background-color: #2b5c43;
+        color: #fff;
+        border-color: #2b5c43;
+        transform: scale(1.05);
+    }
+</style>

@@ -1,0 +1,28 @@
+@page "/documents/{slug}/delete"
+@model GUI.Pages.Documents.DeleteModel
+@{
+    ViewData["Title"] = "Xoá Tài Liệu";
+}
+
+<div class="page-shell grain">
+    <div class="container-fluid px-4 px-md-5 py-4 py-md-5">
+        <div class="soft-panel editorial-shadow p-4 p-md-5 mx-auto" style="max-width: 760px;">
+            <div class="font-mono-xs text-muted-foreground mb-3">Xác nhận xoá</div>
+            <h1 class="hero-title mb-3" style="font-size: clamp(2.2rem, 4vw, 3.5rem);">Xoá Tài Liệu</h1>
+            <p class="text-muted-foreground mb-4">
+                Bạn chuẩn bị xoá tài liệu <strong>@Model.ViewModel.Title</strong>.
+                Hành động này sẽ xoá luôn file, chunks và lịch sử upload liên quan.
+            </p>
+
+            <div class="file-card mb-4">
+                <div class="d-flex justify-content-between mb-2"><span class="file-subtle">Tệp</span><strong>@Model.ViewModel.FileCount</strong></div>
+                <div class="d-flex justify-content-between"><span class="file-subtle">Chunks</span><strong>@Model.ViewModel.ChunkCount</strong></div>
+            </div>
+
+            <form method="post" class="d-flex gap-2 flex-wrap">
+                <button type="submit" class="btn btn-danger pill-button px-4 py-3">Xoá vĩnh viễn</button>
+                <a asp-page="/Documents/Details" asp-route-slug="@Model.ViewModel.Slug" class="btn btn-outline-dark pill-button px-4 py-3">Huỷ</a>
+            </form>
+        </div>
+    </div>
+</div>

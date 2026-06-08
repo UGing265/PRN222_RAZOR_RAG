@@ -1,0 +1,616 @@
+@page "/chat"
+@model GUI.Pages.Chat.IndexModel
+@{
+    ViewData["Title"] = "Chat";
+}
+
+<div class="page-shell grain">
+    <div class="container-fluid px-4 px-md-5 py-4 py-md-5">
+        <div class="d-flex justify-content-between align-items-start gap-3 mb-4">
+            <div>
+                <div class="kicker">— Knowledge chat</div>
+                <h1 class="hero-title" style="font-size: clamp(2.5rem, 5vw, 4.5rem);">Chat</h1>
+                <p class="text-muted-foreground mt-2 mb-0">Hỏi đáp với tài liệu, trích nguồn và tìm thông tin nhanh chóng.</p>
+            </div>
+            <a asp-page="/Documents/All" class="font-mono-xs text-muted-foreground link-plain">← Khám Phá</a>
+        </div>
+
+        <div class="row g-4">
+            <!-- Main Chat Area -->
+            <div class="col-lg-8">
+                <div class="soft-panel editorial-shadow p-4 p-md-5 d-flex flex-column" style="min-height: 70vh;">
+                    <!-- Header: Document selector + status -->
+                    <div class="d-flex justify-content-between align-items-center mb-3 flex-wrap gap-2">
+                        <div class="d-flex align-items-center gap-2 flex-grow-1">
+                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--coral)" stroke-width="2.2">
+                                <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/>
+                            </svg>
+                            <select id="documentSelect" class="form-select pill-input" style="max-width: 340px; font-size: 0.88rem;">
+                                <option value="">Tất cả tài liệu</option>
+                            </select>
+                        </div>
+                        <span id="statusBadge" class="badge rounded-pill" style="background: var(--coral-soft); color: var(--brown); font-size: 0.72rem; padding: 6px 14px;">Sẵn sàng</span>
+                    </div>
+
+                    <!-- Messages container -->
+                    <div id="chatMessages" class="flex-grow-1 d-flex flex-column gap-3 mb-4 overflow-auto" style="min-height: 48vh; max-height: 56vh; scroll-behavior: smooth;">
+                        <!-- Welcome message -->
+                        <div class="chat-msg chat-msg-assistant">
+                            <div class="chat-msg-label">
+                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M12 2L2 7l10 5 10-5-10-5z"/><path d="M2 17l10 5 10-5"/><path d="M2 12l10 5 10-5"/></svg>
+                                Assistant
+                            </div>
+                            <div class="chat-msg-content">
+                                Xin chào! 👋 Tôi là trợ lý tài liệu AI. Hãy chọn một tài liệu ở trên và đặt câu hỏi — tôi sẽ trả lời dựa trên nội dung tài liệu đã được index.
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Input area -->
+                    <div class="border-top border-border pt-3">
+                        <form id="chatForm" class="d-flex gap-2">
+                            <input id="chatInput" class="form-control pill-input flex-grow-1" placeholder="Nhập câu hỏi của bạn..." autocomplete="off" />
+                            <button id="sendBtn" class="btn btn-dark pill-button px-4 d-flex align-items-center gap-2" type="submit">
+                                <svg id="sendIcon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
+                                <span>Gửi</span>
+                            </button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Right Sidebar: Sources + Sessions -->
+            <div class="col-lg-4 d-flex flex-column gap-4">
+                <!-- Sources panel -->
+                <div class="soft-panel editorial-shadow p-4">
+                    <div class="d-flex align-items-center gap-2 mb-3">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--coral)" stroke-width="2.2"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg>
+                        <h2 class="h6 mb-0 fw-bold">Nguồn trích dẫn</h2>
+                    </div>
+                    <div id="sourcesPanel">
+                        <div class="text-muted-foreground" style="font-size: 0.85rem;">Các nguồn tài liệu sẽ hiển thị ở đây sau khi AI trả lời.</div>
+                    </div>
+                </div>
+
+                <!-- Sessions panel -->
+                <div class="soft-panel editorial-shadow p-4">
+                    <div class="d-flex align-items-center justify-content-between mb-3">
+                        <div class="d-flex align-items-center gap-2">
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--coral)" stroke-width="2.2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+                            <h2 class="h6 mb-0 fw-bold">Lịch sử phiên</h2>
+                        </div>
+                        <button id="newSessionBtn" class="btn btn-sm pill-button d-flex align-items-center gap-1" style="background: var(--coral-soft); color: var(--brown); font-size: 0.75rem; padding: 5px 12px;" title="Tạo phiên chat mới">
+                            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+                            Phiên mới
+                        </button>
+                    </div>
+                    <div id="sessionsPanel" class="d-flex flex-column gap-2" style="max-height: 300px; overflow-y: auto;">
+                        <div class="text-muted-foreground" style="font-size: 0.85rem;">Chưa có phiên chat nào.</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+    /* ── Chat message bubbles ── */
+    .chat-msg {
+        max-width: 82%;
+        animation: msgFadeIn 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+    .chat-msg-assistant {
+        align-self: flex-start;
+    }
+    .chat-msg-user {
+        align-self: flex-end;
+    }
+    .chat-msg-label {
+        font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+        font-size: 10px;
+        letter-spacing: 0.12em;
+        text-transform: uppercase;
+        margin-bottom: 6px;
+        display: flex;
+        align-items: center;
+        gap: 5px;
+    }
+    .chat-msg-assistant .chat-msg-label { color: var(--coral); }
+    .chat-msg-user .chat-msg-label { color: rgba(255,255,255,0.6); text-align: right; justify-content: flex-end; }
+
+    .chat-msg-content {
+        padding: 14px 18px;
+        border-radius: 20px;
+        font-size: 0.92rem;
+        line-height: 1.65;
+        word-break: break-word;
+    }
+    .chat-msg-assistant .chat-msg-content {
+        background: rgba(255, 255, 255, 0.85);
+        border: 1px solid var(--border);
+        color: var(--foreground);
+    }
+    .chat-msg-user .chat-msg-content {
+        background: var(--brown);
+        color: #fff;
+    }
+
+    /* ── Markdown inside messages ── */
+    .chat-msg-content p { margin: 0 0 0.5em; }
+    .chat-msg-content p:last-child { margin-bottom: 0; }
+    .chat-msg-content ul, .chat-msg-content ol { margin: 0.25em 0; padding-left: 1.3em; }
+    .chat-msg-content strong { font-weight: 700; }
+    .chat-msg-content code {
+        background: rgba(82, 39, 27, 0.06);
+        padding: 2px 6px;
+        border-radius: 6px;
+        font-size: 0.85em;
+    }
+    .chat-msg-content pre {
+        background: rgba(82, 39, 27, 0.04);
+        border-radius: 12px;
+        padding: 12px 16px;
+        overflow-x: auto;
+        margin: 0.5em 0;
+    }
+    .chat-msg-content pre code {
+        background: none;
+        padding: 0;
+    }
+
+    /* ── Typing indicator ── */
+    .typing-indicator {
+        display: inline-flex;
+        align-items: center;
+        gap: 4px;
+        padding: 4px 0;
+    }
+    .typing-indicator span {
+        width: 7px;
+        height: 7px;
+        background: var(--coral);
+        border-radius: 50%;
+        animation: typingBounce 1.2s infinite;
+        opacity: 0.6;
+    }
+    .typing-indicator span:nth-child(2) { animation-delay: 0.15s; }
+    .typing-indicator span:nth-child(3) { animation-delay: 0.3s; }
+
+    @@keyframes typingBounce {
+        0%, 60%, 100% { transform: translateY(0); opacity: 0.6; }
+        30% { transform: translateY(-6px); opacity: 1; }
+    }
+    @@keyframes msgFadeIn {
+        from { opacity: 0; transform: translateY(10px); }
+        to { opacity: 1; transform: translateY(0); }
+    }
+
+    /* ── Source cards ── */
+    .source-card {
+        background: rgba(255,255,255,0.7);
+        border: 1px solid var(--border);
+        border-radius: 14px;
+        padding: 10px 14px;
+        font-size: 0.82rem;
+        transition: all 0.2s ease;
+    }
+    .source-card:hover {
+        background: rgba(255,255,255,0.95);
+        border-color: var(--coral-soft);
+        box-shadow: 0 4px 12px rgba(73, 33, 24, 0.06);
+    }
+
+    /* ── Session items ── */
+    .session-item {
+        padding: 10px 14px;
+        border-radius: 14px;
+        cursor: pointer;
+        transition: all 0.2s ease;
+        border: 1px solid transparent;
+    }
+    .session-item:hover {
+        background: rgba(255,255,255,0.6);
+        border-color: var(--border);
+    }
+    .session-item.active {
+        background: var(--coral-soft);
+        border-color: rgba(216, 106, 88, 0.2);
+    }
+    .session-item .session-title {
+        font-size: 0.84rem;
+        font-weight: 500;
+        color: var(--foreground);
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+    .session-item .session-time {
+        font-family: ui-monospace, monospace;
+        font-size: 10px;
+        color: var(--muted);
+        letter-spacing: 0.04em;
+    }
+
+    /* ── Scrollbar styling ── */
+    #chatMessages::-webkit-scrollbar, #sessionsPanel::-webkit-scrollbar { width: 5px; }
+    #chatMessages::-webkit-scrollbar-track, #sessionsPanel::-webkit-scrollbar-track { background: transparent; }
+    #chatMessages::-webkit-scrollbar-thumb, #sessionsPanel::-webkit-scrollbar-thumb { background: var(--coral-soft); border-radius: 10px; }
+
+    /* ── Send button states ── */
+    #sendBtn:disabled {
+        opacity: 0.6;
+        cursor: not-allowed;
+    }
+    #sendBtn .spinner-border {
+        width: 16px;
+        height: 16px;
+        border-width: 2px;
+    }
+</style>
+
+@section Scripts {
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+    // ── State ──
+    let currentSessionId = null;
+    let isStreaming = false;
+
+    // ── DOM refs ──
+    const chatMessages = document.getElementById('chatMessages');
+    const chatForm = document.getElementById('chatForm');
+    const chatInput = document.getElementById('chatInput');
+    const sendBtn = document.getElementById('sendBtn');
+    const sendIcon = document.getElementById('sendIcon');
+    const documentSelect = document.getElementById('documentSelect');
+    const sourcesPanel = document.getElementById('sourcesPanel');
+    const sessionsPanel = document.getElementById('sessionsPanel');
+    const statusBadge = document.getElementById('statusBadge');
+    const newSessionBtn = document.getElementById('newSessionBtn');
+
+    // ── Init ──
+    loadDocuments();
+    loadSessions();
+
+    // ── Load documents for dropdown ──
+    async function loadDocuments() {
+        try {
+            const res = await fetch('/chat?handler=Documents');
+            if (!res.ok) return;
+            const docs = await res.json();
+            docs.forEach(doc => {
+                const opt = document.createElement('option');
+                opt.value = doc.id;
+                opt.textContent = doc.title + (doc.subject ? ` (${doc.subject})` : '');
+                documentSelect.appendChild(opt);
+            });
+        } catch (e) {
+            console.error('Failed to load documents:', e);
+        }
+    }
+
+    // ── Load sessions ──
+    async function loadSessions() {
+        try {
+            const res = await fetch('/chat?handler=Sessions');
+            if (!res.ok) return;
+            const sessions = await res.json();
+            renderSessions(sessions);
+        } catch (e) {
+            console.error('Failed to load sessions:', e);
+        }
+    }
+
+    function renderSessions(sessions) {
+        if (!sessions || sessions.length === 0) {
+            sessionsPanel.innerHTML = '<div class="text-muted-foreground" style="font-size: 0.85rem;">Chưa có phiên chat nào.</div>';
+            return;
+        }
+        sessionsPanel.innerHTML = sessions.map(s => `
+            <div class="session-item ${s.id === currentSessionId ? 'active' : ''}" data-session-id="${s.id}">
+                <div class="session-title">${escapeHtml(s.title)}</div>
+                <div class="session-time">${formatDate(s.createdAt)}</div>
+            </div>
+        `).join('');
+
+        sessionsPanel.querySelectorAll('.session-item').forEach(el => {
+            el.addEventListener('click', () => loadSession(el.dataset.sessionId));
+        });
+    }
+
+    // ── Load a specific session's messages ──
+    async function loadSession(sessionId) {
+        currentSessionId = sessionId;
+        setStatus('Đang tải...', true);
+        try {
+            const res = await fetch(`/chat?handler=SessionMessages&sessionId=${sessionId}`);
+            if (!res.ok) throw new Error('Failed to load messages');
+            const messages = await res.json();
+
+            chatMessages.innerHTML = '';
+            messages.forEach(m => {
+                appendMessage(m.role === 'user' ? 'user' : 'assistant', m.content);
+            });
+            scrollToBottom();
+
+            // Update active session highlight
+            sessionsPanel.querySelectorAll('.session-item').forEach(el => {
+                el.classList.toggle('active', el.dataset.sessionId === sessionId);
+            });
+
+            setStatus('Sẵn sàng', false);
+        } catch (e) {
+            console.error('Failed to load session:', e);
+            setStatus('Lỗi tải phiên', false);
+        }
+    }
+
+    // ── New session ──
+    newSessionBtn.addEventListener('click', () => {
+        currentSessionId = null;
+        chatMessages.innerHTML = `
+            <div class="chat-msg chat-msg-assistant">
+                <div class="chat-msg-label">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M12 2L2 7l10 5 10-5-10-5z"/><path d="M2 17l10 5 10-5"/><path d="M2 12l10 5 10-5"/></svg>
+                    Assistant
+                </div>
+                <div class="chat-msg-content">Xin chào! 👋 Hãy chọn tài liệu và đặt câu hỏi để bắt đầu phiên chat mới.</div>
+            </div>`;
+        sourcesPanel.innerHTML = '<div class="text-muted-foreground" style="font-size: 0.85rem;">Các nguồn tài liệu sẽ hiển thị ở đây sau khi AI trả lời.</div>';
+        sessionsPanel.querySelectorAll('.session-item').forEach(el => el.classList.remove('active'));
+        chatInput.focus();
+    });
+
+    // ── Send message ──
+    chatForm.addEventListener('submit', async function (e) {
+        e.preventDefault();
+        const message = chatInput.value.trim();
+        if (!message || isStreaming) return;
+
+        // Add user message
+        appendMessage('user', message);
+        chatInput.value = '';
+        scrollToBottom();
+
+        // Prepare request
+        const docId = documentSelect.value || null;
+        const body = {
+            message: message,
+            sessionId: currentSessionId,
+            documentId: docId
+        };
+
+        isStreaming = true;
+        setStatus('Đang trả lời...', true);
+        setSendLoading(true);
+
+        // Create assistant placeholder with typing indicator
+        const assistantDiv = createAssistantPlaceholder();
+        chatMessages.appendChild(assistantDiv);
+        scrollToBottom();
+
+        const contentEl = assistantDiv.querySelector('.chat-msg-content');
+
+        try {
+            const res = await fetch('/chat?handler=Stream', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(body)
+            });
+
+            if (!res.ok) {
+                throw new Error(`HTTP ${res.status}`);
+            }
+
+            const reader = res.body.getReader();
+            const decoder = new TextDecoder();
+            let fullText = '';
+            let buffer = '';
+
+            while (true) {
+                const { done, value } = await reader.read();
+                if (done) break;
+
+                buffer += decoder.decode(value, { stream: true });
+                const lines = buffer.split('\n');
+                buffer = lines.pop(); // keep incomplete line
+
+                for (const line of lines) {
+                    if (!line.startsWith('data: ')) continue;
+                    const data = line.substring(6);
+
+                    if (data === '[DONE]') {
+                        continue;
+                    }
+                    if (data.startsWith('[ERROR]')) {
+                        fullText += '\n⚠️ ' + data.substring(7).trim();
+                        contentEl.innerHTML = renderMarkdown(fullText);
+                        continue;
+                    }
+
+                    fullText += data;
+                    contentEl.innerHTML = renderMarkdown(fullText);
+                    scrollToBottom();
+                }
+            }
+
+            // If we got no text at all, try non-streaming endpoint as fallback
+            if (!fullText) {
+                const fallbackRes = await fetch('/chat?handler=SendMessage', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(body)
+                });
+                if (fallbackRes.ok) {
+                    const data = await fallbackRes.json();
+                    fullText = data.reply;
+                    contentEl.innerHTML = renderMarkdown(fullText);
+                    if (data.sessionId) currentSessionId = data.sessionId;
+                    if (data.sources && data.sources.length > 0) {
+                        renderSources(data.sources);
+                    }
+                }
+            }
+
+            // After stream, load sources via non-streaming endpoint if we don't have them
+            if (fullText && !currentSessionId) {
+                // We need to get the session ID from a follow-up
+                // The next stream will include sessionId tracking
+            }
+
+            // Reload sessions to pick up new/updated session
+            await loadSessions();
+
+        } catch (err) {
+            console.error('Stream error:', err);
+            contentEl.innerHTML = '<span style="color: var(--coral);">⚠️ Đã xảy ra lỗi khi kết nối. Vui lòng thử lại.</span>';
+        } finally {
+            isStreaming = false;
+            setStatus('Sẵn sàng', false);
+            setSendLoading(false);
+            scrollToBottom();
+        }
+    });
+
+    // ── Helper: append a message bubble ──
+    function appendMessage(role, content) {
+        const isUser = role === 'user';
+        const div = document.createElement('div');
+        div.className = `chat-msg chat-msg-${isUser ? 'user' : 'assistant'}`;
+        div.innerHTML = `
+            <div class="chat-msg-label">
+                ${isUser
+                    ? 'You'
+                    : `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M12 2L2 7l10 5 10-5-10-5z"/><path d="M2 17l10 5 10-5"/><path d="M2 12l10 5 10-5"/></svg> Assistant`
+                }
+            </div>
+            <div class="chat-msg-content">${isUser ? escapeHtml(content) : renderMarkdown(content)}</div>
+        `;
+        chatMessages.appendChild(div);
+    }
+
+    function createAssistantPlaceholder() {
+        const div = document.createElement('div');
+        div.className = 'chat-msg chat-msg-assistant';
+        div.innerHTML = `
+            <div class="chat-msg-label">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M12 2L2 7l10 5 10-5-10-5z"/><path d="M2 17l10 5 10-5"/><path d="M2 12l10 5 10-5"/></svg>
+                Assistant
+            </div>
+            <div class="chat-msg-content">
+                <div class="typing-indicator"><span></span><span></span><span></span></div>
+            </div>
+        `;
+        return div;
+    }
+
+    // ── Sources rendering ──
+    function renderSources(sources) {
+        if (!sources || sources.length === 0) {
+            sourcesPanel.innerHTML = '<div class="text-muted-foreground" style="font-size: 0.85rem;">Không tìm thấy nguồn trích dẫn.</div>';
+            return;
+        }
+        sourcesPanel.innerHTML = sources.map((s, i) => `
+            <div class="source-card mb-2">
+                <div class="d-flex align-items-start gap-2">
+                    <span class="chunk-chip flex-shrink-0">${i + 1}</span>
+                    <div>
+                        <div class="fw-semibold" style="color: var(--foreground); font-size: 0.84rem;">${escapeHtml(s.documentTitle)}</div>
+                        ${s.chapterTitle ? `<div class="text-muted-foreground" style="font-size: 0.78rem;">📖 ${escapeHtml(s.chapterTitle)}</div>` : ''}
+                        ${s.pageNumber ? `<div class="text-muted-foreground" style="font-size: 0.75rem;">Trang ${s.pageNumber}</div>` : ''}
+                    </div>
+                </div>
+            </div>
+        `).join('');
+    }
+
+    // ── Status helpers ──
+    function setStatus(text, loading) {
+        statusBadge.innerHTML = loading
+            ? `<span class="spinner-border spinner-border-sm me-1" role="status"></span>${text}`
+            : text;
+        statusBadge.style.background = loading ? 'var(--brown)' : 'var(--coral-soft)';
+        statusBadge.style.color = loading ? '#fff' : 'var(--brown)';
+    }
+
+    // ── UI send button state helpers ──
+    function setSendLoading(loading) {
+        sendBtn.disabled = loading;
+        chatInput.disabled = loading;
+        if (loading) {
+            sendIcon.style.display = 'none';
+            sendBtn.querySelector('span').textContent = 'Đang gửi...';
+        } else {
+            sendIcon.style.display = '';
+            sendBtn.querySelector('span').textContent = 'Gửi';
+        }
+    }
+
+    function scrollToBottom() {
+        requestAnimationFrame(() => {
+            chatMessages.scrollTop = chatMessages.scrollHeight;
+        });
+    }
+
+    // ── Simple markdown renderer ──
+    function renderMarkdown(text) {
+        if (!text) return '';
+        let html = escapeHtml(text);
+
+        // Code blocks
+        html = html.replace(/```(\w*)\n([\s\S]*?)```/g, '<pre><code>$2</code></pre>');
+        // Inline code
+        html = html.replace(/`([^`]+)`/g, '<code>$1</code>');
+        // Bold
+        html = html.replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>');
+        // Italic
+        html = html.replace(/\*(.+?)\*/g, '<em>$1</em>');
+        // Headers
+        html = html.replace(/^### (.+)$/gm, '<h5 class="fw-bold mt-2 mb-1" style="font-size:0.95rem;">$1</h5>');
+        html = html.replace(/^## (.+)$/gm, '<h4 class="fw-bold mt-2 mb-1" style="font-size:1rem;">$1</h4>');
+        html = html.replace(/^# (.+)$/gm, '<h3 class="fw-bold mt-2 mb-1" style="font-size:1.1rem;">$1</h3>');
+        // Unordered lists
+        html = html.replace(/^[-*] (.+)$/gm, '<li>$1</li>');
+        html = html.replace(/(<li>.*<\/li>\n?)+/g, '<ul>$&</ul>');
+        // Ordered lists
+        html = html.replace(/^\d+\. (.+)$/gm, '<li>$1</li>');
+        // Line breaks → paragraphs
+        html = html.replace(/\n\n/g, '</p><p>');
+        html = html.replace(/\n/g, '<br>');
+        html = '<p>' + html + '</p>';
+        // Clean up empty paragraphs
+        html = html.replace(/<p>\s*<\/p>/g, '');
+
+        return html;
+    }
+
+    // ── Utilities ──
+    function escapeHtml(str) {
+        const div = document.createElement('div');
+        div.textContent = str;
+        return div.innerHTML;
+    }
+
+    function formatDate(dateStr) {
+        const d = new Date(dateStr);
+        const now = new Date();
+        const diffMs = now - d;
+        const diffMin = Math.floor(diffMs / 60000);
+        if (diffMin < 1) return 'Vừa xong';
+        if (diffMin < 60) return `${diffMin} phút trước`;
+        const diffHr = Math.floor(diffMin / 60);
+        if (diffHr < 24) return `${diffHr} giờ trước`;
+        const diffDay = Math.floor(diffHr / 24);
+        if (diffDay < 7) return `${diffDay} ngày trước`;
+        return d.toLocaleDateString('vi-VN');
+    }
+
+    // ── Keyboard shortcut ──
+    chatInput.addEventListener('keydown', function (e) {
+        if (e.key === 'Enter' && !e.shiftKey) {
+            e.preventDefault();
+            chatForm.dispatchEvent(new Event('submit'));
+        }
+    });
+});
+</script>
+}
