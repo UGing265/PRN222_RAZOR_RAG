@@ -19,6 +19,7 @@
     "@better-auth/cli": "^1.4.21",
     "@types/node": "^20.14.9",
     "@types/pg": "^8.11.6",
+    "concurrently": "^10.0.3",
     "tsx": "^4.16.0",
     "typescript": "^5.5.2"
   }
