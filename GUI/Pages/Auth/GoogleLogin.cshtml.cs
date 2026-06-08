@@ -1,5 +1,3 @@
-using Microsoft.AspNetCore.Authentication;
-using Microsoft.AspNetCore.Authentication.Google;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 
@@ -9,8 +7,9 @@ namespace GUI.Pages.Auth
     {
         public IActionResult OnGet()
         {
-            var properties = new AuthenticationProperties { RedirectUri = Url.Page("/Auth/GoogleCallback") };
-            return Challenge(properties, GoogleDefaults.AuthenticationScheme);
+            var callbackUrl = "http://localhost:5155/";
+            var redirectUrl = $"http://localhost:5000/api/auth/sign-in/social?provider=google&callbackURL={Uri.EscapeDataString(callbackUrl)}";
+            return Redirect(redirectUrl);
         }
     }
 }

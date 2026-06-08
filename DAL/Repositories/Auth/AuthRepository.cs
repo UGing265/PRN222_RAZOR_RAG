@@ -64,4 +64,22 @@ public class AuthRepository : IAuthRepository
         _dbContext.Users.Remove(user);
         await _dbContext.SaveChangesAsync(cancellationToken);
     }
+
+    public Task<Session?> GetSessionWithUserAndRoleAsync(string token, CancellationToken cancellationToken = default)
+    {
+        return _dbContext.Sessions
+            .Include(s => s.User)
+            .ThenInclude(u => u.Role)
+            .FirstOrDefaultAsync(s => s.Token == token, cancellationToken);
+    }
+
+    public async Task DeleteSessionAsync(string token, CancellationToken cancellationToken = default)
+    {
+        var session = await _dbContext.Sessions.FirstOrDefaultAsync(s => s.Token == token, cancellationToken);
+        if (session != null)
+        {
+            _dbContext.Sessions.Remove(session);
+            await _dbContext.SaveChangesAsync(cancellationToken);
+        }
+    }
 }

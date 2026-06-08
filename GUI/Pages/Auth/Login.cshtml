@@ -22,19 +22,18 @@
                 <div class="alert alert-success py-2 mb-3">@TempData["SuccessMessage"]</div>
             }
 
-            <form method="post">
-                @Html.AntiForgeryToken()
-                <div asp-validation-summary="ModelOnly" class="alert alert-danger py-2"></div>
+            <div id="error-alert" class="alert alert-danger py-2 mb-3" style="display: none;"></div>
 
+            <form id="login-form">
                 <div class="mb-3">
                     <label asp-for="Input.Email" class="form-label font-mono-xs text-muted-foreground">Email</label>
-                    <input asp-for="Input.Email" class="form-control pill-input" placeholder="name@example.com" />
+                    <input asp-for="Input.Email" class="form-control pill-input" placeholder="name@example.com" required />
                     <span asp-validation-for="Input.Email" class="text-danger small"></span>
                 </div>
 
                 <div class="mb-3">
                     <label asp-for="Input.Password" class="form-label font-mono-xs text-muted-foreground">Mật khẩu</label>
-                    <input asp-for="Input.Password" type="password" class="form-control pill-input" placeholder="Mật khẩu" />
+                    <input asp-for="Input.Password" type="password" class="form-control pill-input" placeholder="Mật khẩu" required />
                     <span asp-validation-for="Input.Password" class="text-danger small"></span>
                 </div>
 
@@ -42,7 +41,7 @@
 
                 <div class="text-center my-3 text-muted-foreground font-mono-xs" style="font-size: 0.8rem; letter-spacing: 0.1em;">— HOẶC —</div>
 
-                <a asp-page="/Auth/GoogleLogin" class="btn btn-outline-dark pill-button w-100 py-3 d-flex align-items-center justify-content-center gap-2 mb-3" style="border-color:#4a1f16;color:#4a1f16;">
+                <a href="#" id="google-login-btn" class="btn btn-outline-dark pill-button w-100 py-3 d-flex align-items-center justify-content-center gap-2 mb-3" style="border-color:#4a1f16;color:#4a1f16;">
                     <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 48 48">
                         <path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z"/>
                         <path fill="#4285F4" d="M46.5 24c0-1.61-.15-3.16-.42-4.67H24v8.83h12.63c-.55 2.92-2.19 5.4-4.67 7.07l7.25 5.62C43.5 35.81 46.5 30.33 46.5 24z"/>
@@ -62,4 +61,75 @@
 
 @section Scripts {
     <partial name="_ValidationScriptsPartial" />
+    <script>
+        document.getElementById('login-form').addEventListener('submit', async function (e) {
+            e.preventDefault();
+            
+            const email = document.getElementById('Input_Email').value;
+            const password = document.getElementById('Input_Password').value;
+            
+            const errorAlert = document.getElementById('error-alert');
+            errorAlert.style.display = 'none';
+            errorAlert.innerText = '';
+            
+            try {
+                const response = await fetch('http://localhost:5000/api/auth/sign-in/email', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ email, password }),
+                    credentials: 'include'
+                });
+                
+                const data = await response.json();
+                
+                if (response.ok) {
+                    window.location.href = '/';
+                } else {
+                    errorAlert.innerText = data.message || 'Email hoặc mật khẩu không đúng.';
+                    errorAlert.style.display = 'block';
+                }
+            } catch (err) {
+                console.error(err);
+                errorAlert.innerText = 'Không thể kết nối đến máy chủ xác thực.';
+                errorAlert.style.display = 'block';
+            }
+        });
+
+        document.getElementById('google-login-btn').addEventListener('click', async function (e) {
+            e.preventDefault();
+            
+            const errorAlert = document.getElementById('error-alert');
+            errorAlert.style.display = 'none';
+            errorAlert.innerText = '';
+            
+            try {
+                const response = await fetch('http://localhost:5000/api/auth/sign-in/social', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        provider: 'google',
+                        callbackURL: window.location.origin + '/'
+                    }),
+                    credentials: 'include'
+                });
+                
+                const data = await response.json();
+                
+                if (response.ok && data.url) {
+                    window.location.href = data.url;
+                } else {
+                    errorAlert.innerText = data.message || 'Không thể đăng nhập bằng Google.';
+                    errorAlert.style.display = 'block';
+                }
+            } catch (err) {
+                console.error(err);
+                errorAlert.innerText = 'Không thể kết nối đến máy chủ xác thực.';
+                errorAlert.style.display = 'block';
+            }
+        });
+    </script>
 }

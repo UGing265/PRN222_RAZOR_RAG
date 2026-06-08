@@ -274,7 +274,7 @@ document.addEventListener('DOMContentLoaded', function () {
     // ── Load documents for dropdown ──
     async function loadDocuments() {
         try {
-            const res = await fetch('/chat?handler=Documents');
+            const res = await fetch('/api/chat/documents');
             if (!res.ok) return;
             const docs = await res.json();
             docs.forEach(doc => {
@@ -291,7 +291,7 @@ document.addEventListener('DOMContentLoaded', function () {
     // ── Load sessions ──
     async function loadSessions() {
         try {
-            const res = await fetch('/chat?handler=Sessions');
+            const res = await fetch('/api/chat/sessions');
             if (!res.ok) return;
             const sessions = await res.json();
             renderSessions(sessions);
@@ -322,7 +322,7 @@ document.addEventListener('DOMContentLoaded', function () {
         currentSessionId = sessionId;
         setStatus('Đang tải...', true);
         try {
-            const res = await fetch(`/chat?handler=SessionMessages&sessionId=${sessionId}`);
+            const res = await fetch(`/api/chat/sessions/${sessionId}/messages`);
             if (!res.ok) throw new Error('Failed to load messages');
             const messages = await res.json();
 
@@ -391,7 +391,7 @@ document.addEventListener('DOMContentLoaded', function () {
         const contentEl = assistantDiv.querySelector('.chat-msg-content');
 
         try {
-            const res = await fetch('/chat?handler=Stream', {
+            const res = await fetch('/api/chat/messages/stream', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(body)
@@ -435,7 +435,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
             // If we got no text at all, try non-streaming endpoint as fallback
             if (!fullText) {
-                const fallbackRes = await fetch('/chat?handler=SendMessage', {
+                const fallbackRes = await fetch('/api/chat/messages', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify(body)

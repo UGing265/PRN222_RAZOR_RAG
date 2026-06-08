@@ -27,37 +27,9 @@ namespace GUI.Pages.Auth
             return Page();
         }
 
-        public async Task<IActionResult> OnPostAsync(CancellationToken cancellationToken)
+        public IActionResult OnPost()
         {
-            if (!ModelState.IsValid)
-            {
-                return Page();
-            }
-
-            try
-            {
-                if (Input.RoleId is not 2 and not 3)
-                {
-                    ModelState.AddModelError(nameof(Input.RoleId), "Chỉ được chọn Giảng Viên hoặc Sinh Viên.");
-                    return Page();
-                }
-
-                var user = await _authService.RegisterAsync(Input.FullName, Input.Email, Input.Password, Input.RoleId, cancellationToken);
-
-                TempData["SuccessMessage"] = "Đăng ký thành công! Bạn có thể đăng nhập ngay lập tức.";
-                return RedirectToPage("/Auth/Login");
-            }
-            catch (InvalidOperationException ex)
-            {
-                ModelState.AddModelError(string.Empty, ex.Message);
-                return Page();
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, "Register failed for {Email}", Input.Email);
-                ModelState.AddModelError(string.Empty, "Không thể đăng ký lúc này. Vui lòng thử lại.");
-                return Page();
-            }
+            return Page();
         }
     }
 }

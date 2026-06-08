@@ -11,3 +11,8 @@ GUI/appsettings.*.local.json
 *.user
 *.suo
 *.log
+
+# Node.js
+**/node_modules/
+**/dist/
+better-auth/.env
