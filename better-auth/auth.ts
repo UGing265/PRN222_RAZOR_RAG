@@ -26,15 +26,13 @@ export const auth = betterAuth({
       createdAt: "created_at",
       updatedAt: "updated_at",
       emailVerified: "email_verified",
-      username: "username",
-      displayUsername: "display_username",
-      roleId: "role_id",
     },
     additionalFields: {
       roleId: {
         type: "number",
         required: true,
         defaultValue: 3,
+        fieldName: "role_id",
       },
     },
   },
