@@ -203,10 +203,48 @@ CREATE TABLE public.users (
     role_id smallint NOT NULL,
     full_name character varying(200) NOT NULL,
     email character varying(255) NOT NULL,
-    password_hash text NOT NULL,
+    email_verified boolean DEFAULT false NOT NULL,
+    username character varying(255),
+    "displayUsername" character varying(255),
     avatar_url text,
     is_active boolean DEFAULT true NOT NULL,
     is_blocked boolean DEFAULT false NOT NULL,
+    created_at timestamp with time zone DEFAULT now() NOT NULL,
+    updated_at timestamp with time zone DEFAULT now() NOT NULL
+);
+
+CREATE TABLE public.sessions (
+    id uuid DEFAULT public.uuid_generate_v4() NOT NULL,
+    expires_at timestamp with time zone NOT NULL,
+    token text NOT NULL,
+    created_at timestamp with time zone DEFAULT now() NOT NULL,
+    updated_at timestamp with time zone NOT NULL,
+    ip_address text,
+    user_agent text,
+    user_id uuid NOT NULL
+);
+
+CREATE TABLE public.accounts (
+    id uuid DEFAULT public.uuid_generate_v4() NOT NULL,
+    account_id text NOT NULL,
+    provider_id text NOT NULL,
+    user_id uuid NOT NULL,
+    access_token text,
+    refresh_token text,
+    id_token text,
+    access_token_expires_at timestamp with time zone,
+    refresh_token_expires_at timestamp with time zone,
+    scope text,
+    password text,
+    created_at timestamp with time zone DEFAULT now() NOT NULL,
+    updated_at timestamp with time zone NOT NULL
+);
+
+CREATE TABLE public.verifications (
+    id uuid DEFAULT public.uuid_generate_v4() NOT NULL,
+    identifier text NOT NULL,
+    value text NOT NULL,
+    expires_at timestamp with time zone NOT NULL,
     created_at timestamp with time zone DEFAULT now() NOT NULL,
     updated_at timestamp with time zone DEFAULT now() NOT NULL
 );
@@ -248,6 +286,11 @@ ALTER TABLE ONLY public.users ADD CONSTRAINT users_email_key UNIQUE (email);
 
 ALTER TABLE ONLY public.users ADD CONSTRAINT users_pkey PRIMARY KEY (id);
 
+ALTER TABLE ONLY public.sessions ADD CONSTRAINT sessions_pkey PRIMARY KEY (id);
+ALTER TABLE ONLY public.sessions ADD CONSTRAINT sessions_token_key UNIQUE (token);
+ALTER TABLE ONLY public.accounts ADD CONSTRAINT accounts_pkey PRIMARY KEY (id);
+ALTER TABLE ONLY public.verifications ADD CONSTRAINT verifications_pkey PRIMARY KEY (id);
+
 -- ==========================================
 -- 6. INDEXES
 -- ==========================================
@@ -270,6 +313,10 @@ CREATE INDEX island_docs_visibility ON public.documents USING btree (visibility)
 CREATE UNIQUE INDEX ix_documents_slug ON public.documents USING btree (slug);
 CREATE INDEX idx_user_subjects_user_id ON public.user_subjects USING btree (user_id);
 CREATE INDEX idx_user_subjects_subject_id ON public.user_subjects USING btree (subject_id);
+
+CREATE INDEX sessions_user_id_idx ON public.sessions USING btree (user_id);
+CREATE INDEX accounts_user_id_idx ON public.accounts USING btree (user_id);
+CREATE INDEX verifications_identifier_idx ON public.verifications USING btree (identifier);
 
 
 -- ==========================================
@@ -299,6 +346,9 @@ ALTER TABLE ONLY public.user_bookmarks ADD CONSTRAINT user_bookmarks_user_id_fke
 ALTER TABLE ONLY public.user_subjects ADD CONSTRAINT user_subjects_user_id_fkey FOREIGN KEY (user_id) REFERENCES public.users(id) ON DELETE CASCADE;
 ALTER TABLE ONLY public.user_subjects ADD CONSTRAINT user_subjects_subject_id_fkey FOREIGN KEY (subject_id) REFERENCES public.subjects(id) ON DELETE CASCADE;
 ALTER TABLE ONLY public.users ADD CONSTRAINT users_role_id_fkey FOREIGN KEY (role_id) REFERENCES public.roles(id);
+
+ALTER TABLE ONLY public.sessions ADD CONSTRAINT sessions_user_id_fkey FOREIGN KEY (user_id) REFERENCES public.users(id) ON DELETE CASCADE;
+ALTER TABLE ONLY public.accounts ADD CONSTRAINT accounts_user_id_fkey FOREIGN KEY (user_id) REFERENCES public.users(id) ON DELETE CASCADE;
 
 
 -- ==========================================

@@ -13,7 +13,7 @@ public partial class User
 
     public string Email { get; set; } = null!;
 
-    public string PasswordHash { get; set; } = null!;
+    public string? PasswordHash { get; set; }
 
     public string? AvatarUrl { get; set; }
 
@@ -24,6 +24,12 @@ public partial class User
     public DateTime CreatedAt { get; set; }
 
     public DateTime UpdatedAt { get; set; }
+
+    public bool EmailVerified { get; set; }
+
+    public string? Username { get; set; }
+
+    public string? DisplayUsername { get; set; }
 
     public virtual ICollection<Document> Documents { get; set; } = new List<Document>();
 

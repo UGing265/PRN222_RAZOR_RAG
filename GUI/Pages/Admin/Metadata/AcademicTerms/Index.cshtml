@@ -1,0 +1,219 @@
+@page
+@model GUI.Pages.Admin.Metadata.AcademicTerms.IndexModel
+@{
+    ViewData["Title"] = "Quản Lý Danh Mục - Học Kỳ";
+}
+
+<style>
+    .metadata-panel {
+        background: rgba(255, 255, 255, 0.65) !important;
+        backdrop-filter: blur(20px) !important;
+        -webkit-backdrop-filter: blur(20px) !important;
+        border: 1px solid rgba(255, 255, 255, 0.8) !important;
+        box-shadow: 0 20px 40px rgba(74, 31, 22, 0.04) !important;
+        border-radius: 24px !important;
+        transition: all 0.3s ease;
+    }
+    .glass-table-row {
+        background: rgba(255, 255, 255, 0.4) !important;
+        border-radius: 16px !important;
+        transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1) !important;
+        border: 1px solid transparent;
+    }
+    .glass-table-row td { background: transparent !important; border: none !important; }
+    .glass-table-row td:first-child { border-radius: 16px 0 0 16px; }
+    .glass-table-row td:last-child { border-radius: 0 16px 16px 0; }
+    .glass-table-row:hover {
+        background: rgba(255, 255, 255, 0.85) !important;
+        transform: translateY(-2px);
+        box-shadow: 0 15px 35px rgba(74, 31, 22, 0.05) !important;
+    }
+    .table-container { border-collapse: separate; border-spacing: 0 12px; }
+    .pill-input:focus {
+        background: rgb(255, 255, 255) !important;
+        border-color: rgba(216, 106, 88, 0.25) !important;
+        box-shadow: 0 6px 18px rgba(216, 106, 88, 0.15) !important;
+        outline: none;
+    }
+    .btn-outline-danger { border-color: rgba(220, 53, 69, 0.35) !important; color: #dc3545 !important; background: transparent !important; }
+    .btn-outline-danger:hover { background-color: #dc3545 !important; color: #fff !important; border-color: #dc3545 !important; }
+    .btn-outline-secondary { border-color: rgba(0, 0, 0, 0.1) !important; color: #6c757d !important; background: transparent !important; }
+    .btn-outline-secondary:hover { background-color: #6c757d !important; color: #fff !important; }
+    .btn-outline-dark { border-color: rgba(74, 31, 22, 0.2) !important; color: #4a1f16 !important; background: transparent !important; }
+    .btn-outline-dark:hover { background-color: #4a1f16 !important; color: #fff !important; border-color: #4a1f16 !important; }
+</style>
+
+<div class="page-shell">
+    <main class="container-fluid px-4 px-md-5 py-5" style="max-width: 1250px;">
+        <div class="d-flex align-items-center justify-content-between mb-4">
+            <div>
+                <h1 class="hero-title mb-1" style="font-size: clamp(2rem, 4vw, 2.75rem); font-family: inherit;">Quản Lý Danh Mục</h1>
+                <p class="text-muted-foreground" style="font-size: 15px; font-weight: 400; margin-bottom: 0;">Cấu hình các danh mục Môn học, Loại tài liệu, Ngôn ngữ, Nguồn và Học kỳ trong hệ thống.</p>
+            </div>
+        </div>
+
+        <!-- Tabs Area -->
+        <ul class="nav nav-tabs border-0 mb-5 d-flex gap-2" id="metadataTabs" role="tablist" style="font-family: inherit;">
+            <li class="nav-item">
+                <a class="nav-link pill-button px-4 py-2 text-decoration-none border-0 metadata-tab-btn @(ViewContext.RouteData.Values["page"]?.ToString()?.Contains("Subjects") == true ? "active" : "")" id="subjects-tab" href="/Admin/Metadata/Subjects/Index">
+                    Môn Học (@Model.SubjectsCount)
+                </a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link pill-button px-4 py-2 text-decoration-none border-0 metadata-tab-btn @(ViewContext.RouteData.Values["page"]?.ToString()?.Contains("DocumentTypes") == true ? "active" : "")" id="documenttypes-tab" href="/Admin/Metadata/DocumentTypes/Index">
+                    Loại Học Liệu (@Model.DocumentTypesCount)
+                </a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link pill-button px-4 py-2 text-decoration-none border-0 metadata-tab-btn @(ViewContext.RouteData.Values["page"]?.ToString()?.Contains("Languages") == true ? "active" : "")" id="languages-tab" href="/Admin/Metadata/Languages/Index">
+                    Ngôn Ngữ (@Model.LanguagesCount)
+                </a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link pill-button px-4 py-2 text-decoration-none border-0 metadata-tab-btn @(ViewContext.RouteData.Values["page"]?.ToString()?.Contains("DocumentSources") == true ? "active" : "")" id="documentsources-tab" href="/Admin/Metadata/DocumentSources/Index">
+                    Nguồn Tài Liệu (@Model.DocumentSourcesCount)
+                </a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link pill-button px-4 py-2 text-decoration-none border-0 metadata-tab-btn @(ViewContext.RouteData.Values["page"]?.ToString()?.Contains("AcademicTerms") == true ? "active" : "")" id="academicterms-tab" href="/Admin/Metadata/AcademicTerms/Index">
+                    Học Kỳ (@Model.AcademicTermsCount)
+                </a>
+            </li>
+        </ul>
+
+        <div class="row g-4">
+            <div class="col-lg-8">
+                <div class="metadata-panel p-4 p-md-5">
+                    <h2 class="h4 fw-bold text-foreground mb-4" style="font-family: inherit;">Danh Sách Học Kỳ</h2>
+                    @if (!Model.Items.Any())
+                    {
+                        <div class="text-center py-5">
+                            <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.2" class="text-muted mb-3"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+                            <h3 class="text-muted-foreground" style="font-size: 15px; font-weight: 500; font-family: inherit;">Chưa có học kỳ nào trong hệ thống.</h3>
+                        </div>
+                    }
+                    else
+                    {
+                        <div class="table-responsive">
+                            <table class="table table-hover align-middle mb-0 table-container" style="font-family: inherit;">
+                                <thead>
+                                    <tr class="text-muted-foreground" style="border: none; font-size: 13px; font-weight: 600; letter-spacing: 0.02em;">
+                                        <th scope="col" class="pb-2 border-0 ps-3">Thứ Tự</th>
+                                        <th scope="col" class="pb-2 border-0">Tên Học Kỳ</th>
+                                        <th scope="col" class="pb-2 border-0 text-end pe-3">Ngày Tạo</th>
+                                        <th scope="col" class="pb-2 border-0 text-end pe-3">Thao Tác</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    @foreach (var item in Model.Items)
+                                    {
+                                        <tr class="glass-table-row">
+                                            <td class="ps-3 py-3 border-0 fw-bold text-foreground" style="border-radius: 12px 0 0 12px; color: #d97706 !important; width: 100px; font-size: 14px;">@item.Order</td>
+                                            <td class="py-3 border-0 fw-medium text-muted-foreground" style="font-size: 14px;">@item.Name</td>
+                                            <td class="py-3 border-0 text-end text-muted pe-3" style="font-size: 12px;">@item.CreatedAt.ToLocalTime().ToString("dd/MM/yyyy HH:mm")</td>
+                                            <td class="py-3 border-0 text-end pe-3" style="border-radius: 0 12px 12px 0; width: 100px;">
+                                                <div class="d-flex gap-2 justify-content-end">
+                                                    <button type="button" class="btn btn-sm btn-outline-secondary d-flex align-items-center justify-content-center" onclick="openEditTermModal('@item.Id', '@item.Name', @item.Order)" style="border-radius: 50%; border-color: rgba(0,0,0,0.1); width: 30px; height: 30px; padding: 0;">
+                                                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+                                                    </button>
+                                                    <button type="button" class="btn btn-sm btn-outline-danger d-flex align-items-center justify-content-center" onclick="openDeleteTermModal('@item.Id', '@item.Name')" style="border-radius: 50%; width: 30px; height: 30px; padding: 0;">
+                                                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
+                                                    </button>
+                                                </div>
+                                            </td>
+                                        </tr>
+                                    }
+                                </tbody>
+                            </table>
+                        </div>
+                    }
+                </div>
+            </div>
+            <div class="col-lg-4">
+                <div class="metadata-panel p-4">
+                    <h2 class="h5 fw-bold text-foreground mb-4 d-flex align-items-center gap-2" style="font-family: inherit;">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M12 5v14M5 12h14"/></svg>
+                        Thêm Học Kỳ Mới
+                    </h2>
+                    <form asp-page-handler="Create" method="post" style="font-family: inherit;">
+                        <div class="mb-3">
+                            <label for="termName" class="form-label text-muted-foreground" style="font-size: 13px; font-weight: 600;">Tên học kỳ</label>
+                            <input type="text" class="form-control pill-input" id="termName" name="name" placeholder="Ví dụ: Tiếng Anh Chuẩn Bị, Kỳ 1" required style="background: rgba(255,255,255,0.5); border: 1px solid rgba(82, 39, 27, 0.08); border-radius: 12px; padding: 12px 16px; font-size: 14px;" />
+                        </div>
+                        <div class="mb-4">
+                            <label for="termOrder" class="form-label text-muted-foreground" style="font-size: 13px; font-weight: 600;">Thứ Tự Sắp Xếp (Số)</label>
+                            <input type="number" class="form-control pill-input" id="termOrder" name="order" value="0" min="0" required style="background: rgba(255,255,255,0.5); border: 1px solid rgba(82, 39, 27, 0.08); border-radius: 12px; padding: 12px 16px; font-size: 14px;" />
+                            <div class="form-text mt-1" style="font-size: 0.75rem; color: #a1a1aa !important;">Sử dụng để sắp xếp danh sách (0 là Tiếng Anh Chuẩn Bị, Kỳ 1 -> 9 là 1 -> 9).</div>
+                        </div>
+                        <button type="submit" class="btn btn-dark w-100 pill-button py-2.5 text-white" style="background: #d97706; border: none; border-radius: 100px; font-size: 14px; font-weight: 600; box-shadow: 0 4px 12px rgba(217, 119, 6, 0.2);">Tạo Học Kỳ</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </main>
+</div>
+
+<!-- Academic Term Modals -->
+<div class="modal fade" id="editTermModal" tabindex="-1" aria-hidden="true" style="backdrop-filter: blur(8px); background: rgba(217, 119, 6, 0.03);">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content border-0 shadow-lg" style="border-radius: 24px; overflow: hidden; font-family: inherit;">
+            <div class="modal-header border-0 p-4 pb-0 d-flex justify-content-between align-items-center">
+                <h5 class="modal-title fw-bold" style="font-size: 1.2rem; color: #d97706;">Chỉnh Sửa Học Kỳ</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close" style="background-color: rgba(0, 0, 0, 0.05); padding: 0.75rem; border-radius: 50%;"></button>
+            </div>
+            <form asp-page-handler="Update" method="post">
+                <div class="modal-body p-4">
+                    <input type="hidden" id="editTermId" name="id" />
+                    <div class="mb-3">
+                        <label class="form-label text-muted-foreground" style="font-size: 13px; font-weight: 600;">Tên học kỳ</label>
+                        <input type="text" class="form-control pill-input" id="editTermName" name="name" required style="border-radius: 12px; padding: 10px 16px; font-size: 14px;" />
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label text-muted-foreground" style="font-size: 13px; font-weight: 600;">Thứ Tự</label>
+                        <input type="number" class="form-control pill-input" id="editTermOrder" name="order" required min="0" style="border-radius: 12px; padding: 10px 16px; font-size: 14px;" />
+                    </div>
+                </div>
+                <div class="modal-footer border-0 p-4 pt-0 d-flex justify-content-end gap-2">
+                    <button type="button" class="btn btn-outline-dark pill-button px-4 py-2" data-bs-dismiss="modal" style="font-size: 0.85rem; border-color: rgba(0,0,0,0.15); border-radius: 100px;">Hủy</button>
+                    <button type="submit" class="btn btn-dark pill-button px-4 py-2 text-white" style="font-size: 0.85rem; background: #d97706; border: none; border-radius: 100px;">Lưu Thay Đổi</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="deleteTermModal" tabindex="-1" aria-hidden="true" style="backdrop-filter: blur(8px); background: rgba(220, 53, 69, 0.03);">
+    <div class="modal-dialog modal-dialog-centered modal-sm">
+        <div class="modal-content border-0 shadow-lg" style="border-radius: 24px; overflow: hidden; font-family: inherit;">
+            <form asp-page-handler="Delete" method="post">
+                <div class="modal-body text-center p-4">
+                    <input type="hidden" id="deleteTermId" name="id" />
+                    <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="#dc3545" stroke-width="2.2" class="mb-3"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
+                    <h5 class="fw-bold mb-2" style="font-size: 1.15rem;">Xác nhận xóa?</h5>
+                    <p class="text-muted small mb-4">Bạn có chắc chắn muốn xóa học kỳ <strong id="deleteTermNameDisplay"></strong> không?</p>
+                    <div class="d-flex gap-2 justify-content-center">
+                        <button type="button" class="btn btn-outline-dark pill-button px-3.5 py-1.5" data-bs-dismiss="modal" style="font-size: 0.85rem; border-radius: 100px;">Hủy</button>
+                        <button type="submit" class="btn btn-danger pill-button px-3.5 py-1.5" style="font-size: 0.85rem; background-color: #dc3545; border: none; border-radius: 100px;">Xóa</button>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        function openEditTermModal(id, name, order) {
+            document.getElementById('editTermId').value = id;
+            document.getElementById('editTermName').value = name;
+            document.getElementById('editTermOrder').value = order;
+            new bootstrap.Modal(document.getElementById('editTermModal')).show();
+        }
+
+        function openDeleteTermModal(id, name) {
+            document.getElementById('deleteTermId').value = id;
+            document.getElementById('deleteTermNameDisplay').textContent = name;
+            new bootstrap.Modal(document.getElementById('deleteTermModal')).show();
+        }
+    </script>
+}

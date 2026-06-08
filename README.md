@@ -1,4 +1,4 @@
-# Hệ Thống Quản Lý & Tìm Kiếm Tài Liệu Học Thuật Tích Hợp AI RAG (PRN222_RAG)
+# Hệ Thống Quản Lý & Tìm Kiếm Tài Liệu Học Thuật Tích Hợp AI RAG (PRN222_RAZOR_RAG)
 
 Hệ thống quản lý và tìm kiếm ngữ nghĩa tài liệu học thuật dành cho trường học, được xây dựng dựa trên mô hình **3-Layer Architecture** sử dụng ASP.NET Core 8 MVC kết hợp với cơ sở dữ liệu PostgreSQL (pgvector) và mô hình ngôn ngữ lớn (LLM) **Google Gemini API** cho hệ thống **RAG (Retrieval-Augmented Generation)**.
 
@@ -117,7 +117,7 @@ Hệ thống được tối ưu hóa sâu sắc ở khâu tiền xử lý dữ l
 *   **Google Gemini API Key** (tạo miễn phí tại Google AI Studio).
 
 ### 1. Chuẩn bị Cơ sở dữ liệu
-Đăng nhập vào PostgreSQL và tạo cơ sở dữ liệu mới (ví dụ: `prn222_rag`). Sau đó chạy file script SQL tại đường dẫn:
+Đăng nhập vào PostgreSQL và tạo cơ sở dữ liệu mới (ví dụ: `prn222_razor_rag`). Sau đó chạy file script SQL tại đường dẫn:
 ```bash
 # Thực thi script tạo bảng, indexes và cài đặt các extensions cần thiết
 Database/Database.sql

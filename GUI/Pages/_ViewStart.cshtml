@@ -1,0 +1,6 @@
+@{
+    var page = ViewContext.RouteData.Values["page"]?.ToString();
+    var isAuthenticated = User?.Identity?.IsAuthenticated == true;
+    var isAuthPage = page != null && page.StartsWith("/Auth/", StringComparison.OrdinalIgnoreCase);
+    Layout = (isAuthPage || !isAuthenticated) ? "_Layout" : "_AppLayout";
+}

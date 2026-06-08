@@ -1,0 +1,119 @@
+@page "/Auth/Register"
+@model GUI.Pages.Auth.RegisterModel
+
+@{
+    ViewData["Title"] = "Đăng Ký";
+}
+
+<div class="page-shell grain">
+    <main class="container-fluid px-4 px-md-5 py-5" style="max-width: 620px;">
+        <div class="soft-panel editorial-shadow p-4 p-md-5" style="background: rgba(255,255,255,.72);">
+            <div class="d-flex align-items-center justify-content-between mb-4">
+                <h1 class="hero-title mb-0" style="font-size: clamp(2rem, 4vw, 3rem);">Đăng Ký</h1>
+                <a asp-page="/Index" class="link-plain text-muted-foreground font-mono-xs">Trang Chủ</a>
+            </div>
+
+            <div id="error-alert" class="alert alert-danger py-2 mb-3" style="display: none;"></div>
+            <div id="success-alert" class="alert alert-success py-2 mb-3" style="display: none;"></div>
+
+            <form id="register-form">
+                <div class="mb-3">
+                    <label asp-for="Input.FullName" class="form-label font-mono-xs text-muted-foreground">Họ và tên</label>
+                    <input asp-for="Input.FullName" class="form-control pill-input" placeholder="Họ và tên" required />
+                    <span asp-validation-for="Input.FullName" class="text-danger small"></span>
+                </div>
+
+                <div class="mb-3">
+                    <label asp-for="Input.Email" class="form-label font-mono-xs text-muted-foreground">Email</label>
+                    <input asp-for="Input.Email" class="form-control pill-input" placeholder="name@example.com" required />
+                    <span asp-validation-for="Input.Email" class="text-danger small"></span>
+                </div>
+
+                <div class="row g-3 mb-3">
+                    <div class="col-md-6">
+                        <label asp-for="Input.Password" class="form-label font-mono-xs text-muted-foreground">Mật khẩu</label>
+                        <input asp-for="Input.Password" type="password" class="form-control pill-input" placeholder="Mật khẩu" required />
+                        <span asp-validation-for="Input.Password" class="text-danger small"></span>
+                    </div>
+                    <div class="col-md-6">
+                        <label asp-for="Input.ConfirmPassword" class="form-label font-mono-xs text-muted-foreground">Mật khẩu nhập lại</label>
+                        <input asp-for="Input.ConfirmPassword" type="password" class="form-control pill-input" placeholder="Nhập lại" required />
+                        <span asp-validation-for="Input.ConfirmPassword" class="text-danger small"></span>
+                    </div>
+                </div>
+
+                <div class="mb-4">
+                    <label asp-for="Input.RoleId" class="form-label font-mono-xs text-muted-foreground">Bạn là</label>
+                    <select asp-for="Input.RoleId" class="form-select pill-input">
+                        <option value="3">Sinh Viên</option>
+                        <option value="2">Giảng Viên</option>
+                    </select>
+                    <span asp-validation-for="Input.RoleId" class="text-danger small"></span>
+                </div>
+
+                <button type="submit" class="btn btn-dark pill-button w-100 py-3" style="background:#4a1f16;border-color:#4a1f16;">Đăng Ký</button>
+            </form>
+        </div>
+    </main>
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+    <script>
+        document.getElementById('register-form').addEventListener('submit', async function (e) {
+            e.preventDefault();
+            
+            const fullName = document.getElementById('Input_FullName').value;
+            const email = document.getElementById('Input_Email').value;
+            const password = document.getElementById('Input_Password').value;
+            const confirmPassword = document.getElementById('Input_ConfirmPassword').value;
+            const roleId = parseInt(document.getElementById('Input_RoleId').value);
+            
+            const errorAlert = document.getElementById('error-alert');
+            const successAlert = document.getElementById('success-alert');
+            errorAlert.style.display = 'none';
+            successAlert.style.display = 'none';
+            
+            if (password !== confirmPassword) {
+                errorAlert.innerText = 'Mật khẩu nhập lại không khớp.';
+                errorAlert.style.display = 'block';
+                return;
+            }
+            
+            const username = email.split('@@')[0];
+            
+            try {
+                const response = await fetch('/api/auth/sign-up/email', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        email,
+                        password,
+                        name: fullName,
+                        username,
+                        roleId
+                    })
+                });
+                
+                const data = await response.json();
+                
+                if (response.ok) {
+                    successAlert.innerText = 'Đăng ký tài khoản thành công! Đang chuyển hướng đến trang đăng nhập...';
+                    successAlert.style.display = 'block';
+                    setTimeout(() => {
+                        window.location.href = '/Auth/Login';
+                    }, 2000);
+                } else {
+                    errorAlert.innerText = data.message || 'Đăng ký không thành công. Vui lòng kiểm tra lại thông tin.';
+                    errorAlert.style.display = 'block';
+                }
+            } catch (err) {
+                console.error(err);
+                errorAlert.innerText = 'Không thể kết nối đến máy chủ xác thực.';
+                errorAlert.style.display = 'block';
+            }
+        });
+    </script>
+}

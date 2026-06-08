@@ -230,3 +230,180 @@ h1, h2, h3, h4, h5, h6, .hero-title, .font-display { font-family: Inter, ui-sans
 .hero-visual-card:hover {
     transform: scale(1.02) rotate(0.5deg);
 }
+
+/* Metadata Admin Tabs Styles */
+.metadata-tab-btn {
+    font-family: inherit;
+    font-size: 14px;
+    font-weight: 600;
+    text-transform: none;
+    letter-spacing: normal;
+    background: rgba(255, 255, 255, 0.45) !important;
+    color: var(--brown) !important;
+    border: 1px solid rgba(82, 39, 27, 0.08) !important;
+    backdrop-filter: blur(8px);
+    transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1) !important;
+    border-radius: 100px !important;
+    text-decoration: none;
+    display: inline-block;
+    padding: 8px 18px;
+}
+.metadata-tab-btn:hover {
+    background: rgba(255, 255, 255, 0.75) !important;
+    border-color: rgba(216, 106, 88, 0.25) !important;
+    color: var(--brown) !important;
+}
+.metadata-tab-btn.active {
+    color: #fff !important;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.15) !important;
+}
+#subjects-tab.active {
+    background: #4a1f16 !important;
+    border-color: #4a1f16 !important;
+    box-shadow: 0 4px 15px rgba(74, 31, 22, 0.2) !important;
+}
+#documenttypes-tab.active {
+    background: #2b5c43 !important;
+    border-color: #2b5c43 !important;
+    box-shadow: 0 4px 15px rgba(43, 92, 67, 0.2) !important;
+}
+#languages-tab.active {
+    background: #1e3e62 !important;
+    border-color: #1e3e62 !important;
+    box-shadow: 0 4px 15px rgba(30, 62, 98, 0.2) !important;
+}
+#documentsources-tab.active {
+    background: #4b5563 !important;
+    border-color: #4b5563 !important;
+    box-shadow: 0 4px 15px rgba(75, 85, 99, 0.2) !important;
+}
+#academicterms-tab.active {
+    background: #d97706 !important;
+    border-color: #d97706 !important;
+    box-shadow: 0 4px 15px rgba(217, 119, 6, 0.2) !important;
+}
+
+/* ==========================================================================
+   Premium Glassmorphism Floating Toast Styles
+   ========================================================================== */
+.premium-toast-container {
+    position: fixed;
+    top: 24px;
+    right: 24px;
+    z-index: 9999;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    pointer-events: none;
+}
+
+.premium-toast {
+    pointer-events: auto;
+    width: 380px;
+    max-width: calc(100vw - 48px);
+    background: rgba(255, 255, 255, 0.7);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    border-radius: 16px;
+    padding: 16px 20px;
+    box-shadow: 0 15px 35px rgba(82, 39, 27, 0.08), 0 5px 15px rgba(0, 0, 0, 0.04);
+    display: flex;
+    align-items: flex-start;
+    gap: 14px;
+    border: 1px solid rgba(82, 39, 27, 0.08);
+    transform: translateX(120%);
+    opacity: 0;
+    transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.4s ease;
+    position: relative;
+    overflow: hidden;
+}
+
+.premium-toast.show {
+    transform: translateX(0);
+    opacity: 1;
+}
+
+.premium-toast.success {
+    border-left: 4px solid #2b5c43;
+}
+
+.premium-toast.danger {
+    border-left: 4px solid #dc3545;
+}
+
+.premium-toast-icon {
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
+}
+
+.premium-toast.success .premium-toast-icon {
+    background: rgba(43, 92, 67, 0.1);
+    color: #2b5c43;
+}
+
+.premium-toast.danger .premium-toast-icon {
+    background: rgba(220, 53, 69, 0.1);
+    color: #dc3545;
+}
+
+.premium-toast-body {
+    flex-grow: 1;
+}
+
+.premium-toast-title {
+    font-weight: 700;
+    color: var(--brown);
+    font-size: 0.92rem;
+    margin-bottom: 3px;
+    font-family: inherit;
+}
+
+.premium-toast-message {
+    color: var(--muted);
+    font-size: 0.82rem;
+    line-height: 1.4;
+    font-family: inherit;
+}
+
+.premium-toast-close {
+    background: transparent;
+    border: none;
+    color: var(--muted);
+    opacity: 0.5;
+    transition: opacity 0.2s ease;
+    padding: 0;
+    cursor: pointer;
+    font-size: 1.3rem;
+    line-height: 1;
+    margin-top: -4px;
+}
+
+.premium-toast-close:hover {
+    opacity: 1;
+}
+
+/* Toast Progress Bar Timer */
+.premium-toast-progress {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    height: 3px;
+    background: rgba(82, 39, 27, 0.15);
+    width: 100%;
+    transform-origin: left;
+    transform: scaleX(1);
+}
+
+.premium-toast.success .premium-toast-progress {
+    background: rgba(43, 92, 67, 0.4);
+}
+
+.premium-toast.danger .premium-toast-progress {
+    background: rgba(220, 53, 69, 0.4);
+}
+

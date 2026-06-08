@@ -64,4 +64,30 @@ public class AuthRepository : IAuthRepository
         _dbContext.Users.Remove(user);
         await _dbContext.SaveChangesAsync(cancellationToken);
     }
+
+    public Task<Session?> GetSessionWithUserAndRoleAsync(string token, CancellationToken cancellationToken = default)
+    {
+        return _dbContext.Sessions
+            .Include(s => s.User)
+            .ThenInclude(u => u.Role)
+            .FirstOrDefaultAsync(s => s.Token == token, cancellationToken);
+    }
+
+    public async Task DeleteSessionAsync(string token, CancellationToken cancellationToken = default)
+    {
+        var session = await _dbContext.Sessions.FirstOrDefaultAsync(s => s.Token == token, cancellationToken);
+        if (session != null)
+        {
+            _dbContext.Sessions.Remove(session);
+            await _dbContext.SaveChangesAsync(cancellationToken);
+        }
+    }
+
+    public async Task CreateAccountAsync(Guid userId, string email, string passwordHash, CancellationToken cancellationToken = default)
+    {
+        await _dbContext.Database.ExecuteSqlRawAsync(
+            "INSERT INTO accounts (id, account_id, provider_id, user_id, password, created_at, updated_at) VALUES ({0}, {1}, 'credential', {2}, {3}, now(), now())",
+            new object[] { Guid.NewGuid(), userId.ToString(), userId, passwordHash },
+            cancellationToken);
+    }
 }

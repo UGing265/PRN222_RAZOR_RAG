@@ -1,0 +1,6 @@
+@using System.Security.Claims
+@{
+    // Pull userId once so the ViewComponent can build a stable cache key.
+    var userId = User?.FindFirstValue(ClaimTypes.NameIdentifier);
+}
+@await Component.InvokeAsync("Nav", new { userId })

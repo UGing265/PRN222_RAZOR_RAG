@@ -1,0 +1,117 @@
+@page "/Admin/AssignSubjects"
+@model GUI.Pages.Admin.AssignSubjectsModel
+@{
+    ViewData["Title"] = "Phân Công Môn Học";
+}
+
+<div class="page-shell">
+    <main class="container-fluid px-4 px-md-5 py-5" style="max-width: 900px;">
+        <!-- Top Heading Area -->
+        <div class="d-flex align-items-center justify-content-between mb-5">
+            <div>
+                <h1 class="hero-title mb-1" style="font-size: clamp(2rem, 4vw, 2.75rem); font-family: inherit;">Phân Công Môn Học</h1>
+                <p class="text-muted-foreground" style="font-size: 15px; font-weight: 400; margin-bottom: 0;">
+                    Chọn các môn học mà giảng viên <strong>@Model.Lecturer?.FullName</strong> (@Model.Lecturer?.Email) được phép upload và quản lý học liệu.
+                </p>
+            </div>
+            <div>
+                <a asp-page="/Admin/Users" class="btn btn-outline-secondary rounded-pill px-4 py-2 text-decoration-none" style="font-size: 14px; font-weight: 500;">
+                    Quay Lại
+                </a>
+            </div>
+        </div>
+
+        <div class="soft-panel editorial-shadow p-4 p-md-5" style="background: rgba(255,255,255,.72); border-radius: 24px;">
+            <form method="post">
+                @Html.AntiForgeryToken()
+                <input type="hidden" name="userId" value="@Model.Lecturer?.Id" />
+
+                <!-- Search Input for filtering subjects -->
+                <div class="mb-4">
+                    <input type="text" id="subjectSearch" class="form-control pill-input px-4 py-2.5" placeholder="Tìm kiếm môn học theo tên hoặc mã môn..." style="border-radius: 12px; background: rgba(255,255,255,0.8); border: 1px solid rgba(0,0,0,0.08); font-family: inherit; font-size: 15px;" />
+                </div>
+
+                <div class="table-responsive" style="max-height: 400px; overflow-y: auto; border: 1px solid rgba(0,0,0,0.05); border-radius: 12px; background: rgba(255,255,255,0.4);">
+                    <table class="table table-hover align-middle mb-0" id="subjectsTable" style="font-family: inherit;">
+                        <thead>
+                            <tr class="text-muted-foreground" style="font-size: 13px; font-weight: 600; letter-spacing: 0.02em;">
+                                <th scope="col" style="width: 50px;" class="ps-3 py-3 border-0">Chọn</th>
+                                <th scope="col" class="py-3 border-0">Mã Môn</th>
+                                <th scope="col" class="py-3 border-0">Tên Môn Học</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var subject in Model.AllSubjects)
+                            {
+                                var isChecked = Model.AssignedSubjectIds.Contains(subject.Id);
+                                var isAssignedToOther = Model.SubjectLecturerMap.TryGetValue(subject.Id, out var lecturerInfo) && lecturerInfo.UserId != Model.Lecturer?.Id;
+                                
+                                <tr class="subject-row" style="transition: background 0.2s; @(isAssignedToOther ? "opacity: 0.65;" : "")">
+                                    <td class="ps-3 py-3 border-0">
+                                        <div class="form-check">
+                                            @if (isAssignedToOther)
+                                            {
+                                                <input class="form-check-input" type="checkbox" disabled="disabled" style="width: 18px; height: 18px; cursor: not-allowed;" />
+                                            }
+                                            else
+                                            {
+                                                <input class="form-check-input" type="checkbox" name="subjectIds" value="@subject.Id" id="chk-@subject.Id" @(isChecked ? "checked" : "") style="cursor: pointer; width: 18px; height: 18px;" />
+                                            }
+                                        </div>
+                                    </td>
+                                    <td class="py-3 border-0 fw-medium" style="font-size: 14px;">
+                                        @if (isAssignedToOther)
+                                        {
+                                            <span>@subject.Code</span>
+                                        }
+                                        else
+                                        {
+                                            <label for="chk-@subject.Id" style="cursor: pointer; display: block; margin: 0;">@subject.Code</label>
+                                        }
+                                    </td>
+                                    <td class="py-3 border-0 text-muted-foreground" style="font-size: 14px;">
+                                        @if (isAssignedToOther)
+                                        {
+                                            <span>@subject.Name</span>
+                                            <span class="badge rounded-pill ms-2 px-2.5 py-1" style="background: rgba(139, 0, 0, 0.08); color: #8b0000; font-size: 11px; font-weight: 500; border: 1px solid rgba(139, 0, 0, 0.12); text-transform: none; letter-spacing: normal;">
+                                                Đã phân công cho: @lecturerInfo.FullName
+                                            </span>
+                                        }
+                                        else
+                                        {
+                                            <label for="chk-@subject.Id" style="cursor: pointer; display: block; margin: 0;">@subject.Name</label>
+                                        }
+                                    </td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+
+                <div class="d-flex justify-content-end gap-3 mt-4">
+                    <a asp-page="/Admin/Users" class="btn btn-outline-secondary rounded-pill px-4 py-2 text-decoration-none" style="font-size: 14px; font-weight: 500;">Hủy</a>
+                    <button type="submit" class="btn btn-primary rounded-pill px-4 py-2" style="background: #2b5c43; border: none; color: #fff; font-size: 14px; font-weight: 500;">
+                        Lưu Thay Đổi
+                    </button>
+                </div>
+            </form>
+        </div>
+    </main>
+</div>
+
+@section Scripts {
+    <script>
+        document.getElementById('subjectSearch').addEventListener('input', function() {
+            var filter = this.value.toLowerCase();
+            var rows = document.querySelectorAll('.subject-row');
+            rows.forEach(function(row) {
+                var text = row.innerText.toLowerCase();
+                if (text.indexOf(filter) > -1) {
+                    row.style.display = '';
+                } else {
+                    row.style.display = 'none';
+                }
+            });
+        });
+    </script>
+}

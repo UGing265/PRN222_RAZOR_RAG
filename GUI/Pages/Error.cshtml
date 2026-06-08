@@ -1,0 +1,19 @@
+@page
+@model GUI.Pages.ErrorModel
+@{
+    ViewData["Title"] = "Lỗi";
+}
+
+<div class="container py-5">
+    <div class="soft-panel editorial-shadow p-5 max-w-2xl mx-auto text-center">
+        <h1 class="text-danger mb-3">Đã xảy ra lỗi</h1>
+        <p class="text-muted-foreground">Đã có lỗi xảy ra trong quá trình xử lý yêu cầu của bạn.</p>
+
+        @if (Model.ShowRequestId)
+        {
+            <div class="mt-4 p-3 bg-light rounded-4 font-mono-xs" style="border: 1px solid rgba(82,39,27,0.08);">
+                <strong>Mã yêu cầu (Request ID):</strong> <code>@Model.RequestId</code>
+            </div>
+        }
+    </div>
+</div>

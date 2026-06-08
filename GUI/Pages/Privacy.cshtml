@@ -1,0 +1,14 @@
+@page "/privacy"
+@model GUI.Pages.PrivacyModel
+@{
+    ViewData["Title"] = "Chính sách bảo mật";
+}
+
+<div class="container py-5">
+    <div class="soft-panel editorial-shadow p-5 max-w-4xl mx-auto">
+        <h1 class="hero-title mb-4">@ViewData["Title"]</h1>
+        <p class="text-muted-foreground">Trang này quy định các chính sách bảo mật thông tin tài liệu và người dùng trong hệ thống StudyMate AI.</p>
+        <hr class="my-4" />
+        <p>Hệ thống RAG sử dụng API Gemini để xử lý dữ liệu và tạo câu trả lời. Dữ liệu của bạn được lưu trữ an toàn trong cơ sở dữ liệu Postgres của chúng tôi.</p>
+    </div>
+</div>
