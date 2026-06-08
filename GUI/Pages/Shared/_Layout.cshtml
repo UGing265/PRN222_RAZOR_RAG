@@ -11,30 +11,33 @@
     <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
 </head>
 <body class="bg-background text-foreground">
+    <div class="premium-toast-container" id="premiumToastContainer"></div>
+
     <main>
-        @if (TempData["SuccessMessage"] is string successMessage)
-        {
-            <div class="container-fluid px-4 px-md-5 pt-4">
-                <div class="alert alert-success alert-dismissible fade show shadow-sm" role="alert">
-                    @successMessage
-                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-                </div>
-            </div>
-        }
-        @if (TempData["ErrorMessage"] is string errorMessage)
-        {
-            <div class="container-fluid px-4 px-md-5 pt-4">
-                <div class="alert alert-danger alert-dismissible fade show shadow-sm" role="alert">
-                    @errorMessage
-                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-                </div>
-            </div>
-        }
         @RenderBody()
     </main>
     <script src="~/lib/jquery/dist/jquery.min.js"></script>
     <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
     <script src="~/js/glass-dropdown.js" asp-append-version="true"></script>
+    <script src="~/js/site.js" asp-append-version="true"></script>
+    
+    <script>
+        document.addEventListener("DOMContentLoaded", function () {
+            @if (TempData["SuccessMessage"] is string successMsg)
+            {
+                <text>
+                showPremiumToast(@Html.Raw(System.Text.Json.JsonSerializer.Serialize(successMsg)), 'success');
+                </text>
+            }
+            @if (TempData["ErrorMessage"] is string errorMsg)
+            {
+                <text>
+                showPremiumToast(@Html.Raw(System.Text.Json.JsonSerializer.Serialize(errorMsg)), 'danger');
+                </text>
+            }
+        });
+    </script>
+
     @await RenderSectionAsync("Scripts", required: false)
 </body>
 </html>
