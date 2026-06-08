@@ -30,6 +30,13 @@ export const auth = betterAuth({
       displayUsername: "display_username",
       roleId: "role_id",
     },
+    additionalFields: {
+      roleId: {
+        type: "number",
+        required: true,
+        defaultValue: 3,
+      },
+    },
   },
   session: {
     modelName: "sessions",
@@ -88,8 +95,10 @@ export const auth = betterAuth({
           // Default roleId is 3 (Student)
           const targetRoleId = user.roleId ? Number(user.roleId) : 3;
           return {
-            ...user,
-            roleId: targetRoleId,
+            data: {
+              ...user,
+              roleId: targetRoleId,
+            }
           };
         },
       },
