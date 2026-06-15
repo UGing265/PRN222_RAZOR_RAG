@@ -27,6 +27,10 @@
                             </svg>
                             <select id="documentSelect" class="form-select pill-input" style="max-width: 340px; font-size: 0.88rem;">
                                 <option value="">Tất cả tài liệu</option>
+                                @foreach (var doc in Model.ChatDocuments)
+                                {
+                                    <option value="@doc.Id">@doc.Title @(!string.IsNullOrWhiteSpace(doc.SubjectName) ? $"({doc.SubjectName})" : "")</option>
+                                }
                             </select>
                         </div>
                         <span id="statusBadge" class="badge rounded-pill" style="background: var(--coral-soft); color: var(--brown); font-size: 0.72rem; padding: 6px 14px;">Sẵn sàng</span>
@@ -268,37 +272,7 @@ document.addEventListener('DOMContentLoaded', function () {
     const newSessionBtn = document.getElementById('newSessionBtn');
 
     // ── Init ──
-    loadDocuments();
     loadSessions();
-
-    // ── Load documents for dropdown ──
-    async function loadDocuments() {
-        try {
-            const whoami = await fetch('/api/chat/whoami');
-            if (whoami.ok) {
-                console.log('WHOAMI:', await whoami.json());
-            } else {
-                console.log('WHOAMI failed:', whoami.status, whoami.redirected);
-            }
-
-            const res = await fetch('/api/chat/documents');
-            console.log('loadDocuments response:', res.status, res.redirected, res.url);
-            if (res.redirected || !res.ok) {
-                console.error('Failed to load documents: HTTP', res.status, 'Redirected:', res.redirected);
-                return;
-            }
-            const docs = await res.json();
-            console.log('Documents loaded:', docs.length, docs);
-            docs.forEach(doc => {
-                const opt = document.createElement('option');
-                opt.value = doc.id;
-                opt.textContent = doc.title + (doc.subject ? ` (${doc.subject})` : '');
-                documentSelect.appendChild(opt);
-            });
-        } catch (e) {
-            console.error('Failed to load documents:', e);
-        }
-    }
 
     // ── Load sessions ──
     async function loadSessions() {

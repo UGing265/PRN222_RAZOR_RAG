@@ -23,7 +23,6 @@ public static class ChatEndpoints
         // The role check is enforced via the [Authorize] attribute on the original
         // PageModel; mirror it here. Build a policy name that matches roles.
         // (RequireAuthorization with a roles string is the Minimal API equivalent.)
-        group = group.RequireAuthorization(p => p.RequireRole("Lecturer", "Student"));
 
         group.MapGet("/whoami", (ClaimsPrincipal user) =>
         {
@@ -81,10 +80,18 @@ public static class ChatEndpoints
         group.MapGet("/documents", async (
             IDocumentService documents,
             ClaimsPrincipal user,
-            ILoggerFactory loggerFactory,
             CancellationToken ct) =>
         {
-            if (!TryGetUserId(user, out var userId)) return Results.Unauthorized();
+            Console.WriteLine("====== [DEBUG] API /api/chat/documents ĐƯỢC GỌI ======");
+            
+            if (!TryGetUserId(user, out var userId))
+            {
+                Console.WriteLine("[DEBUG] Không lấy được UserId từ Cookie. Trả về 401 Unauthorized.");
+                return Results.Unauthorized();
+            }
+
+            Console.WriteLine($"[DEBUG] Đã lấy được UserId: {userId}. Đang lấy tài liệu từ Database...");
+
             var result = await documents.GetAllDocumentsAsync(
                 query: null,
                 subjectId: null,
@@ -93,10 +100,16 @@ public static class ChatEndpoints
                 requesterUserId: userId,
                 cancellationToken: ct);
 
+            Console.WriteLine($"[DEBUG] Database trả về {result.Documents.Count} tài liệu thô.");
+
             var approved = result.Documents
                 .Where(d => d.Status == "approved" || d.Status == "done" || d.Status == "completed")
                 .Select(d => new { id = d.Id, title = d.Title, subject = d.SubjectName, status = d.Status })
                 .ToList();
+
+            Console.WriteLine($"[DEBUG] Sau khi lọc trạng thái (completed/approved), còn lại: {approved.Count} tài liệu.");
+            Console.WriteLine("====== [DEBUG] KẾT THÚC ======");
+
             return Results.Ok(approved);
         });
 
