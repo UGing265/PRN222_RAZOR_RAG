@@ -203,48 +203,13 @@ CREATE TABLE public.users (
     role_id smallint NOT NULL,
     full_name character varying(200) NOT NULL,
     email character varying(255) NOT NULL,
+    password_hash character varying(255),
     email_verified boolean DEFAULT false NOT NULL,
     username character varying(255),
     "displayUsername" character varying(255),
     avatar_url text,
     is_active boolean DEFAULT true NOT NULL,
     is_blocked boolean DEFAULT false NOT NULL,
-    created_at timestamp with time zone DEFAULT now() NOT NULL,
-    updated_at timestamp with time zone DEFAULT now() NOT NULL
-);
-
-CREATE TABLE public.sessions (
-    id uuid DEFAULT public.uuid_generate_v4() NOT NULL,
-    expires_at timestamp with time zone NOT NULL,
-    token text NOT NULL,
-    created_at timestamp with time zone DEFAULT now() NOT NULL,
-    updated_at timestamp with time zone NOT NULL,
-    ip_address text,
-    user_agent text,
-    user_id uuid NOT NULL
-);
-
-CREATE TABLE public.accounts (
-    id uuid DEFAULT public.uuid_generate_v4() NOT NULL,
-    account_id text NOT NULL,
-    provider_id text NOT NULL,
-    user_id uuid NOT NULL,
-    access_token text,
-    refresh_token text,
-    id_token text,
-    access_token_expires_at timestamp with time zone,
-    refresh_token_expires_at timestamp with time zone,
-    scope text,
-    password text,
-    created_at timestamp with time zone DEFAULT now() NOT NULL,
-    updated_at timestamp with time zone NOT NULL
-);
-
-CREATE TABLE public.verifications (
-    id uuid DEFAULT public.uuid_generate_v4() NOT NULL,
-    identifier text NOT NULL,
-    value text NOT NULL,
-    expires_at timestamp with time zone NOT NULL,
     created_at timestamp with time zone DEFAULT now() NOT NULL,
     updated_at timestamp with time zone DEFAULT now() NOT NULL
 );
@@ -286,10 +251,7 @@ ALTER TABLE ONLY public.users ADD CONSTRAINT users_email_key UNIQUE (email);
 
 ALTER TABLE ONLY public.users ADD CONSTRAINT users_pkey PRIMARY KEY (id);
 
-ALTER TABLE ONLY public.sessions ADD CONSTRAINT sessions_pkey PRIMARY KEY (id);
-ALTER TABLE ONLY public.sessions ADD CONSTRAINT sessions_token_key UNIQUE (token);
-ALTER TABLE ONLY public.accounts ADD CONSTRAINT accounts_pkey PRIMARY KEY (id);
-ALTER TABLE ONLY public.verifications ADD CONSTRAINT verifications_pkey PRIMARY KEY (id);
+
 
 -- ==========================================
 -- 6. INDEXES
@@ -314,9 +276,7 @@ CREATE UNIQUE INDEX ix_documents_slug ON public.documents USING btree (slug);
 CREATE INDEX idx_user_subjects_user_id ON public.user_subjects USING btree (user_id);
 CREATE INDEX idx_user_subjects_subject_id ON public.user_subjects USING btree (subject_id);
 
-CREATE INDEX sessions_user_id_idx ON public.sessions USING btree (user_id);
-CREATE INDEX accounts_user_id_idx ON public.accounts USING btree (user_id);
-CREATE INDEX verifications_identifier_idx ON public.verifications USING btree (identifier);
+
 
 
 -- ==========================================
@@ -347,10 +307,6 @@ ALTER TABLE ONLY public.user_subjects ADD CONSTRAINT user_subjects_user_id_fkey 
 ALTER TABLE ONLY public.user_subjects ADD CONSTRAINT user_subjects_subject_id_fkey FOREIGN KEY (subject_id) REFERENCES public.subjects(id) ON DELETE CASCADE;
 ALTER TABLE ONLY public.users ADD CONSTRAINT users_role_id_fkey FOREIGN KEY (role_id) REFERENCES public.roles(id);
 
-ALTER TABLE ONLY public.sessions ADD CONSTRAINT sessions_user_id_fkey FOREIGN KEY (user_id) REFERENCES public.users(id) ON DELETE CASCADE;
-ALTER TABLE ONLY public.accounts ADD CONSTRAINT accounts_user_id_fkey FOREIGN KEY (user_id) REFERENCES public.users(id) ON DELETE CASCADE;
-
-
 -- ==========================================
 -- 8. INSERT DATA
 -- ==========================================
@@ -362,6 +318,56 @@ ON CONFLICT (id) DO NOTHING;
 
 -- Reset lại Sequence cho bảng roles để sau này nếu thêm Role mới sẽ tự tăng từ số 4
 SELECT pg_catalog.setval('public.roles_id_seq', 3, true);
+
+-- Seed Academic Terms
+INSERT INTO public.academic_terms (id, name, term_order) VALUES
+('86b25d0a-24da-4400-b936-18dcae65541a', 'Kỳ 3', 3),
+('55c187f6-45f3-47e7-bada-97deada6d679', 'Kỳ 4', 4),
+('2b1a8d05-4f32-4d1a-be19-9cf3bfa61cda', 'Kỳ 5', 5),
+('cd8f16b2-601e-4df9-8bfa-10a3decd49a2', 'Kỳ 6', 6),
+('ef3d5e21-bc72-469b-983b-fde35b1e9c22', 'Kỳ 7', 7),
+('108ce3a8-a3cb-4baf-8a4b-8d3ef8af93a8', 'Kỳ 8', 8),
+('7a3b4e2f-d890-4e31-89bc-fcd8ea23e41b', 'Kỳ 9', 9)
+ON CONFLICT (name) DO NOTHING;
+
+-- Seed Subjects
+INSERT INTO public.subjects (id, code, name, academic_term_id) VALUES
+('79f438d9-cee5-4402-bf1b-6e317953a7a5', 'SWD392', 'Software Architecture And Design', 'ef3d5e21-bc72-469b-983b-fde35b1e9c22'),
+('be07db58-2977-4b72-b883-7e4cbcdce489', 'PRN222', 'Advanced Cross-Platform Application Programming', 'ef3d5e21-bc72-469b-983b-fde35b1e9c22'),
+('ce07db58-2977-4b72-b883-7e4cbcdce490', 'EXE101', 'Experiential Entrepreneurship 1', 'ef3d5e21-bc72-469b-983b-fde35b1e9c22'),
+('de07db58-2977-4b72-b883-7e4cbcdce491', 'MLN111', 'Triết học Mac-Lenin', '108ce3a8-a3cb-4baf-8a4b-8d3ef8af93a8')
+ON CONFLICT (code) DO NOTHING;
+
+-- Seed Users
+INSERT INTO public.users (id, role_id, full_name, email, password_hash, email_verified, username, "displayUsername", is_active, is_blocked) VALUES
+('d5b6a71e-ad90-482a-bb39-001340ad3541', 1, 'Admin', 'admin@studymate.edu.vn', '9fA4BGEskhpZmlxM81iwlA==.9m7sssnxBnSv8qC/NUubZEDMxOU5ROcmCwKRK3cq6VY=', true, 'admin', 'Admin', true, false),
+('4c2b9a1a-cb28-4ef3-a9d0-fa83fbe2c021', 2, 'Tú Còi', 'Tucore@studymate.edu.vn', '9fA4BGEskhpZmlxM81iwlA==.9m7sssnxBnSv8qC/NUubZEDMxOU5ROcmCwKRK3cq6VY=', true, 'tucore', 'Tucore', true, false),
+('d7b3a8e2-9bc8-4f2a-b731-10cde29fa38b', 2, 'Sư phụ Bảo', 'Suphubao@studymate.edu.vn', '9fA4BGEskhpZmlxM81iwlA==.9m7sssnxBnSv8qC/NUubZEDMxOU5ROcmCwKRK3cq6VY=', true, 'suphubao', 'Suphubao', true, false),
+('ef8e5d32-cd29-43a1-bb2f-fe8d02df380e', 2, 'Giảng Viên', 'gv@studymate.edu.vn', '9fA4BGEskhpZmlxM81iwlA==.9m7sssnxBnSv8qC/NUubZEDMxOU5ROcmCwKRK3cq6VY=', true, 'gv', 'GV', true, false),
+('de07db38-2977-4b72-b883-7e4cbcdce491', 3, 'Sinh Vien', 'sinhvien@studymate.edu.vn', '9fA4BGEskhpZmlxM81iwlA==.9m7sssnxBnSv8qC/NUubZEDMxOU5ROcmCwKRK3cq6VY=', true, 'sinhvien', 'Sinh Vien', true, false)
+ON CONFLICT (email) DO NOTHING;
+
+-- Seed Languages (Only 2)
+INSERT INTO public.languages (id, code, name) VALUES
+('b1c7d2e3-4f5a-6b7c-8d9e-0f1a2b3c4d5e', 'vi', 'Tiếng Việt'),
+('c2d8e3f4-5a6b-7c8d-9e0f-1a2b3c4d5e6f', 'en', 'Tiếng Anh')
+ON CONFLICT (code) DO NOTHING;
+
+-- Seed Document Types (Study/Learning)
+INSERT INTO public.document_types (id, name, description) VALUES
+('a1b2c3d4-e5f6-7a8b-9c0d-1e2f3a4b5c6d', 'Tài liệu học tập', 'Tài liệu phục vụ cho việc học tập và giảng dạy'),
+('a2b3c4d5-e6f7-8a9b-0c1d-2e3f4a5b6c7d', 'Giáo trình', 'Sách giáo trình chính thức của môn học'),
+('a3b4c5d6-e7f8-9a0b-1c2d-3e4f5a6b7c8d', 'Tài liệu ôn tập', 'Tài liệu và đề cương ôn tập thi cử'),
+('a4b5c6d7-e8f9-0a1b-2c3d-4e5f6a7b8c9d', 'Đề thi & Kiểm tra', 'Các đề thi thử, đề kiểm tra các kỳ trước'),
+('a5b6c7d8-e9f0-1a2b-3c4d-5e6f7a8b9c0d', 'Bài tập & Assignment', 'Bài tập về nhà và các yêu cầu đồ án')
+ON CONFLICT (name) DO NOTHING;
+
+-- Seed Document Sources
+INSERT INTO public.document_sources (id, name) VALUES
+('d1e2f3a4-b5c6-7d8e-9f0a-1b2c3d4e5f6a', 'Nội bộ'),
+('e2f3a4b5-c6d7-8e9f-0a1b-2c3d4e5f6a7b', 'Internet'),
+('f3a4b5c6-d7e8-9f0a-1b2c-3d4e5f6a7b8c', 'Thư viện')
+ON CONFLICT (name) DO NOTHING;
 
 -- ==========================================
 -- 9. CHAT TABLES

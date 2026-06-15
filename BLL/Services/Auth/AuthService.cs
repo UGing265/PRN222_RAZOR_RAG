@@ -41,6 +41,7 @@ public class AuthService : IAuthService
             Id = Guid.NewGuid(),
             FullName = fullName.Trim(),
             Email = normalizedEmail,
+            PasswordHash = hashedPassword,
             RoleId = roleId,
             IsActive = true,
             CreatedAt = now,
@@ -48,7 +49,6 @@ public class AuthService : IAuthService
         };
 
         var created = await _authRepository.AddUserAsync(user, cancellationToken);
-        await _authRepository.CreateAccountAsync(created.Id, created.Email, hashedPassword, cancellationToken);
         return Map(created);
     }
 
@@ -62,7 +62,7 @@ public class AuthService : IAuthService
             return null;
         }
 
-        if (!VerifyPassword(password, user.PasswordHash))
+        if (string.IsNullOrEmpty(user.PasswordHash) || !VerifyPassword(password, user.PasswordHash))
         {
             return null;
         }
@@ -231,32 +231,7 @@ public class AuthService : IAuthService
         return true;
     }
 
-    public async Task<SessionValidationResultDto?> ValidateSessionTokenAsync(string token, CancellationToken cancellationToken = default)
-    {
-        var session = await _authRepository.GetSessionWithUserAndRoleAsync(token, cancellationToken);
-        if (session == null)
-        {
-            return null;
-        }
 
-        return new SessionValidationResultDto
-        {
-            UserId = session.UserId,
-            Email = session.User.Email,
-            FullName = session.User.FullName,
-            RoleName = session.User.Role?.Name ?? session.User.RoleId.ToString(),
-            RoleId = session.User.RoleId,
-            Username = session.User.Username,
-            IsActive = session.User.IsActive,
-            IsBlocked = session.User.IsBlocked,
-            ExpiresAt = session.ExpiresAt
-        };
-    }
-
-    public async Task InvalidateSessionTokenAsync(string token, CancellationToken cancellationToken = default)
-    {
-        await _authRepository.DeleteSessionAsync(token, cancellationToken);
-    }
 
     private static AuthUserDto Map(User user) => new()
     {

@@ -28,8 +28,6 @@ public partial class DBContext : DbContext
     public virtual DbSet<Tag> Tags { get; set; }
 
     public virtual DbSet<User> Users { get; set; }
-    
-    public virtual DbSet<Session> Sessions { get; set; }
 
 
     public virtual DbSet<Subject> Subjects { get; set; }
@@ -488,7 +486,9 @@ public partial class DBContext : DbContext
             entity.Property(e => e.IsBlocked)
                 .HasDefaultValue(false)
                 .HasColumnName("is_blocked");
-            entity.Ignore(e => e.PasswordHash);
+            entity.Property(e => e.PasswordHash)
+                .HasMaxLength(255)
+                .HasColumnName("password_hash");
             entity.Property(e => e.RoleId).HasColumnName("role_id");
             entity.Property(e => e.UpdatedAt)
                 .HasDefaultValueSql("now()")
@@ -507,26 +507,6 @@ public partial class DBContext : DbContext
                 .HasForeignKey(d => d.RoleId)
                 .OnDelete(DeleteBehavior.ClientSetNull)
                 .HasConstraintName("users_role_id_fkey");
-        });
-
-        modelBuilder.Entity<Session>(entity =>
-        {
-            entity.HasKey(e => e.Id).HasName("sessions_pkey");
-            entity.ToTable("sessions");
-            entity.HasIndex(e => e.UserId, "sessions_user_id_idx");
-            entity.Property(e => e.Id).HasDefaultValueSql("uuid_generate_v4()").HasColumnName("id");
-            entity.Property(e => e.ExpiresAt).HasColumnName("expires_at");
-            entity.Property(e => e.Token).HasColumnName("token");
-            entity.Property(e => e.CreatedAt).HasDefaultValueSql("now()").HasColumnName("created_at");
-            entity.Property(e => e.UpdatedAt).HasColumnName("updated_at");
-            entity.Property(e => e.IpAddress).HasColumnName("ip_address");
-            entity.Property(e => e.UserAgent).HasColumnName("user_agent");
-            entity.Property(e => e.UserId).HasColumnName("user_id");
-
-            entity.HasOne(d => d.User).WithMany()
-                .HasForeignKey(d => d.UserId)
-                .OnDelete(DeleteBehavior.Cascade)
-                .HasConstraintName("sessions_user_id_fkey");
         });
 
         // Seed Roles

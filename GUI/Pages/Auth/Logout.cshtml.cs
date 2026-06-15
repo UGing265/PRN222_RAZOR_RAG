@@ -22,19 +22,10 @@ namespace GUI.Pages.Auth
 
         public async Task<IActionResult> OnPostAsync()
         {
-            if (Request.Cookies.TryGetValue("better-auth.session_token", out var sessionToken) && !string.IsNullOrEmpty(sessionToken))
-            {
-                // Invalidate session in database via BLL
-                await _authService.InvalidateSessionTokenAsync(sessionToken);
-
-                // Delete cookie from browser
-                Response.Cookies.Delete("better-auth.session_token");
-            }
-
             // Sign out from ASP.NET Core Cookie authentication middleware
             await HttpContext.SignOutAsync(CookieAuthenticationDefaults.AuthenticationScheme);
 
-            TempData["SuccessMessage"] = "Đã đăng xuất.";
+            TempData["SuccessMessage"] = "Đã đăng xuất thành công.";
             return RedirectToPage("/Auth/Login");
         }
     }
