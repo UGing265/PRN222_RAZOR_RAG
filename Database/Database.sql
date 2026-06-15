@@ -362,3 +362,32 @@ ON CONFLICT (id) DO NOTHING;
 
 -- Reset lại Sequence cho bảng roles để sau này nếu thêm Role mới sẽ tự tăng từ số 4
 SELECT pg_catalog.setval('public.roles_id_seq', 3, true);
+
+-- ==========================================
+-- 9. CHAT TABLES
+-- ==========================================
+CREATE TABLE public.chat_sessions (
+    id uuid DEFAULT public.uuid_generate_v4() NOT NULL,
+    user_id uuid NOT NULL,
+    document_id uuid NOT NULL,
+    title character varying(500),
+    created_at timestamp with time zone DEFAULT now() NOT NULL,
+    CONSTRAINT chat_sessions_pkey PRIMARY KEY (id),
+    CONSTRAINT chat_sessions_user_id_fkey FOREIGN KEY (user_id) REFERENCES public.users(id) ON DELETE CASCADE,
+    CONSTRAINT chat_sessions_document_id_fkey FOREIGN KEY (document_id) REFERENCES public.documents(id) ON DELETE CASCADE
+);
+CREATE INDEX idx_chat_sessions_user_id ON public.chat_sessions USING btree (user_id);
+CREATE INDEX idx_chat_sessions_document_id ON public.chat_sessions USING btree (document_id);
+CREATE INDEX idx_chat_sessions_created_at ON public.chat_sessions USING btree (created_at);
+
+CREATE TABLE public.chat_messages (
+    id uuid DEFAULT public.uuid_generate_v4() NOT NULL,
+    session_id uuid NOT NULL,
+    role character varying(20),
+    content text,
+    created_at timestamp with time zone DEFAULT now() NOT NULL,
+    CONSTRAINT chat_messages_pkey PRIMARY KEY (id),
+    CONSTRAINT chat_messages_session_id_fkey FOREIGN KEY (session_id) REFERENCES public.chat_sessions(id) ON DELETE CASCADE
+);
+CREATE INDEX idx_chat_messages_session_id ON public.chat_messages USING btree (session_id);
+CREATE INDEX idx_chat_messages_created_at ON public.chat_messages USING btree (created_at);

@@ -10,8 +10,8 @@ using Microsoft.Extensions.Logging;
 namespace BLL.Services.Chat;
 
 /// <summary>
-/// Gọi Gemini REST API (generateContent / streamGenerateContent)
-/// với API key rotation và retry logic giống GeminiEmbeddingService.
+/// Calls the Gemini REST API (generateContent / streamGenerateContent)
+/// with API key rotation and retry logic similar to GeminiEmbeddingService.
 /// </summary>
 public class GeminiChatService : IGeminiChatService
 {
@@ -52,7 +52,7 @@ public class GeminiChatService : IGeminiChatService
     }
 
     /// <summary>
-    /// Gửi request đồng bộ tới Gemini và nhận response đầy đủ.
+    /// Sends a synchronous request to Gemini and receives the full response.
     /// </summary>
     public async Task<string> GenerateAsync(string systemPrompt, List<GeminiChatMessage> history, CancellationToken cancellationToken = default)
     {
@@ -110,7 +110,7 @@ public class GeminiChatService : IGeminiChatService
     }
 
     /// <summary>
-    /// Gửi request streaming tới Gemini, yield từng text chunk qua SSE.
+    /// Sends a streaming request to Gemini and yields each text chunk via SSE.
     /// </summary>
     public async IAsyncEnumerable<string> StreamGenerateAsync(
         string systemPrompt,

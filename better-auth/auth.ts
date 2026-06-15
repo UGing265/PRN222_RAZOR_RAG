@@ -131,7 +131,7 @@ export const auth = betterAuth({
       create: {
         before: async (user) => {
           const email = user.email;
-          const allowedDomains = ["fpt.edu.vn", "fe.edu.vn"];
+          const allowedDomains = ["fpt.edu.vn", "fe.edu.vn", "gmail.com"];
           const domain = email.split("@")[1];
           if (!allowedDomains.includes(domain)) {
             throw new Error("Chỉ chấp nhận tài khoản email FPT (@fpt.edu.vn hoặc @fe.edu.vn)!");

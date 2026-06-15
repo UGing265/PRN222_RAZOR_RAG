@@ -620,6 +620,7 @@ public partial class DBContext : DbContext
                 .HasDefaultValueSql("uuid_generate_v4()")
                 .HasColumnName("id");
             entity.Property(e => e.UserId).HasColumnName("user_id");
+            entity.Property(e => e.DocumentId).HasColumnName("document_id");
             entity.Property(e => e.Title)
                 .HasMaxLength(500)
                 .HasColumnName("title");
@@ -631,6 +632,11 @@ public partial class DBContext : DbContext
                 .HasForeignKey(d => d.UserId)
                 .OnDelete(DeleteBehavior.Cascade)
                 .HasConstraintName("chat_sessions_user_id_fkey");
+
+            entity.HasOne(d => d.Document).WithMany()
+                .HasForeignKey(d => d.DocumentId)
+                .OnDelete(DeleteBehavior.Cascade)
+                .HasConstraintName("chat_sessions_document_id_fkey");
         });
 
         modelBuilder.Entity<ChatMessage>(entity =>

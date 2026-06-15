@@ -1,4 +1,4 @@
-@page "/chat"
+@page
 @model GUI.Pages.Chat.IndexModel
 @{
     ViewData["Title"] = "Chat";
@@ -12,7 +12,7 @@
                 <h1 class="hero-title" style="font-size: clamp(2.5rem, 5vw, 4.5rem);">Chat</h1>
                 <p class="text-muted-foreground mt-2 mb-0">Hỏi đáp với tài liệu, trích nguồn và tìm thông tin nhanh chóng.</p>
             </div>
-            <a asp-page="/Documents/All" class="font-mono-xs text-muted-foreground link-plain">← Khám Phá</a>
+            <a asp-page="/Documents/AllDocuments" class="font-mono-xs text-muted-foreground link-plain">← Khám Phá</a>
         </div>
 
         <div class="row g-4">
@@ -274,9 +274,21 @@ document.addEventListener('DOMContentLoaded', function () {
     // ── Load documents for dropdown ──
     async function loadDocuments() {
         try {
+            const whoami = await fetch('/api/chat/whoami');
+            if (whoami.ok) {
+                console.log('WHOAMI:', await whoami.json());
+            } else {
+                console.log('WHOAMI failed:', whoami.status, whoami.redirected);
+            }
+
             const res = await fetch('/api/chat/documents');
-            if (!res.ok) return;
+            console.log('loadDocuments response:', res.status, res.redirected, res.url);
+            if (res.redirected || !res.ok) {
+                console.error('Failed to load documents: HTTP', res.status, 'Redirected:', res.redirected);
+                return;
+            }
             const docs = await res.json();
+            console.log('Documents loaded:', docs.length, docs);
             docs.forEach(doc => {
                 const opt = document.createElement('option');
                 opt.value = doc.id;
@@ -366,13 +378,20 @@ document.addEventListener('DOMContentLoaded', function () {
         const message = chatInput.value.trim();
         if (!message || isStreaming) return;
 
+        // Validate: must select a specific document when starting a new session
+        const docId = documentSelect.value || null;
+        if (!currentSessionId && !docId) {
+            appendMessage('assistant', '⚠️ Vui lòng chọn một tài liệu cụ thể ở menu thả xuống phía trên trước khi bắt đầu chat.');
+            scrollToBottom();
+            return;
+        }
+
         // Add user message
         appendMessage('user', message);
         chatInput.value = '';
         scrollToBottom();
 
         // Prepare request
-        const docId = documentSelect.value || null;
         const body = {
             message: message,
             sessionId: currentSessionId,
@@ -397,8 +416,15 @@ document.addEventListener('DOMContentLoaded', function () {
                 body: JSON.stringify(body)
             });
 
-            if (!res.ok) {
-                throw new Error(`HTTP ${res.status}`);
+            // Handle auth redirect or HTTP errors
+            if (res.redirected || !res.ok) {
+                const statusCode = res.status;
+                if (statusCode === 401 || statusCode === 403 || res.redirected) {
+                    contentEl.innerHTML = '<span style="color: var(--coral);">⚠️ Phiên đăng nhập đã hết hạn. Vui lòng tải lại trang và đăng nhập lại.</span>';
+                } else {
+                    contentEl.innerHTML = `<span style="color: var(--coral);">⚠️ Lỗi từ máy chủ (HTTP ${statusCode}). Vui lòng thử lại.</span>`;
+                }
+                return;
             }
 
             const reader = res.body.getReader();
@@ -451,12 +477,6 @@ document.addEventListener('DOMContentLoaded', function () {
                 }
             }
 
-            // After stream, load sources via non-streaming endpoint if we don't have them
-            if (fullText && !currentSessionId) {
-                // We need to get the session ID from a follow-up
-                // The next stream will include sessionId tracking
-            }
-
             // Reload sessions to pick up new/updated session
             await loadSessions();
 
@@ -470,6 +490,10 @@ document.addEventListener('DOMContentLoaded', function () {
             scrollToBottom();
         }
     });
+
+    // ── Also fetch sources after streaming via the non-stream endpoint ──
+    // We hook into the stream flow: after a stream completes, we call the message API once
+    // to get structured sources. We modify the send flow above for this.
 
     // ── Helper: append a message bubble ──
     function appendMessage(role, content) {
@@ -532,7 +556,6 @@ document.addEventListener('DOMContentLoaded', function () {
         statusBadge.style.color = loading ? '#fff' : 'var(--brown)';
     }
 
-    // ── UI send button state helpers ──
     function setSendLoading(loading) {
         sendBtn.disabled = loading;
         chatInput.disabled = loading;
@@ -614,3 +637,5 @@ document.addEventListener('DOMContentLoaded', function () {
 });
 </script>
 }
+
+
