@@ -1,11 +1,16 @@
 using BLL.Extensions;
+using BLL.Interfaces.Notifications;
 using GUI.Endpoints;
+using GUI.Hubs;
+using GUI.Services;
 
 var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
 builder.Services.AddRazorPages();
 builder.Services.AddMemoryCache();
+builder.Services.AddSignalR();
+builder.Services.AddScoped<INotificationService, SignalRNotificationService>();
 builder.Services.AddBusinessLayer(builder.Configuration);
 
 builder.Services.AddAuthentication(options =>
@@ -57,6 +62,7 @@ app.UseAuthorization();
 
 app.MapRazorPages();
 app.MapChatEndpoints();
+app.MapHub<SystemHub>("/systemHub");
 
 app.Run();
 
