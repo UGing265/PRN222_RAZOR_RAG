@@ -1,5 +1,6 @@
 using BLL.DTOs.Auth;
 using BLL.Interfaces.Auth;
+using BLL.Interfaces.Notifications;
 using DAL.Entities;
 using DAL.Interfaces.Auth;
 using Microsoft.AspNetCore.DataProtection;
@@ -11,11 +12,16 @@ public class AuthService : IAuthService
 {
     private readonly IAuthRepository _authRepository;
     private readonly ITimeLimitedDataProtector _protector;
+    private readonly INotificationService _notificationService;
 
-    public AuthService(IAuthRepository authRepository, IDataProtectionProvider dataProtectionProvider)
+    public AuthService(
+        IAuthRepository authRepository, 
+        IDataProtectionProvider dataProtectionProvider,
+        INotificationService notificationService)
     {
         _authRepository = authRepository;
         _protector = dataProtectionProvider.CreateProtector("FptStudentEmailVerification").ToTimeLimitedDataProtector();
+        _notificationService = notificationService;
     }
 
     public async Task<AuthUserDto> RegisterAsync(string fullName, string email, string password, short roleId, CancellationToken cancellationToken = default)
@@ -213,6 +219,10 @@ public class AuthService : IAuthService
             user.UpdatedAt = DateTime.UtcNow;
             await _authRepository.UpdateUserAsync(user, cancellationToken);
         }
+
+        // Notify client to force logout
+        await _notificationService.SendForceLogoutAsync(userId, cancellationToken);
+
         return true;
     }
 

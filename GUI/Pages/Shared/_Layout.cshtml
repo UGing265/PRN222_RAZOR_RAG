@@ -20,6 +20,7 @@
     <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
     <script src="~/js/glass-dropdown.js" asp-append-version="true"></script>
     <script src="~/js/site.js" asp-append-version="true"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/microsoft-signalr/8.0.7/signalr.min.js"></script>
     
     <script>
         document.addEventListener("DOMContentLoaded", function () {
@@ -33,6 +34,29 @@
             {
                 <text>
                 showPremiumToast(@Html.Raw(System.Text.Json.JsonSerializer.Serialize(errorMsg)), 'danger');
+                </text>
+            }
+
+            @if (User.Identity?.IsAuthenticated == true)
+            {
+                var userId = User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
+                <text>
+                const currentUserId = "@userId";
+                if (currentUserId) {
+                    const connection = new signalR.HubConnectionBuilder()
+                        .withUrl("/systemHub")
+                        .withAutomaticReconnect()
+                        .build();
+
+                    connection.on("ReceiveForceLogout", function () {
+                        showPremiumToast("Tài khoản của bạn đã bị khóa hoặc thay đổi trạng thái bởi Admin. Đang đăng xuất...", "danger");
+                        setTimeout(function () {
+                            window.location.href = "/Auth/Logout";
+                        }, 2500);
+                    });
+
+                    connection.start().catch(err => console.error("SignalR Connection Error: ", err));
+                }
                 </text>
             }
         });
