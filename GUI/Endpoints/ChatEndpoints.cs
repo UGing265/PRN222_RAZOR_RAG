@@ -23,7 +23,17 @@ public static class ChatEndpoints
         // The role check is enforced via the [Authorize] attribute on the original
         // PageModel; mirror it here. Build a policy name that matches roles.
         // (RequireAuthorization with a roles string is the Minimal API equivalent.)
-        group = group.RequireAuthorization(p => p.RequireRole("Lecturer", "Student"));
+
+        group.MapGet("/whoami", (ClaimsPrincipal user) =>
+        {
+            return Results.Ok(new
+            {
+                IsAuthenticated = user.Identity?.IsAuthenticated,
+                Name = user.Identity?.Name,
+                Roles = user.FindAll(ClaimTypes.Role).Select(c => c.Value).ToList(),
+                AllClaims = user.Claims.Select(c => new { c.Type, c.Value }).ToList()
+            });
+        }).RequireAuthorization();
 
         group.MapGet("/sessions", async (
             IChatService chat,
@@ -46,13 +56,42 @@ public static class ChatEndpoints
             return Results.Ok(messages);
         });
 
+        group.MapGet("/debug-docs", async (
+            IDocumentService documents,
+            DAL.Interfaces.Documents.IDocumentRepository repo,
+            CancellationToken ct) =>
+        {
+            var raw = await repo.GetDocumentsAsync(null, null, 1, 100, null, null, null, null, null, ct);
+            return Results.Ok(new
+            {
+                Count = raw.Count,
+                Items = raw.Select(d => new
+                {
+                    d.Id,
+                    d.Title,
+                    d.Status,
+                    d.Visibility,
+                    OwnerRoleId = d.OwnerUser?.RoleId,
+                    OwnerId = d.OwnerUserId
+                })
+            });
+        });
+
         group.MapGet("/documents", async (
             IDocumentService documents,
             ClaimsPrincipal user,
-            ILoggerFactory loggerFactory,
             CancellationToken ct) =>
         {
-            if (!TryGetUserId(user, out var userId)) return Results.Unauthorized();
+            Console.WriteLine("====== [DEBUG] API /api/chat/documents ĐƯỢC GỌI ======");
+            
+            if (!TryGetUserId(user, out var userId))
+            {
+                Console.WriteLine("[DEBUG] Không lấy được UserId từ Cookie. Trả về 401 Unauthorized.");
+                return Results.Unauthorized();
+            }
+
+            Console.WriteLine($"[DEBUG] Đã lấy được UserId: {userId}. Đang lấy tài liệu từ Database...");
+
             var result = await documents.GetAllDocumentsAsync(
                 query: null,
                 subjectId: null,
@@ -61,10 +100,16 @@ public static class ChatEndpoints
                 requesterUserId: userId,
                 cancellationToken: ct);
 
+            Console.WriteLine($"[DEBUG] Database trả về {result.Documents.Count} tài liệu thô.");
+
             var approved = result.Documents
-                .Where(d => d.Status == "approved" || d.Status == "done")
+                .Where(d => d.Status == "approved" || d.Status == "done" || d.Status == "completed")
                 .Select(d => new { id = d.Id, title = d.Title, subject = d.SubjectName, status = d.Status })
                 .ToList();
+
+            Console.WriteLine($"[DEBUG] Sau khi lọc trạng thái (completed/approved), còn lại: {approved.Count} tài liệu.");
+            Console.WriteLine("====== [DEBUG] KẾT THÚC ======");
+
             return Results.Ok(approved);
         });
 
@@ -77,6 +122,9 @@ public static class ChatEndpoints
             if (!TryGetUserId(user, out var userId)) return Results.Unauthorized();
             if (string.IsNullOrWhiteSpace(request.Message))
                 return Results.BadRequest(new { error = "Message is required." });
+
+            if (!request.SessionId.HasValue && (!request.DocumentId.HasValue || request.DocumentId.Value == Guid.Empty))
+                return Results.BadRequest(new { error = "Vui lòng chọn một tài liệu cụ thể để bắt đầu chat." });
 
             var response = await chat.SendMessageAsync(userId, request, ct);
             return Results.Ok(response);
@@ -98,6 +146,14 @@ public static class ChatEndpoints
             if (string.IsNullOrWhiteSpace(request.Message))
             {
                 http.Response.StatusCode = 400;
+                return;
+            }
+
+            if (!request.SessionId.HasValue && (!request.DocumentId.HasValue || request.DocumentId.Value == Guid.Empty))
+            {
+                http.Response.ContentType = "text/event-stream";
+                await http.Response.WriteAsync($"data: [ERROR] Vui lòng chọn một tài liệu cụ thể (ở menu thả xuống phía trên) để bắt đầu phiên chat.\n\n", ct);
+                await http.Response.Body.FlushAsync(ct);
                 return;
             }
 

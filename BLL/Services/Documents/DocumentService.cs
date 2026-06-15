@@ -1249,4 +1249,3 @@ public class DocumentService : IDocumentService
     public Task<Dictionary<Guid, (Guid UserId, string FullName)>> GetSubjectLecturerMapAsync(CancellationToken cancellationToken = default)
         => _documentRepository.GetSubjectLecturerMapAsync(cancellationToken);
 }
-

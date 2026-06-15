@@ -32,7 +32,7 @@ public class ChatService : IChatService
     }
 
     /// <summary>
-    /// Luồng chính: nhận message → embed → tìm vector → build prompt → gọi LLM → lưu DB → trả kết quả
+    /// Main flow: receive message -> embed -> search vector -> build prompt -> call LLM -> save to DB -> return result.
     /// </summary>
     public async Task<ChatResponse> SendMessageAsync(Guid userId, ChatRequest request, CancellationToken cancellationToken = default)
     {
@@ -52,8 +52,8 @@ public class ChatService : IChatService
             var queryEmbedding = await _embeddingService.EmbedAsync(request.Message, cancellationToken);
 
             // 5. Tìm Top K chunks liên quan
-            _logger.LogInformation("Searching similar chunks. DocumentId={DocumentId}, TopK={TopK}", request.DocumentId, TopKChunks);
-            var relevantChunks = await _chatRepository.SearchSimilarChunksAsync(queryEmbedding, TopKChunks, request.DocumentId, cancellationToken);
+            _logger.LogInformation("Searching similar chunks. DocumentId={DocumentId}, TopK={TopK}", session.DocumentId, TopKChunks);
+            var relevantChunks = await _chatRepository.SearchSimilarChunksAsync(queryEmbedding, TopKChunks, session.DocumentId, cancellationToken);
 
             // 6. Build System Prompt
             var systemPrompt = BuildSystemPrompt(relevantChunks);
@@ -87,8 +87,8 @@ public class ChatService : IChatService
     }
 
     /// <summary>
-    /// Luồng Streaming: tương tự SendMessageAsync nhưng yield từng chunk text ra cho UI hiển thị real-time.
-    /// Lưu ý: response đầy đủ sẽ được lưu vào DB sau khi stream xong.
+    /// Streaming flow: similar to SendMessageAsync but yields text chunks for real-time UI display.
+    /// Note: the full response will be saved to the DB after the stream finishes.
     /// </summary>
     public async IAsyncEnumerable<string> StreamMessageAsync(
         Guid userId,
@@ -100,7 +100,7 @@ public class ChatService : IChatService
         await SaveUserMessageAsync(session.Id, request.Message, cancellationToken);
         var historyMessages = await _chatRepository.GetRecentMessagesAsync(session.Id, MaxHistoryMessages, cancellationToken);
         var queryEmbedding = await _embeddingService.EmbedAsync(request.Message, cancellationToken);
-        var relevantChunks = await _chatRepository.SearchSimilarChunksAsync(queryEmbedding, TopKChunks, request.DocumentId, cancellationToken);
+        var relevantChunks = await _chatRepository.SearchSimilarChunksAsync(queryEmbedding, TopKChunks, session.DocumentId, cancellationToken);
         var systemPrompt = BuildSystemPrompt(relevantChunks);
         var geminiHistory = BuildGeminiHistory(historyMessages);
 
@@ -128,6 +128,7 @@ public class ChatService : IChatService
         return sessions.Select(s => new ChatSessionSummaryDto
         {
             Id = s.Id,
+            DocumentId = s.DocumentId,
             Title = s.Title,
             CreatedAt = s.CreatedAt
         }).ToList();
@@ -173,6 +174,7 @@ public class ChatService : IChatService
         var session = new ChatSession
         {
             UserId = userId,
+            DocumentId = request.DocumentId!.Value,
             Title = title,
             CreatedAt = DateTime.UtcNow
         };
@@ -205,7 +207,7 @@ public class ChatService : IChatService
     }
 
     /// <summary>
-    /// Build System Prompt chặt chẽ cho RAG: grounded generation + trích dẫn nguồn
+    /// Builds a strict System Prompt for RAG: grounded generation + source citation.
     /// </summary>
     private static string BuildSystemPrompt(List<DocumentChunk> chunks)
     {
@@ -252,7 +254,7 @@ public class ChatService : IChatService
     }
 
     /// <summary>
-    /// Chuyển đổi danh sách ChatMessage từ DB thành format cho Gemini API
+    /// Converts a list of ChatMessages from the DB into the format required by the Gemini API.
     /// </summary>
     private static List<GeminiChatMessage> BuildGeminiHistory(List<ChatMessage> historyMessages)
     {
@@ -267,7 +269,7 @@ public class ChatService : IChatService
     }
 
     /// <summary>
-    /// Trích xuất metadata nguồn từ các chunks tìm được (deduplicated)
+    /// Extracts source metadata from the retrieved chunks (deduplicated).
     /// </summary>
     private static List<ChatSourceDto> ExtractSources(List<DocumentChunk> chunks)
     {

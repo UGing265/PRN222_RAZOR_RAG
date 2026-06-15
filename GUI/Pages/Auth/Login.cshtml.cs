@@ -22,6 +22,8 @@ namespace GUI.Pages.Auth
         [BindProperty]
         public LoginViewModel Input { get; set; } = new();
 
+        public string? ErrorMessage { get; set; }
+
         public IActionResult OnGet()
         {
             if (User.Identity?.IsAuthenticated == true)
@@ -31,9 +33,57 @@ namespace GUI.Pages.Auth
             return Page();
         }
 
-        public IActionResult OnPost()
+        public async Task<IActionResult> OnPostAsync(CancellationToken cancellationToken)
         {
-            return Page();
+            if (!ModelState.IsValid)
+            {
+                return Page();
+            }
+
+            try
+            {
+                var user = await _authService.ValidateCredentialsAsync(Input.Email, Input.Password, cancellationToken);
+                if (user == null)
+                {
+                    ErrorMessage = "Email hoặc mật khẩu không chính xác.";
+                    return Page();
+                }
+
+                var claims = new List<Claim>
+                {
+                    new(ClaimTypes.NameIdentifier, user.Id.ToString()),
+                    new(ClaimTypes.Email, user.Email),
+                    new(ClaimTypes.Name, user.FullName),
+                    new(ClaimTypes.Role, user.RoleName),
+                    new("role_id", user.RoleId.ToString())
+                };
+
+                var identity = new ClaimsIdentity(claims, CookieAuthenticationDefaults.AuthenticationScheme);
+                var principal = new ClaimsPrincipal(identity);
+
+                await HttpContext.SignInAsync(
+                    CookieAuthenticationDefaults.AuthenticationScheme,
+                    principal,
+                    new AuthenticationProperties
+                    {
+                        IsPersistent = Input.RememberMe,
+                        ExpiresUtc = DateTimeOffset.UtcNow.AddDays(7)
+                    });
+
+                _logger.LogInformation("User {Email} logged in successfully.", user.Email);
+                return RedirectToPage("/Index");
+            }
+            catch (InvalidOperationException ex)
+            {
+                ErrorMessage = ex.Message;
+                return Page();
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error during native login.");
+                ErrorMessage = "Đã xảy ra lỗi hệ thống. Vui lòng thử lại sau.";
+                return Page();
+            }
         }
     }
 }

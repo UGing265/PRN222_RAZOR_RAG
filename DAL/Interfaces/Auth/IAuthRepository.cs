@@ -12,7 +12,4 @@ public interface IAuthRepository
     Task<User?> GetUserByIdAsync(Guid userId, CancellationToken cancellationToken = default);
     Task UpdateUserAsync(User user, CancellationToken cancellationToken = default);
     Task DeleteUserAsync(User user, CancellationToken cancellationToken = default);
-    Task<Session?> GetSessionWithUserAndRoleAsync(string token, CancellationToken cancellationToken = default);
-    Task DeleteSessionAsync(string token, CancellationToken cancellationToken = default);
-    Task CreateAccountAsync(Guid userId, string email, string passwordHash, CancellationToken cancellationToken = default);
 }
