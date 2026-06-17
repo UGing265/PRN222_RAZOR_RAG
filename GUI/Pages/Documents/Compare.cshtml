@@ -63,7 +63,17 @@
     {
         <div class="row justify-content-center mt-5">
             <div class="col-lg-10">
-                <h3 class="font-serif tracking-tight text-text-primary mb-4">Kết Quả Phân Tích</h3>
+                <div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-2">
+                    <h3 class="font-serif tracking-tight text-text-primary mb-0">Kết Quả Phân Tích</h3>
+                    @if (!string.IsNullOrEmpty(Model.ExportKey))
+                    {
+                        <a href="?handler=ExportPdf&amp;key=@Model.ExportKey"
+                           class="btn btn-outline-primary btn-sm"
+                           download>
+                            Xuất PDF
+                        </a>
+                    }
+                </div>
                 <div class="card border-crisp shadow-sm" style="background: rgba(255, 255, 255, 0.75); backdrop-filter: blur(12px); border-radius: 8px;">
                 <div class="card-body p-4">
                     <div class="table-responsive">
