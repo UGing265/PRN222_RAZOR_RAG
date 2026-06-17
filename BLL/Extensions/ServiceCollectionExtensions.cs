@@ -40,6 +40,7 @@ public static class ServiceCollectionExtensions
         services.AddScoped<IUploadProcessingService, UploadProcessingService>();
         services.AddScoped<IFileParserService, SimpleFileParserService>();
         services.AddScoped<IEmbeddingService, GeminiEmbeddingService>();
+        services.AddScoped<IDocumentComparisonService, DocumentComparisonService>();
         services.AddHostedService<UploadJobBackgroundService>();
 
         // Chat services

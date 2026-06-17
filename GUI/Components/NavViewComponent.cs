@@ -103,7 +103,10 @@ public sealed class NavViewComponent : ViewComponent
         {
             model.NavLinks.Add(new NavLink { Page = "/Documents/All", Label = "Khám Phá", IconKey = "discover" });
             if (roleId == 2 || roleId == 3)
+            {
                 model.NavLinks.Add(new NavLink { Page = "/Chat/Index", Label = "Trò Chuyện AI", IconKey = "chat" });
+                model.NavLinks.Add(new NavLink { Page = "/Documents/Compare", Label = "So Sánh", IconKey = "library" });
+            }
             if (roleId == 2)
             {
                 model.NavLinks.Add(new NavLink { Page = "/Documents/Mine", Label = "Thư Viện", IconKey = "library" });

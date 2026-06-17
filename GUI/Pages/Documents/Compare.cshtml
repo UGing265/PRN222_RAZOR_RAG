@@ -1,0 +1,209 @@
+@page
+@model GUI.Pages.Documents.CompareModel
+@{
+    ViewData["Title"] = "So Sánh Tài Liệu";
+}
+
+<div class="container py-5">
+    <div class="row mb-4">
+        <div class="col-12 text-center">
+            <h1 class="font-serif tracking-tight text-text-primary mb-2">So Sánh Tài Liệu (AI)</h1>
+            <p class="text-text-muted">Phân tích và tìm ra điểm khác biệt giữa các tài liệu với độ chính xác cao.</p>
+        </div>
+    </div>
+
+    @if (!string.IsNullOrEmpty(Model.ErrorMessage))
+    {
+        <div class="alert alert-danger" role="alert">
+            @Model.ErrorMessage
+        </div>
+    }
+
+    <div class="row justify-content-center">
+        <div class="col-lg-8">
+            <div class="card border-crisp shadow-sm" style="background: rgba(255, 255, 255, 0.75); backdrop-filter: blur(12px); border-radius: 8px;">
+                <div class="card-body p-4">
+                    <form method="post" id="compareForm">
+                        <div class="mb-4">
+                            <label class="form-label font-sans fw-medium text-text-secondary">Tìm kiếm và Chọn Tài Liệu (2 - 5 tài liệu)</label>
+                            <div class="position-relative">
+                                <input type="text" id="searchInput" class="form-control" placeholder="Nhập tên tài liệu để tìm kiếm..." autocomplete="off" />
+                                <div id="searchResults" class="list-group position-absolute w-100 shadow" style="display: none; z-index: 1000; max-height: 250px; overflow-y: auto;">
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="mb-4">
+                            <h6 class="font-sans fw-medium text-text-secondary mb-3">Tài Liệu Đã Chọn:</h6>
+                            <ul id="selectedDocsList" class="list-group">
+                                <!-- Selected docs will be appended here -->
+                            </ul>
+                        </div>
+
+                        <!-- Hidden inputs for form submission -->
+                        <div id="hiddenInputsContainer">
+                            @foreach (var id in Model.SelectedDocumentIds)
+                            {
+                                <input type="hidden" name="SelectedDocumentIds" value="@id" />
+                            }
+                        </div>
+
+                        <div class="text-end">
+                            <button type="submit" id="btnCompare" class="btn btn-premium-primary" disabled>
+                                Phân Tích Sự Khác Biệt
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    @if (!string.IsNullOrEmpty(Model.ComparisonResultHtml))
+    {
+        <div class="row justify-content-center mt-5">
+            <div class="col-lg-10">
+                <h3 class="font-serif tracking-tight text-text-primary mb-4">Kết Quả Phân Tích</h3>
+                <div class="card border-crisp shadow-sm" style="background: rgba(255, 255, 255, 0.75); backdrop-filter: blur(12px); border-radius: 8px;">
+                <div class="card-body p-4">
+                    <div class="table-responsive">
+                        <div id="markdownContent" class="markdown-body font-sans text-text-secondary" style="word-break: break-word;">
+                            @Html.Raw(Model.ComparisonResultHtml)
+                        </div>
+                    </div>
+                </div>
+                </div>
+            </div>
+        </div>
+    }
+</div>
+
+@section Scripts {
+    <script>
+        document.addEventListener("DOMContentLoaded", function () {
+            const searchInput = document.getElementById("searchInput");
+            const searchResults = document.getElementById("searchResults");
+            const selectedDocsList = document.getElementById("selectedDocsList");
+            const hiddenInputsContainer = document.getElementById("hiddenInputsContainer");
+            const btnCompare = document.getElementById("btnCompare");
+
+            let selectedDocs = [];
+            
+            // Re-populate if coming back from POST
+            const existingInputs = hiddenInputsContainer.querySelectorAll("input");
+            if (existingInputs.length > 0) {
+                existingInputs.forEach(input => {
+                    selectedDocs.push({ id: input.value, title: "Tài liệu đã chọn (ID: " + input.value.substring(0, 8) + ")" });
+                });
+                renderSelectedDocs();
+            }
+
+            let searchTimeout = null;
+
+            searchInput.addEventListener("input", function () {
+                const query = this.value.trim();
+                clearTimeout(searchTimeout);
+
+                if (query.length < 2) {
+                    searchResults.style.display = "none";
+                    return;
+                }
+
+                searchTimeout = setTimeout(() => {
+                    fetch(`?handler=Search&query=${encodeURIComponent(query)}`)
+                        .then(response => response.json())
+                        .then(data => {
+                            searchResults.innerHTML = "";
+                            if (data && data.length > 0) {
+                                data.forEach(doc => {
+                                    // Don't show if already selected
+                                    if (selectedDocs.find(d => d.id === doc.id)) return;
+
+                                    const item = document.createElement("button");
+                                    item.type = "button";
+                                    item.className = "list-group-item list-group-item-action";
+                                    item.innerHTML = `<strong>${doc.title}</strong><br><small class="text-muted">${doc.subjectName} | ${doc.visibility === 'public' || doc.visibility === 'school_wide' ? 'Công khai' : 'Cá nhân'}</small>`;
+                                    item.onclick = function () {
+                                        addDocument(doc.id, doc.title);
+                                        searchInput.value = "";
+                                        searchResults.style.display = "none";
+                                    };
+                                    searchResults.appendChild(item);
+                                });
+                                searchResults.style.display = "block";
+                            } else {
+                                searchResults.innerHTML = '<div class="list-group-item text-muted">Không tìm thấy tài liệu phù hợp.</div>';
+                                searchResults.style.display = "block";
+                            }
+                        })
+                        .catch(err => console.error("Lỗi tìm kiếm:", err));
+                }, 300);
+            });
+
+            // Hide results on outside click
+            document.addEventListener("click", function (e) {
+                if (!searchInput.contains(e.target) && !searchResults.contains(e.target)) {
+                    searchResults.style.display = "none";
+                }
+            });
+
+            function addDocument(id, title) {
+                if (selectedDocs.length >= 5) {
+                    showPremiumToast("Bạn chỉ có thể chọn tối đa 5 tài liệu để so sánh.", "danger");
+                    return;
+                }
+                if (!selectedDocs.find(d => d.id === id)) {
+                    selectedDocs.push({ id, title });
+                    renderSelectedDocs();
+                }
+            }
+
+            window.removeDocument = function(id) {
+                selectedDocs = selectedDocs.filter(d => d.id !== id);
+                renderSelectedDocs();
+            }
+
+            function renderSelectedDocs() {
+                selectedDocsList.innerHTML = "";
+                hiddenInputsContainer.innerHTML = "";
+
+                if (selectedDocs.length === 0) {
+                    selectedDocsList.innerHTML = '<li class="list-group-item text-muted text-center">Chưa có tài liệu nào được chọn.</li>';
+                }
+
+                selectedDocs.forEach(doc => {
+                    const li = document.createElement("li");
+                    li.className = "list-group-item d-flex justify-content-between align-items-center";
+                    li.innerHTML = `
+                        <span>${doc.title}</span>
+                        <button type="button" class="btn btn-sm btn-outline-danger" onclick="removeDocument('${doc.id}')">Xóa</button>
+                    `;
+                    selectedDocsList.appendChild(li);
+
+                    const input = document.createElement("input");
+                    input.type = "hidden";
+                    input.name = "SelectedDocumentIds";
+                    input.value = doc.id;
+                    hiddenInputsContainer.appendChild(input);
+                });
+
+                btnCompare.disabled = selectedDocs.length < 2 || selectedDocs.length > 5;
+            }
+
+            renderSelectedDocs();
+
+            // Style tables natively for Bootstrap
+            const markdownContent = document.getElementById("markdownContent");
+            if (markdownContent) {
+                const tables = markdownContent.querySelectorAll('table');
+                tables.forEach(table => {
+                    table.classList.add('table', 'table-bordered', 'table-hover');
+                    const thead = table.querySelector('thead');
+                    if (thead) {
+                        thead.classList.add('table-light');
+                    }
+                });
+            }
+        });
+    </script>
+}

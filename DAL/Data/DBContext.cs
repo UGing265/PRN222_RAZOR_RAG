@@ -160,7 +160,7 @@ public partial class DBContext : DbContext
 
             entity.HasIndex(e => e.OwnerUserId, "idx_documents_owner_user_id");
 
-        
+
             entity.HasIndex(e => e.Status, "idx_documents_status");
 
             entity.HasIndex(e => e.SubjectId, "idx_documents_subject_id");
