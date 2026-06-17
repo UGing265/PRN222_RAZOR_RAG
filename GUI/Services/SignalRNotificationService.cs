@@ -33,6 +33,11 @@ public class SignalRNotificationService : INotificationService
         await _hubContext.Clients.Group("Role_Lecturer").SendAsync("ReceiveDocumentListUpdated", cancellationToken);
     }
 
+    public async Task SendDocumentDeletedAsync(Guid documentId, string title, CancellationToken cancellationToken = default)
+    {
+        await _hubContext.Clients.All.SendAsync("ReceiveDocumentDeleted", new { documentId, title }, cancellationToken);
+    }
+
     public async Task SendUploadProgressAsync(string jobId, int progressPercent, string statusMessage, Guid ownerId, CancellationToken cancellationToken = default)
     {
         await _hubContext.Clients.Group($"User_{ownerId}").SendAsync("ReceiveUploadProgress", new { jobId, progressPercent, statusMessage }, cancellationToken);

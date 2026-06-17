@@ -9,6 +9,7 @@ using System.Security.Claims;
 namespace GUI.Pages.Documents;
 
 [Authorize(Roles = "Lecturer")]
+[RequestSizeLimit(104857600)] // 100 MB
 public class CreateModel : PageModel
 {
     private readonly IDocumentService _documentService;
@@ -122,9 +123,22 @@ public class CreateModel : PageModel
 
         try
         {
+            const long maxFileSize = 104857600; // 100 MB
+
             if (Input.UploadFile is null || Input.UploadFile.Length == 0)
             {
                 TempData["ErrorMessage"] = "Vui lòng chọn file để tạo tài liệu. Không có file thì sẽ không tạo document.";
+                await PopulateLookupsAsync(cancellationToken, ownerUserId);
+                return Page();
+            }
+
+            if (Input.UploadFile.Length > maxFileSize)
+            {
+                var sizeMb = Input.UploadFile.Length / 1024.0 / 1024.0;
+                var errors = new[] { $"File '{Input.UploadFile.FileName}' ({sizeMb:0.0} MB) vượt quá giới hạn 100 MB. Vui lòng chọn file nhỏ hơn." };
+                if (Request.Headers.TryGetValue("X-Requested-With", out var xrw) && xrw == "XMLHttpRequest")
+                    return new JsonResult(new { success = false, errors });
+                TempData["ErrorMessage"] = errors[0];
                 await PopulateLookupsAsync(cancellationToken, ownerUserId);
                 return Page();
             }

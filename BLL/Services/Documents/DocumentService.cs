@@ -569,7 +569,6 @@ public class DocumentService : IDocumentService
         await _documentRepository.SaveChangesAsync(cancellationToken);
 
         await _notificationService.SendDocumentStatusUpdatedAsync(document.Id, document.Title, "deleted", document.OwnerUserId, cancellationToken);
-        await _notificationService.SendReportsUpdatedAsync(cancellationToken);
     }
 
     public async Task DeleteDocumentAssetsAsync(Guid documentId, CancellationToken cancellationToken = default)

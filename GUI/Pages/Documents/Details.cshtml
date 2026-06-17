@@ -507,4 +507,28 @@
             }
         })();
     </script>
+
+    <script>
+        // SignalR: Real-time document deletion guard
+        (() => {
+            const currentDocumentId = '@Model.ViewModel.Id';
+
+            function setupDocumentDeletedListener() {
+                const connection = window.signalrConnection;
+                if (!connection) { setTimeout(setupDocumentDeletedListener, 100); return; }
+
+                connection.on('ReceiveDocumentDeleted', (payload) => {
+                    const deletedId = (payload.documentId || '').toLowerCase();
+                    const currentId = (currentDocumentId || '').toLowerCase();
+                    if (deletedId !== currentId) return;
+
+                    showPremiumToast(`Tài liệu "${payload.title || 'này'}" đã bị Admin xóa khỏi hệ thống. Đang chuyển hướng...`, 'danger');
+                    setTimeout(() => { window.location.href = '/Documents/All'; }, 3000);
+                });
+            }
+
+            setupDocumentDeletedListener();
+        })();
+    </script>
 }
+

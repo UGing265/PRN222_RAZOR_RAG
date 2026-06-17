@@ -519,6 +519,14 @@
                 if (!input.files || input.files.length === 0) return;
                 e.preventDefault();
 
+                // Client-side 100 MB guard — fires before any network request
+                const MAX_SIZE = 100 * 1024 * 1024;
+                if (input.files[0].size > MAX_SIZE) {
+                    const sizeMb = (input.files[0].size / 1024 / 1024).toFixed(1);
+                    showPremiumToast(`File "${input.files[0].name}" (${sizeMb} MB) vượt quá giới hạn 100 MB. Vui lòng chọn file nhỏ hơn.`, 'danger');
+                    return;
+                }
+
                 progressShell.classList.remove('d-none');
                 progressBar.style.width = '0%';
                 progressLabel.textContent = '0%';
@@ -533,18 +541,42 @@
                 }, 220);
 
                 try {
-                    const response = await fetch(form.action, {
+                    // Remove any existing dynamic alerts
+                    const oldAlerts = form.querySelectorAll('.alert-dynamic-upload');
+                    oldAlerts.forEach(a => a.remove());
+
+                    const response = await fetch(form.action || window.location.pathname, {
                         method: 'POST',
                         body: new FormData(form),
-                        headers: { 'X-Requested-With': 'XMLHttpRequest' }
+                        headers: { 
+                            'X-Requested-With': 'XMLHttpRequest',
+                            'RequestVerificationToken': document.querySelector('input[name="__RequestVerificationToken"]').value
+                        }
                     });
                     clearInterval(timer);
 
                     if (!response.ok) {
-                        throw new Error('Upload failed');
+                        const errText = await response.text();
+                        throw new Error(errText || 'Upload failed');
                     }
 
                     const data = await response.json();
+                    if (data && data.success === false) {
+                        progressShell.classList.add('d-none');
+                        const errorAlert = document.createElement('div');
+                        errorAlert.className = 'alert alert-danger alert-dismissible fade show mt-3 alert-dynamic-upload';
+                        errorAlert.role = 'alert';
+                        errorAlert.innerHTML = `
+                            <strong>Lỗi tải lên:</strong>
+                            <ul class="mb-0 mt-1">
+                                ${data.errors.map(err => `<li>${err}</li>`).join('')}
+                            </ul>
+                            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                        `;
+                        form.insertBefore(errorAlert, form.firstChild);
+                        return;
+                    }
+
                     progressBar.style.width = '100%';
                     progressLabel.textContent = '100%';
                     progressMeta.textContent = 'Hoàn tất. Đang chuyển hướng...';
@@ -554,7 +586,15 @@
                     }, 800);
                 } catch (error) {
                     clearInterval(timer);
-                    form.submit();
+                    progressShell.classList.add('d-none');
+                    const errorAlert = document.createElement('div');
+                    errorAlert.className = 'alert alert-danger alert-dismissible fade show mt-3 alert-dynamic-upload';
+                    errorAlert.role = 'alert';
+                    errorAlert.innerHTML = `
+                        <strong>Lỗi hệ thống:</strong> ${error.message || 'Có lỗi xảy ra trong quá trình upload.'}
+                        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                    `;
+                    form.insertBefore(errorAlert, form.firstChild);
                 }
             });
         })();

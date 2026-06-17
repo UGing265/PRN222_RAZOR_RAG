@@ -14,6 +14,22 @@ builder.Services.AddRazorPages();
 builder.Services.AddMemoryCache();
 builder.Services.AddSignalR();
 builder.Services.AddScoped<INotificationService, SignalRNotificationService>();
+
+// Configure Kestrel request size limits
+builder.WebHost.ConfigureKestrel(options =>
+{
+    options.Limits.MaxRequestBodySize = 104857600; // 100 MB
+});
+
+// Configure Form Options multipart limits
+builder.Services.Configure<Microsoft.AspNetCore.Http.Features.FormOptions>(options =>
+{
+    options.MultipartBodyLengthLimit = 104857600; // 100 MB
+});
+builder.Services.AddAntiforgery(options =>
+{
+    options.HeaderName = "RequestVerificationToken";
+});
 builder.Services.AddBusinessLayer(builder.Configuration);
 
 builder.Services.AddAuthentication(options =>
