@@ -142,7 +142,7 @@ public sealed class QuestPdfComparisonExporter : IComparisonPdfExporter
                                 foreach (var cell in row)
                                 {
                                     h.Cell().Background(AccentColor).Padding(4)
-                                        .Text(cell).FontColor(Colors.White).Bold().FontSize(10);
+                                        .Element(c => RenderInlineText(c, cell, 10, defaultBold: true, defaultColor: Colors.White));
                                 }
                             });
                             isHeader = false;
@@ -152,7 +152,7 @@ public sealed class QuestPdfComparisonExporter : IComparisonPdfExporter
                             foreach (var cell in row)
                             {
                                 table.Cell().BorderBottom(0.5f).BorderColor(Colors.Grey.Lighten2)
-                                    .Padding(4).Text(cell).FontSize(10);
+                                    .Padding(4).Element(c => RenderInlineText(c, cell, 10));
                             }
                         }
                     }
