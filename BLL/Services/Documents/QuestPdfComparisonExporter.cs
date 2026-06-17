@@ -16,6 +16,10 @@ public sealed class QuestPdfComparisonExporter : IComparisonPdfExporter
     private static readonly Color MutedColor = Color.FromHex("#64748B");
     private static readonly Color AccentColor = Color.FromHex("#2563EB");
 
+    private static readonly Regex InlineFormat = new(
+        @"\*\*(?<bold>[^*]+)\*\*|\*(?<italic>[^*]+)\*|`(?<code>[^`]+)`",
+        RegexOptions.Compiled);
+
     public byte[] Build(ComparisonExportRequest request)
     {
         if (request is null) throw new ArgumentNullException(nameof(request));
@@ -96,22 +100,22 @@ public sealed class QuestPdfComparisonExporter : IComparisonPdfExporter
         switch (block.Kind)
         {
             case MarkdownBlockKind.Heading1:
-                container.PaddingTop(8).Text(block.Text).FontSize(18).Bold().FontColor(BrandColor);
+                container.PaddingTop(8).Element(c => RenderInlineText(c, block.Text, 18, defaultBold: true, defaultColor: BrandColor));
                 break;
             case MarkdownBlockKind.Heading2:
-                container.PaddingTop(6).Text(block.Text).FontSize(15).Bold().FontColor(BrandColor);
+                container.PaddingTop(6).Element(c => RenderInlineText(c, block.Text, 15, defaultBold: true, defaultColor: BrandColor));
                 break;
             case MarkdownBlockKind.Heading3:
-                container.PaddingTop(4).Text(block.Text).FontSize(13).Bold();
+                container.PaddingTop(4).Element(c => RenderInlineText(c, block.Text, 13, defaultBold: true));
                 break;
             case MarkdownBlockKind.Paragraph:
-                container.Text(block.Text).FontSize(11).LineHeight(1.35f);
+                RenderInlineText(container, block.Text, 11, lineHeight: 1.35f);
                 break;
             case MarkdownBlockKind.Bullet:
                 container.Row(r =>
                 {
                     r.ConstantItem(14).Text("•").FontSize(11);
-                    r.RelativeItem().Text(block.Text).FontSize(11).LineHeight(1.35f);
+                    r.RelativeItem().Element(c => RenderInlineText(c, block.Text, 11, lineHeight: 1.35f));
                 });
                 break;
             case MarkdownBlockKind.Code:
@@ -155,6 +159,49 @@ public sealed class QuestPdfComparisonExporter : IComparisonPdfExporter
                 });
                 break;
         }
+    }
+
+    private static void RenderInlineText(
+        IContainer container,
+        string text,
+        float fontSize,
+        float? lineHeight = null,
+        bool defaultBold = false,
+        Color? defaultColor = null)
+    {
+        container.Text(t =>
+        {
+            int lastIndex = 0;
+            foreach (Match m in InlineFormat.Matches(text))
+            {
+                if (m.Index > lastIndex)
+                    AppendSpan(t, text.Substring(lastIndex, m.Index - lastIndex), fontSize, lineHeight, defaultBold, defaultColor, bold: false, italic: false, code: false);
+
+                if (m.Groups["bold"].Success)
+                    AppendSpan(t, m.Groups["bold"].Value, fontSize, lineHeight, defaultBold, defaultColor, bold: true, italic: false, code: false);
+                else if (m.Groups["italic"].Success)
+                    AppendSpan(t, m.Groups["italic"].Value, fontSize, lineHeight, defaultBold, defaultColor, bold: false, italic: true, code: false);
+                else if (m.Groups["code"].Success)
+                    AppendSpan(t, m.Groups["code"].Value, fontSize, lineHeight, defaultBold, defaultColor, bold: false, italic: false, code: true);
+
+                lastIndex = m.Index + m.Length;
+            }
+
+            if (lastIndex < text.Length)
+                AppendSpan(t, text.Substring(lastIndex), fontSize, lineHeight, defaultBold, defaultColor, bold: false, italic: false, code: false);
+        });
+    }
+
+    private static void AppendSpan(TextDescriptor t, string text, float fontSize, float? lineHeight, bool defaultBold, Color? defaultColor, bool bold, bool italic, bool code)
+    {
+        if (string.IsNullOrEmpty(text)) return;
+        var span = t.Span(text).FontSize(fontSize);
+        if (lineHeight.HasValue) span.LineHeight(lineHeight.Value);
+        if (defaultColor.HasValue) span.FontColor(defaultColor.Value);
+        if (defaultBold) span.Bold();
+        if (bold) span.Bold();
+        if (italic) span.Italic();
+        if (code) span.FontFamily("Consolas").BackgroundColor(Colors.Grey.Lighten4);
     }
 }
 
