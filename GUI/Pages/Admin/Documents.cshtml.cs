@@ -86,7 +86,7 @@ namespace GUI.Pages.Admin
                 _logger.LogError(ex, "Error deleting document {Id} by Admin", id);
                 TempData["ErrorMessage"] = "Có lỗi xảy ra khi xóa tài liệu: " + ex.Message;
             }
-            return RedirectToPage(new { tab = "files", q, subjectId, page });
+            return RedirectToPage("/Admin/Documents", new { tab = "files", q, subjectId, page });
         }
 
         public async Task<IActionResult> OnPostResolveReportAsync(Guid id, string resolution, CancellationToken cancellationToken)
@@ -108,7 +108,7 @@ namespace GUI.Pages.Admin
                 _logger.LogError(ex, "Error resolving report {Id}", id);
                 TempData["ErrorMessage"] = "Có lỗi xảy ra khi xử lý báo cáo: " + ex.Message;
             }
-            return RedirectToPage(new { tab = "reports" });
+            return RedirectToPage("/Admin/Documents", new { tab = "reports" });
         }
     }
 }

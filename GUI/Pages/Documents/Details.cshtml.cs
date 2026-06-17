@@ -138,7 +138,7 @@ public class DetailsModel : PageModel
         if (string.IsNullOrWhiteSpace(reason))
         {
             TempData["ErrorMessage"] = "Lý do báo cáo không được để trống.";
-            return RedirectToPage(new { slug });
+            return RedirectToPage("/Documents/Details", new { slug });
         }
 
         if (!Guid.TryParse(User.FindFirstValue(ClaimTypes.NameIdentifier), out var userId))
@@ -163,6 +163,6 @@ public class DetailsModel : PageModel
             TempData["ErrorMessage"] = "Không thể gửi báo cáo: " + ex.Message;
         }
 
-        return RedirectToPage(new { slug });
+        return RedirectToPage("/Documents/Details", new { slug });
     }
 }
