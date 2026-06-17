@@ -42,4 +42,9 @@ public class SignalRNotificationService : INotificationService
     {
         await _hubContext.Clients.All.SendAsync("ReceiveMetadataUpdated", new { metadataType, actionType, data }, cancellationToken);
     }
+
+    public async Task SendSubjectsAssignedUpdatedAsync(Guid userId, CancellationToken cancellationToken = default)
+    {
+        await _hubContext.Clients.Group($"User_{userId}").SendAsync("ReceiveSubjectsAssignedUpdated", cancellationToken);
+    }
 }

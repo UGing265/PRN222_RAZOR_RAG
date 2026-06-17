@@ -1,5 +1,6 @@
 using BLL.DTOs.Documents;
 using BLL.Interfaces.Documents;
+using BLL.Interfaces.Notifications;
 using DAL.Entities;
 using DAL.Interfaces.Documents;
 using Microsoft.AspNetCore.Http;
@@ -30,8 +31,17 @@ public class DocumentService : IDocumentService
     private readonly IS3StorageService _s3StorageService;
     private readonly DocumentIndexingOptions _indexingOptions;
     private readonly IUploadJobRepository _uploadJobRepository;
+    private readonly INotificationService _notificationService;
 
-    public DocumentService(IDocumentRepository documentRepository, IConfiguration configuration, IFileParserService fileParserService, IEmbeddingService embeddingService, IChapterSegmentationService chapterSegmentationService, IS3StorageService s3StorageService, IUploadJobRepository uploadJobRepository)
+    public DocumentService(
+        IDocumentRepository documentRepository, 
+        IConfiguration configuration, 
+        IFileParserService fileParserService, 
+        IEmbeddingService embeddingService, 
+        IChapterSegmentationService chapterSegmentationService, 
+        IS3StorageService s3StorageService, 
+        IUploadJobRepository uploadJobRepository,
+        INotificationService notificationService)
     {
         _documentRepository = documentRepository;
         _fileParserService = fileParserService;
@@ -39,6 +49,7 @@ public class DocumentService : IDocumentService
         _chapterSegmentationService = chapterSegmentationService;
         _s3StorageService = s3StorageService;
         _uploadJobRepository = uploadJobRepository;
+        _notificationService = notificationService;
         _indexingOptions = configuration.GetSection("DocumentIndexing").Get<DocumentIndexingOptions>() ?? new DocumentIndexingOptions();
     }
 
@@ -556,6 +567,8 @@ public class DocumentService : IDocumentService
         await _documentRepository.RemoveDocumentReportsByDocumentAsync(documentId, cancellationToken);
         await _documentRepository.RemoveDocumentAsync(document, cancellationToken);
         await _documentRepository.SaveChangesAsync(cancellationToken);
+
+        await _notificationService.SendDocumentStatusUpdatedAsync(document.Id, document.Title, "deleted", document.OwnerUserId, cancellationToken);
     }
 
     public async Task DeleteDocumentAssetsAsync(Guid documentId, CancellationToken cancellationToken = default)

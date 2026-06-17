@@ -13,11 +13,13 @@ namespace GUI.Pages.Admin
     {
         private readonly IAuthService _authService;
         private readonly IDocumentService _documentService;
+        private readonly BLL.Interfaces.Notifications.INotificationService _notificationService;
 
-        public AssignSubjectsModel(IAuthService authService, IDocumentService documentService)
+        public AssignSubjectsModel(IAuthService authService, IDocumentService documentService, BLL.Interfaces.Notifications.INotificationService notificationService)
         {
             _authService = authService;
             _documentService = documentService;
+            _notificationService = notificationService;
         }
 
         public AuthUserDto Lecturer { get; set; } = null!;
@@ -66,6 +68,7 @@ namespace GUI.Pages.Admin
             }
 
             await _documentService.AssignSubjectsToLecturerAsync(userId, subjectIds ?? new List<Guid>(), cancellationToken);
+            await _notificationService.SendSubjectsAssignedUpdatedAsync(userId, cancellationToken);
             TempData["SuccessMessage"] = $"Đã cập nhật danh sách môn học phân công cho giảng viên '{user.FullName}' thành công.";
             return RedirectToPage("/Admin/Users");
         }

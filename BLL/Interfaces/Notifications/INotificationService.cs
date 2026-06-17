@@ -11,4 +11,5 @@ public interface INotificationService
     Task SendDocumentStatusUpdatedAsync(Guid documentId, string title, string status, Guid ownerId, CancellationToken cancellationToken = default);
     Task SendUploadProgressAsync(string jobId, int progressPercent, string statusMessage, Guid ownerId, CancellationToken cancellationToken = default);
     Task SendMetadataUpdatedAsync(string metadataType, string actionType, object data, CancellationToken cancellationToken = default);
+    Task SendSubjectsAssignedUpdatedAsync(Guid userId, CancellationToken cancellationToken = default);
 }

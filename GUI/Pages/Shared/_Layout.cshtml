@@ -48,6 +48,8 @@
                         .withAutomaticReconnect()
                         .build();
 
+                    window.signalrConnection = connection;
+
                     connection.on("ReceiveForceLogout", function () {
                         showPremiumToast("Tài khoản của bạn đã bị khóa hoặc thay đổi trạng thái bởi Admin. Đang đăng xuất...", "danger");
                         setTimeout(function () {
@@ -55,7 +57,9 @@
                         }, 2500);
                     });
 
-                    connection.start().catch(err => console.error("SignalR Connection Error: ", err));
+                    connection.start()
+                        .then(() => console.log("SignalR Connection established successfully."))
+                        .catch(err => console.error("SignalR Connection Error: ", err));
                 }
                 </text>
             }

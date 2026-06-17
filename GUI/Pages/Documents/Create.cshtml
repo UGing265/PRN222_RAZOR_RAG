@@ -646,6 +646,200 @@
                     window.reinitGlassDropdown('SubjectId');
                 }
             });
-        })();
-    </script>
+
+             // Global refresh function to update without full page reload
+             window.updateSubjectsDropdowns = function (newSubjects, newTerms, newSubjectTermMap, newDocTypes, newLanguages, newDocSources) {
+                 var docTypeEl = document.getElementById('DocumentTypeId');
+                 var langEl = document.getElementById('LanguageId');
+                 var docSourceEl = document.getElementById('DocumentSourceId');
+
+                 // 1. Update the mapping
+                 subjectToTerm = {};
+                 for (var k in newSubjectTermMap) {
+                     if (newSubjectTermMap.hasOwnProperty(k)) {
+                         subjectToTerm[k.toLowerCase()] = newSubjectTermMap[k].toLowerCase();
+                     }
+                 }
+ 
+                 // 2. Re-populate allSubjectOptions
+                 allSubjectOptions = [{ val: '', text: 'Chọn Môn Học', termId: null }];
+                 newSubjects.forEach(function (s) {
+                     allSubjectOptions.push({
+                         val: s.id,
+                         text: s.code,
+                         termId: s.termId ? s.termId.toLowerCase() : null
+                     });
+                 });
+ 
+                 // 3. Update AcademicTermId options
+                 var prevTermVal = termEl.value;
+                 while (termEl.options.length > 0) {
+                     termEl.remove(0);
+                 }
+                 
+                 // Add default option
+                 var defaultTermOpt = document.createElement('option');
+                 defaultTermOpt.value = '';
+                 defaultTermOpt.textContent = 'Chọn Học Kỳ';
+                 termEl.add(defaultTermOpt);
+ 
+                 newTerms.forEach(function (t) {
+                     var termOpt = document.createElement('option');
+                     termOpt.value = t.id;
+                     termOpt.textContent = t.name;
+                     termEl.add(termOpt);
+                 });
+ 
+                 // Restore previous term value if valid
+                 var termRestored = false;
+                 for (var i = 0; i < termEl.options.length; i++) {
+                     if (termEl.options[i].value === prevTermVal) {
+                         termEl.selectedIndex = i;
+                         termRestored = true;
+                         break;
+                     }
+                 }
+                 if (!termRestored) {
+                     termEl.selectedIndex = 0;
+                 }
+
+                 // 4. Update DocumentTypeId options
+                 if (docTypeEl && newDocTypes) {
+                     var prevDocTypeVal = docTypeEl.value;
+                     while (docTypeEl.options.length > 0) {
+                         docTypeEl.remove(0);
+                     }
+                     var defaultTypeOpt = document.createElement('option');
+                     defaultTypeOpt.value = '';
+                     defaultTypeOpt.textContent = 'Chọn Loại Học Liệu';
+                     docTypeEl.add(defaultTypeOpt);
+
+                     newDocTypes.forEach(function (dt) {
+                         var opt = document.createElement('option');
+                         opt.value = dt.id;
+                         opt.textContent = dt.name;
+                         docTypeEl.add(opt);
+                     });
+
+                     var typeRestored = false;
+                     for (var i = 0; i < docTypeEl.options.length; i++) {
+                         if (docTypeEl.options[i].value === prevDocTypeVal) {
+                             docTypeEl.selectedIndex = i;
+                             typeRestored = true;
+                             break;
+                         }
+                     }
+                     if (!typeRestored) {
+                         docTypeEl.selectedIndex = 0;
+                     }
+                 }
+
+                 // 5. Update LanguageId options
+                 if (langEl && newLanguages) {
+                     var prevLangVal = langEl.value;
+                     while (langEl.options.length > 0) {
+                         langEl.remove(0);
+                     }
+                     var defaultLangOpt = document.createElement('option');
+                     defaultLangOpt.value = '';
+                     defaultLangOpt.textContent = 'Chọn Ngôn Ngữ';
+                     langEl.add(defaultLangOpt);
+
+                     newLanguages.forEach(function (l) {
+                         var opt = document.createElement('option');
+                         opt.value = l.id;
+                         opt.textContent = l.name;
+                         langEl.add(opt);
+                     });
+
+                     var langRestored = false;
+                     for (var i = 0; i < langEl.options.length; i++) {
+                         if (langEl.options[i].value === prevLangVal) {
+                             langEl.selectedIndex = i;
+                             langRestored = true;
+                             break;
+                         }
+                     }
+                     if (!langRestored) {
+                         langEl.selectedIndex = 0;
+                     }
+                 }
+
+                 // 6. Update DocumentSourceId options
+                 if (docSourceEl && newDocSources) {
+                     var prevSourceVal = docSourceEl.value;
+                     while (docSourceEl.options.length > 0) {
+                         docSourceEl.remove(0);
+                     }
+                     var defaultSourceOpt = document.createElement('option');
+                     defaultSourceOpt.value = '';
+                     defaultSourceOpt.textContent = '-- Chọn nguồn (tuỳ chọn) --';
+                     docSourceEl.add(defaultSourceOpt);
+
+                     newDocSources.forEach(function (ds) {
+                         var opt = document.createElement('option');
+                         opt.value = ds.id;
+                         opt.textContent = ds.name;
+                         docSourceEl.add(opt);
+                     });
+
+                     var sourceRestored = false;
+                     for (var i = 0; i < docSourceEl.options.length; i++) {
+                         if (docSourceEl.options[i].value === prevSourceVal) {
+                             docSourceEl.selectedIndex = i;
+                             sourceRestored = true;
+                             break;
+                         }
+                     }
+                     if (!sourceRestored) {
+                         docSourceEl.selectedIndex = 0;
+                     }
+                 }
+ 
+                 // 7. Trigger TERM change to filter and update SUBJECT select
+                 termEl.dispatchEvent(new Event('change'));
+ 
+                 // 8. Re-initialize the custom glass-dropdown UI
+                 if (window.reinitGlassDropdown) {
+                     window.reinitGlassDropdown('SubjectId');
+                     window.reinitGlassDropdown('AcademicTermId');
+                     window.reinitGlassDropdown('DocumentTypeId');
+                     window.reinitGlassDropdown('LanguageId');
+                     window.reinitGlassDropdown('DocumentSourceId');
+                 }
+             };
+         })();
+     </script>
+ 
+     <script>
+         document.addEventListener("DOMContentLoaded", function () {
+             function setupSignalRUpload() {
+                 const connection = window.signalrConnection;
+                 if (!connection) {
+                     setTimeout(setupSignalRUpload, 100);
+                     return;
+                 }
+                 connection.on("ReceiveSubjectsAssignedUpdated", function () {
+                     console.log("ReceiveSubjectsAssignedUpdated: Fetching updated subjects and other lookups...");
+                     
+                     fetch('/upload?handler=RefreshSubjects')
+                         .then(response => {
+                             if (!response.ok) throw new Error('Failed to fetch subjects');
+                             return response.json();
+                         })
+                         .then(data => {
+                             if (window.updateSubjectsDropdowns) {
+                                 window.updateSubjectsDropdowns(data.subjects, data.academicTerms, data.subjectTermMap, data.documentTypes, data.languages, data.documentSources);
+                                 showPremiumToast("Danh sách môn học và các trường học liệu đã được cập nhật trực tiếp theo thời gian thực!", "info");
+                             }
+                         })
+                         .catch(err => {
+                             console.error("Error updating subjects: ", err);
+                             showPremiumToast("Có lỗi xảy ra khi tự động cập nhật danh sách học liệu.", "danger");
+                         });
+                 });
+             }
+             setupSignalRUpload();
+         });
+     </script>
 }

@@ -589,7 +589,7 @@
             input.form.submit();
         }
 
-        (function () {
+        document.addEventListener("DOMContentLoaded", function () {
             const list = document.getElementById('uploadJobList');
             const count = document.getElementById('uploadJobCount');
             if (!list || !count) return;
@@ -606,7 +606,44 @@
                 }
             };
 
-            setInterval(refreshJobs, 5000);
-        })();
+            function setupSignalRListeners() {
+                const connection = window.signalrConnection;
+                if (!connection) {
+                    setTimeout(setupSignalRListeners, 100);
+                    return;
+                }
+
+                connection.on("ReceiveUploadProgress", function (data) {
+                    console.log("ReceiveUploadProgress:", data);
+                    
+                    // Dynamically refresh the active job cards in the queue
+                    refreshJobs();
+
+                    // If job completed successfully or failed, show toast notification and reload document grid
+                    if (data.progressPercent >= 100) {
+                        showPremiumToast("Xử lý tài liệu và trích xuất AI thành công!", "success");
+                        setTimeout(function () {
+                            window.location.reload();
+                        }, 1500);
+                    }
+                });
+
+                connection.on("ReceiveDocumentStatusUpdated", function (data) {
+                    console.log("ReceiveDocumentStatusUpdated:", data);
+                    if (data.status === "deleted") {
+                        showPremiumToast(`Tài liệu "${data.title}" đã bị gỡ bỏ khỏi hệ thống.`, "danger");
+                    } else if (data.status === "completed") {
+                        showPremiumToast(`Tài liệu "${data.title}" đã xử lý hoàn tất.`, "success");
+                    } else {
+                        showPremiumToast(`Trạng thái tài liệu "${data.title}" đã được cập nhật.`, "info");
+                    }
+                    setTimeout(function () {
+                        window.location.reload();
+                    }, 1500);
+                });
+            }
+
+            setupSignalRListeners();
+        });
     </script>
 }
