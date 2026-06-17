@@ -89,7 +89,7 @@ namespace GUI.Pages.Admin
             return RedirectToPage("/Admin/Documents", new { tab = "files", q, subjectId, page });
         }
 
-        public async Task<IActionResult> OnPostResolveReportAsync(Guid id, string resolution, CancellationToken cancellationToken)
+        public async Task<IActionResult> OnPostResolveReportAsync(Guid id, string resolution, CancellationToken cancellationToken = default)
         {
             try
             {
