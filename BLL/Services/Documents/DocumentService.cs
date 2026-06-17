@@ -1091,6 +1091,9 @@ public class DocumentService : IDocumentService
 
         await _documentRepository.AddDocumentReportAsync(report, cancellationToken);
         await _documentRepository.SaveChangesAsync(cancellationToken);
+
+        await _notificationService.SendReportsUpdatedAsync(cancellationToken);
+
         return new DocumentReportDto
         {
             Id = report.Id,
@@ -1139,6 +1142,8 @@ public class DocumentService : IDocumentService
             }
             await _documentRepository.SaveChangesAsync(cancellationToken);
         }
+
+        await _notificationService.SendReportsUpdatedAsync(cancellationToken);
     }
 
     public async Task<MyDocumentsDto> GetAdminDocumentsAsync(string? query, Guid? subjectId, int page = 1, int pageSize = 10, CancellationToken cancellationToken = default)

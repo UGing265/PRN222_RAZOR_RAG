@@ -374,6 +374,13 @@
                         window.location.reload();
                     }, 1500);
                 });
+                connection.on("ReceiveReportsUpdated", function () {
+                    console.log("ReceiveReportsUpdated: Refreshing admin reports list...");
+                    showPremiumToast("Danh sách báo cáo vi phạm đã có thay đổi. Đang cập nhật...", "info");
+                    setTimeout(function () {
+                        window.location.reload();
+                    }, 1500);
+                });
             }
             setupSignalRAdmin();
         });
