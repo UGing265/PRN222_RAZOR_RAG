@@ -76,36 +76,51 @@ namespace GUI.Pages.Admin
 
         public async Task<IActionResult> OnPostDeleteDocumentAsync(Guid id, string? q, Guid? subjectId, int page = 1, CancellationToken cancellationToken = default)
         {
+            bool isAjax = Request.Headers.TryGetValue("X-Requested-With", out var requestedWith) && requestedWith == "XMLHttpRequest";
             try
             {
                 await _documentService.DeleteDocumentAsync(id, cancellationToken);
+                if (isAjax)
+                {
+                    return new JsonResult(new { success = true, message = "Đã xóa tài liệu khỏi hệ thống thành công." });
+                }
                 TempData["SuccessMessage"] = "Đã xóa tài liệu khỏi hệ thống thành công.";
             }
             catch (Exception ex)
             {
                 _logger.LogError(ex, "Error deleting document {Id} by Admin", id);
+                if (isAjax)
+                {
+                    return new JsonResult(new { success = false, message = "Có lỗi xảy ra khi xóa tài liệu: " + ex.Message });
+                }
                 TempData["ErrorMessage"] = "Có lỗi xảy ra khi xóa tài liệu: " + ex.Message;
             }
             return RedirectToPage("/Admin/Documents", new { tab = "files", q, subjectId, page });
         }
 
-        public async Task<IActionResult> OnPostResolveReportAsync(Guid id, string resolution, CancellationToken cancellationToken = default)
+        public async Task<IActionResult> OnPostResolveReportAsync(Guid id, string resolution, CancellationToken cancellationToken)
         {
+            bool isAjax = Request.Headers.TryGetValue("X-Requested-With", out var requestedWith) && requestedWith == "XMLHttpRequest";
             try
             {
                 await _documentService.ResolveReportAsync(id, resolution, cancellationToken);
-                if (resolution.Equals("delete", StringComparison.OrdinalIgnoreCase))
+                string msg = resolution.Equals("delete", StringComparison.OrdinalIgnoreCase)
+                    ? "Đã xóa tài liệu bị báo cáo và giải quyết các báo cáo liên quan."
+                    : "Đã bỏ qua báo cáo vi phạm thành công.";
+
+                if (isAjax)
                 {
-                    TempData["SuccessMessage"] = "Đã xóa tài liệu bị báo cáo và giải quyết các báo cáo liên quan.";
+                    return new JsonResult(new { success = true, message = msg });
                 }
-                else
-                {
-                    TempData["SuccessMessage"] = "Đã bỏ qua báo cáo vi phạm thành công.";
-                }
+                TempData["SuccessMessage"] = msg;
             }
             catch (Exception ex)
             {
                 _logger.LogError(ex, "Error resolving report {Id}", id);
+                if (isAjax)
+                {
+                    return new JsonResult(new { success = false, message = "Có lỗi xảy ra khi xử lý báo cáo: " + ex.Message });
+                }
                 TempData["ErrorMessage"] = "Có lỗi xảy ra khi xử lý báo cáo: " + ex.Message;
             }
             return RedirectToPage("/Admin/Documents", new { tab = "reports" });

@@ -45,7 +45,7 @@ namespace GUI.Pages.Admin
             return Page();
         }
 
-        public async Task<IActionResult> OnPostAsync(Guid userId, List<Guid> subjectIds, CancellationToken cancellationToken = default)
+        public async Task<IActionResult> OnPostAsync(Guid userId, List<Guid> subjectIds, CancellationToken cancellationToken)
         {
             var users = await _authService.GetAllUsersAsync(cancellationToken);
             var user = users.FirstOrDefault(u => u.Id == userId);

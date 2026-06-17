@@ -15,10 +15,10 @@
                 <p class="text-muted-foreground" style="font-size: 15px; font-weight: 400; margin-bottom: 0;">Giám sát, tìm kiếm, phân quyền và giải quyết các tài liệu báo cáo vi phạm trên hệ thống.</p>
             </div>
             <div class="d-flex gap-2">
-                <span class="badge bg-dark text-white px-3.5 py-2 border-0 rounded-pill" style="font-size: 13px; font-weight: 500; font-family: inherit; text-transform: none; letter-spacing: normal;">
+                <span id="top-total-docs-badge" class="badge bg-dark text-white px-3.5 py-2 border-0 rounded-pill" style="font-size: 13px; font-weight: 500; font-family: inherit; text-transform: none; letter-spacing: normal;">
                     @Model.ViewModel.TotalDocuments Tài liệu
                 </span>
-                <span class="badge px-3.5 py-2 border-0 rounded-pill text-white" style="background-color: #dc3545 !important; font-size: 13px; font-weight: 500; font-family: inherit; text-transform: none; letter-spacing: normal;">
+                <span id="top-pending-reports-badge" class="badge px-3.5 py-2 border-0 rounded-pill text-white" style="background-color: #dc3545 !important; font-size: 13px; font-weight: 500; font-family: inherit; text-transform: none; letter-spacing: normal;">
                     @Model.ViewModel.PendingReports.Count Báo cáo chờ xử lý
                 </span>
             </div>
@@ -28,12 +28,12 @@
         <ul class="nav nav-tabs border-0 mb-4 d-flex gap-2" id="adminDocsTabs" role="tablist" style="font-family: inherit;">
             <li class="nav-item" role="presentation">
                 <button class="nav-link pill-button px-4 py-2 text-decoration-none border-0 @(activeTab == "files" ? "active" : "")" id="files-tab" data-bs-toggle="tab" data-bs-target="#files-pane" type="button" role="tab" aria-controls="files-pane" aria-selected="@(activeTab == "files" ? "true" : "false")" style="border-radius: 100px;">
-                    Quản Lý File (@Model.ViewModel.TotalDocuments)
+                    Quản Lý File (<span id="tab-files-count">@Model.ViewModel.TotalDocuments</span>)
                 </button>
             </li>
             <li class="nav-item" role="presentation">
                 <button class="nav-link pill-button px-4 py-2 text-decoration-none border-0 @(activeTab == "reports" ? "active" : "")" id="reports-tab" data-bs-toggle="tab" data-bs-target="#reports-pane" type="button" role="tab" aria-controls="reports-pane" aria-selected="@(activeTab == "reports" ? "true" : "false")" style="border-radius: 100px;">
-                    Tài Liệu Bị Báo Cáo (@Model.ViewModel.PendingReports.Count)
+                    Tài Liệu Bị Báo Cáo (<span id="tab-reports-count">@Model.ViewModel.PendingReports.Count</span>)
                 </button>
             </li>
         </ul>
@@ -70,6 +70,7 @@
                     </form>
 
                     <!-- Documents Table -->
+                    <div id="files-table-container">
                     @if (!Model.ViewModel.Documents.Any())
                     {
                         <div class="text-center py-5">
@@ -165,6 +166,7 @@
                             </nav>
                         }
                     }
+                    </div>
                 </div>
             </div>
 
@@ -173,6 +175,7 @@
                 <div class="soft-panel editorial-shadow p-4 p-md-5" style="background: rgba(255,255,255,.72); border-radius: 24px;">
                     <h2 class="h4 fw-bold text-foreground mb-4" style="font-family: inherit;">Danh Sách Báo Cáo Chờ Xử Lý</h2>
                     
+                    <div id="reports-table-container">
                     @if (!Model.ViewModel.PendingReports.Any())
                     {
                         <div class="text-center py-5">
@@ -237,6 +240,8 @@
                             </table>
                         </div>
                     }
+                    </div>
+                </div>
                 </div>
             </div>
         </div>
@@ -360,7 +365,111 @@
             modal.show();
         }
 
+        // Global sync function for real-time silent updates
+        function syncAdminDashboard(showToast = true, toastMessage = "Dữ liệu đã được đồng bộ tự động theo thời gian thực!", toastType = "info") {
+            console.log("syncAdminDashboard: Starting silent sync...");
+            fetch(window.location.href)
+                .then(response => {
+                    if (!response.ok) throw new Error("Silent sync fetch failed.");
+                    return response.text();
+                })
+                .then(html => {
+                    const parser = new DOMParser();
+                    const doc = parser.parseFromString(html, 'text/html');
+
+                    // 1. Sync files table
+                    const newFilesContainer = doc.getElementById('files-table-container');
+                    const currentFilesContainer = document.getElementById('files-table-container');
+                    if (newFilesContainer && currentFilesContainer) {
+                        currentFilesContainer.innerHTML = newFilesContainer.innerHTML;
+                    }
+
+                    // 2. Sync reports table
+                    const newReportsContainer = doc.getElementById('reports-table-container');
+                    const currentReportsContainer = document.getElementById('reports-table-container');
+                    if (newReportsContainer && currentReportsContainer) {
+                        currentReportsContainer.innerHTML = newReportsContainer.innerHTML;
+                    }
+
+                    // 3. Sync header badges
+                    const headerBadges = ['top-total-docs-badge', 'top-pending-reports-badge'];
+                    headerBadges.forEach(id => {
+                        const newBadge = doc.getElementById(id);
+                        const currentBadge = document.getElementById(id);
+                        if (newBadge && currentBadge) {
+                            currentBadge.innerHTML = newBadge.innerHTML;
+                        }
+                    });
+
+                    // 4. Sync tab counter badges
+                    const tabBadges = ['tab-files-count', 'tab-reports-count'];
+                    tabBadges.forEach(id => {
+                        const newBadge = doc.getElementById(id);
+                        const currentBadge = document.getElementById(id);
+                        if (newBadge && currentBadge) {
+                            currentBadge.innerHTML = newBadge.innerHTML;
+                        }
+                    });
+
+                    console.log("syncAdminDashboard: Silent sync completed successfully.");
+                    if (showToast) {
+                        showPremiumToast(toastMessage, toastType);
+                    }
+                })
+                .catch(err => {
+                    console.error("Error during silent sync: ", err);
+                });
+        }
+
         document.addEventListener("DOMContentLoaded", function () {
+            // Intercept form submissions for Delete Document and Resolve Report
+            document.addEventListener("submit", function (event) {
+                const form = event.target;
+                const action = form.getAttribute("action") || "";
+                
+                const isDeleteDocForm = action.includes("handler=DeleteDocument");
+                const isResolveReportForm = action.includes("handler=ResolveReport");
+                
+                if (isDeleteDocForm || isResolveReportForm) {
+                    event.preventDefault();
+                    
+                    const formData = new FormData(form);
+                    const url = form.action || window.location.href;
+                    
+                    // Hide delete modal if it's the delete document form
+                    if (isDeleteDocForm) {
+                        const modalEl = document.getElementById('deleteDocModal');
+                        const modal = bootstrap.Modal.getInstance(modalEl);
+                        if (modal) {
+                            modal.hide();
+                        }
+                    }
+                    
+                    fetch(url, {
+                        method: "POST",
+                        body: formData,
+                        headers: {
+                            "X-Requested-With": "XMLHttpRequest"
+                        }
+                    })
+                    .then(response => {
+                        if (!response.ok) throw new Error("Form submission failed.");
+                        return response.json();
+                    })
+                    .then(data => {
+                        if (data.success) {
+                            syncAdminDashboard(true, data.message, "success");
+                        } else {
+                            showPremiumToast(data.message || "Đã xảy ra lỗi khi thực hiện thao tác.", "danger");
+                        }
+                    })
+                    .catch(err => {
+                        console.error("Error submitting form: ", err);
+                        showPremiumToast("Lỗi hệ thống. Vui lòng thử lại sau.", "danger");
+                    });
+                }
+            });
+
             function setupSignalRAdmin() {
                 const connection = window.signalrConnection;
                 if (!connection) {
@@ -369,17 +478,11 @@
                 }
                 connection.on("ReceiveDocumentListUpdated", function () {
                     console.log("ReceiveDocumentListUpdated: Refreshing admin documents list...");
-                    showPremiumToast("Danh sách tài liệu đã có thay đổi. Đang cập nhật...", "info");
-                    setTimeout(function () {
-                        window.location.reload();
-                    }, 1500);
+                    syncAdminDashboard(true, "Danh sách tài liệu đã có thay đổi. Đang cập nhật tự động...", "info");
                 });
                 connection.on("ReceiveReportsUpdated", function () {
                     console.log("ReceiveReportsUpdated: Refreshing admin reports list...");
-                    showPremiumToast("Danh sách báo cáo vi phạm đã có thay đổi. Đang cập nhật...", "info");
-                    setTimeout(function () {
-                        window.location.reload();
-                    }, 1500);
+                    syncAdminDashboard(true, "Danh sách báo cáo vi phạm đã có thay đổi. Đang cập nhật tự động...", "info");
                 });
             }
             setupSignalRAdmin();

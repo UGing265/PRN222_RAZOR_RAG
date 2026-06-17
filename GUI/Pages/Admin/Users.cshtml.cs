@@ -26,7 +26,7 @@ namespace GUI.Pages.Admin
             return Page();
         }
 
-        public async Task<IActionResult> OnPostCreateUserAsync(string fullName, string email, string password, short roleId, CancellationToken cancellationToken = default)
+        public async Task<IActionResult> OnPostCreateUserAsync(string fullName, string email, string password, short roleId, CancellationToken cancellationToken)
         {
             if (string.IsNullOrWhiteSpace(fullName) || string.IsNullOrWhiteSpace(email) || string.IsNullOrWhiteSpace(password))
             {
@@ -52,7 +52,7 @@ namespace GUI.Pages.Admin
             return RedirectToPage();
         }
 
-        public async Task<IActionResult> OnPostApproveAsync(Guid id, CancellationToken cancellationToken = default)
+        public async Task<IActionResult> OnPostApproveAsync(Guid id, CancellationToken cancellationToken)
         {
             var success = await _authService.ApproveUserAsync(id, cancellationToken);
             if (success)
@@ -66,7 +66,7 @@ namespace GUI.Pages.Admin
             return RedirectToPage();
         }
 
-        public async Task<IActionResult> OnPostRejectOrBlockAsync(Guid id, CancellationToken cancellationToken = default)
+        public async Task<IActionResult> OnPostRejectOrBlockAsync(Guid id, CancellationToken cancellationToken)
         {
             var success = await _authService.RejectOrBlockUserAsync(id, cancellationToken);
             if (success)
@@ -80,7 +80,7 @@ namespace GUI.Pages.Admin
             return RedirectToPage();
         }
 
-        public async Task<IActionResult> OnPostUnblockAsync(Guid id, CancellationToken cancellationToken = default)
+        public async Task<IActionResult> OnPostUnblockAsync(Guid id, CancellationToken cancellationToken)
         {
             var success = await _authService.UnblockUserAsync(id, cancellationToken);
             if (success)
