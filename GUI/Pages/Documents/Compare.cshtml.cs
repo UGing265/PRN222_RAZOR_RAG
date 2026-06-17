@@ -1,7 +1,9 @@
+using BLL.DTOs.Documents;
 using BLL.Interfaces.Documents;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
+using Microsoft.Extensions.Caching.Memory;
 using System.Security.Claims;
 using System.Text.Json;
 using Markdig;
@@ -13,11 +15,19 @@ public class CompareModel : PageModel
 {
     private readonly IDocumentService _documentService;
     private readonly IDocumentComparisonService _documentComparisonService;
+    private readonly IComparisonPdfExporter _pdfExporter;
+    private readonly IMemoryCache _cache;
 
-    public CompareModel(IDocumentService documentService, IDocumentComparisonService documentComparisonService)
+    public CompareModel(
+        IDocumentService documentService,
+        IDocumentComparisonService documentComparisonService,
+        IComparisonPdfExporter pdfExporter,
+        IMemoryCache cache)
     {
         _documentService = documentService;
         _documentComparisonService = documentComparisonService;
+        _pdfExporter = pdfExporter;
+        _cache = cache;
     }
 
     public string? ComparisonResultHtml { get; set; }
@@ -26,6 +36,8 @@ public class CompareModel : PageModel
     // We need to keep track of the selected documents to re-render them if a postback happens.
     [BindProperty]
     public List<Guid> SelectedDocumentIds { get; set; } = new();
+
+    public string? ExportKey { get; set; }
 
     public void OnGet()
     {
@@ -61,6 +73,35 @@ public class CompareModel : PageModel
         return new JsonResult(documents);
     }
 
+    public async Task<IActionResult> OnGetExportPdfAsync(string key)
+    {
+        if (string.IsNullOrWhiteSpace(key)) return BadRequest();
+
+        if (!_cache.TryGetValue<ComparisonExportRequest>(key, out var payload) || payload is null)
+        {
+            ErrorMessage = "Phiên xuất PDF đã hết hạn. Vui lòng chạy lại phân tích.";
+            return Page();
+        }
+
+        var userIdString = User.FindFirstValue(ClaimTypes.NameIdentifier);
+        if (!Guid.TryParse(userIdString, out var userId))
+        {
+            return Unauthorized();
+        }
+
+        // Ownership check: only the original requester (or admin) can download.
+        var requesterEmail = User.FindFirstValue(ClaimTypes.Email);
+        if (!User.IsInRole("Admin") &&
+            !string.Equals(requesterEmail, payload.RequesterEmail, StringComparison.OrdinalIgnoreCase))
+        {
+            return Forbid();
+        }
+
+        var pdfBytes = _pdfExporter.Build(payload);
+        var fileName = $"compare-{DateTime.UtcNow:yyyyMMdd-HHmmss}.pdf";
+        return File(pdfBytes, "application/pdf", fileName);
+    }
+
     public async Task<IActionResult> OnPostAsync()
     {
         var userIdString = User.FindFirstValue(ClaimTypes.NameIdentifier);
@@ -91,6 +132,19 @@ public class CompareModel : PageModel
                 .UsePipeTables()
                 .Build();
             ComparisonResultHtml = Markdig.Markdown.ToHtml(rawMarkdown, pipeline);
+
+            // Stash raw markdown + metadata in cache so the export handler can build a PDF
+            var exportKey = Guid.NewGuid().ToString("N");
+            var titles = await ResolveDocumentTitlesAsync(SelectedDocumentIds, userId, isAdmin);
+            var cacheEntry = new ComparisonExportRequest
+            {
+                RawMarkdown = rawMarkdown,
+                DocumentTitles = titles,
+                RequesterEmail = User.FindFirstValue(ClaimTypes.Email) ?? userIdString,
+                GeneratedAtUtc = DateTime.UtcNow,
+            };
+            _cache.Set(exportKey, cacheEntry, TimeSpan.FromMinutes(5));
+            ExportKey = exportKey;
         }
         catch (Exception ex)
         {
@@ -98,5 +152,17 @@ public class CompareModel : PageModel
         }
 
         return Page();
+    }
+
+    private async Task<IReadOnlyList<string>> ResolveDocumentTitlesAsync(
+        List<Guid> ids, Guid userId, bool isAdmin)
+    {
+        var titles = new List<string>(ids.Count);
+        foreach (var id in ids)
+        {
+            var doc = await _documentService.GetDocumentDetailsAsync(id, chunkPage: 1, chunkPageSize: 1, incrementViewCount: false);
+            titles.Add(doc?.Title ?? $"Tài liệu {id.ToString().Substring(0, 8)}");
+        }
+        return titles;
     }
 }
