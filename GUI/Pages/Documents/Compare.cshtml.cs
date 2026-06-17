@@ -83,12 +83,6 @@ public class CompareModel : PageModel
             return Page();
         }
 
-        var userIdString = User.FindFirstValue(ClaimTypes.NameIdentifier);
-        if (!Guid.TryParse(userIdString, out var userId))
-        {
-            return Unauthorized();
-        }
-
         // Ownership check: only the original requester (or admin) can download.
         var requesterEmail = User.FindFirstValue(ClaimTypes.Email);
         if (!User.IsInRole("Admin") &&
@@ -135,7 +129,7 @@ public class CompareModel : PageModel
 
             // Stash raw markdown + metadata in cache so the export handler can build a PDF
             var exportKey = Guid.NewGuid().ToString("N");
-            var titles = await ResolveDocumentTitlesAsync(SelectedDocumentIds, userId, isAdmin);
+            var titles = await ResolveDocumentTitlesAsync(SelectedDocumentIds);
             var cacheEntry = new ComparisonExportRequest
             {
                 RawMarkdown = rawMarkdown,
@@ -154,8 +148,7 @@ public class CompareModel : PageModel
         return Page();
     }
 
-    private async Task<IReadOnlyList<string>> ResolveDocumentTitlesAsync(
-        List<Guid> ids, Guid userId, bool isAdmin)
+    private async Task<IReadOnlyList<string>> ResolveDocumentTitlesAsync(List<Guid> ids)
     {
         var titles = new List<string>(ids.Count);
         foreach (var id in ids)
