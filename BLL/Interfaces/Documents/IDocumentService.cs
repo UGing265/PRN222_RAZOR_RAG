@@ -63,5 +63,16 @@ public interface IDocumentService
     Task AssignSubjectsToLecturerAsync(Guid userId, List<Guid> subjectIds, CancellationToken cancellationToken = default);
     Task<bool> IsSubjectAssignedToLecturerAsync(Guid userId, Guid subjectId, CancellationToken cancellationToken = default);
     Task<Dictionary<Guid, (Guid UserId, string FullName)>> GetSubjectLecturerMapAsync(CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Upload file, save to storage, trigger indexing pipeline (extract → chunk → embed → save).
+    /// Returns result DTO with DocumentId, FileName, and initial Status.
+    /// </summary>
+    Task<DocumentUploadResultDto> UploadAndProcessAsync(IFormFile file, Guid userId, CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Approve a document (change Status to "approved"). Only Lecturer/Admin can call this.
+    /// </summary>
+    Task ApproveDocumentAsync(Guid documentId, Guid approverId, CancellationToken cancellationToken = default);
 }
 

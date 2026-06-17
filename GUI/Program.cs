@@ -62,6 +62,7 @@ app.UseAuthorization();
 
 app.MapRazorPages();
 app.MapChatEndpoints();
+app.MapDocumentEndpoints();
 app.MapHub<SystemHub>("/systemHub");
 
 app.Run();

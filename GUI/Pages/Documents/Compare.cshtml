@@ -1,0 +1,224 @@
+@page
+@model GUI.Pages.Documents.CompareModel
+@{
+    ViewData["Title"] = "So sánh tài liệu";
+}
+
+<div class="container py-4">
+    <div class="row mb-4">
+        <div class="col-12">
+            <h2 class="fw-bold mb-3"><i class="bi bi-files text-primary me-2"></i>So sánh tài liệu</h2>
+            <p class="text-muted">Chọn tài liệu từ hệ thống hoặc tải lên hai tài liệu để so sánh, tìm điểm giống và khác nhau bằng AI.</p>
+        </div>
+    </div>
+
+    @if (!string.IsNullOrEmpty(Model.ErrorMessage))
+    {
+        <div class="alert alert-danger" role="alert">
+            <i class="bi bi-exclamation-triangle-fill me-2"></i>@Model.ErrorMessage
+        </div>
+    }
+
+    <!-- Tabs cho 2 chế độ -->
+    <ul class="nav nav-tabs mb-4" id="compareTabs" role="tablist">
+        <li class="nav-item" role="presentation">
+            <button class="nav-link active fw-bold" id="db-tab" data-bs-toggle="tab" data-bs-target="#db-mode" type="button" role="tab" aria-controls="db-mode" aria-selected="true">
+                <i class="bi bi-database me-2"></i>Chọn từ thư viện
+            </button>
+        </li>
+        <li class="nav-item" role="presentation">
+            <button class="nav-link fw-bold" id="legacy-tab" data-bs-toggle="tab" data-bs-target="#legacy-mode" type="button" role="tab" aria-controls="legacy-mode" aria-selected="false">
+                <i class="bi bi-upload me-2"></i>Tải lên trực tiếp
+            </button>
+        </li>
+    </ul>
+
+    <div class="tab-content" id="compareTabsContent">
+        
+        <!-- Chế độ chọn từ DB -->
+        <div class="tab-pane fade show active" id="db-mode" role="tabpanel" aria-labelledby="db-tab">
+            <div class="card shadow-sm mb-4">
+                <div class="card-body">
+                    <form method="post" asp-page-handler="Db" id="compareDbForm">
+                        <div class="mb-3">
+                            <label class="form-label fw-semibold">Chọn tài liệu để so sánh (ít nhất 2)</label>
+                            <select class="form-select" asp-for="SelectedDocumentIds" asp-items="Model.AvailableDocuments" multiple style="height: 150px;">
+                            </select>
+                            <div class="form-text">Giữ phím Ctrl (Windows) hoặc Cmd (Mac) để chọn nhiều tài liệu.</div>
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label fw-semibold">Câu hỏi bổ sung (Tùy chọn)</label>
+                            <textarea class="form-control" asp-for="Question" rows="2" placeholder="Ví dụ: Phân tích sự khác biệt về định nghĩa Machine Learning trong 2 tài liệu này."></textarea>
+                        </div>
+
+                        <div class="text-end">
+                            <button type="submit" class="btn btn-primary" id="btnCompareDb">
+                                <i class="bi bi-magic me-2"></i>Phân tích & So sánh
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+
+            @if (Model.DbResult != null)
+            {
+                <div class="card shadow-sm border-0 border-top border-5 border-success">
+                    <div class="card-body p-4">
+                        <h4 class="mb-4">Kết quả so sánh AI</h4>
+
+                        <div class="row mb-4 align-items-center">
+                            <div class="col-md-4 text-center">
+                                <div class="display-4 fw-bold @(Model.DbResult.SimilarityPercentage > 80 ? "text-danger" : Model.DbResult.SimilarityPercentage > 50 ? "text-warning" : "text-success")">
+                                    @Model.DbResult.SimilarityPercentage%
+                                </div>
+                                <div class="text-muted text-uppercase fw-semibold tracking-wide">Độ giống nhau</div>
+                            </div>
+                            <div class="col-md-8">
+                                <div class="progress" style="height: 25px;">
+                                    <div class="progress-bar @(Model.DbResult.SimilarityPercentage > 80 ? "bg-danger" : Model.DbResult.SimilarityPercentage > 50 ? "bg-warning" : "bg-success")" 
+                                         role="progressbar" 
+                                         style="width: @Model.DbResult.SimilarityPercentage%;" 
+                                         aria-valuenow="@Model.DbResult.SimilarityPercentage" 
+                                         aria-valuemin="0" 
+                                         aria-valuemax="100">
+                                    </div>
+                                </div>
+                                <p class="mt-3 mb-0 text-muted"><strong>Nhận xét chung:</strong> @Model.DbResult.SimilarityExplanation</p>
+                            </div>
+                        </div>
+
+                        <hr />
+
+                        <div class="row">
+                            <div class="col-12 mb-4">
+                                <h5 class="text-success"><i class="bi bi-check-circle me-2"></i>Điểm giống nhau</h5>
+                                <ul>
+                                    @foreach(var item in Model.DbResult.SimilarPoints)
+                                    {
+                                        <li>@item</li>
+                                    }
+                                </ul>
+                            </div>
+                            
+                            <div class="col-12">
+                                <h5 class="text-danger"><i class="bi bi-x-circle me-2"></i>Điểm khác biệt</h5>
+                                <div class="accordion" id="diffAccordion">
+                                    @{ int diffIndex = 0; }
+                                    @foreach(var kv in Model.DbResult.DifferentPoints)
+                                    {
+                                        <div class="accordion-item">
+                                            <h2 class="accordion-header" id="heading@(diffIndex)">
+                                                <button class="accordion-button @(diffIndex > 0 ? "collapsed" : "")" type="button" data-bs-toggle="collapse" data-bs-target="#collapse@(diffIndex)" aria-expanded="@(diffIndex == 0 ? "true" : "false")" aria-controls="collapse@(diffIndex)">
+                                                    <strong>Tài liệu: @kv.Key</strong>
+                                                </button>
+                                            </h2>
+                                            <div id="collapse@(diffIndex)" class="accordion-collapse collapse @(diffIndex == 0 ? "show" : "")" aria-labelledby="heading@(diffIndex)" data-bs-parent="#diffAccordion">
+                                                <div class="accordion-body">
+                                                    <ul>
+                                                        @foreach(var pt in kv.Value)
+                                                        {
+                                                            <li>@pt</li>
+                                                        }
+                                                    </ul>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        diffIndex++;
+                                    }
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            }
+        </div>
+
+        <!-- Chế độ Legacy Upload -->
+        <div class="tab-pane fade" id="legacy-mode" role="tabpanel" aria-labelledby="legacy-tab">
+            <div class="card shadow-sm mb-4">
+                <div class="card-body">
+                    <form method="post" asp-page-handler="Legacy" enctype="multipart/form-data" id="compareLegacyForm">
+                        <div class="row g-4">
+                            <div class="col-md-6">
+                                <label class="form-label fw-semibold">Tài liệu 1</label>
+                                <input class="form-control" type="file" asp-for="File1" accept=".pdf,.docx,.pptx,.txt,.md" required>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label fw-semibold">Tài liệu 2</label>
+                                <input class="form-control" type="file" asp-for="File2" accept=".pdf,.docx,.pptx,.txt,.md" required>
+                            </div>
+                        </div>
+                        <div class="mt-4 text-end">
+                            <button type="submit" class="btn btn-outline-primary" id="btnCompareLegacy">
+                                <i class="bi bi-upload me-2"></i>Tải lên & So sánh
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+
+            @if (Model.LegacyResult != null)
+            {
+                <div class="card shadow-sm border-0 border-top border-5 border-info">
+                    <div class="card-body p-4">
+                        <h4 class="mb-4">Kết quả so sánh trực tiếp</h4>
+                        
+                        <div class="row mb-4 align-items-center">
+                            <div class="col-md-4 text-center">
+                                <div class="display-4 fw-bold @(Model.LegacyResult.SimilarityPercentage > 80 ? "text-danger" : Model.LegacyResult.SimilarityPercentage > 50 ? "text-warning" : "text-success")">
+                                    @Model.LegacyResult.SimilarityPercentage%
+                                </div>
+                                <div class="text-muted text-uppercase fw-semibold tracking-wide">Độ giống nhau</div>
+                            </div>
+                            <div class="col-md-8">
+                                <div class="progress" style="height: 25px;">
+                                    <div class="progress-bar @(Model.LegacyResult.SimilarityPercentage > 80 ? "bg-danger" : Model.LegacyResult.SimilarityPercentage > 50 ? "bg-warning" : "bg-success")" 
+                                         role="progressbar" 
+                                         style="width: @Model.LegacyResult.SimilarityPercentage%;" 
+                                         aria-valuenow="@Model.LegacyResult.SimilarityPercentage" 
+                                         aria-valuemin="0" 
+                                         aria-valuemax="100">
+                                    </div>
+                                </div>
+                                <small class="text-muted mt-2 d-block">Mức độ tương đồng tính toán bằng thuật toán không gian Vector (Cosine Distance).</small>
+                            </div>
+                        </div>
+
+                        <hr />
+
+                        <h5 class="mb-3"><i class="bi bi-robot text-info me-2"></i>AI Nhận xét & Tóm tắt</h5>
+                        <div class="p-4 bg-light rounded-3" style="white-space: pre-wrap;">
+                            @Model.LegacyResult.GeminiSummary
+                        </div>
+                    </div>
+                </div>
+            }
+        </div>
+        
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        document.getElementById('compareDbForm').addEventListener('submit', function() {
+            var btn = document.getElementById('btnCompareDb');
+            btn.innerHTML = '<span class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>Đang phân tích...';
+            btn.classList.add('disabled');
+        });
+        document.getElementById('compareLegacyForm').addEventListener('submit', function() {
+            var btn = document.getElementById('btnCompareLegacy');
+            btn.innerHTML = '<span class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>Đang tải lên...';
+            btn.classList.add('disabled');
+        });
+
+        // Giữ active tab dựa trên form vừa submit
+        document.addEventListener("DOMContentLoaded", function () {
+            var urlParams = new URLSearchParams(window.location.search);
+            if (window.location.href.indexOf('handler=Legacy') > -1 || @(Model.LegacyResult != null ? "true" : "false")) {
+                var legacyTab = new bootstrap.Tab(document.querySelector('#legacy-tab'));
+                legacyTab.show();
+            }
+        });
+    </script>
+}

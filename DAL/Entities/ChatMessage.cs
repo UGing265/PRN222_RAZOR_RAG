@@ -17,6 +17,12 @@ public class ChatMessage
 
     public DateTime CreatedAt { get; set; }
 
+    /// <summary>
+    /// JSON-serialized list of DocumentChunk IDs that were retrieved during RAG for this message.
+    /// Only populated on Assistant messages. Used to reconstruct "Nguồn trích dẫn" when loading chat history.
+    /// </summary>
+    public List<Guid> RetrievedChunkIds { get; set; } = [];
+
     public virtual ChatSession Session { get; set; } = null!;
 }
 

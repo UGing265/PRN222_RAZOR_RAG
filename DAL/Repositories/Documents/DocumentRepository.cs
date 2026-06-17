@@ -628,6 +628,26 @@ public class DocumentRepository : IDocumentRepository
         _dbContext.DocumentReports.RemoveRange(reports);
     }
 
+    public async Task<Dictionary<Guid, string>> GetDocumentTextAsync(List<Guid> documentIds, CancellationToken cancellationToken = default)
+    {
+        if (documentIds == null || documentIds.Count == 0)
+            return new Dictionary<Guid, string>();
+
+        var chunks = await _dbContext.DocumentChunks
+            .AsNoTracking()
+            .Where(c => documentIds.Contains(c.DocumentId))
+            .OrderBy(c => c.DocumentId)
+            .ThenBy(c => c.ChunkOrder)
+            .Select(c => new { c.DocumentId, c.Content })
+            .ToListAsync(cancellationToken);
+
+        return chunks
+            .GroupBy(c => c.DocumentId)
+            .ToDictionary(
+                g => g.Key,
+                g => string.Join("\n\n", g.Select(c => c.Content)));
+    }
+
     public Task SaveChangesAsync(CancellationToken cancellationToken = default)
         => _dbContext.SaveChangesAsync(cancellationToken);
 

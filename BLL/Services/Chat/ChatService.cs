@@ -52,8 +52,8 @@ public class ChatService : IChatService
             var queryEmbedding = await _embeddingService.EmbedAsync(request.Message, cancellationToken);
 
             // 5. Tìm Top K chunks liên quan
-            _logger.LogInformation("Searching similar chunks. DocumentId={DocumentId}, TopK={TopK}", session.DocumentId, TopKChunks);
-            var relevantChunks = await _chatRepository.SearchSimilarChunksAsync(queryEmbedding, TopKChunks, session.DocumentId, cancellationToken);
+            _logger.LogInformation("Searching similar chunks. DocumentIds={DocumentIds}, TopK={TopK}", string.Join(",", request.DocumentIds ?? new List<Guid>()), TopKChunks);
+            var relevantChunks = await _chatRepository.SearchSimilarChunksAsync(queryEmbedding, TopKChunks, request.DocumentIds, cancellationToken);
 
             // 6. Build System Prompt
             var systemPrompt = BuildSystemPrompt(relevantChunks);
@@ -65,8 +65,9 @@ public class ChatService : IChatService
             _logger.LogInformation("Calling Gemini for chat response. SessionId={SessionId}, ChunksFound={ChunksFound}", session.Id, relevantChunks.Count);
             var reply = await _geminiChatService.GenerateAsync(systemPrompt, geminiHistory, cancellationToken);
 
-            // 9. Lưu response Assistant vào DB
-            await SaveAssistantMessageAsync(session.Id, reply, cancellationToken);
+            // 9. Lưu response Assistant vào DB (kèm RetrievedChunkIds để phục vụ "Nguồn trích dẫn" khi load lại lịch sử)
+            var chunkIds = relevantChunks.Select(c => c.Id).ToList();
+            await SaveAssistantMessageAsync(session.Id, reply, chunkIds, cancellationToken);
 
             // 10. Extract sources và trả về
             var sources = ExtractSources(relevantChunks);
@@ -100,7 +101,7 @@ public class ChatService : IChatService
         await SaveUserMessageAsync(session.Id, request.Message, cancellationToken);
         var historyMessages = await _chatRepository.GetRecentMessagesAsync(session.Id, MaxHistoryMessages, cancellationToken);
         var queryEmbedding = await _embeddingService.EmbedAsync(request.Message, cancellationToken);
-        var relevantChunks = await _chatRepository.SearchSimilarChunksAsync(queryEmbedding, TopKChunks, session.DocumentId, cancellationToken);
+        var relevantChunks = await _chatRepository.SearchSimilarChunksAsync(queryEmbedding, TopKChunks, request.DocumentIds, cancellationToken);
         var systemPrompt = BuildSystemPrompt(relevantChunks);
         var geminiHistory = BuildGeminiHistory(historyMessages);
 
@@ -114,11 +115,12 @@ public class ChatService : IChatService
             yield return chunk;
         }
 
-        // 7. Lưu response đầy đủ vào DB sau khi stream xong
+        // 7. Lưu response đầy đủ vào DB sau khi stream xong (kèm RetrievedChunkIds)
         var completeReply = fullResponse.ToString();
         if (!string.IsNullOrWhiteSpace(completeReply))
         {
-            await SaveAssistantMessageAsync(session.Id, completeReply, cancellationToken);
+            var chunkIds = relevantChunks.Select(c => c.Id).ToList();
+            await SaveAssistantMessageAsync(session.Id, completeReply, chunkIds, cancellationToken);
         }
     }
 
@@ -128,7 +130,7 @@ public class ChatService : IChatService
         return sessions.Select(s => new ChatSessionSummaryDto
         {
             Id = s.Id,
-            DocumentId = s.DocumentId,
+            DocumentId = Guid.Empty, // Deprecated, we can just leave it empty or map the first document. But for DTO, maybe return first
             Title = s.Title,
             CreatedAt = s.CreatedAt
         }).ToList();
@@ -174,9 +176,9 @@ public class ChatService : IChatService
         var session = new ChatSession
         {
             UserId = userId,
-            DocumentId = request.DocumentId!.Value,
             Title = title,
-            CreatedAt = DateTime.UtcNow
+            CreatedAt = DateTime.UtcNow,
+            SessionDocuments = request.DocumentIds?.Select(id => new ChatSessionDocument { DocumentId = id }).ToList() ?? new List<ChatSessionDocument>()
         };
 
         return await _chatRepository.CreateSessionAsync(session, cancellationToken);
@@ -194,14 +196,15 @@ public class ChatService : IChatService
         await _chatRepository.AddMessageAsync(message, cancellationToken);
     }
 
-    private async Task SaveAssistantMessageAsync(Guid sessionId, string content, CancellationToken cancellationToken)
+    private async Task SaveAssistantMessageAsync(Guid sessionId, string content, List<Guid>? retrievedChunkIds, CancellationToken cancellationToken)
     {
         var message = new ChatMessage
         {
             SessionId = sessionId,
             Role = ChatRole.Assistant,
             Content = content,
-            CreatedAt = DateTime.UtcNow
+            CreatedAt = DateTime.UtcNow,
+            RetrievedChunkIds = retrievedChunkIds ?? []
         };
         await _chatRepository.AddMessageAsync(message, cancellationToken);
     }
@@ -211,27 +214,17 @@ public class ChatService : IChatService
     /// </summary>
     private static string BuildSystemPrompt(List<DocumentChunk> chunks)
     {
-        var sb = new StringBuilder();
-
-        sb.AppendLine("Bạn là trợ lý thông tin nội bộ của hệ thống tài liệu học thuật.");
-        sb.AppendLine();
-        sb.AppendLine("### LUẬT BẮT BUỘC:");
-        sb.AppendLine("1. CHỈ sử dụng thông tin trong phần [CONTEXT] bên dưới để trả lời. TUYỆT ĐỐI KHÔNG được bịa, suy đoán, hoặc sử dụng kiến thức bên ngoài.");
-        sb.AppendLine("2. Nếu không tìm thấy thông tin liên quan trong [CONTEXT], trả lời CHÍNH XÁC: \"Xin lỗi, tôi không tìm thấy thông tin liên quan trong tài liệu được cung cấp.\"");
-        sb.AppendLine("3. Cuối mỗi câu/đoạn cung cấp thông tin, BẮT BUỘC trích dẫn theo format: (Nguồn: [Tên tài liệu] - [Tên chương], Trang [số trang])");
-        sb.AppendLine("4. Trả lời bằng Tiếng Việt, rõ ràng, có cấu trúc, sử dụng markdown khi cần thiết.");
-        sb.AppendLine("5. Nếu câu hỏi là lời chào hỏi thông thường (xin chào, hello, hi, ...), hãy chào lại lịch sự và giới thiệu ngắn gọn rằng bạn là trợ lý tài liệu.");
-        sb.AppendLine();
+        var contextBuilder = new StringBuilder();
 
         if (chunks.Count == 0)
         {
-            sb.AppendLine("[CONTEXT]");
-            sb.AppendLine("Không có tài liệu nào được cung cấp.");
-            sb.AppendLine("[/CONTEXT]");
+            contextBuilder.AppendLine("[CONTEXT]");
+            contextBuilder.AppendLine("Không có tài liệu nào được cung cấp.");
+            contextBuilder.AppendLine("[/CONTEXT]");
         }
         else
         {
-            sb.AppendLine("[CONTEXT]");
+            contextBuilder.AppendLine("[CONTEXT]");
             for (var i = 0; i < chunks.Count; i++)
             {
                 var chunk = chunks[i];
@@ -239,18 +232,18 @@ public class ChatService : IChatService
                 var chapterTitle = chunk.Chapter?.Title ?? "N/A";
                 var page = chunk.PageNumber?.ToString() ?? "N/A";
 
-                sb.AppendLine($"--- Chunk {i + 1} ---");
-                sb.AppendLine($"Tài liệu: {docTitle}");
-                sb.AppendLine($"Chương: {chapterTitle}");
-                sb.AppendLine($"Trang: {page}");
-                sb.AppendLine("Nội dung:");
-                sb.AppendLine(chunk.Content);
-                sb.AppendLine();
+                contextBuilder.AppendLine($"--- Chunk {i + 1} ---");
+                contextBuilder.AppendLine($"Tài liệu: {docTitle}");
+                contextBuilder.AppendLine($"Chương: {chapterTitle}");
+                contextBuilder.AppendLine($"Trang: {page}");
+                contextBuilder.AppendLine("Nội dung:");
+                contextBuilder.AppendLine(chunk.Content);
+                contextBuilder.AppendLine();
             }
-            sb.AppendLine("[/CONTEXT]");
+            contextBuilder.AppendLine("[/CONTEXT]");
         }
 
-        return sb.ToString();
+        return BLL.Constants.PromptTemplates.RAG_SYSTEM_PROMPT.Replace("{context_chunks}", contextBuilder.ToString());
     }
 
     /// <summary>

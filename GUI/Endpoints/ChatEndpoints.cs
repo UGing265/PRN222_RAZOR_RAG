@@ -123,8 +123,8 @@ public static class ChatEndpoints
             if (string.IsNullOrWhiteSpace(request.Message))
                 return Results.BadRequest(new { error = "Message is required." });
 
-            if (!request.SessionId.HasValue && (!request.DocumentId.HasValue || request.DocumentId.Value == Guid.Empty))
-                return Results.BadRequest(new { error = "Vui lòng chọn một tài liệu cụ thể để bắt đầu chat." });
+            if (!request.SessionId.HasValue && (request.DocumentIds == null || request.DocumentIds.Count == 0))
+                return Results.BadRequest(new { error = "Vui lòng chọn ít nhất một tài liệu để bắt đầu chat." });
 
             var response = await chat.SendMessageAsync(userId, request, ct);
             return Results.Ok(response);
@@ -149,10 +149,10 @@ public static class ChatEndpoints
                 return;
             }
 
-            if (!request.SessionId.HasValue && (!request.DocumentId.HasValue || request.DocumentId.Value == Guid.Empty))
+            if (!request.SessionId.HasValue && (request.DocumentIds == null || request.DocumentIds.Count == 0))
             {
                 http.Response.ContentType = "text/event-stream";
-                await http.Response.WriteAsync($"data: [ERROR] Vui lòng chọn một tài liệu cụ thể (ở menu thả xuống phía trên) để bắt đầu phiên chat.\n\n", ct);
+                await http.Response.WriteAsync($"data: [ERROR] Vui lòng chọn ít nhất một tài liệu (ở menu thả xuống phía trên) để bắt đầu phiên chat.\n\n", ct);
                 await http.Response.Body.FlushAsync(ct);
                 return;
             }

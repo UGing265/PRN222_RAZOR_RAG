@@ -72,6 +72,13 @@ public interface IDocumentRepository
     Task<DocumentReport?> GetDocumentReportAsync(Guid reportId, CancellationToken cancellationToken = default);
     Task<List<DocumentReport>> GetDocumentReportsByDocumentAsync(Guid documentId, CancellationToken cancellationToken = default);
     Task RemoveDocumentReportsByDocumentAsync(Guid documentId, CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Ghép toàn bộ Content của các chunk theo DocumentId, dùng cho CompareService.
+    /// Returns Dictionary: key = DocumentId, value = ghép toàn bộ chunk text.
+    /// </summary>
+    Task<Dictionary<Guid, string>> GetDocumentTextAsync(List<Guid> documentIds, CancellationToken cancellationToken = default);
+
     Task SaveChangesAsync(CancellationToken cancellationToken = default);
 
     Task<List<Subject>> GetSubjectsAssignedToLecturerAsync(Guid userId, CancellationToken cancellationToken = default);
