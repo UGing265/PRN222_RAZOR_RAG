@@ -4,7 +4,12 @@ namespace BLL.Interfaces.Auth;
 
 public interface IAuthService
 {
-    Task<AuthUserDto> RegisterAsync(string fullName, string email, string password, short roleId, CancellationToken cancellationToken = default);
+    Task SubmitAccountRequestAsync(string fullName, string email, short roleId, CancellationToken cancellationToken = default);
+    Task RegisterAsync(string fullName, string email, string password, short roleId, CancellationToken cancellationToken = default);
+    Task<List<AccountRequestDto>> GetPendingRequestsAsync(CancellationToken cancellationToken = default);
+    Task ApproveAccountRequestAsync(Guid requestId, string verificationUrlFormat, CancellationToken cancellationToken = default);
+    Task RejectAccountRequestAsync(Guid requestId, CancellationToken cancellationToken = default);
+    Task<bool> VerifyAccountRequestAndSetPasswordAsync(string token, string newPassword, CancellationToken cancellationToken = default);
 
     Task<AuthUserDto?> ValidateCredentialsAsync(string email, string password, CancellationToken cancellationToken = default);
     Task<AuthUserDto> LoginOrRegisterExternalAsync(string email, string fullName, CancellationToken cancellationToken = default);

@@ -24,6 +24,7 @@ public class SmtpEmailService : IEmailService
     {
         var smtpServer = _configuration["SmtpSettings:Server"];
         var senderEmail = _configuration["SmtpSettings:SenderEmail"];
+        var smtpUsername = _configuration["SmtpSettings:Username"] ?? senderEmail;
         var senderPassword = _configuration["SmtpSettings:Password"];
         var senderName = _configuration["SmtpSettings:SenderName"] ?? "FPT RAG System";
         
@@ -49,7 +50,7 @@ public class SmtpEmailService : IEmailService
         {
             using var client = new SmtpClient(smtpServer, port)
             {
-                Credentials = new NetworkCredential(senderEmail, senderPassword),
+                Credentials = new NetworkCredential(smtpUsername, senderPassword),
                 EnableSsl = true
             };
 

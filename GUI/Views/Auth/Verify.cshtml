@@ -1,0 +1,142 @@
+@model GUI.Models.Auth.VerifyViewModel
+@{
+    Layout = null;
+    ViewData["Title"] = "Xác thực & Thiết lập mật khẩu";
+}
+
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>@ViewData["Title"] — StudyMate AI</title>
+    
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Source+Serif+4:ital,wght@0,400;0,600;1,400;1,600&display=swap" rel="stylesheet">
+    
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
+    
+    <style>
+        .auth-container {
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+            background: radial-gradient(circle at top left, var(--coral-soft) 0%, var(--bg) 40%);
+            position: relative;
+            overflow: hidden;
+        }
+        .auth-card {
+            width: 100%;
+            max-width: 440px;
+            padding: 40px;
+            text-align: center;
+            z-index: 2;
+        }
+    </style>
+</head>
+<body class="bg-background text-foreground">
+    <div class="auth-container">
+        <!-- Ánh sáng trang trí bay lơ lửng phía sau -->
+        <div class="pulsing-glow" style="top: 10%; left: 30%;"></div>
+
+        <!-- Khung giao diện chính (Glassmorphism) -->
+        <div class="soft-panel auth-card editorial-shadow position-relative">
+            
+            <!-- Icon Success (Dấu tick) -->
+            <div class="mb-4 d-flex justify-content-center">
+                <div class="brand-mark bg-background text-coral-deep border border-border" style="width: 72px; height: 72px;">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path>
+                        <polyline points="22 4 12 14.01 9 11.01"></polyline>
+                    </svg>
+                </div>
+            </div>
+
+            <!-- Tiêu đề & Thông báo -->
+            <h2 class="hero-title text-gradient mb-3" style="font-size: 28px;">Xác thực thành công!</h2>
+            <p class="text-muted-foreground mb-4" style="font-size: 15px;">Email của bạn đã được hệ thống ghi nhận. Vui lòng tự thiết lập mật khẩu bảo mật để hoàn tất kích hoạt tài khoản.</p>
+
+            <!-- Form nhập mật khẩu -->
+            <form class="text-start" asp-action="Verify" method="post">
+                @Html.AntiForgeryToken()
+                <input type="hidden" asp-for="Token" />
+                <div asp-validation-summary="ModelOnly" class="text-danger mb-3" style="font-size: 14px; text-align: center;"></div>
+
+                <div class="mb-3 position-relative">
+                    <label class="form-label font-mono-xs text-muted-foreground ms-1">Mật khẩu mới</label>
+                    <input type="password" class="form-control pill-input pe-5" asp-for="Password" placeholder="Nhập ít nhất 6 ký tự">
+                    <button type="button" class="btn position-absolute bottom-0 end-0 p-2 text-muted toggle-password" style="border-radius: 50%; border: none; background: transparent; transform: translateY(-2px);">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="eye-icon"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path><circle cx="12" cy="12" r="3"></circle></svg>
+                    </button>
+                    <span asp-validation-for="Password" class="text-danger mt-1 d-block" style="font-size: 13px;"></span>
+                </div>
+                <div class="mb-4 position-relative">
+                    <label class="form-label font-mono-xs text-muted-foreground ms-1">Xác nhận mật khẩu</label>
+                    <input type="password" class="form-control pill-input pe-5" asp-for="ConfirmPassword" placeholder="Nhập lại mật khẩu mới">
+                    <button type="button" class="btn position-absolute bottom-0 end-0 p-2 text-muted toggle-password" style="border-radius: 50%; border: none; background: transparent; transform: translateY(-2px);">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="eye-icon"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path><circle cx="12" cy="12" r="3"></circle></svg>
+                    </button>
+                    <span asp-validation-for="ConfirmPassword" class="text-danger mt-1 d-block" style="font-size: 13px;"></span>
+                </div>
+                
+                <button type="submit" class="btn btn-premium-primary w-100 py-3" style="font-size: 16px;">
+                    Hoàn tất & Đăng nhập
+                </button>
+            </form>
+            
+        </div>
+    </div>
+
+    <!-- MODAL THÔNG BÁO TẠO MẬT KHẨU THÀNH CÔNG -->
+    <div class="modal fade" id="successVerifyModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered modal-sm">
+            <div class="modal-content text-center" style="border-radius: 1.5rem; border: 1px solid var(--border); background: var(--card); padding: 2rem 1rem;">
+                <div class="mb-3 d-flex justify-content-center">
+                    <div class="brand-mark bg-background text-coral-deep border border-border" style="width: 60px; height: 60px;">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
+                            <polyline points="20 6 9 17 4 12"></polyline>
+                        </svg>
+                    </div>
+                </div>
+                <h5 class="mb-2" style="color: var(--foreground); font-weight: 700;">Hoàn tất!</h5>
+                <p class="text-muted-foreground mb-4" style="font-size: 14px;">Mật khẩu của bạn đã được lưu lại thành công. Bây giờ bạn có thể đăng nhập vào hệ thống.</p>
+                <!-- Dẫn về trang Auth/Login thật -->
+                <a href="/Auth/Login" class="btn btn-premium-primary w-100">Đến trang đăng nhập</a>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.6.0/jquery.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery-validate/1.19.3/jquery.validate.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery-validation-unobtrusive/3.2.12/jquery.validate.unobtrusive.min.js"></script>
+    <script>
+        // JS toggle hiển thị mật khẩu
+        document.querySelectorAll('.toggle-password').forEach(button => {
+            button.addEventListener('click', function() {
+                const input = this.previousElementSibling;
+                const icon = this.querySelector('svg');
+                if (input.type === 'password') {
+                    input.type = 'text';
+                    icon.innerHTML = '<path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"></path><line x1="1" y1="1" x2="23" y2="23"></line>';
+                } else {
+                    input.type = 'password';
+                    icon.innerHTML = '<path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path><circle cx="12" cy="12" r="3"></circle>';
+                }
+            });
+        });
+
+        @if (ViewBag.IsSuccess == true)
+        {
+            <text>
+            var myModal = new bootstrap.Modal(document.getElementById('successVerifyModal'), { backdrop: 'static', keyboard: false });
+            myModal.show();
+            </text>
+        }
+    </script>
+</body>
+</html>

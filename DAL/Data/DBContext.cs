@@ -29,7 +29,7 @@ public partial class DBContext : DbContext
 
     public virtual DbSet<User> Users { get; set; }
 
-
+    public virtual DbSet<AccountRequest> AccountRequests { get; set; }
     public virtual DbSet<Subject> Subjects { get; set; }
 
     public virtual DbSet<UserBookmark> UserBookmarks { get; set; }
@@ -75,6 +75,29 @@ public partial class DBContext : DbContext
                 .HasForeignKey(d => d.AcademicTermId)
                 .OnDelete(DeleteBehavior.SetNull)
                 .HasConstraintName("fk_subjects_academic_term");
+        });
+
+        modelBuilder.Entity<AccountRequest>(entity =>
+        {
+            entity.HasKey(e => e.Id).HasName("account_requests_pkey");
+            entity.ToTable("account_requests");
+            entity.HasIndex(e => e.Email, "account_requests_email_key").IsUnique();
+            entity.HasIndex(e => e.Status, "idx_account_requests_status");
+            entity.HasIndex(e => e.VerificationToken, "idx_account_requests_token");
+
+            entity.Property(e => e.Id).HasDefaultValueSql("uuid_generate_v4()").HasColumnName("id");
+            entity.Property(e => e.FullName).HasMaxLength(200).HasColumnName("full_name");
+            entity.Property(e => e.Email).HasMaxLength(255).HasColumnName("email");
+            entity.Property(e => e.RoleId).HasColumnName("role_id");
+            entity.Property(e => e.Status).HasMaxLength(50).HasDefaultValueSql("'pending'::character varying").HasColumnName("status");
+            entity.Property(e => e.VerificationToken).HasMaxLength(255).HasColumnName("verification_token");
+            entity.Property(e => e.TokenExpiresAt).HasColumnName("token_expires_at");
+            entity.Property(e => e.CreatedAt).HasDefaultValueSql("now()").HasColumnName("created_at");
+
+            entity.HasOne(d => d.Role).WithMany(p => p.AccountRequests)
+                .HasForeignKey(d => d.RoleId)
+                .OnDelete(DeleteBehavior.Cascade)
+                .HasConstraintName("account_requests_role_id_fkey");
         });
 
         modelBuilder.Entity<UserBookmark>(entity =>
@@ -486,22 +509,11 @@ public partial class DBContext : DbContext
             entity.Property(e => e.IsBlocked)
                 .HasDefaultValue(false)
                 .HasColumnName("is_blocked");
-            entity.Property(e => e.PasswordHash)
-                .HasMaxLength(255)
-                .HasColumnName("password_hash");
+            entity.Property(e => e.PasswordHash).HasColumnName("password_hash");
             entity.Property(e => e.RoleId).HasColumnName("role_id");
             entity.Property(e => e.UpdatedAt)
                 .HasDefaultValueSql("now()")
                 .HasColumnName("updated_at");
-            entity.Property(e => e.EmailVerified)
-                .HasDefaultValue(false)
-                .HasColumnName("email_verified");
-            entity.Property(e => e.Username)
-                .HasMaxLength(255)
-                .HasColumnName("username");
-            entity.Property(e => e.DisplayUsername)
-                .HasMaxLength(255)
-                .HasColumnName("displayUsername");
 
             entity.HasOne(d => d.Role).WithMany(p => p.Users)
                 .HasForeignKey(d => d.RoleId)
@@ -600,7 +612,6 @@ public partial class DBContext : DbContext
                 .HasDefaultValueSql("uuid_generate_v4()")
                 .HasColumnName("id");
             entity.Property(e => e.UserId).HasColumnName("user_id");
-            entity.Property(e => e.DocumentId).HasColumnName("document_id");
             entity.Property(e => e.Title)
                 .HasMaxLength(500)
                 .HasColumnName("title");
@@ -612,11 +623,6 @@ public partial class DBContext : DbContext
                 .HasForeignKey(d => d.UserId)
                 .OnDelete(DeleteBehavior.Cascade)
                 .HasConstraintName("chat_sessions_user_id_fkey");
-
-            entity.HasOne(d => d.Document).WithMany()
-                .HasForeignKey(d => d.DocumentId)
-                .OnDelete(DeleteBehavior.Cascade)
-                .HasConstraintName("chat_sessions_document_id_fkey");
         });
 
         modelBuilder.Entity<ChatMessage>(entity =>

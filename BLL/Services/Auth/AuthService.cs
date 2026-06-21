@@ -1,6 +1,5 @@
 using BLL.DTOs.Auth;
 using BLL.Interfaces.Auth;
-using BLL.Interfaces.Notifications;
 using DAL.Entities;
 using DAL.Interfaces.Auth;
 using Microsoft.AspNetCore.DataProtection;
@@ -12,50 +11,203 @@ public class AuthService : IAuthService
 {
     private readonly IAuthRepository _authRepository;
     private readonly ITimeLimitedDataProtector _protector;
-    private readonly INotificationService _notificationService;
+    private readonly IEmailService _emailService;
 
-    public AuthService(
-        IAuthRepository authRepository, 
-        IDataProtectionProvider dataProtectionProvider,
-        INotificationService notificationService)
+    public AuthService(IAuthRepository authRepository, IDataProtectionProvider dataProtectionProvider, IEmailService emailService)
     {
         _authRepository = authRepository;
         _protector = dataProtectionProvider.CreateProtector("FptStudentEmailVerification").ToTimeLimitedDataProtector();
-        _notificationService = notificationService;
+        _emailService = emailService;
     }
 
-    public async Task<AuthUserDto> RegisterAsync(string fullName, string email, string password, short roleId, CancellationToken cancellationToken = default)
+    public async Task SubmitAccountRequestAsync(string fullName, string email, short roleId, CancellationToken cancellationToken = default)
+    {
+        var normalizedEmail = email.Trim().ToLowerInvariant();
+
+        // 1. Kiểm tra xem email đã là user chưa
+        var existingUser = await _authRepository.EmailExistsAsync(normalizedEmail, cancellationToken);
+        if (existingUser)
+        {
+            throw new InvalidOperationException("Email này đã có tài khoản.");
+        }
+
+        // 2. Kiểm tra xem email đã từng gửi yêu cầu chưa
+        var existingRequest = await _authRepository.AccountRequestEmailExistsAsync(normalizedEmail, cancellationToken);
+        if (existingRequest)
+        {
+            throw new InvalidOperationException("Email này đã được gửi yêu cầu. Vui lòng chờ Admin phê duyệt.");
+        }
+
+        var roleExists = await _authRepository.RoleExistsAsync(roleId, cancellationToken);
+        if (!roleExists)
+        {
+            throw new InvalidOperationException("Vai trò không hợp lệ.");
+        }
+
+        var request = new AccountRequest
+        {
+            Id = Guid.NewGuid(),
+            FullName = fullName.Trim(),
+            Email = normalizedEmail,
+            RoleId = roleId,
+            Status = "pending",
+            CreatedAt = DateTime.UtcNow
+        };
+
+        await _authRepository.AddAccountRequestAsync(request, cancellationToken);
+    }
+
+    public async Task RegisterAsync(string fullName, string email, string password, short roleId, CancellationToken cancellationToken = default)
     {
         var normalizedEmail = email.Trim().ToLowerInvariant();
 
         var existingUser = await _authRepository.EmailExistsAsync(normalizedEmail, cancellationToken);
         if (existingUser)
         {
-            throw new InvalidOperationException("Email đã được sử dụng.");
+            throw new InvalidOperationException("Email này đã có tài khoản.");
         }
 
         var roleExists = await _authRepository.RoleExistsAsync(roleId, cancellationToken);
         if (!roleExists)
         {
-            throw new InvalidOperationException("Role không hợp lệ.");
+            throw new InvalidOperationException("Vai trò không hợp lệ.");
         }
 
-        var now = DateTime.UtcNow;
-        var hashedPassword = HashPassword(password);
         var user = new User
         {
             Id = Guid.NewGuid(),
             FullName = fullName.Trim(),
             Email = normalizedEmail,
-            PasswordHash = hashedPassword,
+            PasswordHash = HashPassword(password),
             RoleId = roleId,
             IsActive = true,
-            CreatedAt = now,
-            UpdatedAt = now
+            CreatedAt = DateTime.UtcNow,
+            UpdatedAt = DateTime.UtcNow
         };
 
-        var created = await _authRepository.AddUserAsync(user, cancellationToken);
-        return Map(created);
+        await _authRepository.AddUserAsync(user, cancellationToken);
+    }
+
+    public async Task<List<AccountRequestDto>> GetPendingRequestsAsync(CancellationToken cancellationToken = default)
+    {
+        var requests = await _authRepository.GetPendingAccountRequestsAsync(cancellationToken);
+        return requests.Select(r => new AccountRequestDto
+        {
+            Id = r.Id,
+            FullName = r.FullName,
+            Email = r.Email,
+            RoleId = r.RoleId,
+            RoleName = r.Role?.Name ?? r.RoleId.ToString(),
+            Status = r.Status,
+            CreatedAt = r.CreatedAt
+        }).ToList();
+    }
+
+    public async Task ApproveAccountRequestAsync(Guid requestId, string verificationUrlFormat, CancellationToken cancellationToken = default)
+    {
+        var request = await _authRepository.GetAccountRequestByIdAsync(requestId, cancellationToken);
+        if (request is null || request.Status != "pending")
+        {
+            throw new InvalidOperationException("Yêu cầu không tồn tại hoặc đã được xử lý.");
+        }
+
+        // Tạo Token có hiệu lực 24 giờ (hoặc 15 phút tùy policy, nhưng setup password thì nên cho lâu hơn chút, vd 24h)
+        var token = _protector.Protect(request.Email, DateTimeOffset.UtcNow.AddHours(24));
+        
+        request.VerificationToken = token;
+        request.TokenExpiresAt = DateTime.UtcNow.AddHours(24);
+        // Ở đây mình vẫn giữ Status = pending, chỉ khi user đặt mật khẩu thì status mới thành approved
+        await _authRepository.UpdateAccountRequestAsync(request, cancellationToken);
+
+        // Gửi email
+        var verificationUrl = verificationUrlFormat.Replace("TOKEN_PLACEHOLDER", Uri.EscapeDataString(token));
+        
+        var subject = "Kích hoạt tài khoản StudyMate AI";
+        var body = $@"
+            <div style='font-family: sans-serif; max-width: 600px; margin: auto; padding: 20px; border: 1px solid #e0e0e0; border-radius: 10px;'>
+                <h2 style='color: #4a1f16;'>Xin chào {request.FullName},</h2>
+                <p>Yêu cầu cấp tài khoản hệ thống <b>StudyMate AI</b> của bạn đã được quản trị viên phê duyệt.</p>
+                <p>Vui lòng click vào đường dẫn bên dưới để thiết lập mật khẩu và kích hoạt tài khoản:</p>
+                <div style='text-align: center; margin: 30px 0;'>
+                    <a href='{verificationUrl}' style='display:inline-block;padding:12px 24px;background-color:#c44b36;color:white;text-decoration:none;border-radius:30px;font-weight:bold;'>Thiết lập mật khẩu</a>
+                </div>
+                <p style='color: #666; font-size: 13px;'>Đường dẫn này sẽ hết hạn trong vòng 24 giờ.</p>
+                <hr style='border: none; border-top: 1px solid #eee; margin: 20px 0;' />
+                <p style='color: #888; font-size: 12px;'>Trân trọng,<br>Đội ngũ StudyMate AI</p>
+            </div>
+        ";
+        
+        try
+        {
+            await _emailService.SendEmailAsync(request.Email, subject, body, cancellationToken);
+        }
+        catch
+        {
+            // Nếu gửi mail thất bại, thực hiện Rollback: Xóa Token để yêu cầu quay về trạng thái chờ duyệt ban đầu.
+            // Điều này là Best Practice để tránh giữ Transaction (Lock DB) quá lâu trong lúc chờ gọi mạng (SMTP).
+            request.VerificationToken = null;
+            request.TokenExpiresAt = null;
+            await _authRepository.UpdateAccountRequestAsync(request, CancellationToken.None); // Dùng None để đảm bảo luôn rollback được dù request đã bị hủy
+            throw;
+        }
+    }
+
+    public async Task RejectAccountRequestAsync(Guid requestId, CancellationToken cancellationToken = default)
+    {
+        var request = await _authRepository.GetAccountRequestByIdAsync(requestId, cancellationToken);
+        if (request is null || request.Status != "pending")
+        {
+            throw new InvalidOperationException("Yêu cầu không tồn tại hoặc đã được xử lý.");
+        }
+
+        request.Status = "rejected";
+        await _authRepository.UpdateAccountRequestAsync(request, cancellationToken);
+    }
+
+    public async Task<bool> VerifyAccountRequestAndSetPasswordAsync(string token, string newPassword, CancellationToken cancellationToken = default)
+    {
+        try
+        {
+            var email = _protector.Unprotect(token);
+            var normalizedEmail = email.Trim().ToLowerInvariant();
+
+            var request = await _authRepository.GetAccountRequestByTokenAsync(token, cancellationToken);
+            if (request is null)
+            {
+                return false; // Token không hợp lệ hoặc đã dùng
+            }
+
+            if (request.TokenExpiresAt < DateTime.UtcNow)
+            {
+                return false; // Hết hạn
+            }
+
+            // Tạo User mới
+            var user = new User
+            {
+                Id = Guid.NewGuid(),
+                FullName = request.FullName,
+                Email = request.Email,
+                PasswordHash = HashPassword(newPassword),
+                RoleId = request.RoleId,
+                IsActive = true,
+                CreatedAt = DateTime.UtcNow,
+                UpdatedAt = DateTime.UtcNow
+            };
+
+            await _authRepository.AddUserAsync(user, cancellationToken);
+
+            // Cập nhật trạng thái request
+            request.Status = "approved";
+            request.VerificationToken = null; // Xóa token
+            await _authRepository.UpdateAccountRequestAsync(request, cancellationToken);
+
+            return true;
+        }
+        catch (System.Security.Cryptography.CryptographicException)
+        {
+            return false;
+        }
     }
 
     public async Task<AuthUserDto?> ValidateCredentialsAsync(string email, string password, CancellationToken cancellationToken = default)
@@ -65,10 +217,16 @@ public class AuthService : IAuthService
 
         if (user is null)
         {
+            // Nếu không có trong Users, kiểm tra xem có đang chờ duyệt không để báo lỗi rõ ràng
+            var isPending = await _authRepository.AccountRequestEmailExistsAsync(normalizedEmail, cancellationToken);
+            if (isPending)
+            {
+                throw new InvalidOperationException("Tài khoản của bạn đang chờ Admin phê duyệt hoặc bạn chưa thiết lập mật khẩu qua email xác nhận.");
+            }
             return null;
         }
 
-        if (string.IsNullOrEmpty(user.PasswordHash) || !VerifyPassword(password, user.PasswordHash))
+        if (!VerifyPassword(password, user.PasswordHash))
         {
             return null;
         }
@@ -219,10 +377,6 @@ public class AuthService : IAuthService
             user.UpdatedAt = DateTime.UtcNow;
             await _authRepository.UpdateUserAsync(user, cancellationToken);
         }
-
-        // Notify client to force logout
-        await _notificationService.SendForceLogoutAsync(userId, cancellationToken);
-
         return true;
     }
 
@@ -240,8 +394,6 @@ public class AuthService : IAuthService
         await _authRepository.UpdateUserAsync(user, cancellationToken);
         return true;
     }
-
-
 
     private static AuthUserDto Map(User user) => new()
     {
