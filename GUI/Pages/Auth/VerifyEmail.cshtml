@@ -1,2 +1,46 @@
 @page "/Auth/VerifyEmail"
 @model GUI.Pages.Auth.VerifyEmailModel
+@{
+    ViewData["Title"] = "Thiết Lập Mật Khẩu";
+}
+
+<div class="page-shell grain">
+    <main class="container-fluid px-4 px-md-5 py-5" style="max-width: 560px;">
+        <div class="soft-panel editorial-shadow p-4 p-md-5" style="background: rgba(255,255,255,.72);">
+            <div class="d-flex align-items-center justify-content-between mb-4">
+                <h1 class="hero-title mb-0" style="font-size: clamp(1.8rem, 4vw, 2.5rem);">Tạo Mật Khẩu</h1>
+            </div>
+
+            <p class="text-muted-foreground mb-4 font-mono-xs" style="font-size: 14px;">
+                Tài khoản của bạn đã được Admin phê duyệt. Vui lòng thiết lập mật khẩu để hoàn tất kích hoạt.
+            </p>
+
+            @if (!string.IsNullOrEmpty(Model.ErrorMessage))
+            {
+                <div class="alert alert-danger py-2 mb-3">@Model.ErrorMessage</div>
+            }
+
+            <form method="post">
+                <input type="hidden" asp-for="Input.Token" />
+
+                <div class="mb-3">
+                    <label asp-for="Input.Password" class="form-label font-mono-xs text-muted-foreground">Mật khẩu mới</label>
+                    <input asp-for="Input.Password" type="password" class="form-control pill-input" placeholder="Nhập mật khẩu..." />
+                    <span asp-validation-for="Input.Password" class="text-danger small"></span>
+                </div>
+
+                <div class="mb-4">
+                    <label asp-for="Input.ConfirmPassword" class="form-label font-mono-xs text-muted-foreground">Xác nhận mật khẩu</label>
+                    <input asp-for="Input.ConfirmPassword" type="password" class="form-control pill-input" placeholder="Nhập lại mật khẩu..." />
+                    <span asp-validation-for="Input.ConfirmPassword" class="text-danger small"></span>
+                </div>
+
+                <button type="submit" class="btn btn-dark pill-button w-100 py-3" style="background:#4a1f16;border-color:#4a1f16;">Xác Nhận & Kích Hoạt</button>
+            </form>
+        </div>
+    </main>
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}

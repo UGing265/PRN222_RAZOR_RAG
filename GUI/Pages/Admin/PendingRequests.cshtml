@@ -1,36 +1,26 @@
-@model List<BLL.DTOs.Auth.AccountRequestDto>
+@page "/Admin/PendingRequests"
+@model GUI.Pages.Admin.PendingRequestsModel
 @{
     ViewData["Title"] = "Yêu cầu cấp tài khoản";
 }
 
 <div class="container-fluid px-4 px-md-5 py-4 page-shell">
-    <!-- 1. HEADER & TOPBAR -->
     <div class="topbar mb-4">
         <div>
             <h1 class="topbar-title text-gradient mb-1" style="font-size: 28px; font-weight: 800;">Yêu cầu cấp tài khoản</h1>
             <p class="text-muted-foreground font-mono-xs">Quản lý danh sách sinh viên/giảng viên đang chờ phê duyệt</p>
         </div>
-        <div>
-            <!-- Nút này đã được dời xuống từng dòng yêu cầu -->
-        </div>
     </div>
 
-    <!-- 2. BỘ LỌC VÀ TÌM KIẾM (GLASSMORPHISM PANEL) -->
-    <div class="soft-panel p-3 mb-4 d-flex flex-wrap gap-4 align-items-center shadow-sm">
-        <div class="flex-grow-1" style="max-width: 350px; position: relative;">
-            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="position: absolute; left: 14px; top: 13px; color: var(--muted);">
-                <circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/>
-            </svg>
-            <input type="text" class="form-control pill-input" placeholder="Tìm kiếm theo email, tên..." style="padding-left: 38px; border: 1px solid rgba(82, 39, 27, 0.3) !important;">
-        </div>
-        <select class="form-select pill-input" style="max-width: 200px; color: var(--foreground); border: 1px solid rgba(82, 39, 27, 0.3) !important;">
-            <option value="">Tất cả vai trò</option>
-            <option value="student">Sinh viên</option>
-            <option value="lecturer">Giảng viên</option>
-        </select>
-    </div>
+    @if (TempData["SuccessMessage"] != null)
+    {
+        <div class="alert alert-success py-2 mb-3">@TempData["SuccessMessage"]</div>
+    }
+    @if (TempData["ErrorMessage"] != null)
+    {
+        <div class="alert alert-danger py-2 mb-3">@TempData["ErrorMessage"]</div>
+    }
 
-    <!-- 3. DANH SÁCH YÊU CẦU (TABLE TRONG SOFT PANEL) -->
     <div class="soft-panel overflow-hidden shadow-sm">
         <div class="table-responsive">
             <table class="table table-hover mb-0 align-middle" style="background: transparent;">
@@ -43,9 +33,9 @@
                     </tr>
                 </thead>
                 <tbody style="border-top: 1px solid var(--border);">
-                    @if (Model != null && Model.Any())
+                    @if (Model.Requests != null && Model.Requests.Any())
                     {
-                        foreach (var req in Model)
+                        foreach (var req in Model.Requests)
                         {
                             <tr>
                                 <td class="border-border py-3 px-4">
@@ -66,15 +56,13 @@
                                     @req.CreatedAt.ToString("dd/MM/yyyy HH:mm")
                                 </td>
                                 <td class="border-border py-3 px-4 text-end">
-                                    <!-- Nút Từ chối -->
-                                    <form asp-action="RejectRequest" method="post" class="d-inline">
+                                    <form method="post" asp-page-handler="Reject" class="d-inline">
                                         <input type="hidden" name="id" value="@req.Id" />
                                         <button type="submit" class="btn btn-sm btn-premium-secondary me-2" style="font-size: 13px; padding: 0.4rem 1rem;">
                                             Từ chối
                                         </button>
                                     </form>
                                     
-                                    <!-- Nút Duyệt -->
                                     <button class="btn btn-sm btn-premium-primary btn-approve" style="font-size: 13px; padding: 0.4rem 1rem;" 
                                             data-id="@req.Id" data-name="@req.FullName" data-email="@req.Email" data-role="@req.RoleName" 
                                             data-bs-toggle="modal" data-bs-target="#createAccountModal">
@@ -96,7 +84,6 @@
     </div>
 </div>
 
-<!-- MODAL 1: XÁC NHẬN TẠO TÀI KHOẢN -->
 <div class="modal fade" id="createAccountModal" tabindex="-1" aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered">
         <div class="modal-content" style="border-radius: 1.5rem; border: 1px solid var(--border); background: var(--card);">
@@ -104,7 +91,7 @@
                 <h5 class="modal-title" style="color: var(--foreground); font-size: 20px; font-weight: 700;">Tạo tài khoản</h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
-            <form asp-action="ApproveRequest" method="post">
+            <form method="post" asp-page-handler="Approve">
                 <div class="modal-body py-4">
                     <p class="text-muted-foreground mb-4" style="font-size: 14px;">Xác nhận tạo tài khoản cho người dùng dưới đây. Một email chứa link đặt mật khẩu sẽ được gửi đến họ.</p>
                     
@@ -125,28 +112,9 @@
                 </div>
                 <div class="modal-footer border-0 pt-0">
                     <button type="button" class="btn btn-premium-secondary" data-bs-dismiss="modal">Hủy</button>
-                    <!-- Vì dùng form submit thực sự về Backend nên ta đổi thành type submit. Nếu xử lý AJAX thì có thể giữ nguyên modal -->
                     <button type="submit" class="btn btn-premium-primary">Khởi tạo & Gửi Email</button>
                 </div>
             </form>
-        </div>
-    </div>
-</div>
-
-<!-- MODAL 2: THÔNG BÁO THÀNH CÔNG -->
-<div class="modal fade" id="successModal" tabindex="-1" aria-hidden="true">
-    <div class="modal-dialog modal-dialog-centered modal-sm">
-        <div class="modal-content text-center" style="border-radius: 1.5rem; border: 1px solid var(--border); background: var(--card); padding: 2rem 1rem;">
-            <div class="mb-3 d-flex justify-content-center">
-                <div class="brand-mark bg-background text-coral-deep border border-border" style="width: 60px; height: 60px;">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
-                        <polyline points="20 6 9 17 4 12"></polyline>
-                    </svg>
-                </div>
-            </div>
-            <h5 class="mb-2" style="color: var(--foreground); font-weight: 700;">Thành công!</h5>
-            <p class="text-muted-foreground mb-4" style="font-size: 14px;">Tài khoản đã được tạo. Thư mời đặt mật khẩu vừa được gửi đi.</p>
-            <button type="button" class="btn btn-premium-primary w-100" data-bs-dismiss="modal">Quay lại danh sách</button>
         </div>
     </div>
 </div>
@@ -157,15 +125,10 @@
             const approveButtons = document.querySelectorAll('.btn-approve');
             approveButtons.forEach(btn => {
                 btn.addEventListener('click', function () {
-                    const id = this.getAttribute('data-id');
-                    const name = this.getAttribute('data-name');
-                    const email = this.getAttribute('data-email');
-                    const role = this.getAttribute('data-role');
-
-                    document.getElementById('modalRequestId').value = id;
-                    document.getElementById('modalFullName').value = name;
-                    document.getElementById('modalEmail').value = email;
-                    document.getElementById('modalRole').value = role;
+                    document.getElementById('modalRequestId').value = this.getAttribute('data-id');
+                    document.getElementById('modalFullName').value = this.getAttribute('data-name');
+                    document.getElementById('modalEmail').value = this.getAttribute('data-email');
+                    document.getElementById('modalRole').value = this.getAttribute('data-role');
                 });
             });
         });

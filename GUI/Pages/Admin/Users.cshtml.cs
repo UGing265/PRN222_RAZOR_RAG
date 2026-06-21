@@ -26,31 +26,6 @@ namespace GUI.Pages.Admin
             return Page();
         }
 
-        public async Task<IActionResult> OnPostCreateUserAsync(string fullName, string email, string password, short roleId, CancellationToken cancellationToken)
-        {
-            if (string.IsNullOrWhiteSpace(fullName) || string.IsNullOrWhiteSpace(email) || string.IsNullOrWhiteSpace(password))
-            {
-                TempData["ErrorMessage"] = "Vui lòng điền đầy đủ thông tin để tạo tài khoản.";
-                return RedirectToPage();
-            }
-
-            try
-            {
-                await _authService.RegisterAsync(fullName, email, password, roleId, cancellationToken);
-                TempData["SuccessMessage"] = $"Đã tạo tài khoản cho '{fullName}' thành công.";
-            }
-            catch (InvalidOperationException ex)
-            {
-                TempData["ErrorMessage"] = ex.Message;
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, "Admin failed to create user {Email}", email);
-                TempData["ErrorMessage"] = "Có lỗi xảy ra khi tạo tài khoản. Vui lòng thử lại.";
-            }
-
-            return RedirectToPage();
-        }
 
         public async Task<IActionResult> OnPostApproveAsync(Guid id, CancellationToken cancellationToken)
         {

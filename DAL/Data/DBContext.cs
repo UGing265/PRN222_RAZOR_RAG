@@ -514,6 +514,11 @@ public partial class DBContext : DbContext
             entity.Property(e => e.UpdatedAt)
                 .HasDefaultValueSql("now()")
                 .HasColumnName("updated_at");
+            entity.Property(e => e.EmailVerified)
+                .HasDefaultValue(false)
+                .HasColumnName("email_verified");
+            entity.Property(e => e.Username).HasColumnName("username");
+            entity.Property(e => e.DisplayUsername).HasColumnName("displayUsername");
 
             entity.HasOne(d => d.Role).WithMany(p => p.Users)
                 .HasForeignKey(d => d.RoleId)

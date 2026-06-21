@@ -51,18 +51,17 @@ namespace GUI.Pages.Auth
                     return Page();
                 }
 
-                await _authService.RegisterAsync(
+                await _authService.SubmitAccountRequestAsync(
                     Input.FullName,
                     Input.Email,
-                    Input.Password,
                     Input.RoleId,
                     cancellationToken
                 );
 
-                SuccessMessage = "Đăng ký thành công! Bạn có thể đăng nhập ngay bây giờ.";
+                SuccessMessage = "Yêu cầu của bạn đã được gửi. Vui lòng chờ Admin phê duyệt.";
                 TempData["SuccessMessage"] = SuccessMessage;
 
-                return RedirectToPage("/Auth/Login");
+                return Page();
             }
             catch (InvalidOperationException ex)
             {

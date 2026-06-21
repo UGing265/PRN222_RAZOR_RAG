@@ -1,4 +1,6 @@
+using System.ComponentModel.DataAnnotations;
 using BLL.Interfaces.Auth;
+using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 
@@ -15,7 +17,26 @@ namespace GUI.Pages.Auth
             _logger = logger;
         }
 
-        public async Task<IActionResult> OnGetAsync(string token, CancellationToken cancellationToken)
+        [BindProperty]
+        public VerifyInputModel Input { get; set; } = new();
+
+        public string? ErrorMessage { get; set; }
+
+        public class VerifyInputModel
+        {
+            [Required]
+            public string Token { get; set; } = string.Empty;
+
+            [Required(ErrorMessage = "Vui lòng nhập mật khẩu.")]
+            [StringLength(100, ErrorMessage = "Mật khẩu phải từ {2} đến {1} ký tự.", MinimumLength = 6)]
+            public string Password { get; set; } = string.Empty;
+
+            [Required(ErrorMessage = "Vui lòng xác nhận mật khẩu.")]
+            [Compare("Password", ErrorMessage = "Mật khẩu xác nhận không khớp.")]
+            public string ConfirmPassword { get; set; } = string.Empty;
+        }
+
+        public IActionResult OnGet(string token)
         {
             if (string.IsNullOrEmpty(token))
             {
@@ -23,25 +44,41 @@ namespace GUI.Pages.Auth
                 return RedirectToPage("/Auth/Login");
             }
 
+            Input.Token = token;
+            return Page();
+        }
+
+        public async Task<IActionResult> OnPostAsync(CancellationToken cancellationToken)
+        {
+            if (!ModelState.IsValid)
+            {
+                return Page();
+            }
+
             try
             {
-                var verified = await _authService.VerifyEmailTokenAsync(token, cancellationToken);
-                if (verified)
+                var success = await _authService.VerifyAccountRequestAndSetPasswordAsync(Input.Token, Input.Password, cancellationToken);
+                if (success)
                 {
-                    TempData["SuccessMessage"] = "Xác thực email thành công! Tài khoản của bạn đã được kích hoạt. Hãy đăng nhập.";
+                    if (User.Identity?.IsAuthenticated == true)
+                    {
+                        await HttpContext.SignOutAsync(Microsoft.AspNetCore.Authentication.Cookies.CookieAuthenticationDefaults.AuthenticationScheme);
+                    }
+                    TempData["SuccessMessage"] = "Thiết lập mật khẩu thành công! Tài khoản của bạn đã được kích hoạt. Hãy đăng nhập.";
+                    return RedirectToPage("/Auth/Login");
                 }
                 else
                 {
-                    TempData["ErrorMessage"] = "Mã xác thực không hợp lệ hoặc đã hết hạn. Vui lòng thử đăng ký lại.";
+                    ErrorMessage = "Link xác nhận không hợp lệ hoặc đã hết hạn. Vui lòng liên hệ Admin.";
+                    return Page();
                 }
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Lỗi khi xác thực email với token {Token}", token);
-                TempData["ErrorMessage"] = "Đã xảy ra lỗi trong quá trình xác thực email.";
+                _logger.LogError(ex, "Lỗi khi xác thực email với token {Token}", Input.Token);
+                ErrorMessage = "Đã xảy ra lỗi trong quá trình xác thực email.";
+                return Page();
             }
-
-            return RedirectToPage("/Auth/Login");
         }
     }
 }

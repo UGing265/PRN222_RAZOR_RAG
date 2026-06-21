@@ -20,6 +20,7 @@ builder.Services.AddAuthentication(options =>
     })
     .AddCookie(options =>
     {
+        options.Cookie.Name = "StudyMateAuth_" + Guid.NewGuid().ToString("N");
         options.LoginPath = "/Auth/Login";
         options.LogoutPath = "/Auth/Logout";
         options.AccessDeniedPath = "/Auth/Login";

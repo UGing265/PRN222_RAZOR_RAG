@@ -17,10 +17,11 @@
                 <p class="text-muted-foreground" style="font-size: 15px; font-weight: 400; margin-bottom: 0;">Quản lý và cấp quyền tài khoản giảng viên, học sinh trên hệ thống.</p>
             </div>
             <div class="d-flex align-items-center gap-3">
-                <button type="button" class="btn btn-dark pill-button px-4 py-2.5 d-flex align-items-center gap-2" style="background: #4a1f16; border-color: #4a1f16; font-size: 14px; font-weight: 500;" data-bs-toggle="modal" data-bs-target="#createUserModal">
-                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
-                    Tạo Tài Khoản
-                </button>
+                <a asp-page="/Admin/PendingRequests" class="btn btn-outline-dark pill-button px-4 py-2.5 d-flex align-items-center gap-2" style="border-color: rgba(82, 39, 27, 0.2); font-size: 14px; font-weight: 500; text-decoration: none;">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="8.5" cy="7" r="4"/><line x1="20" y1="8" x2="20" y2="14"/><line x1="23" y1="11" x2="17" y2="11"/></svg>
+                    Yêu Cầu Chờ Duyệt
+                </a>
+
                 <div class="d-flex gap-2">
                     <span class="badge px-3.5 py-2 border-0 rounded-pill text-white" style="background-color: #2b5c43 !important; font-size: 13px; font-weight: 500; font-family: inherit; text-transform: none; letter-spacing: normal;">
                         @activeUsers.Count Đang Hoạt Động
@@ -214,46 +215,7 @@
     </main>
 </div>
 
-<!-- Create User Modal -->
-<div class="modal fade" id="createUserModal" tabindex="-1" aria-labelledby="createUserModalLabel" aria-hidden="true" style="font-family: inherit;">
-    <div class="modal-dialog modal-dialog-centered" style="max-width: 500px;">
-        <div class="modal-content border-0 shadow-lg" style="border-radius: 20px; background: rgba(255, 255, 255, 0.95); backdrop-filter: blur(10px);">
-            <div class="modal-header border-0 pb-0 pt-4 px-4 d-flex justify-content-between align-items-center">
-                <h5 class="modal-title fw-bold text-foreground" id="createUserModalLabel" style="font-size: 1.25rem;">Tạo Tài Khoản Mới</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-            </div>
-            <form asp-page-handler="CreateUser" method="post">
-                @Html.AntiForgeryToken()
-                <div class="modal-body p-4">
-                    <div class="mb-3">
-                        <label for="fullName" class="form-label font-mono-xs text-muted-foreground" style="font-size: 12px; font-weight: 600; letter-spacing: 0.05em;">HỌ VÀ TÊN</label>
-                        <input type="text" id="fullName" name="fullName" class="form-control pill-input" placeholder="Họ và tên người dùng" required />
-                    </div>
-                    <div class="mb-3">
-                        <label for="email" class="form-label font-mono-xs text-muted-foreground" style="font-size: 12px; font-weight: 600; letter-spacing: 0.05em;">EMAIL</label>
-                        <input type="email" id="email" name="email" class="form-control pill-input" placeholder="name@example.com" required />
-                    </div>
-                    <div class="mb-3">
-                        <label for="password" class="form-label font-mono-xs text-muted-foreground" style="font-size: 12px; font-weight: 600; letter-spacing: 0.05em;">MẬT KHẨU</label>
-                        <input type="password" id="password" name="password" class="form-control pill-input" placeholder="Tối thiểu 6 ký tự" minlength="6" required />
-                    </div>
-                    <div class="mb-3">
-                        <label for="roleId" class="form-label font-mono-xs text-muted-foreground" style="font-size: 12px; font-weight: 600; letter-spacing: 0.05em;">VAI TRÒ</label>
-                        <select id="roleId" name="roleId" class="form-select pill-input">
-                            <option value="3">Sinh Viên</option>
-                            <option value="2">Giảng Viên</option>
-                            <option value="1">Admin</option>
-                        </select>
-                    </div>
-                </div>
-                <div class="modal-footer border-0 pt-0 pb-4 px-4 d-flex gap-2 justify-content-end">
-                    <button type="button" class="btn btn-light rounded-pill px-4 py-2" data-bs-dismiss="modal" style="font-size: 14px; font-weight: 500;">Hủy</button>
-                    <button type="submit" class="btn btn-dark rounded-pill px-4 py-2" style="background: #4a1f16; border-color: #4a1f16; font-size: 14px; font-weight: 500;">Tạo Mới</button>
-                </div>
-            </form>
-        </div>
-    </div>
-</div>
+
 
 <style>
     .nav-tabs .nav-link {

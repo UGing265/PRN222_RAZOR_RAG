@@ -73,11 +73,15 @@ public class AuthService : IAuthService
             throw new InvalidOperationException("Vai trò không hợp lệ.");
         }
 
+        var baseUsername = email.Split('@')[0];
         var user = new User
         {
             Id = Guid.NewGuid(),
             FullName = fullName.Trim(),
             Email = normalizedEmail,
+            Username = baseUsername,
+            DisplayUsername = fullName.Trim(),
+            EmailVerified = true,
             PasswordHash = HashPassword(password),
             RoleId = roleId,
             IsActive = true,
@@ -183,11 +187,15 @@ public class AuthService : IAuthService
             }
 
             // Tạo User mới
+            var baseUsername = request.Email.Split('@')[0];
             var user = new User
             {
                 Id = Guid.NewGuid(),
                 FullName = request.FullName,
                 Email = request.Email,
+                Username = baseUsername,
+                DisplayUsername = request.FullName,
+                EmailVerified = true,
                 PasswordHash = HashPassword(newPassword),
                 RoleId = request.RoleId,
                 IsActive = true,

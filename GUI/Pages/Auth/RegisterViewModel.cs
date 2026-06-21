@@ -13,14 +13,6 @@ public class RegisterViewModel
     [StringLength(255, ErrorMessage = "Email không được vượt quá 255 ký tự.")]
     public string Email { get; set; } = string.Empty;
 
-    [Required(ErrorMessage = "Vui lòng nhập mật khẩu.")]
-    [StringLength(100, MinimumLength = 6, ErrorMessage = "Mật khẩu phải từ 6 ký tự trở lên.")]
-    public string Password { get; set; } = string.Empty;
-
-    [Required(ErrorMessage = "Vui lòng nhập lại mật khẩu.")]
-    [Compare(nameof(Password), ErrorMessage = "Mật khẩu xác nhận không khớp.")]
-    public string ConfirmPassword { get; set; } = string.Empty;
-
     [Range(1, short.MaxValue, ErrorMessage = "Role không hợp lệ.")]
-    public short RoleId { get; set; } = 1;
+    public short RoleId { get; set; } = 3;
 }
