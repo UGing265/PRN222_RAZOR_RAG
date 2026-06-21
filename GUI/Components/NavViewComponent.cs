@@ -105,7 +105,7 @@ public sealed class NavViewComponent : ViewComponent
             if (roleId == 2 || roleId == 3)
             {
                 model.NavLinks.Add(new NavLink { Page = "/Chat/Index", Label = "Trò Chuyện AI", IconKey = "chat" });
-                model.NavLinks.Add(new NavLink { Page = "/Documents/Compare", Label = "So Sánh", IconKey = "library" });
+                model.NavLinks.Add(new NavLink { Page = "/documents/compare", Label = "So Sánh", IconKey = "library" });
             }
             if (roleId == 2)
             {

@@ -106,6 +106,11 @@ public class CreateModel : PageModel
 
         if (!ModelState.IsValid)
         {
+            if (Request.Headers.TryGetValue("X-Requested-With", out var xrw1) && xrw1 == "XMLHttpRequest")
+            {
+                var errors = ModelState.Values.SelectMany(v => v.Errors).Select(e => e.ErrorMessage).Where(e => !string.IsNullOrEmpty(e)).ToList();
+                return new JsonResult(new { success = false, errors });
+            }
             await PopulateLookupsAsync(cancellationToken, ownerUserId);
             return Page();
         }
@@ -115,6 +120,10 @@ public class CreateModel : PageModel
             var isAssigned = await _documentService.IsSubjectAssignedToLecturerAsync(ownerUserId, Input.SubjectId.Value, cancellationToken);
             if (!isAssigned)
             {
+                if (Request.Headers.TryGetValue("X-Requested-With", out var xrw2) && xrw2 == "XMLHttpRequest")
+                {
+                    return new JsonResult(new { success = false, errors = new[] { "Bạn không có quyền upload học liệu cho môn học này." } });
+                }
                 TempData["ErrorMessage"] = "Bạn không có quyền upload học liệu cho môn học này.";
                 await PopulateLookupsAsync(cancellationToken, ownerUserId);
                 return Page();
@@ -127,6 +136,10 @@ public class CreateModel : PageModel
 
             if (Input.UploadFile is null || Input.UploadFile.Length == 0)
             {
+                if (Request.Headers.TryGetValue("X-Requested-With", out var xrw3) && xrw3 == "XMLHttpRequest")
+                {
+                    return new JsonResult(new { success = false, errors = new[] { "Vui lòng chọn file để tạo tài liệu." } });
+                }
                 TempData["ErrorMessage"] = "Vui lòng chọn file để tạo tài liệu. Không có file thì sẽ không tạo document.";
                 await PopulateLookupsAsync(cancellationToken, ownerUserId);
                 return Page();
@@ -179,6 +192,10 @@ public class CreateModel : PageModel
         }
         catch (InvalidOperationException ex)
         {
+            if (Request.Headers.TryGetValue("X-Requested-With", out var xrw4) && xrw4 == "XMLHttpRequest")
+            {
+                return new JsonResult(new { success = false, errors = new[] { ex.Message } });
+            }
             ModelState.AddModelError(string.Empty, ex.Message);
             await PopulateLookupsAsync(cancellationToken, ownerUserId);
             return Page();
@@ -186,6 +203,10 @@ public class CreateModel : PageModel
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error while creating document");
+            if (Request.Headers.TryGetValue("X-Requested-With", out var xrw5) && xrw5 == "XMLHttpRequest")
+            {
+                return new JsonResult(new { success = false, errors = new[] { "Có lỗi xảy ra khi tạo tài liệu. Vui lòng thử lại." } });
+            }
             ModelState.AddModelError(string.Empty, "Có lỗi xảy ra khi tạo tài liệu. Vui lòng thử lại.");
             await PopulateLookupsAsync(cancellationToken, ownerUserId);
             return Page();

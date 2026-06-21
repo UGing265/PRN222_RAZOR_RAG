@@ -37,13 +37,16 @@ public class CompareModel : PageModel
     [BindProperty]
     public List<Guid> SelectedDocumentIds { get; set; } = new();
 
+    public List<SubjectDto> Subjects { get; set; } = new();
+
     public string? ExportKey { get; set; }
 
-    public void OnGet()
+    public async Task OnGetAsync()
     {
+        Subjects = await _documentService.GetSubjectsAsync();
     }
 
-    public async Task<IActionResult> OnGetSearchAsync(string query)
+    public async Task<IActionResult> OnGetSearchAsync(string? query, Guid? subjectId)
     {
         var userIdString = User.FindFirstValue(ClaimTypes.NameIdentifier);
         if (!Guid.TryParse(userIdString, out var userId))
@@ -54,7 +57,7 @@ public class CompareModel : PageModel
         // Search both owned and public documents
         var searchResult = await _documentService.GetAllDocumentsAsync(
             query: query,
-            subjectId: null,
+            subjectId: subjectId,
             page: 1,
             pageSize: 10,
             requesterUserId: userId,
@@ -107,6 +110,7 @@ public class CompareModel : PageModel
         if (SelectedDocumentIds == null || SelectedDocumentIds.Count < 2 || SelectedDocumentIds.Count > 5)
         {
             ErrorMessage = "Vui lòng chọn từ 2 đến 5 tài liệu để so sánh.";
+            Subjects = await _documentService.GetSubjectsAsync();
             return Page();
         }
 
@@ -145,6 +149,7 @@ public class CompareModel : PageModel
             ErrorMessage = ex.Message;
         }
 
+        Subjects = await _documentService.GetSubjectsAsync();
         return Page();
     }
 
