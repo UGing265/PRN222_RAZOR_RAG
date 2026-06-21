@@ -33,7 +33,7 @@ h1, h2, h3, h4, h5, h6, .hero-title, .font-display { font-family: 'Product Sans'
 .card { border: 1px solid var(--border); border-radius: 1.5rem; }
 .alert { border-radius: 1rem; }
 .shell { min-height: 100vh; display: grid; grid-template-columns: 280px 1fr; }
-.sidebar { position: sticky; top: 0; height: 100vh; overflow-y: auto; background: linear-gradient(180deg, #f4dcd0 0%, #f7e4db 100%); border-right: 1px solid rgba(82, 39, 27, 0.08); padding: 18px 14px; display: flex; flex-direction: column; justify-content: space-between; }
+.sidebar { height: 100vh; overflow-y: auto; background: linear-gradient(180deg, #f4dcd0 0%, #f7e4db 100%); border-right: 1px solid rgba(82, 39, 27, 0.08); padding: 18px 14px; display: flex; flex-direction: column; justify-content: space-between; }
 .sidebar-card { border-radius: 18px; padding: 14px; }
 .profile-card-toggle { border-radius: 20px; padding: 14px 16px; background: rgba(255, 255, 255, 0.45); border: 1px solid rgba(82, 39, 27, 0.08); transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1); }
 .profile-card-toggle:hover { background: rgba(255, 255, 255, 0.65); border-color: rgba(82, 39, 27, 0.16); box-shadow: 0 8px 24px rgba(82, 39, 27, 0.04); }
@@ -61,7 +61,7 @@ h1, h2, h3, h4, h5, h6, .hero-title, .font-display { font-family: 'Product Sans'
 .file-meta { font-family: 'Product Sans', 'Google Sans', Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; font-size: 14px; color: var(--foreground); }
 .file-subtle { font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace; font-size: 11px; letter-spacing: .08em; text-transform: uppercase; color: var(--muted); }
 .summary-label { font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace; font-size: 11px; letter-spacing: .08em; text-transform: uppercase; color: var(--muted); }
-@media (max-width: 992px) { .shell { grid-template-columns: 1fr; } .sidebar { display: none; } .main-stage { padding: 18px; } }
+@media (max-width: 992px) { .shell { grid-template-columns: 1fr; } .main-stage { padding: 18px; } }
 
 /* ==========================================================================
    Premium Landing Page Styling & Animations
