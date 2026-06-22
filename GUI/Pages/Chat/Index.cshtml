@@ -242,6 +242,31 @@
         background-color: rgba(0, 0, 0, 0.01);
     }
 
+    /* ── Citation Links ── */
+    .citation-link {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        background: var(--coral-soft);
+        color: var(--brown);
+        border: 1px solid rgba(216, 106, 88, 0.2);
+        border-radius: 4px;
+        padding: 1px 5px;
+        font-size: 0.72rem;
+        font-weight: 600;
+        text-decoration: none;
+        margin: 0 2px;
+        vertical-align: super;
+        transition: all 0.2s ease;
+        user-select: none;
+    }
+    .citation-link:hover {
+        background: var(--coral);
+        color: #fff;
+        border-color: var(--coral);
+        box-shadow: 0 2px 6px rgba(216, 106, 88, 0.25);
+    }
+
     /* ── Typing indicator ── */
     .typing-indicator {
         display: inline-flex;
@@ -704,7 +729,7 @@ document.addEventListener('DOMContentLoaded', function () {
         
         aiCitationsContainer.style.display = 'block';
         sourcesPanel.innerHTML = sources.map((s, i) => `
-            <div class="source-card mb-2">
+            <div class="source-card mb-2" id="source-card-${i + 1}">
                 <div class="d-flex align-items-start gap-2">
                     <span class="chunk-chip flex-shrink-0 badge bg-primary rounded-circle" style="width:20px;height:20px;padding:0;line-height:20px;text-align:center;">${i + 1}</span>
                     <div>
@@ -754,8 +779,34 @@ document.addEventListener('DOMContentLoaded', function () {
             gfm: true     // Enable GitHub Flavored Markdown (tables, autolinks, task lists)
         });
 
-        return marked.parse(text);
+        let html = marked.parse(text);
+
+        // Replace numeric citations like [1] with interactive clickable badges
+        html = html.replace(/\[(\d+)\]/g, '<span class="citation-link" style="cursor: pointer;" onclick="highlightSourceCard($1)">$1</span>');
+
+        return html;
     }
+
+    // ── Interactive source card highlight ──
+    window.highlightSourceCard = function(index) {
+        const card = document.getElementById(`source-card-${index}`);
+        if (card) {
+            // Scroll to card
+            card.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+            
+            // Highlight styling animation
+            card.style.transition = 'all 0.3s ease';
+            card.style.backgroundColor = 'var(--coral-soft)';
+            card.style.borderColor = 'var(--coral)';
+            card.style.transform = 'scale(1.02)';
+            
+            setTimeout(() => {
+                card.style.backgroundColor = '';
+                card.style.borderColor = '';
+                card.style.transform = '';
+            }, 2000);
+        }
+    };
 
     // ── Syntax highlighting and copy button integration ──
     function highlightCodeBlocks(container) {
