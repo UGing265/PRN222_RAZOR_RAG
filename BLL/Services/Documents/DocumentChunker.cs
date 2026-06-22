@@ -6,6 +6,69 @@ namespace BLL.Services.Documents;
 
 public static class DocumentChunker
 {
+    private static readonly Regex ChapterHeaderRegex = new Regex(
+        @"^(?:Chương|Chapter|Phần|Part)\s+(\d+|[IVXLCDM]+)(?:\s*[:-]\s*|\s|$)",
+        RegexOptions.IgnoreCase | RegexOptions.Compiled);
+
+    private static readonly Regex TocIndicatorRegex = new Regex(
+        @"^(?:Mục\s+lục|Table\s+of\s+contents|TOC|Content|Contents)$",
+        RegexOptions.IgnoreCase | RegexOptions.Compiled);
+
+    private static bool IsTocLine(string paragraph)
+    {
+        var trimmed = paragraph.Trim();
+        
+        // Chứa các ký tự chấm lửng kéo dài thường dùng nối tiêu đề với số trang trong mục lục
+        if (trimmed.Contains("...") || trimmed.Contains("..") || trimmed.Contains("___") || trimmed.Contains("---"))
+        {
+            return true;
+        }
+
+        // Kết thúc bằng số trang dạng: "Chương 1: Giới thiệu 12" hoặc "Chương 1: Giới thiệu trang 12"
+        if (Regex.IsMatch(trimmed, @"\s+\d+$") || Regex.IsMatch(trimmed, @"\b(?:trang|page)\s+\d+$", RegexOptions.IgnoreCase))
+        {
+            return true;
+        }
+
+        return false;
+    }
+
+    private static bool IsChapterHeader(string paragraph)
+    {
+        var trimmed = paragraph.Trim();
+        if (trimmed.Length == 0 || trimmed.Length > 120)
+        {
+            return false;
+        }
+
+        // Tiêu đề chương không bao giờ kết thúc bằng dấu phẩy
+        if (trimmed.EndsWith(","))
+        {
+            return false;
+        }
+
+        // Dòng mục lục thì không phải là tiêu đề chương thực tế
+        if (IsTocLine(trimmed))
+        {
+            return false;
+        }
+
+        // Phải khớp với định dạng "Chương X", "Chapter X", "Phần X"... ở đầu dòng
+        if (!ChapterHeaderRegex.IsMatch(trimmed))
+        {
+            return false;
+        }
+
+        // Vì tiêu đề chương (nằm riêng trên 1 paragraph) thường rất ngắn, khống chế số từ <= 35
+        var wordCount = CountWords(trimmed);
+        if (wordCount > 35)
+        {
+            return false;
+        }
+
+        return true;
+    }
+
     public static IReadOnlyList<string> ChunkText(string text, int minWords = 1, int maxWords = 1100, int overlapWords = 100)
     {
         if (string.IsNullOrWhiteSpace(text))
@@ -25,9 +88,44 @@ public static class DocumentChunker
         var currentChunk = new List<string>();
         var currentWordCount = 0;
 
+        var isInToc = false;
+        var wordsSinceLastHeader = 10000; // Khởi tạo lớn để chấp nhận tiêu đề chương đầu tiên
+
         foreach (var paragraph in paragraphs)
         {
             var pWordCount = CountWords(paragraph);
+            var trimmed = paragraph.Trim();
+
+            // Nhận diện bắt đầu Mục lục
+            if (TocIndicatorRegex.IsMatch(trimmed))
+            {
+                isInToc = true;
+            }
+            // Nếu gặp một đoạn văn dài (> 80 từ), chứng tỏ đã hết Mục lục và vào nội dung chính
+            else if (isInToc && pWordCount > 80)
+            {
+                isInToc = false;
+            }
+
+            // Chỉ nhận diện tiêu đề chương khi không nằm trong mục lục
+            var isNewChapter = false;
+            if (!isInToc && IsChapterHeader(paragraph))
+            {
+                // Khoảng cách từ tiêu đề chương trước đến tiêu đề chương này phải đủ lớn (tránh nhận nhầm danh sách mục lục/tóm tắt gần nhau)
+                if (wordsSinceLastHeader >= 30)
+                {
+                    isNewChapter = true;
+                }
+            }
+
+            // Nếu gặp tiêu đề chương mới và chunk hiện tại đã có dữ liệu -> Ép đóng chunk ngay lập tức
+            if (isNewChapter && currentChunk.Count > 0)
+            {
+                chunks.Add(string.Join("\n\n", currentChunk));
+                currentChunk = new List<string>();
+                currentWordCount = 0;
+                wordsSinceLastHeader = 0;
+            }
 
             // Nếu đoạn văn hiện tại nhét vừa vào chunk đang có
             if (currentWordCount + pWordCount <= maxWords)
@@ -106,6 +204,9 @@ public static class DocumentChunker
                     currentWordCount += pWordCount;
                 }
             }
+
+            // Tăng số từ kể từ tiêu đề chương cuối cùng
+            wordsSinceLastHeader += pWordCount;
         }
 
         if (currentChunk.Count > 0 && currentWordCount >= minWords)

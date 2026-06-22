@@ -89,7 +89,7 @@ public class GeminiChapterSegmentationService : IChapterSegmentationService
             
             // Trích xuất các dòng ngắn có khả năng là Header/Tiêu đề chương
             var potentialHeaders = lines
-                .Where(l => l.Trim().Length > 3 && l.Trim().Length < 80)
+                .Where(l => l.Trim().Length > 3 && l.Trim().Length < 150)
                 .Where(l => !l.Trim().EndsWith(".") && !l.Trim().EndsWith(","))
                 .Take(10);
                 

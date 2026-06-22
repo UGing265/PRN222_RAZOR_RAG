@@ -98,6 +98,7 @@ public class SimpleFileParserService : IFileParserService
                             if (!string.IsNullOrWhiteSpace(pText))
                             {
                                 sb.AppendLine(pText);
+                                sb.AppendLine();
                             }
                         }
                         pages.Add(new PageContent { PageNumber = null, Content = sb.ToString() });
@@ -196,6 +197,7 @@ public class SimpleFileParserService : IFileParserService
             if (!string.IsNullOrWhiteSpace(text))
             {
                 sb.AppendLine(text);
+                sb.AppendLine();
             }
         }
 
@@ -228,6 +230,7 @@ public class SimpleFileParserService : IFileParserService
                     sb.AppendLine(text.Text);
                 }
             }
+            sb.AppendLine();
         }
 
         return sb.ToString();
