@@ -91,7 +91,6 @@ public sealed class NavViewComponent : ViewComponent
         if (!isAuth)
         {
             model.NavLinks.Add(new NavLink { Page = "/Auth/Login", Label = "Đăng Nhập", IconKey = "login" });
-            model.NavLinks.Add(new NavLink { Page = "/Auth/Register", Label = "Đăng Ký", IconKey = "register" });
         }
         else if (roleId == 1)
         {

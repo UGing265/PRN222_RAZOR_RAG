@@ -82,7 +82,7 @@ public class CompareModel : PageModel
 
         if (!_cache.TryGetValue<ComparisonExportRequest>(key, out var payload) || payload is null)
         {
-            ErrorMessage = "Phiên xuất PDF đã hết hạn. Vui lòng chạy lại phân tích.";
+            TempData["ErrorMessage"] = "Phiên xuất PDF đã hết hạn. Vui lòng chạy lại phân tích.";
             return Page();
         }
 
@@ -109,7 +109,7 @@ public class CompareModel : PageModel
 
         if (SelectedDocumentIds == null || SelectedDocumentIds.Count < 2 || SelectedDocumentIds.Count > 5)
         {
-            ErrorMessage = "Vui lòng chọn từ 2 đến 5 tài liệu để so sánh.";
+            TempData["ErrorMessage"] = "Vui lòng chọn từ 2 đến 5 tài liệu để so sánh.";
             Subjects = await _documentService.GetSubjectsAsync();
             return Page();
         }
@@ -146,7 +146,7 @@ public class CompareModel : PageModel
         }
         catch (Exception ex)
         {
-            ErrorMessage = ex.Message;
+            TempData["ErrorMessage"] = ex.Message;
         }
 
         Subjects = await _documentService.GetSubjectsAsync();

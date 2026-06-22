@@ -6,22 +6,24 @@
     string activeTab = Model.ActiveTab;
 }
 
-<div class="page-shell">
-    <main class="container-fluid px-4 px-md-5 py-5" style="max-width: 1350px;">
+<div class="page-shell grain">
+    <main class="container-fluid px-4 px-md-5 py-5" style="max-width: 1300px;">
         <!-- Top Heading Area -->
-        <div class="d-flex align-items-center justify-content-between mb-5">
+        <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center mb-5 gap-4">
             <div>
-                <h1 class="hero-title mb-1" style="font-size: clamp(2rem, 4vw, 2.75rem); font-family: inherit;">Quản Lý Tài Liệu</h1>
-                <p class="text-muted-foreground" style="font-size: 15px; font-weight: 400; margin-bottom: 0;">Giám sát, tìm kiếm, phân quyền và giải quyết các tài liệu báo cáo vi phạm trên hệ thống.</p>
+                <span class="font-mono-xs text-coral-deep" style="font-weight: 700; letter-spacing: 0.15em;">QUẢN TRỊ VIÊN</span>
+                <h1 class="hero-title mt-2 mb-3" style="font-size: clamp(2.5rem, 5vw, 3.5rem); color: var(--brown); line-height: 1.1;">Quản Lý Tài Liệu</h1>
+                <p class="text-muted-foreground mb-3" style="font-size: 15px; font-weight: 400;">Giám sát, tìm kiếm, phân quyền và giải quyết các tài liệu báo cáo vi phạm trên hệ thống.</p>
+                <div class="d-flex gap-2">
+                    <span class="badge bg-dark text-white px-3.5 py-2 border-0 rounded-pill" style="font-size: 13px; font-weight: 500; font-family: inherit; text-transform: none; letter-spacing: normal;">
+                        @Model.ViewModel.TotalDocuments Tài liệu
+                    </span>
+                    <span class="badge px-3.5 py-2 border-0 rounded-pill text-white" style="background-color: #dc3545 !important; font-size: 13px; font-weight: 500; font-family: inherit; text-transform: none; letter-spacing: normal;">
+                        @Model.ViewModel.PendingReports.Count Báo cáo chờ xử lý
+                    </span>
+                </div>
             </div>
-            <div class="d-flex gap-2">
-                <span class="badge bg-dark text-white px-3.5 py-2 border-0 rounded-pill" style="font-size: 13px; font-weight: 500; font-family: inherit; text-transform: none; letter-spacing: normal;">
-                    @Model.ViewModel.TotalDocuments Tài liệu
-                </span>
-                <span class="badge px-3.5 py-2 border-0 rounded-pill text-white" style="background-color: #dc3545 !important; font-size: 13px; font-weight: 500; font-family: inherit; text-transform: none; letter-spacing: normal;">
-                    @Model.ViewModel.PendingReports.Count Báo cáo chờ xử lý
-                </span>
-            </div>
+            <!-- If there are actions, put them here in a separate div -->
         </div>
 
         <!-- Tabs Area -->
@@ -246,7 +248,7 @@
 <!-- Delete Confirmation Modal -->
 <div class="modal fade" id="deleteDocModal" tabindex="-1" aria-labelledby="deleteDocModalLabel" aria-hidden="true" style="backdrop-filter: blur(8px); background: rgba(139, 0, 0, 0.05);">
     <div class="modal-dialog modal-dialog-centered">
-        <div class="modal-content border-0 shadow-lg" style="border-radius: 24px; overflow: hidden; font-family: inherit;">
+        <div class="tab-content mt-4 metadata-panel p-4 p-md-5 animate-tab-content" id="adminDocsTabContent" style="border-radius: 24px;">
             <div class="modal-header border-0 p-4 pb-0 d-flex justify-content-between align-items-center">
                 <h5 class="modal-title fw-bold" id="deleteDocModalLabel" style="font-size: 1.2rem; color: #8b0000;">Xác Nhận Xóa Tài Liệu</h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close" style="background-color: rgba(0, 0, 0, 0.05); padding: 0.75rem; border-radius: 50%;"></button>
