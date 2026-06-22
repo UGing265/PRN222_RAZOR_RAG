@@ -1,0 +1,422 @@
+@page "/documents/compare"
+@model GUI.Pages.Documents.CompareModel
+@{
+    ViewData["Title"] = "So Sánh Tài Liệu";
+}
+
+<style>
+    /* Premium Compare Page Styles Sync with System */
+    .compare-glass-container {
+        background: rgba(255, 255, 255, 0.7);
+        backdrop-filter: blur(20px);
+        -webkit-backdrop-filter: blur(20px);
+        border-radius: 24px;
+        border: 1px solid rgba(255, 255, 255, 0.8);
+        box-shadow: 0 10px 40px rgba(74, 31, 22, 0.05);
+        transition: all 0.3s ease;
+        padding: 32px;
+    }
+    
+    .compare-glass-container:focus-within {
+        box-shadow: 0 15px 50px rgba(216, 106, 88, 0.12);
+        border-color: rgba(216, 106, 88, 0.2);
+    }
+
+    .doc-pill {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        padding: 8px 16px;
+        background: rgba(255, 255, 255, 0.8);
+        border: 1px solid var(--border);
+        border-radius: 9999px;
+        font-size: 0.9rem;
+        color: var(--brown);
+        font-weight: 500;
+        transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+        animation: popIn 300ms cubic-bezier(0.16, 1, 0.3, 1);
+    }
+    .doc-pill:hover {
+        background: var(--coral-soft);
+        border-color: var(--coral);
+        color: var(--brown);
+        transform: translateY(-2px);
+    }
+    .doc-pill button {
+        background: transparent;
+        border: none;
+        color: var(--muted);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        width: 22px;
+        height: 22px;
+        border-radius: 50%;
+        cursor: pointer;
+        transition: all 0.2s ease;
+        padding: 0;
+    }
+    .doc-pill:hover button {
+        color: var(--brown);
+        background: rgba(255, 255, 255, 0.5);
+    }
+
+    .result-dropdown {
+        background: rgba(255, 255, 255, 0.95);
+        backdrop-filter: blur(16px);
+        border: 1px solid var(--border);
+        border-radius: 16px;
+        box-shadow: var(--shadow);
+        overflow: hidden;
+    }
+
+    .result-item {
+        padding: 14px 18px;
+        cursor: pointer;
+        transition: all 0.2s ease;
+        border-bottom: 1px solid rgba(82, 39, 27, 0.04);
+    }
+    .result-item:last-child {
+        border-bottom: none;
+    }
+    .result-item:hover {
+        background: rgba(216, 106, 88, 0.05);
+    }
+
+    /* Markdown Overrides for StudyMate Theme */
+    .markdown-premium {
+        color: var(--foreground);
+        font-family: var(--font-sans);
+        line-height: 1.7;
+    }
+    .markdown-premium h1, .markdown-premium h2, .markdown-premium h3 {
+        color: var(--brown);
+        font-family: inherit;
+        font-weight: 700;
+        margin-top: 2rem;
+        margin-bottom: 1rem;
+    }
+    .markdown-premium table {
+        width: 100%;
+        border-collapse: collapse;
+        margin: 2rem 0;
+        background: rgba(255, 255, 255, 0.6);
+        border-radius: 12px;
+        overflow: hidden;
+    }
+    .markdown-premium th {
+        background: rgba(216, 106, 88, 0.08);
+        color: var(--brown);
+        font-weight: 600;
+        text-transform: uppercase;
+        font-size: 0.8rem;
+        letter-spacing: 0.05em;
+        padding: 1rem;
+        text-align: left;
+    }
+    .markdown-premium td {
+        padding: 1.25rem 1rem;
+        border-bottom: 1px solid var(--border);
+        color: var(--foreground);
+        vertical-align: top;
+    }
+    .markdown-premium tr:last-child td {
+        border-bottom: none;
+    }
+
+    @@keyframes fadeUp {
+        from { opacity: 0; transform: translateY(20px); }
+        to { opacity: 1; transform: translateY(0); }
+    }
+    @@keyframes popIn {
+        from { opacity: 0; transform: scale(0.9); }
+        to { opacity: 1; transform: scale(1); }
+    }
+</style>
+
+<div class="page-shell grain">
+    <div class="container-fluid px-4 px-md-5 py-5" style="max-width: 1300px;">
+        
+        <!-- Header Section -->
+        <div class="d-flex align-items-center justify-content-between mb-5 flex-wrap gap-3">
+            <div>
+                <span class="font-mono-xs" style="font-weight: 700; letter-spacing: 0.15em; color: var(--coral);">TRÍ TUỆ NHÂN TẠO</span>
+                <h1 class="hero-title mt-2 mb-3" style="font-size: clamp(2.5rem, 5vw, 3.5rem); color: var(--brown); line-height: 1.1;">So Sánh Tài Liệu</h1>
+                <p class="text-muted-foreground mb-0" style="max-width: 600px; font-size: 1.05rem; line-height: 1.6;">
+                    Phân tích sâu sắc sự khác biệt và tương đồng giữa các tài liệu. 
+                    Lựa chọn từ 2 đến 5 tài liệu để bắt đầu.
+                </p>
+            </div>
+        </div>
+
+        @if (!string.IsNullOrEmpty(Model.ErrorMessage))
+        {
+            <div class="alert mb-5" style="background: rgba(254, 242, 242, 0.8); border: 1px solid rgba(254, 226, 226, 1); color: #991b1b; border-radius: 16px;" role="alert">
+                <div class="d-flex align-items-center">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="me-3"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+                    <span>@Model.ErrorMessage</span>
+                </div>
+            </div>
+        }
+
+        <!-- Compare Input Form -->
+        <div class="compare-glass-container mb-5">
+            <form method="post" id="compareForm">
+                <div class="row g-4 mb-4">
+                    <!-- Subject Filter -->
+                    <div class="col-md-4">
+                        <label class="form-label font-mono-xs mb-2" style="color: var(--muted);">Lọc theo môn học</label>
+                        <select id="subjectSelect" class="form-select form-control" style="background-color: rgba(255,255,255,0.7); border-radius: 14px;">
+                            <option value="">Tất cả môn học</option>
+                            @foreach(var subject in Model.Subjects.OrderBy(s => s.Code))
+                            {
+                                <option value="@subject.Id">@subject.Code - @subject.Name</option>
+                            }
+                        </select>
+                    </div>
+
+                    <!-- Search Box -->
+                    <div class="col-md-8 position-relative" style="max-width: 600px;">
+                        <label class="form-label font-mono-xs mb-2" style="color: var(--muted);">Tìm tài liệu</label>
+                        <div class="premium-search-box position-relative">
+                            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" class="premium-search-icon"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
+                            <input type="text" id="searchInput" class="premium-search-input" placeholder="Nhập tên tài liệu..." autocomplete="off" />
+                        </div>
+                        
+                        <!-- Search Results Dropdown -->
+                        <div id="searchResults" class="position-absolute w-100 mt-2 result-dropdown" style="display: none; z-index: 1000; top: 100%; left: 0; max-height: 350px; overflow-y: auto;">
+                            <div id="searchResultsList" class="d-flex flex-column">
+                                <!-- Results -->
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Selected Documents -->
+                <div class="mb-4">
+                    <div class="d-flex justify-content-between align-items-end mb-3">
+                        <label class="form-label font-mono-xs mb-0" style="color: var(--muted);">Tài Liệu Đã Chọn (<span id="selectedCount">0</span>/5)</label>
+                    </div>
+                    
+                    <div id="selectedDocsContainer" class="d-flex flex-wrap gap-2" style="min-height: 52px;">
+                        <div id="emptySelectionMsg" class="w-100 py-3 px-4" style="border: 1px dashed rgba(82, 39, 27, 0.15); border-radius: 16px; background: rgba(255,255,255,0.4);">
+                            <span class="text-muted-foreground text-sm">Chưa có tài liệu nào được chọn. Hãy tìm kiếm ở trên.</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Hidden Inputs -->
+                <div id="hiddenInputsContainer">
+                    @foreach (var id in Model.SelectedDocumentIds)
+                    {
+                        <input type="hidden" name="SelectedDocumentIds" value="@id" />
+                    }
+                </div>
+
+                <div class="text-end border-top pt-4 mt-4" style="border-color: var(--border) !important;">
+                    <button type="submit" id="btnCompare" class="btn btn-premium-primary pill-button px-5 py-2.5 font-mono-xs text-white d-inline-flex align-items-center gap-2" disabled>
+                        PHÂN TÍCH KHÁC BIỆT
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg>
+                    </button>
+                </div>
+            </form>
+        </div>
+
+        <!-- Results Section -->
+        @if (!string.IsNullOrEmpty(Model.ComparisonResultHtml))
+        {
+            <div class="feature-card-premium" style="animation: fadeUp 800ms cubic-bezier(0.16, 1, 0.3, 1) forwards;">
+                <div class="d-flex justify-content-between align-items-center mb-5 flex-wrap gap-3">
+                    <h2 class="hero-title m-0" style="font-size: 1.8rem; color: var(--brown);">Báo Cáo Phân Tích</h2>
+                    
+                    @if (!string.IsNullOrEmpty(Model.ExportKey))
+                    {
+                        <a href="?handler=ExportPdf&amp;key=@Model.ExportKey"
+                           class="btn btn-premium-secondary pill-button d-flex align-items-center gap-2"
+                           download>
+                           <span class="font-mono-xs">XUẤT PDF</span>
+                           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+                        </a>
+                    }
+                </div>
+                
+                <div class="markdown-premium">
+                    <div id="markdownContent" style="word-break: break-word;">
+                        @Html.Raw(Model.ComparisonResultHtml)
+                    </div>
+                </div>
+            </div>
+        }
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        document.addEventListener("DOMContentLoaded", function () {
+            const searchInput = document.getElementById("searchInput");
+            const subjectSelect = document.getElementById("subjectSelect");
+            const searchResults = document.getElementById("searchResults");
+            const searchResultsList = document.getElementById("searchResultsList");
+            const selectedDocsContainer = document.getElementById("selectedDocsContainer");
+            const emptySelectionMsg = document.getElementById("emptySelectionMsg");
+            const hiddenInputsContainer = document.getElementById("hiddenInputsContainer");
+            const btnCompare = document.getElementById("btnCompare");
+            const selectedCount = document.getElementById("selectedCount");
+
+            let selectedDocs = [];
+            
+            // Re-populate if coming back from POST
+            const existingInputs = hiddenInputsContainer.querySelectorAll("input");
+            if (existingInputs.length > 0) {
+                existingInputs.forEach(input => {
+                    selectedDocs.push({ id: input.value, title: "Tài liệu đã chọn (" + input.value.substring(0, 8) + ")" });
+                });
+                renderSelectedDocs();
+            }
+
+            let searchTimeout = null;
+
+            function triggerSearch() {
+                const query = searchInput.value.trim();
+                const subjectId = subjectSelect.value;
+                
+                if (query.length < 2 && !subjectId) {
+                    searchResults.style.display = "none";
+                    return;
+                }
+
+                clearTimeout(searchTimeout);
+                searchTimeout = setTimeout(() => {
+                    let url = `?handler=Search`;
+                    if (query) url += `&query=${encodeURIComponent(query)}`;
+                    if (subjectId) url += `&subjectId=${encodeURIComponent(subjectId)}`;
+
+                    fetch(url)
+                        .then(response => response.json())
+                        .then(data => {
+                            searchResultsList.innerHTML = "";
+                            if (data && data.length > 0) {
+                                data.forEach(doc => {
+                                    if (selectedDocs.find(d => d.id === doc.id)) return;
+
+                                    const item = document.createElement("div");
+                                    item.className = "result-item";
+                                    
+                                    const isPublic = doc.visibility === 'public' || doc.visibility === 'school_wide';
+                                    const visibilityColor = isPublic ? "color: #2b5c43; background: rgba(43,92,67,0.1);" : "color: var(--coral); background: rgba(216,106,88,0.1);";
+                                    const visibilityText = isPublic ? "Công khai" : "Cá nhân";
+
+                                    item.innerHTML = `
+                                        <div class="d-flex justify-content-between align-items-center mb-1">
+                                            <strong style="color: var(--brown); font-size: 0.95rem;">${doc.title}</strong>
+                                            <span class="rounded-pill px-2 py-1 font-mono-xs" style="${visibilityColor}">${visibilityText}</span>
+                                        </div>
+                                        <div class="text-muted-foreground d-flex align-items-center gap-1" style="font-size: 0.85rem;">
+                                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 19.5v-15A2.5 2.5 0 0 1 6.5 2H20v20H6.5a2.5 2.5 0 0 1 0-5H20"/></svg>
+                                            ${doc.subjectName}
+                                        </div>
+                                    `;
+                                    item.onclick = function () {
+                                        addDocument(doc.id, doc.title);
+                                        searchInput.value = "";
+                                        searchResults.style.display = "none";
+                                    };
+                                    searchResultsList.appendChild(item);
+                                });
+                                
+                                if(searchResultsList.children.length === 0) {
+                                    searchResultsList.innerHTML = '<div class="p-4 text-center text-muted-foreground">Tất cả tài liệu tìm được đã được chọn.</div>';
+                                }
+                                searchResults.style.display = "block";
+                            } else {
+                                searchResultsList.innerHTML = '<div class="p-4 text-center text-muted-foreground">Không tìm thấy tài liệu phù hợp.</div>';
+                                searchResults.style.display = "block";
+                            }
+                        })
+                        .catch(err => console.error("Lỗi tìm kiếm:", err));
+                }, 300);
+            }
+
+            searchInput.addEventListener("input", triggerSearch);
+            
+            subjectSelect.addEventListener("change", function(e) {
+                // Remove searchInput.focus() to prevent keyboard popping up or weird focus issues
+                // that might cause the dropdown to blur/hide immediately.
+                triggerSearch();
+            });
+
+            document.addEventListener("click", function (e) {
+                if (!searchInput.contains(e.target) && !searchResults.contains(e.target) && !subjectSelect.contains(e.target)) {
+                    searchResults.style.display = "none";
+                }
+            });
+
+            // Prevent clicks inside the dropdown from hiding it via document click
+            searchResults.addEventListener("click", function (e) {
+                e.stopPropagation();
+            });
+
+            searchInput.addEventListener("focus", function() {
+                if (searchInput.value.trim().length >= 2 || subjectSelect.value) {
+                    triggerSearch();
+                }
+            });
+
+            function addDocument(id, title) {
+                if (selectedDocs.length >= 5) {
+                    if(typeof showPremiumToast === "function") {
+                        showPremiumToast("Chỉ chọn tối đa 5 tài liệu.", "danger");
+                    } else {
+                        alert("Bạn chỉ có thể chọn tối đa 5 tài liệu để so sánh.");
+                    }
+                    return;
+                }
+                if (!selectedDocs.find(d => d.id === id)) {
+                    selectedDocs.push({ id, title });
+                    renderSelectedDocs();
+                }
+            }
+
+            window.removeDocument = function(id) {
+                selectedDocs = selectedDocs.filter(d => d.id !== id);
+                renderSelectedDocs();
+            }
+
+            function renderSelectedDocs() {
+                const pills = selectedDocsContainer.querySelectorAll('.doc-pill');
+                pills.forEach(p => p.remove());
+                
+                hiddenInputsContainer.innerHTML = "";
+                selectedCount.textContent = selectedDocs.length;
+
+                if (selectedDocs.length === 0) {
+                    emptySelectionMsg.style.display = "block";
+                } else {
+                    emptySelectionMsg.style.display = "none";
+                    
+                    selectedDocs.forEach(doc => {
+                        const pill = document.createElement("div");
+                        pill.className = "doc-pill";
+                        pill.innerHTML = `
+                            <span class="text-truncate" style="max-width: 200px;">${doc.title}</span>
+                            <button type="button" onclick="removeDocument('${doc.id}')" title="Xóa">
+                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+                            </button>
+                        `;
+                        selectedDocsContainer.insertBefore(pill, emptySelectionMsg);
+
+                        const input = document.createElement("input");
+                        input.type = "hidden";
+                        input.name = "SelectedDocumentIds";
+                        input.value = doc.id;
+                        hiddenInputsContainer.appendChild(input);
+                    });
+                }
+
+                btnCompare.disabled = selectedDocs.length < 2 || selectedDocs.length > 5;
+            }
+
+            renderSelectedDocs();
+        });
+    </script>
+}

@@ -1,6 +1,7 @@
 using BLL.DTOs.Documents;
 using GUI.Pages.Documents;
 using BLL.Interfaces.Documents;
+using BLL.Interfaces.Notifications;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
@@ -11,11 +12,13 @@ namespace GUI.Pages.Admin
     public class DocumentsModel : PageModel
     {
         private readonly IDocumentService _documentService;
+        private readonly INotificationService _notificationService;
         private readonly ILogger<DocumentsModel> _logger;
 
-        public DocumentsModel(IDocumentService documentService, ILogger<DocumentsModel> logger)
+        public DocumentsModel(IDocumentService documentService, INotificationService notificationService, ILogger<DocumentsModel> logger)
         {
             _documentService = documentService;
+            _notificationService = notificationService;
             _logger = logger;
         }
 
@@ -78,7 +81,16 @@ namespace GUI.Pages.Admin
         {
             try
             {
+                // Fetch title before deleting for the notification payload
+                var docInfo = await _documentService.GetAdminDocumentsAsync(null, null, 1, 1, cancellationToken);
+                var matchedDoc = ViewModel.Documents.FirstOrDefault(x => x.Id == id);
+                string docTitle = matchedDoc?.Title ?? id.ToString();
+
                 await _documentService.DeleteDocumentAsync(id, cancellationToken);
+
+                // Notify all clients viewing this document via SignalR
+                await _notificationService.SendDocumentDeletedAsync(id, docTitle, cancellationToken);
+
                 TempData["SuccessMessage"] = "Đã xóa tài liệu khỏi hệ thống thành công.";
             }
             catch (Exception ex)
@@ -86,7 +98,7 @@ namespace GUI.Pages.Admin
                 _logger.LogError(ex, "Error deleting document {Id} by Admin", id);
                 TempData["ErrorMessage"] = "Có lỗi xảy ra khi xóa tài liệu: " + ex.Message;
             }
-            return RedirectToPage(new { tab = "files", q, subjectId, page });
+            return RedirectToPage("/Admin/Documents", new { tab = "files", q, subjectId, page });
         }
 
         public async Task<IActionResult> OnPostResolveReportAsync(Guid id, string resolution, CancellationToken cancellationToken)
@@ -108,7 +120,7 @@ namespace GUI.Pages.Admin
                 _logger.LogError(ex, "Error resolving report {Id}", id);
                 TempData["ErrorMessage"] = "Có lỗi xảy ra khi xử lý báo cáo: " + ex.Message;
             }
-            return RedirectToPage(new { tab = "reports" });
+            return RedirectToPage("/Admin/Documents", new { tab = "reports" });
         }
     }
 }

@@ -99,13 +99,13 @@
 </style>
 
 <div class="page-shell grain">
-    <div class="container-fluid px-4 px-md-5 py-4 py-md-5">
+    <div class="container-fluid px-4 px-md-5 py-5" style="max-width: 1300px;">
         
         <!-- Header -->
         <div class="d-flex flex-column flex-md-row justify-content-between align-items-start gap-4 mb-5">
             <div class="min-w-0 flex-grow-1">
-                <div class="kicker mb-1">Kho tài liệu</div>
-                <h1 class="hero-title text-overflow-safe mb-2" style="font-size: clamp(2rem, 4vw, 3.2rem); line-height: 1.1;">@Model.ViewModel.Title</h1>
+                <span class="font-mono-xs text-coral-deep" style="font-weight: 700; letter-spacing: 0.15em;">KHO TÀI LIỆU</span>
+                <h1 class="hero-title text-overflow-safe mt-2 mb-3" style="font-size: clamp(2.5rem, 5vw, 3.5rem); color: var(--brown); line-height: 1.1;">@Model.ViewModel.Title</h1>
                 <div class="font-mono-xs text-muted-foreground d-flex align-items-center gap-2">
                     <span style="font-weight: 600; color: var(--coral);">[@Model.ViewModel.SubjectCode] @Model.ViewModel.SubjectName</span>
                 </div>
@@ -206,7 +206,7 @@
                             <h2 class="h5 mb-1 text-overflow-safe" style="font-weight: 700; color: var(--brown);">Tệp đã đính kèm</h2>
                             <div class="font-mono-xs text-muted-foreground">Danh sách file gốc gắn với tài liệu</div>
                         </div>
-                        <span class="badge text-bg-dark rounded-pill px-3 py-1.5" style="font-size: 0.78rem;">@Model.ViewModel.FileCount tệp</span>
+
                     </div>
                     
                     @if (!Model.ViewModel.Files.Any())
@@ -229,14 +229,22 @@
                                                 </div>
                                                 <div class="min-w-0">
                                                     <div class="fw-bold text-dark text-truncate text-overflow-safe" style="font-size: 0.92rem;">@file.OriginalFilename</div>
-                                                    <div class="font-mono-xs text-muted-foreground">@file.MimeType</div>
                                                 </div>
                                             </div>
                                             <div class="d-flex align-items-center gap-3 flex-wrap ms-auto">
                                                 <div class="font-mono-xs text-muted-foreground fw-semibold">
                                                     @((file.FileSizeBytes / 1024.0 / 1024.0).ToString("0.00")) MB
                                                 </div>
-                                                <span class="premium-accent-chip" style="background: rgba(216, 106, 88, 0.05) !important; border-color: rgba(216, 106, 88, 0.1) !important; color: var(--coral) !important; font-size: 0.72rem !important; border-radius: 9999px !important; padding: 4px 10px !important;">@file.ExtractionStatus</span>
+                                                @{
+                                                    var status = file.ExtractionStatus?.ToLower() ?? "";
+                                                    var statusClass = status switch {
+                                                        "success" or "completed" => "badge-approved-glass",
+                                                        "failed" or "error" => "badge-rejected-glass",
+                                                        "pending" or "processing" => "badge-pending-glass",
+                                                        _ => "premium-accent-chip"
+                                                    };
+                                                }
+                                                <span class="badge @statusClass rounded-pill" style="font-size: 0.72rem; padding: 4px 10px;">@file.ExtractionStatus</span>
                                                 <div class="font-mono-xs text-muted-foreground">@file.CreatedAt.ToString("dd/MM/yyyy HH:mm")</div>
                                             </div>
                                         </div>
@@ -255,7 +263,7 @@
                             <h2 class="h5 mb-1" style="font-weight: 700; color: var(--brown);">Các chương học thuật</h2>
                             <div class="font-mono-xs text-muted-foreground">Phân tích từ AI · @Model.ViewModel.TotalChapters chương</div>
                         </div>
-                        <span class="badge rounded-pill text-bg-dark px-3 py-1.5" style="font-size: 0.78rem;">@Model.ViewModel.Chapters.Count chương hiển thị</span>
+
                     </div>
 
                     @if (!Model.ViewModel.Chapters.Any())
@@ -285,16 +293,6 @@
                                                 <span class="premium-accent-chip" style="background: rgba(82, 39, 27, 0.04) !important; border-color: rgba(82, 39, 27, 0.08) !important; color: var(--muted-foreground) !important;">
                                                     Chunk @chapter.StartChunkIndex → @chapter.EndChunkIndex
                                                 </span>
-                                                @if (chapter.ConfidenceScore is not null)
-                                                {
-                                                    <span class="premium-accent-chip" style="background: rgba(82, 39, 27, 0.04) !important; border-color: rgba(82, 39, 27, 0.08) !important; color: var(--muted-foreground) !important;">
-                                                        Tin cậy: @(chapter.ConfidenceScore.Value.ToString("0%"))
-                                                    </span>
-                                                }
-                                                @if (chapter.IsAiGenerated)
-                                                {
-                                                    <span class="premium-accent-chip" style="background: rgba(255, 193, 7, 0.1) !important; border-color: rgba(255, 193, 7, 0.2) !important; color: #7d5a00 !important;">AI</span>
-                                                }
                                             </div>
                                         </div>
                                     </div>
@@ -308,13 +306,13 @@
                 <div id="chunks-card" class="details-panel-glass shadow-sm p-0 overflow-hidden" style="transition: opacity 0.25s ease;">
                     <div class="p-4 border-bottom border-border d-flex justify-content-between align-items-center gap-3 flex-wrap">
                         <div>
-                            <div class="kicker mb-1">— Các phân đoạn</div>
+                            <div class="kicker mb-1">Các phân đoạn</div>
                             <h2 class="h5 mb-1" style="font-weight: 700; color: var(--brown);">Đoạn dữ liệu văn bản</h2>
                             <div class="font-mono-xs text-muted-foreground">Trang @Model.ViewModel.ChunkPage / @Model.ViewModel.TotalChunkPages</div>
                         </div>
                         <div class="d-flex align-items-center gap-2 flex-wrap">
-                            <a asp-page="/Documents/Details" asp-route-slug="@Model.ViewModel.Slug" asp-route-chunkPage="@Math.Max(1, Model.ViewModel.ChunkPage - 1)" asp-route-chunkPageSize="@Model.ViewModel.ChunkPageSize" class="btn btn-outline-dark btn-sm pill-button px-3 @(Model.ViewModel.ChunkPage <= 1 ? "disabled" : "")">Trước</a>
-                            <a asp-page="/Documents/Details" asp-route-slug="@Model.ViewModel.Slug" asp-route-chunkPage="@Math.Min(Model.ViewModel.TotalChunkPages, Model.ViewModel.ChunkPage + 1)" asp-route-chunkPageSize="@Model.ViewModel.ChunkPageSize" class="btn btn-outline-dark btn-sm pill-button px-3 @(Model.ViewModel.ChunkPage >= Model.ViewModel.TotalChunkPages ? "disabled" : "")">Sau</a>
+                            <a asp-page="/Documents/Details" asp-route-slug="@Model.ViewModel.Slug" asp-route-chunkPage="@Math.Max(1, Model.ViewModel.ChunkPage - 1)" asp-route-chunkPageSize="@Model.ViewModel.ChunkPageSize" class="btn btn-premium-secondary btn-sm pill-button px-3 @(Model.ViewModel.ChunkPage <= 1 ? "disabled" : "")">Trước</a>
+                            <a asp-page="/Documents/Details" asp-route-slug="@Model.ViewModel.Slug" asp-route-chunkPage="@Math.Min(Model.ViewModel.TotalChunkPages, Model.ViewModel.ChunkPage + 1)" asp-route-chunkPageSize="@Model.ViewModel.ChunkPageSize" class="btn btn-premium-secondary btn-sm pill-button px-3 @(Model.ViewModel.ChunkPage >= Model.ViewModel.TotalChunkPages ? "disabled" : "")">Sau</a>
                         </div>
                     </div>
 
@@ -334,8 +332,8 @@
                                         previewText = previewText[..180] + "…";
                                     }
                                     <div class="col-12 col-xl-6">
-                                        <details class="item-card-glass h-100" style="padding: 16px 20px !important;">
-                                            <summary class="list-unstyled d-flex justify-content-between align-items-start gap-3" style="cursor: pointer;">
+                                        <div class="item-card-glass h-100" style="padding: 16px 20px !important; cursor: pointer;" data-bs-toggle="modal" data-bs-target="#chunkModal-@chunk.ChunkOrder">
+                                            <div class="d-flex justify-content-between align-items-start gap-3">
                                                 <div class="flex-grow-1 min-w-0">
                                                     <div class="d-flex align-items-center justify-content-between gap-3 mb-2">
                                                         <div class="d-flex align-items-center gap-2">
@@ -354,21 +352,13 @@
                                                     <div class="fw-bold mb-2 text-dark" style="font-size: 0.88rem; font-family: 'Source Serif 4', Georgia, serif;">@chunk.WordCount từ</div>
                                                     <div class="text-muted-foreground text-overflow-safe" style="word-break: break-word; line-height: 1.5; font-size: 0.85rem; opacity: 0.9;">@previewText</div>
                                                 </div>
-                                                <svg class="chevron-icon flex-shrink-0 mt-1" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="transition: transform 0.25s ease;">
-                                                    <polyline points="6 9 12 15 18 9"/>
+                                                <svg class="flex-shrink-0 mt-1 text-muted" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                                                    <path d="M15 3h6v6M9 21H3v-6M21 3l-7 7M3 21l7-7"/>
                                                 </svg>
-                                            </summary>
-
-                                            <div class="mt-3 pt-3 border-top border-border">
-                                                <div class="d-flex align-items-center gap-2 mb-3 text-muted-foreground font-mono-xs" style="font-size: 0.72rem; letter-spacing: 0.03em;">
-                                                    <span>HASH: @chunk.ChunkHash</span>
-                                                    <span>•</span>
-                                                    <span>@chunk.WordCount từ vựng</span>
-                                                </div>
-                                                <div class="file-meta-key mb-2">Nội dung chi tiết phân đoạn</div>
-                                                <div class="text-overflow-safe text-dark" style="font-family: 'Source Serif 4', Georgia, serif; font-size: 0.9rem; white-space: pre-wrap; line-height: 1.6;">@chunk.Content</div>
                                             </div>
-                                        </details>
+                                        </div>
+
+
                                     </div>
                                 }
                             </div>
@@ -427,13 +417,36 @@
                     </div>
                 </div>
                 <div class="modal-footer border-0 p-4 pt-0 d-flex justify-content-end gap-2">
-                    <button type="button" class="btn btn-outline-dark pill-button px-4 py-2" data-bs-dismiss="modal" style="font-size: 0.85rem; border-color: rgba(0,0,0,0.15); border-radius: 100px;">Hủy</button>
+                    <button type="button" class="btn btn-premium-secondary pill-button px-4 py-2" data-bs-dismiss="modal" style="font-size: 0.85rem; border-color: rgba(0,0,0,0.15); border-radius: 100px;">Hủy</button>
                     <button type="submit" class="btn btn-danger pill-button px-4 py-2" style="font-size: 0.85rem; background-color: #8b0000; border: none; box-shadow: 0 4px 12px rgba(139, 0, 0, 0.2); border-radius: 100px; color: white;">Gửi Báo Cáo</button>
                 </div>
             </form>
         </div>
     </div>
 </div>
+
+<!-- Chunk Modals -->
+@if (Model.ViewModel.Chunks.Any())
+{
+    foreach (var chunk in Model.ViewModel.Chunks)
+    {
+        <div class="modal fade" id="chunkModal-@chunk.ChunkOrder" tabindex="-1" aria-hidden="true" style="backdrop-filter: blur(8px); background: rgba(82, 39, 27, 0.05);">
+            <div class="modal-dialog modal-dialog-centered modal-lg modal-dialog-scrollable">
+                <div class="modal-content border-0 shadow-lg" style="background: var(--card); border-radius: 24px; color: var(--foreground); overflow: hidden;">
+                    <div class="modal-header border-0 p-4 pb-0 d-flex justify-content-between align-items-center">
+                        <h5 class="modal-title fw-bold" style="font-size: 1.25rem; color: var(--brown);">Nội dung phân đoạn @chunk.ChunkOrder</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close" style="background-color: rgba(0, 0, 0, 0.05); padding: 0.75rem; border-radius: 50%;"></button>
+                    </div>
+                    <div class="modal-body p-4 text-overflow-safe text-dark" style="font-family: 'Source Serif 4', Georgia, serif; font-size: 1rem; white-space: pre-wrap; line-height: 1.7;">@chunk.Content</div>
+                    <div class="modal-footer border-0 p-4 pt-0 d-flex justify-content-between align-items-center">
+                        <div class="font-mono-xs text-muted-foreground">@chunk.WordCount từ vựng</div>
+                        <button type="button" class="btn btn-premium-secondary pill-button px-4 py-2" data-bs-dismiss="modal" style="font-size: 0.85rem; border-color: rgba(0,0,0,0.15); border-radius: 100px;">Đóng</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    }
+}
 
 @section Scripts {
     <script>
@@ -507,4 +520,28 @@
             }
         })();
     </script>
+
+    <script>
+        // SignalR: Real-time document deletion guard
+        (() => {
+            const currentDocumentId = '@Model.ViewModel.Id';
+
+            function setupDocumentDeletedListener() {
+                const connection = window.signalrConnection;
+                if (!connection) { setTimeout(setupDocumentDeletedListener, 100); return; }
+
+                connection.on('ReceiveDocumentDeleted', (payload) => {
+                    const deletedId = (payload.documentId || '').toLowerCase();
+                    const currentId = (currentDocumentId || '').toLowerCase();
+                    if (deletedId !== currentId) return;
+
+                    showPremiumToast(`Tài liệu "${payload.title || 'này'}" đã bị Admin xóa khỏi hệ thống. Đang chuyển hướng...`, 'danger');
+                    setTimeout(() => { window.location.href = '/Documents/All'; }, 3000);
+                });
+            }
+
+            setupDocumentDeletedListener();
+        })();
+    </script>
 }
+

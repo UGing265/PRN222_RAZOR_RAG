@@ -359,5 +359,30 @@
             const modal = new bootstrap.Modal(document.getElementById('deleteDocModal'));
             modal.show();
         }
+
+        document.addEventListener("DOMContentLoaded", function () {
+            function setupSignalRAdmin() {
+                const connection = window.signalrConnection;
+                if (!connection) {
+                    setTimeout(setupSignalRAdmin, 100);
+                    return;
+                }
+                connection.on("ReceiveDocumentListUpdated", function () {
+                    console.log("ReceiveDocumentListUpdated: Refreshing admin documents list...");
+                    showPremiumToast("Danh sách tài liệu đã có thay đổi. Đang cập nhật...", "info");
+                    setTimeout(function () {
+                        window.location.reload();
+                    }, 1500);
+                });
+                connection.on("ReceiveReportsUpdated", function () {
+                    console.log("ReceiveReportsUpdated: Refreshing admin reports list...");
+                    showPremiumToast("Danh sách báo cáo vi phạm đã có thay đổi. Đang cập nhật...", "info");
+                    setTimeout(function () {
+                        window.location.reload();
+                    }, 1500);
+                });
+            }
+            setupSignalRAdmin();
+        });
     </script>
 }
