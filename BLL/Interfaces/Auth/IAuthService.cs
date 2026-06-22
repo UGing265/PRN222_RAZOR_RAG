@@ -14,4 +14,5 @@ public interface IAuthService
     Task<bool> ApproveUserAsync(Guid userId, CancellationToken cancellationToken = default);
     Task<bool> RejectOrBlockUserAsync(Guid userId, CancellationToken cancellationToken = default);
     Task<bool> UnblockUserAsync(Guid userId, CancellationToken cancellationToken = default);
+    Task<(int SuccessCount, List<string> Errors)> BulkRegisterFromExcelAsync(Stream excelStream, short roleId, CancellationToken cancellationToken = default);
 }

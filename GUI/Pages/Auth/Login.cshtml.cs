@@ -45,7 +45,7 @@ namespace GUI.Pages.Auth
                 var user = await _authService.ValidateCredentialsAsync(Input.Email, Input.Password, cancellationToken);
                 if (user == null)
                 {
-                    ErrorMessage = "Email hoặc mật khẩu không chính xác.";
+                    TempData["ErrorMessage"] = "Email hoặc mật khẩu không chính xác.";
                     return Page();
                 }
 
@@ -71,17 +71,23 @@ namespace GUI.Pages.Auth
                     });
 
                 _logger.LogInformation("User {Email} logged in successfully.", user.Email);
-                return RedirectToPage("/Index");
+                TempData["SuccessMessage"] = "Đăng nhập thành công.";
+                
+                if (user.RoleName == "Admin")
+                {
+                    return RedirectToPage("/Admin/Users");
+                }
+                return RedirectToPage("/Documents/All");
             }
             catch (InvalidOperationException ex)
             {
-                ErrorMessage = ex.Message;
+                TempData["ErrorMessage"] = ex.Message;
                 return Page();
             }
             catch (Exception ex)
             {
                 _logger.LogError(ex, "Error during native login.");
-                ErrorMessage = "Đã xảy ra lỗi hệ thống. Vui lòng thử lại sau.";
+                TempData["ErrorMessage"] = "Đã xảy ra lỗi hệ thống. Vui lòng thử lại sau.";
                 return Page();
             }
         }
