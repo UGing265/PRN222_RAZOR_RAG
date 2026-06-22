@@ -230,14 +230,14 @@ public class ChatService : IChatService
                 var chunk = chunks[i];
                 var docTitle = chunk.Document?.Title ?? "N/A";
                 var chapterTitle = chunk.Chapter?.Title ?? "N/A";
-                var page = chunk.PageNumber.HasValue ? chunk.PageNumber.Value.ToString() : "N/A";
-                var chunkOrder = chunk.ChunkOrder;
+                var page = (chunk.PageNumber.HasValue && chunk.PageNumber.Value > 0)
+                    ? chunk.PageNumber.Value.ToString()
+                    : "không có số trang";
 
                 contextBuilder.AppendLine($"--- Chunk {i + 1} ---");
                 contextBuilder.AppendLine($"Tài liệu: {docTitle}");
                 contextBuilder.AppendLine($"Chương: {chapterTitle}");
                 contextBuilder.AppendLine($"Trang: {page}");
-                contextBuilder.AppendLine($"Đoạn số: {chunkOrder + 1}");
                 contextBuilder.AppendLine("Nội dung:");
                 contextBuilder.AppendLine(chunk.Content);
                 contextBuilder.AppendLine();
@@ -275,10 +275,9 @@ public class ChatService : IChatService
                 DocumentId = c.DocumentId,
                 DocumentTitle = c.Document!.Title,
                 ChapterTitle = c.Chapter?.Title,
-                PageNumber = c.PageNumber,
-                ChunkOrder = c.ChunkOrder
+                PageNumber = c.PageNumber
             })
-            .GroupBy(s => new { s.DocumentId, s.ChapterTitle, s.PageNumber, s.ChunkOrder })
+            .GroupBy(s => new { s.DocumentId, s.ChapterTitle, s.PageNumber })
             .Select(g => g.First())
             .ToList();
     }
