@@ -87,7 +87,9 @@ public class GeminiChatService : IGeminiChatService
 
                     if ((int)response.StatusCode is 429)
                     {
-                        await Task.Delay(TimeSpan.FromSeconds(5), cancellationToken);
+                        // Rotate to next key immediately; only delay if single key or all keys exhausted
+                        if (_apiKeys.Length <= 1)
+                            await Task.Delay(TimeSpan.FromSeconds(5), cancellationToken);
                     }
                     else if ((int)response.StatusCode is 503)
                     {
@@ -184,7 +186,11 @@ public class GeminiChatService : IGeminiChatService
                     lastError = new InvalidOperationException($"Gemini stream API returned {(int)response.StatusCode}");
 
                     if ((int)response.StatusCode is 429)
-                        await Task.Delay(TimeSpan.FromSeconds(5), cancellationToken);
+                    {
+                        // Rotate to next key immediately; only delay if single key or all keys exhausted
+                        if (_apiKeys.Length <= 1)
+                            await Task.Delay(TimeSpan.FromSeconds(5), cancellationToken);
+                    }
                     else if ((int)response.StatusCode is 503)
                         await Task.Delay(TimeSpan.FromSeconds(1), cancellationToken);
 
