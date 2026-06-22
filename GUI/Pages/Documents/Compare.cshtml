@@ -149,15 +149,7 @@
             </div>
         </div>
 
-        @if (!string.IsNullOrEmpty(Model.ErrorMessage))
-        {
-            <div class="alert mb-5" style="background: rgba(254, 242, 242, 0.8); border: 1px solid rgba(254, 226, 226, 1); color: #991b1b; border-radius: 16px;" role="alert">
-                <div class="d-flex align-items-center">
-                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="me-3"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
-                    <span>@Model.ErrorMessage</span>
-                </div>
-            </div>
-        }
+
 
         <!-- Compare Input Form -->
         <div class="compare-glass-container mb-5">

@@ -15,7 +15,12 @@
 
     <div class="shell grain">
         <partial name="_Sidebar" />
-        <main class="main-stage">
+        <main class="main-stage animate-tab-content" id="mainStage">
+            <script>
+                if (document.referrer.toLowerCase().includes('/admin/metadata') && window.location.pathname.toLowerCase().includes('/admin/metadata')) {
+                    document.getElementById('mainStage').classList.remove('animate-tab-content');
+                }
+            </script>
             <!-- Mobile Header (Hidden on Desktop) -->
             <div class="d-lg-none d-flex align-items-center justify-content-between mb-4">
                 <a asp-page="/Index" class="d-flex align-items-center gap-2 text-decoration-none">
@@ -93,6 +98,11 @@
                 }
                 </text>
             }
+
+            // Move all modals to body to prevent stacking context issues with animations
+            document.querySelectorAll('.modal').forEach(function(modal) {
+                document.body.appendChild(modal);
+            });
         });
     </script>
 

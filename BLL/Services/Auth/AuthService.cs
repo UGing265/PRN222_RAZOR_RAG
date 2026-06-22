@@ -241,7 +241,176 @@ public class AuthService : IAuthService
         return true;
     }
 
+    public async Task<(int SuccessCount, List<string> Errors)> BulkRegisterFromExcelAsync(Stream excelStream, short roleId, CancellationToken cancellationToken = default)
+    {
+        var errors = new List<string>();
+        int successCount = 0;
 
+        try
+        {
+            NPOI.SS.UserModel.IWorkbook workbook = new NPOI.XSSF.UserModel.XSSFWorkbook(excelStream);
+            var sheet = workbook.GetSheetAt(0);
+
+            if (sheet == null)
+            {
+                errors.Add("File Excel không hợp lệ hoặc không có dữ liệu.");
+                return (successCount, errors);
+            }
+
+            var roleExists = await _authRepository.RoleExistsAsync(roleId, cancellationToken);
+            if (!roleExists)
+            {
+                errors.Add("Role không hợp lệ.");
+                return (successCount, errors);
+            }
+
+            for (int i = 1; i <= sheet.LastRowNum; i++)
+            {
+                var row = sheet.GetRow(i);
+                if (row == null) continue;
+
+                string username = GetCellValueSafe(row.GetCell(0)).Trim();
+                string fullName = GetCellValueSafe(row.GetCell(1)).Trim();
+                string email = GetCellValueSafe(row.GetCell(2)).Trim();
+
+                if (username.Length > 255) 
+                {
+                    errors.Add($"Dòng {i + 1}: Mã định danh quá dài (vượt 255 ký tự). Có thể do lỗi công thức Excel.");
+                    continue;
+                }
+                if (fullName.Length > 200) 
+                {
+                    errors.Add($"Dòng {i + 1}: Họ tên quá dài (vượt 200 ký tự). Có thể do lỗi công thức Excel.");
+                    continue;
+                }
+                if (email.Length > 255) 
+                {
+                    errors.Add($"Dòng {i + 1}: Email quá dài (vượt 255 ký tự). Có thể do lỗi công thức Excel.");
+                    continue;
+                }
+                if (string.IsNullOrWhiteSpace(fullName) && string.IsNullOrWhiteSpace(email) && string.IsNullOrWhiteSpace(username))
+                {
+                    continue;
+                }
+
+                if (string.IsNullOrWhiteSpace(fullName) || string.IsNullOrWhiteSpace(email))
+                {
+                    errors.Add($"Dòng {i + 1}: Thiếu Họ và Tên hoặc Email.");
+                    continue;
+                }
+
+                var normalizedEmail = email.ToLowerInvariant();
+                var existingUser = await _authRepository.EmailExistsAsync(normalizedEmail, cancellationToken);
+                if (existingUser)
+                {
+                    errors.Add($"Dòng {i + 1}: Email '{email}' đã tồn tại.");
+                    continue;
+                }
+
+                string password = GeneratePasswordFromName(fullName);
+                var hashedPassword = HashPassword(password);
+                var now = DateTime.UtcNow;
+
+                var user = new User
+                {
+                    Id = Guid.NewGuid(),
+                    FullName = fullName,
+                    Email = normalizedEmail,
+                    Username = string.IsNullOrWhiteSpace(username) ? null : username,
+                    PasswordHash = hashedPassword,
+                    RoleId = roleId,
+                    IsActive = true,
+                    CreatedAt = now,
+                    UpdatedAt = now
+                };
+
+                try
+                {
+                    await _authRepository.AddUserAsync(user, cancellationToken);
+                    successCount++;
+                }
+                catch (Exception ex)
+                {
+                    var innerMsg = ex.InnerException != null ? ex.InnerException.Message : ex.Message;
+                    errors.Add($"Dòng {i + 1}: Lỗi lưu CSDL - {innerMsg}");
+                }
+            }
+        }
+        catch (Exception ex)
+        {
+            errors.Add($"Lỗi đọc file Excel: {ex.Message}");
+        }
+
+        return (successCount, errors);
+    }
+
+    private static string GetCellValueSafe(NPOI.SS.UserModel.ICell cell)
+    {
+        if (cell == null) return "";
+
+        if (cell.CellType == NPOI.SS.UserModel.CellType.Formula)
+        {
+            try
+            {
+                if (cell.CachedFormulaResultType == NPOI.SS.UserModel.CellType.String)
+                    return cell.StringCellValue ?? "";
+                if (cell.CachedFormulaResultType == NPOI.SS.UserModel.CellType.Numeric)
+                    return cell.NumericCellValue.ToString();
+                if (cell.CachedFormulaResultType == NPOI.SS.UserModel.CellType.Boolean)
+                    return cell.BooleanCellValue.ToString();
+            }
+            catch
+            {
+                // Fallback
+            }
+        }
+
+        var formatter = new NPOI.SS.UserModel.DataFormatter();
+        string formatted = formatter.FormatCellValue(cell) ?? "";
+        
+        if (formatted.StartsWith("LET(") || formatted.StartsWith("REGEXREPLACE(") || (formatted.StartsWith("=") && formatted.Length > 200))
+        {
+            return ""; 
+        }
+
+        return formatted;
+    }
+
+    private static string GeneratePasswordFromName(string fullName)
+    {
+        if (string.IsNullOrWhiteSpace(fullName)) return "default@123";
+
+        var normalized = RemoveDiacritics(fullName.Trim().ToLowerInvariant());
+        var parts = normalized.Split(' ', StringSplitOptions.RemoveEmptyEntries);
+        
+        if (parts.Length == 0) return "default@123";
+        if (parts.Length == 1) return parts[0];
+
+        var password = parts.Last();
+        for (int i = 0; i < parts.Length - 1; i++)
+        {
+            password += parts[i][0];
+        }
+
+        return password;
+    }
+
+    private static string RemoveDiacritics(string text)
+    {
+        var normalizedString = text.Normalize(System.Text.NormalizationForm.FormD);
+        var stringBuilder = new System.Text.StringBuilder();
+
+        foreach (var c in normalizedString)
+        {
+            var unicodeCategory = System.Globalization.CharUnicodeInfo.GetUnicodeCategory(c);
+            if (unicodeCategory != System.Globalization.UnicodeCategory.NonSpacingMark)
+            {
+                stringBuilder.Append(c);
+            }
+        }
+
+        return stringBuilder.ToString().Normalize(System.Text.NormalizationForm.FormC).Replace('đ', 'd').Replace('Đ', 'D');
+    }
 
     private static AuthUserDto Map(User user) => new()
     {

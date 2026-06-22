@@ -63,6 +63,38 @@ h1, h2, h3, h4, h5, h6, .hero-title, .font-display { font-family: 'Product Sans'
 .summary-label { font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace; font-size: 11px; letter-spacing: .08em; text-transform: uppercase; color: var(--muted); }
 @media (max-width: 992px) { .shell { grid-template-columns: 1fr; } .main-stage { padding: 18px; } }
 
+/* Global Premium Table Headers */
+.table thead th {
+    background: rgba(255, 255, 255, 0.5) !important;
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    border: none !important;
+    padding: 14px 16px !important;
+    color: var(--brown) !important;
+    vertical-align: middle;
+}
+.table thead th:first-child {
+    border-radius: 16px 0 0 16px;
+}
+.table thead th:last-child {
+    border-radius: 0 16px 16px 0;
+}
+
+/* Elegant High-End Reveal Animation */
+@keyframes elegantReveal {
+    0% {
+        opacity: 0;
+        transform: translateY(12px);
+    }
+    100% {
+        opacity: 1;
+        transform: none;
+    }
+}
+.animate-tab-content {
+    animation: elegantReveal 0.8s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+}
+
 /* ==========================================================================
    Premium Landing Page Styling & Animations
    ========================================================================== */
@@ -255,6 +287,14 @@ h1, h2, h3, h4, h5, h6, .hero-title, .font-display { font-family: 'Product Sans'
     border-color: rgba(216, 106, 88, 0.25) !important;
     color: var(--brown) !important;
 }
+/* Global rule to prevent clicking active tabs/links across the entire system */
+.nav-link.active,
+.list-group-item.active,
+.page-item.active .page-link {
+    pointer-events: none !important;
+    cursor: default !important;
+}
+
 .metadata-tab-btn.active {
     color: #fff !important;
     box-shadow: 0 4px 15px rgba(0, 0, 0, 0.15) !important;

@@ -3,24 +3,21 @@
 
 @{
     ViewData["Title"] = "Quản Lý Người Dùng";
-    var pendingUsers = Model.UsersList.Where(u => !u.IsActive && !u.IsBlocked).ToList();
     var activeUsers = Model.UsersList.Where(u => u.IsActive && !u.IsBlocked).ToList();
+    var activeAdmins = activeUsers.Where(u => u.RoleId == 1).ToList();
+    var activeLecturers = activeUsers.Where(u => u.RoleId == 2).ToList();
+    var activeStudents = activeUsers.Where(u => u.RoleId == 3).ToList();
     var blockedUsers = Model.UsersList.Where(u => u.IsBlocked).ToList();
 }
 
-<div class="page-shell">
-    <main class="container-fluid px-4 px-md-5 py-5" style="max-width: 1200px;">
+<div class="page-shell grain">
+    <main class="container-fluid px-4 px-md-5 py-5" style="max-width: 1300px;">
         <!-- Top Heading Area -->
-        <div class="d-flex align-items-center justify-content-between mb-5">
+        <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center mb-5 gap-4">
             <div>
-                <h1 class="hero-title mb-1" style="font-size: clamp(2rem, 4vw, 2.75rem); font-family: inherit;">Quản Lý Thành Viên</h1>
-                <p class="text-muted-foreground" style="font-size: 15px; font-weight: 400; margin-bottom: 0;">Quản lý và cấp quyền tài khoản giảng viên, học sinh trên hệ thống.</p>
-            </div>
-            <div class="d-flex align-items-center gap-3">
-                <button type="button" class="btn btn-dark pill-button px-4 py-2.5 d-flex align-items-center gap-2" style="background: #4a1f16; border-color: #4a1f16; font-size: 14px; font-weight: 500;" data-bs-toggle="modal" data-bs-target="#createUserModal">
-                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
-                    Tạo Tài Khoản
-                </button>
+                <span class="font-mono-xs text-coral-deep" style="font-weight: 700; letter-spacing: 0.15em;">QUẢN TRỊ VIÊN</span>
+                <h1 class="hero-title mt-2 mb-3" style="font-size: clamp(2.5rem, 5vw, 3.5rem); color: var(--brown); line-height: 1.1;">Quản Lý Thành Viên</h1>
+                <p class="text-muted-foreground mb-3" style="font-size: 15px; font-weight: 400;">Quản lý và cấp quyền tài khoản giảng viên, học sinh trên hệ thống.</p>
                 <div class="d-flex gap-2">
                     <span class="badge px-3.5 py-2 border-0 rounded-pill text-white" style="background-color: #2b5c43 !important; font-size: 13px; font-weight: 500; font-family: inherit; text-transform: none; letter-spacing: normal;">
                         @activeUsers.Count Đang Hoạt Động
@@ -30,30 +27,72 @@
                     </span>
                 </div>
             </div>
+            <div class="d-flex align-items-center gap-3 flex-wrap">
+                <div class="dropdown">
+                    <button class="btn btn-outline-dark pill-button px-4 py-2.5 d-flex align-items-center gap-2 dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false" style="font-size: 14px; font-weight: 500; border-color: var(--border-crisp);">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+                        Xuất Dữ Liệu
+                    </button>
+                    <ul class="dropdown-menu shadow-sm" style="border-radius: 12px; border: none; font-size: 14px;">
+                        <li><h6 class="dropdown-header text-muted-foreground fw-bold">Giảng Viên</h6></li>
+                        <li><a class="dropdown-item" href="?handler=ExportExcel&roleId=2">Xuất ra Excel (.xlsx)</a></li>
+                        <li><a class="dropdown-item" href="?handler=ExportPdf&roleId=2">Xuất ra PDF (.pdf)</a></li>
+                        <li><hr class="dropdown-divider"></li>
+                        <li><h6 class="dropdown-header text-muted-foreground fw-bold">Sinh Viên</h6></li>
+                        <li><a class="dropdown-item" href="?handler=ExportExcel&roleId=3">Xuất ra Excel (.xlsx)</a></li>
+                        <li><a class="dropdown-item" href="?handler=ExportPdf&roleId=3">Xuất ra PDF (.pdf)</a></li>
+                    </ul>
+                </div>
+                <button type="button" class="btn btn-outline-dark pill-button px-4 py-2.5 d-flex align-items-center gap-2" style="font-size: 14px; font-weight: 500; border-color: var(--border-crisp);" data-bs-toggle="modal" data-bs-target="#importExcelModal">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+                    Nhập từ Excel
+                </button>
+                <button type="button" class="btn btn-dark pill-button px-4 py-2.5 d-flex align-items-center gap-2" style="background: #4a1f16; border-color: #4a1f16; font-size: 14px; font-weight: 500;" data-bs-toggle="modal" data-bs-target="#createUserModal">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+                    Tạo Tài Khoản
+                </button>
+            </div>
         </div>
 
-        <!-- Tabs Area -->
-        <ul class="nav nav-tabs border-0 mb-4 d-flex gap-2" id="adminTabs" role="tablist" style="font-family: inherit;">
-            <li class="nav-item" role="presentation">
-                <button class="nav-link active pill-button px-4 py-2 text-decoration-none border-0" id="active-tab" data-bs-toggle="tab" data-bs-target="#active" type="button" role="tab" aria-controls="active" aria-selected="true" style="border-radius: 100px;">
-                    Đang Hoạt Động (@activeUsers.Count)
-                </button>
-            </li>
-            <li class="nav-item" role="presentation">
-                <button class="nav-link pill-button px-4 py-2 text-decoration-none border-0" id="blocked-tab" data-bs-toggle="tab" data-bs-target="#blocked" type="button" role="tab" aria-controls="blocked" aria-selected="false" style="border-radius: 100px;">
-                    Đã Khóa (@blockedUsers.Count)
-                </button>
-            </li>
-        </ul>
+        <!-- Tabs and Search Area -->
+        <div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-3">
+            <ul class="nav nav-tabs border-0 d-flex gap-2" id="adminTabs" role="tablist" style="font-family: inherit;">
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link active pill-button px-4 py-2 text-decoration-none border-0" id="lecturers-tab" data-bs-toggle="tab" data-bs-target="#lecturers" type="button" role="tab" aria-controls="lecturers" aria-selected="true" style="border-radius: 100px;">
+                        Giảng Viên (@activeLecturers.Count)
+                    </button>
+                </li>
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link pill-button px-4 py-2 text-decoration-none border-0" id="students-tab" data-bs-toggle="tab" data-bs-target="#students" type="button" role="tab" aria-controls="students" aria-selected="false" style="border-radius: 100px;">
+                        Sinh Viên (@activeStudents.Count)
+                    </button>
+                </li>
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link pill-button px-4 py-2 text-decoration-none border-0" id="admins-tab" data-bs-toggle="tab" data-bs-target="#admins" type="button" role="tab" aria-controls="admins" aria-selected="false" style="border-radius: 100px;">
+                        Quản Trị (@activeAdmins.Count)
+                    </button>
+                </li>
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link pill-button px-4 py-2 text-decoration-none border-0" id="blocked-tab" data-bs-toggle="tab" data-bs-target="#blocked" type="button" role="tab" aria-controls="blocked" aria-selected="false" style="border-radius: 100px;">
+                        Đã Khóa (@blockedUsers.Count)
+                    </button>
+                </li>
+            </ul>
+            <div class="position-relative" style="max-width: 300px; width: 100%;">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="position-absolute text-muted-foreground" style="top: 50%; left: 14px; transform: translateY(-50%);"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
+                <input type="text" id="userSearchInput" class="form-control pill-input" placeholder="Tìm theo tên, email..." style="padding-left: 40px; background: rgba(255,255,255,0.7); font-size: 14px;" />
+            </div>
+        </div>
 
-        <div class="tab-content" id="adminTabsContent">
-            <!-- Active Users Tab -->
-            <div class="tab-pane fade show active" id="active" role="tabpanel" aria-labelledby="active-tab">
+        <!-- Tab Content -->
+        <div class="tab-content mt-4" id="adminTabsContent">
+            <!-- Lecturers Tab -->
+            <div class="tab-pane fade show active" id="lecturers" role="tabpanel" aria-labelledby="lecturers-tab">
                 <div class="soft-panel editorial-shadow p-4 p-md-5" style="background: rgba(255,255,255,.72); border-radius: 24px;">
-                    @if (!activeUsers.Any())
+                    @if (!activeLecturers.Any())
                     {
                         <div class="text-center py-5">
-                            <h3 class="text-muted-foreground" style="font-size: 15px; font-weight: 500; font-family: inherit;">Chưa có người dùng nào được kích hoạt.</h3>
+                            <h3 class="text-muted-foreground" style="font-size: 15px; font-weight: 500; font-family: inherit;">Chưa có giảng viên nào được kích hoạt.</h3>
                         </div>
                     }
                     else
@@ -69,69 +108,141 @@
                                     </tr>
                                 </thead>
                                 <tbody>
-                                    @foreach (var user in activeUsers)
+                                    @foreach (var user in activeLecturers)
                                     {
                                         <tr class="glass-row" style="background: rgba(255, 255, 255, 0.4); border-radius: 16px; box-shadow: 0 4px 12px rgba(0,0,0,0.02); transition: all 0.2s ease;">
                                             <td class="ps-3 py-3 border-0 fw-medium text-foreground" style="border-radius: 12px 0 0 12px;">
                                                 <div class="d-flex align-items-center gap-3">
-                                                    @if (user.RoleId == 1)
-                                                    {
-                                                        <div class="avatar-circle d-flex align-items-center justify-content-center text-white fw-bold" style="width: 38px; height: 38px; border-radius: 50%; background: #111; font-size: 14px;">
-                                                            @user.FullName.Substring(0, Math.Min(2, user.FullName.Length)).ToUpper()
-                                                        </div>
-                                                    }
-                                                    else if (user.RoleId == 2)
-                                                    {
-                                                        <div class="avatar-circle d-flex align-items-center justify-content-center text-white fw-bold" style="width: 38px; height: 38px; border-radius: 50%; background: #4a1f16; font-size: 14px;">
-                                                            @user.FullName.Substring(0, Math.Min(2, user.FullName.Length)).ToUpper()
-                                                        </div>
-                                                    }
-                                                    else
-                                                    {
-                                                        <div class="avatar-circle d-flex align-items-center justify-content-center text-white fw-bold" style="width: 38px; height: 38px; border-radius: 50%; background: #2b5c43; font-size: 14px;">
-                                                            @user.FullName.Substring(0, Math.Min(2, user.FullName.Length)).ToUpper()
-                                                        </div>
-                                                    }
+                                                    <div class="avatar-circle d-flex align-items-center justify-content-center text-white fw-bold" style="width: 38px; height: 38px; border-radius: 50%; background: #4a1f16; font-size: 14px;">
+                                                        @user.FullName.Substring(0, Math.Min(2, user.FullName.Length)).ToUpper()
+                                                    </div>
                                                     <span style="font-size: 15px;">@user.FullName</span>
                                                 </div>
                                             </td>
                                             <td class="py-3 border-0 text-muted-foreground" style="font-size: 14px;">@user.Email.ToLower()</td>
                                             <td class="py-3 border-0">
-                                                @if (user.RoleId == 1)
-                                                {
-                                                    <span class="badge bg-dark px-3 py-2 rounded-pill text-white" style="background: #111 !important; border: 1px solid #333; font-size: 12px; font-weight: 500; text-transform: none; letter-spacing: normal;">Admin</span>
-                                                }
-                                                else if (user.RoleId == 2)
-                                                {
-                                                    <span class="badge px-3 py-2 rounded-pill" style="background: rgba(74, 31, 22, 0.08); color: #4a1f16; border: 1px solid rgba(74, 31, 22, 0.15); font-size: 12px; font-weight: 500; text-transform: none; letter-spacing: normal;">Giảng Viên</span>
-                                                }
-                                                else
-                                                {
-                                                    <span class="badge px-3 py-2 rounded-pill" style="background: rgba(43, 92, 67, 0.08); color: #2b5c43; border: 1px solid rgba(43, 92, 67, 0.15); font-size: 12px; font-weight: 500; text-transform: none; letter-spacing: normal;">Sinh Viên</span>
-                                                }
+                                                <span class="badge px-3 py-2 rounded-pill" style="background: rgba(74, 31, 22, 0.08); color: #4a1f16; border: 1px solid rgba(74, 31, 22, 0.15); font-size: 12px; font-weight: 500; text-transform: none; letter-spacing: normal;">Giảng Viên</span>
                                             </td>
                                             <td class="py-3 border-0 text-end pe-3" style="border-radius: 0 12px 12px 0;">
                                                 <div class="d-flex justify-content-end align-items-center gap-2">
-                                                    @if (user.RoleId == 2)
-                                                    {
-                                                        <a asp-page="/Admin/AssignSubjects" asp-route-userId="@user.Id" class="btn btn-sm rounded-pill px-3 py-1.5 d-flex align-items-center gap-1" style="background: rgba(74, 31, 22, 0.08); color: #4a1f16; border: 1px solid rgba(74, 31, 22, 0.15); font-size: 13px; font-weight: 500; text-decoration: none;">
-                                                            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" class="me-1"><path d="M12 20h9"/><path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg>Phân môn
-                                                        </a>
-                                                    }
-                                                    @if (user.RoleId != 1) 
-                                                    {
-                                                        <form asp-page-handler="RejectOrBlock" method="post" class="d-inline">
-                                                            @Html.AntiForgeryToken()
-                                                            <input type="hidden" name="id" value="@user.Id" />
-                                                            <button type="submit" class="btn btn-outline-danger btn-sm rounded-pill px-3 py-1.5 d-flex align-items-center gap-1">
-                                                                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" class="me-1"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>Khóa
-                                                            </button>
-                                                        </form>
-                                                    }
-                                                    else
-                                                    {
-                                                        <span class="text-muted" style="font-size: 13px; font-weight: 500;">Không thể khóa</span>
-                                                    }
+                                                    <a asp-page="/Admin/AssignSubjects" asp-route-userId="@user.Id" class="btn btn-sm rounded-pill px-3 py-1.5 d-flex align-items-center gap-1" style="background: rgba(74, 31, 22, 0.08); color: #4a1f16; border: 1px solid rgba(74, 31, 22, 0.15); font-size: 13px; font-weight: 500; text-decoration: none;">
+                                                        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" class="me-1"><path d="M12 20h9"/><path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg>Phân môn
+                                                    </a>
+                                                    <form asp-page-handler="RejectOrBlock" method="post" class="d-inline">
+                                                        @Html.AntiForgeryToken()
+                                                        <input type="hidden" name="id" value="@user.Id" />
+                                                        <button type="submit" class="btn btn-outline-danger btn-sm rounded-pill px-3 py-1.5 d-flex align-items-center gap-1">
+                                                            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" class="me-1"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>Khóa
+                                                        </button>
+                                                    </form>
+                                                </div>
+                                            </td>
+                                        </tr>
+                                    }
+                                </tbody>
+                            </table>
+                        </div>
+                    }
+                </div>
+            </div>
+
+            <!-- Students Tab -->
+            <div class="tab-pane fade" id="students" role="tabpanel" aria-labelledby="students-tab">
+                <div class="soft-panel editorial-shadow p-4 p-md-5" style="background: rgba(255,255,255,.72); border-radius: 24px;">
+                    @if (!activeStudents.Any())
+                    {
+                        <div class="text-center py-5">
+                            <h3 class="text-muted-foreground" style="font-size: 15px; font-weight: 500; font-family: inherit;">Chưa có sinh viên nào được kích hoạt.</h3>
+                        </div>
+                    }
+                    else
+                    {
+                        <div class="table-responsive">
+                            <table class="table table-hover align-middle mb-0" style="border-collapse: separate; border-spacing: 0 12px; font-family: inherit;">
+                                <thead>
+                                    <tr class="text-muted-foreground" style="border: none; font-size: 13px; font-weight: 600; letter-spacing: 0.02em;">
+                                        <th scope="col" class="pb-2 border-0 ps-3">Họ và Tên</th>
+                                        <th scope="col" class="pb-2 border-0">Email</th>
+                                        <th scope="col" class="pb-2 border-0">Vai Trò</th>
+                                        <th scope="col" class="pb-2 border-0 text-end pe-3">Hành Động</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    @foreach (var user in activeStudents)
+                                    {
+                                        <tr class="glass-row" style="background: rgba(255, 255, 255, 0.4); border-radius: 16px; box-shadow: 0 4px 12px rgba(0,0,0,0.02); transition: all 0.2s ease;">
+                                            <td class="ps-3 py-3 border-0 fw-medium text-foreground" style="border-radius: 12px 0 0 12px;">
+                                                <div class="d-flex align-items-center gap-3">
+                                                    <div class="avatar-circle d-flex align-items-center justify-content-center text-white fw-bold" style="width: 38px; height: 38px; border-radius: 50%; background: #2b5c43; font-size: 14px;">
+                                                        @user.FullName.Substring(0, Math.Min(2, user.FullName.Length)).ToUpper()
+                                                    </div>
+                                                    <span style="font-size: 15px;">@user.FullName</span>
+                                                </div>
+                                            </td>
+                                            <td class="py-3 border-0 text-muted-foreground" style="font-size: 14px;">@user.Email.ToLower()</td>
+                                            <td class="py-3 border-0">
+                                                <span class="badge px-3 py-2 rounded-pill" style="background: rgba(43, 92, 67, 0.08); color: #2b5c43; border: 1px solid rgba(43, 92, 67, 0.15); font-size: 12px; font-weight: 500; text-transform: none; letter-spacing: normal;">Sinh Viên</span>
+                                            </td>
+                                            <td class="py-3 border-0 text-end pe-3" style="border-radius: 0 12px 12px 0;">
+                                                <div class="d-flex justify-content-end align-items-center gap-2">
+                                                    <form asp-page-handler="RejectOrBlock" method="post" class="d-inline">
+                                                        @Html.AntiForgeryToken()
+                                                        <input type="hidden" name="id" value="@user.Id" />
+                                                        <button type="submit" class="btn btn-outline-danger btn-sm rounded-pill px-3 py-1.5 d-flex align-items-center gap-1">
+                                                            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" class="me-1"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>Khóa
+                                                        </button>
+                                                    </form>
+                                                </div>
+                                            </td>
+                                        </tr>
+                                    }
+                                </tbody>
+                            </table>
+                        </div>
+                    }
+                </div>
+            </div>
+
+            <!-- Admins Tab -->
+            <div class="tab-pane fade" id="admins" role="tabpanel" aria-labelledby="admins-tab">
+                <div class="soft-panel editorial-shadow p-4 p-md-5" style="background: rgba(255,255,255,.72); border-radius: 24px;">
+                    @if (!activeAdmins.Any())
+                    {
+                        <div class="text-center py-5">
+                            <h3 class="text-muted-foreground" style="font-size: 15px; font-weight: 500; font-family: inherit;">Chưa có quản trị viên nào được kích hoạt.</h3>
+                        </div>
+                    }
+                    else
+                    {
+                        <div class="table-responsive">
+                            <table class="table table-hover align-middle mb-0" style="border-collapse: separate; border-spacing: 0 12px; font-family: inherit;">
+                                <thead>
+                                    <tr class="text-muted-foreground" style="border: none; font-size: 13px; font-weight: 600; letter-spacing: 0.02em;">
+                                        <th scope="col" class="pb-2 border-0 ps-3">Họ và Tên</th>
+                                        <th scope="col" class="pb-2 border-0">Email</th>
+                                        <th scope="col" class="pb-2 border-0">Vai Trò</th>
+                                        <th scope="col" class="pb-2 border-0 text-end pe-3">Hành Động</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    @foreach (var user in activeAdmins)
+                                    {
+                                        <tr class="glass-row" style="background: rgba(255, 255, 255, 0.4); border-radius: 16px; box-shadow: 0 4px 12px rgba(0,0,0,0.02); transition: all 0.2s ease;">
+                                            <td class="ps-3 py-3 border-0 fw-medium text-foreground" style="border-radius: 12px 0 0 12px;">
+                                                <div class="d-flex align-items-center gap-3">
+                                                    <div class="avatar-circle d-flex align-items-center justify-content-center text-white fw-bold" style="width: 38px; height: 38px; border-radius: 50%; background: #111; font-size: 14px;">
+                                                        @user.FullName.Substring(0, Math.Min(2, user.FullName.Length)).ToUpper()
+                                                    </div>
+                                                    <span style="font-size: 15px;">@user.FullName</span>
+                                                </div>
+                                            </td>
+                                            <td class="py-3 border-0 text-muted-foreground" style="font-size: 14px;">@user.Email.ToLower()</td>
+                                            <td class="py-3 border-0">
+                                                <span class="badge bg-dark px-3 py-2 rounded-pill text-white" style="background: #111 !important; border: 1px solid #333; font-size: 12px; font-weight: 500; text-transform: none; letter-spacing: normal;">Admin</span>
+                                            </td>
+                                            <td class="py-3 border-0 text-end pe-3" style="border-radius: 0 12px 12px 0;">
+                                                <div class="d-flex justify-content-end align-items-center gap-2">
+                                                    <span class="text-muted" style="font-size: 13px; font-weight: 500;">Không thể khóa</span>
                                                 </div>
                                             </td>
                                         </tr>
@@ -254,6 +365,95 @@
         </div>
     </div>
 </div>
+
+<!-- Import Excel Modal -->
+<div class="modal fade" id="importExcelModal" tabindex="-1" aria-labelledby="importExcelModalLabel" aria-hidden="true" style="font-family: inherit;">
+    <div class="modal-dialog modal-dialog-centered" style="max-width: 500px;">
+        <div class="modal-content border-0 shadow-lg" style="border-radius: 20px; background: rgba(255, 255, 255, 0.95); backdrop-filter: blur(10px);">
+            <div class="modal-header border-0 pb-0 pt-4 px-4 d-flex justify-content-between align-items-center">
+                <h5 class="modal-title fw-bold text-foreground" id="importExcelModalLabel" style="font-size: 1.25rem;">Nhập dữ liệu từ Excel</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <form asp-page-handler="ImportExcel" method="post" enctype="multipart/form-data">
+                @Html.AntiForgeryToken()
+                <div class="modal-body p-4">
+                    <div class="mb-3">
+                        <label for="importRoleId" class="form-label font-mono-xs text-muted-foreground" style="font-size: 12px; font-weight: 600; letter-spacing: 0.05em;">ĐỐI TƯỢNG IMPORT</label>
+                        <select id="importRoleId" name="roleId" class="form-select pill-input" onchange="updateTemplateLink()">
+                            <option value="3">Sinh Viên</option>
+                            <option value="2">Giảng Viên</option>
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label for="excelFile" class="form-label font-mono-xs text-muted-foreground" style="font-size: 12px; font-weight: 600; letter-spacing: 0.05em;">CHỌN TỆP EXCEL (.XLSX)</label>
+                        <input type="file" id="excelFile" name="excelFile" class="form-control pill-input" accept=".xlsx" required />
+                    </div>
+                    <div class="mt-4 p-3" style="background: rgba(0,0,0,0.02); border-radius: 12px; border: 1px dashed var(--border-crisp);">
+                        <p class="mb-2" style="font-size: 13px; font-weight: 500;">Chưa có tệp mẫu?</p>
+                        <a id="templateLink" href="?handler=DownloadTemplate&roleId=3" class="btn btn-sm btn-outline-dark rounded-pill px-3 py-1.5" style="font-size: 13px;">Tải tệp mẫu <span id="templateType">Sinh Viên</span></a>
+                    </div>
+                </div>
+                <div class="modal-footer border-0 pt-0 pb-4 px-4 d-flex gap-2 justify-content-end">
+                    <button type="button" class="btn btn-light rounded-pill px-4 py-2" data-bs-dismiss="modal" style="font-size: 14px; font-weight: 500;">Hủy</button>
+                    <button type="submit" class="btn btn-dark rounded-pill px-4 py-2" style="background: #4a1f16; border-color: #4a1f16; font-size: 14px; font-weight: 500;">Tiến hành Import</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<script>
+    function updateTemplateLink() {
+        var roleId = document.getElementById('importRoleId').value;
+        var link = document.getElementById('templateLink');
+        var typeText = document.getElementById('templateType');
+        
+        link.href = '?handler=DownloadTemplate&roleId=' + roleId;
+        if (roleId === '3') {
+            typeText.innerText = 'Sinh Viên';
+        } else {
+            typeText.innerText = 'Giảng Viên';
+        }
+    }
+
+    function removeVietnameseTones(str) {
+        return str.normalize('NFD').replace(/[\u0300-\u036f]/g, '')
+                  .replace(/đ/g, 'd').replace(/Đ/g, 'D');
+    }
+
+    document.addEventListener("DOMContentLoaded", function () {
+        const searchInput = document.getElementById('userSearchInput');
+        if (searchInput) {
+            let debounceTimer;
+            searchInput.addEventListener('input', function () {
+                clearTimeout(debounceTimer);
+                const query = removeVietnameseTones(this.value.toLowerCase().trim());
+                
+                debounceTimer = setTimeout(() => {
+                    const rows = document.querySelectorAll('.tab-content .glass-row');
+                    
+                    rows.forEach(row => {
+                        // Check text in the row (which includes Name and Email)
+                        const text = removeVietnameseTones(row.textContent.toLowerCase());
+                        if (text.includes(query)) {
+                            row.style.display = '';
+                            row.style.opacity = '1';
+                            row.style.transform = 'translateY(0)';
+                        } else {
+                            row.style.opacity = '0';
+                            row.style.transform = 'translateY(10px)';
+                            setTimeout(() => {
+                                if (row.style.opacity === '0') {
+                                    row.style.display = 'none';
+                                }
+                            }, 200); // Wait for transition
+                        }
+                    });
+                }, 150); // Small debounce for smoother typing feel
+            });
+        }
+    });
+</script>
 
 <style>
     .nav-tabs .nav-link {
