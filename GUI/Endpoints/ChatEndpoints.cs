@@ -3,6 +3,8 @@ using BLL.DTOs.Chat;
 using BLL.Interfaces.Chat;
 using BLL.Interfaces.Documents;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
+using Pgvector.EntityFrameworkCore;
 
 namespace GUI.Endpoints;
 
@@ -75,6 +77,27 @@ public static class ChatEndpoints
                     OwnerId = d.OwnerUserId
                 })
             });
+        });
+
+        group.MapGet("/debug-text-search", async (
+            DAL.Data.DBContext context,
+            [FromQuery] string q,
+            CancellationToken ct) =>
+        {
+            var matchedChunks = await context.DocumentChunks
+                .Where(c => c.Content.Contains(q))
+                .Select(c => new
+                {
+                    c.Id,
+                    c.DocumentId,
+                    DocTitle = c.Document.Title,
+                    ChapterTitle = c.Chapter != null ? c.Chapter.Title : "N/A",
+                    c.PageNumber,
+                    c.Content
+                })
+                .ToListAsync(ct);
+
+            return Results.Ok(matchedChunks);
         });
 
         group.MapGet("/documents", async (
@@ -166,7 +189,8 @@ public static class ChatEndpoints
             {
                 await foreach (var chunk in chat.StreamMessageAsync(userId, request, ct))
                 {
-                    await http.Response.WriteAsync($"data: {chunk}\n\n", ct);
+                    var safeChunk = chunk?.Replace("\n", "\\n") ?? string.Empty;
+                    await http.Response.WriteAsync($"data: {safeChunk}\n\n", ct);
                     await http.Response.Body.FlushAsync(ct);
                 }
                 await http.Response.WriteAsync("data: [DONE]\n\n", ct);

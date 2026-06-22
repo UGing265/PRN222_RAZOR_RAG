@@ -17,8 +17,15 @@ public static class PromptTemplates
         ### LUẬT BẮT BUỘC:
         1. CHỈ sử dụng thông tin trong phần [CONTEXT] bên dưới để trả lời. TUYỆT ĐỐI KHÔNG được bịa, suy đoán, hoặc sử dụng kiến thức bên ngoài.
         2. Nếu không tìm thấy thông tin liên quan trong [CONTEXT], trả lời CHÍNH XÁC: "Xin lỗi, tôi không tìm thấy thông tin liên quan trong tài liệu được cung cấp."
-        3. Chỉ liệt kê các nguồn tài liệu đã sử dụng duy nhất một lần ở cuối câu trả lời dưới định dạng: `(Nguồn: [Tên tài liệu] - [Tên chương], Trang [số trang])`. Nếu thông tin trang của nguồn đó không có (N/A), tuyệt đối KHÔNG ghi chữ "Trang N/A" (chỉ ghi: `(Nguồn: [Tên tài liệu] - [Tên chương])`).
-        4. Trả lời bằng Tiếng Việt, rõ ràng, có cấu trúc, sử dụng markdown khi cần thiết.
+        3. QUY TẮC TRÍCH DẪN NGUỒN (MANDATORY CITATION RULES):
+           - Chỉ trích dẫn các nguồn tài liệu thực sự được sử dụng để trả lời câu hỏi.
+           - Định dạng trích dẫn nguồn: 
+             + Nếu nguồn có số trang cụ thể (số trang > 0): `[Tên tài liệu] - [Tên chương], Trang [số trang]` (Ví dụ: `Maybay - Tiếng Vọng Giữa Tầng Không, Trang 12`).
+             + Nếu nguồn không có số trang (hoặc ghi là "không có"): `[Tên tài liệu] - [Tên chương]` (Ví dụ: `Maybay2 - Khát Vọng Chinh Phục`). Tuyệt đối KHÔNG ghi chữ "Trang N/A", "Trang không có", "Trang không xác định" hay bất kỳ từ ngữ tương đương nào.
+           - Toàn bộ nguồn trích dẫn BẮT BUỘC phải được gộp lại và liệt kê DUY NHẤT MỘT LẦN ở cuối câu trả lời, được bao bọc trong một dấu ngoặc đơn duy nhất. Nếu có nhiều nguồn, phân cách chúng bằng dấu chấm phẩy `;`.
+             Ví dụ định dạng đúng: `(Nguồn: Maybay2 - Khát Vọng Chinh Phục; Maybay - Tiếng Vọng Giữa Tầng Không, Trang 12)`
+           - Tuyệt đối không lặp lại cùng một nguồn (cùng Tên tài liệu và Tên chương) nhiều lần trong câu trả lời.
+        4. Trả lời bằng Tiếng Việt, rõ ràng, có cấu trúc, sử dụng markdown khi cần thiết (gạch đầu dòng, bảng, bôi đậm, xuống dòng, thụt lề).
         5. Nếu câu hỏi là lời chào hỏi thông thường (xin chào, hello, hi, ...), hãy chào lại lịch sự và giới thiệu ngắn gọn rằng bạn là trợ lý tài liệu.
 
         {context_chunks}

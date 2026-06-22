@@ -1,5 +1,6 @@
 using System.Runtime.CompilerServices;
 using System.Text;
+using System.Text.RegularExpressions;
 using BLL.DTOs.Chat;
 using BLL.Interfaces.Chat;
 using BLL.Interfaces.Documents;
@@ -49,7 +50,8 @@ public class ChatService : IChatService
 
             // 4. Embed câu hỏi thành vector
             _logger.LogInformation("Embedding user question for session {SessionId}", session.Id);
-            var queryEmbedding = await _embeddingService.EmbedAsync(request.Message, cancellationToken);
+            var enhancedQuery = await EnhanceQueryAsync(request.Message, cancellationToken);
+            var queryEmbedding = await _embeddingService.EmbedAsync(enhancedQuery, cancellationToken);
 
             // 5. Tìm Top K chunks liên quan
             _logger.LogInformation("Searching similar chunks. DocumentIds={DocumentIds}, TopK={TopK}", string.Join(",", request.DocumentIds ?? new List<Guid>()), TopKChunks);
@@ -100,7 +102,8 @@ public class ChatService : IChatService
         var session = await GetOrCreateSessionAsync(userId, request, cancellationToken);
         await SaveUserMessageAsync(session.Id, request.Message, cancellationToken);
         var historyMessages = await _chatRepository.GetRecentMessagesAsync(session.Id, MaxHistoryMessages, cancellationToken);
-        var queryEmbedding = await _embeddingService.EmbedAsync(request.Message, cancellationToken);
+        var enhancedQuery = await EnhanceQueryAsync(request.Message, cancellationToken);
+        var queryEmbedding = await _embeddingService.EmbedAsync(enhancedQuery, cancellationToken);
         var relevantChunks = await _chatRepository.SearchSimilarChunksAsync(queryEmbedding, TopKChunks, request.DocumentIds, cancellationToken);
         var systemPrompt = BuildSystemPrompt(relevantChunks);
         var geminiHistory = BuildGeminiHistory(historyMessages);
@@ -232,7 +235,7 @@ public class ChatService : IChatService
                 var chapterTitle = chunk.Chapter?.Title ?? "N/A";
                 var page = (chunk.PageNumber.HasValue && chunk.PageNumber.Value > 0)
                     ? chunk.PageNumber.Value.ToString()
-                    : "không có số trang";
+                    : "không có";
 
                 contextBuilder.AppendLine($"--- Chunk {i + 1} ---");
                 contextBuilder.AppendLine($"Tài liệu: {docTitle}");
@@ -280,6 +283,67 @@ public class ChatService : IChatService
             .GroupBy(s => new { s.DocumentId, s.ChapterTitle, s.PageNumber })
             .Select(g => g.First())
             .ToList();
+    }
+
+    private static readonly HashSet<string> VietnameseUnmarkedWords = new(StringComparer.OrdinalIgnoreCase)
+    {
+        "la", "gi", "cua", "trong", "tren", "duoi", "va", "hoac", "de", "cho", "tai", "lieu", 
+        "co", "khong", "nao", "dau", "the", "lam", "sao", "mot", "hai", "ba", "bon", "nam",
+        "tim", "kiem", "thuat", "toan", "cau", "truc", "du", "lieu", "mang", "danh", "sach",
+        "lien", "ket", "cay", "nhi", "phan", "do", "thi", "nhe", "nha", "oi", "dung", "sai"
+    };
+
+    private static bool IsProbablyVietnamese(string text)
+    {
+        if (string.IsNullOrWhiteSpace(text)) return false;
+
+        // 1. Kiểm tra ký tự tiếng Việt có dấu
+        var hasVietnameseDiacritics = Regex.IsMatch(text, @"[áàảãạăắằẳẵặâấầẩẫậéèẻẽẹêếềểễệíìỉĩịóòỏõọôốồổỗộơớờởỡợúùủũụưứừửữựýỳỷỹỵđÁÀẢÃẠĂẮẰẲẴẶÂẤẦẨẪẬÉÈẺẼẸÊẾỀỂỄỆÍÌỈĨỊÓÒỎÕỌÔỐỒỔỖỘƠỚỜỞỠỢÚÙỦŨỤƯỨỪỬỮỰÝỲỶỸÝĐ]");
+        if (hasVietnameseDiacritics) return true;
+
+        // 2. Tách các từ riêng biệt và đối chiếu với từ điển tiếng Việt không dấu phổ biến
+        var words = Regex.Split(text, @"\P{L}+");
+        foreach (var word in words)
+        {
+            if (VietnameseUnmarkedWords.Contains(word))
+            {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    private async Task<string> EnhanceQueryAsync(string originalQuery, CancellationToken cancellationToken)
+    {
+        if (!IsProbablyVietnamese(originalQuery))
+        {
+            return originalQuery;
+        }
+
+        var systemPrompt = "You are a professional technical translator. Translate the user's computer science query from Vietnamese to English. Optimize the translation to be used for semantic vector search in English textbooks. Return ONLY the final translated English query, without any explanation, markdown, quotes or extra text.";
+        var history = new List<GeminiChatMessage>
+        {
+            new GeminiChatMessage { Role = ChatRole.User, Content = originalQuery }
+        };
+
+        try
+        {
+            var englishQuery = await _geminiChatService.GenerateAsync(systemPrompt, history, cancellationToken);
+            var cleaned = englishQuery.Trim().Trim('"', '\'', '`');
+            
+            if (!string.IsNullOrWhiteSpace(cleaned) && !cleaned.Equals(originalQuery, StringComparison.OrdinalIgnoreCase))
+            {
+                _logger.LogInformation("Query enhanced: '{Original}' -> '{Original} | {Translated}'", originalQuery, originalQuery, cleaned);
+                return $"{originalQuery} | {cleaned}";
+            }
+        }
+        catch (Exception ex)
+        {
+            _logger.LogWarning(ex, "Failed to translate query. Using original query.");
+        }
+
+        return originalQuery;
     }
 
     #endregion

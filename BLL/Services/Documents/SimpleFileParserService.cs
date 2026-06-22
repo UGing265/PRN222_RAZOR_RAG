@@ -21,17 +21,121 @@ public class SimpleFileParserService : IFileParserService
 
     public async Task<string> ExtractTextAsync(string filePath, string extension, CancellationToken cancellationToken = default)
     {
-        extension = extension.ToLowerInvariant();
-
-        return extension switch
+        var pages = await ExtractPagesAsync(filePath, extension, cancellationToken);
+        var sb = new StringBuilder();
+        foreach (var page in pages)
         {
-            ".txt" or ".md" => await File.ReadAllTextAsync(filePath, cancellationToken),
-            ".pdf" => ExtractPdfText(filePath),
-            ".docx" => ExtractDocxText(filePath),
-            ".pptx" => ExtractPptxText(filePath),
-            ".doc" => ExtractDocText(filePath),
-            _ => string.Empty
-        };
+            sb.AppendLine(page.Content);
+            sb.AppendLine();
+        }
+        return sb.ToString();
+    }
+
+    public async Task<List<PageContent>> ExtractPagesAsync(string filePath, string extension, CancellationToken cancellationToken = default)
+    {
+        extension = extension.ToLowerInvariant();
+        var pages = new List<PageContent>();
+
+        switch (extension)
+        {
+            case ".txt" or ".md":
+                var txt = await File.ReadAllTextAsync(filePath, cancellationToken);
+                pages.Add(new PageContent { PageNumber = 1, Content = txt });
+                break;
+
+            case ".pdf":
+                using (var document = PdfDocument.Open(filePath))
+                {
+                    foreach (var page in document.GetPages())
+                    {
+                        var words = page.GetWords().ToList();
+                        if (words.Count == 0) continue;
+
+                        var lineBuilder = new StringBuilder();
+                        var lastWord = words[0];
+                        lineBuilder.Append(lastWord.Text);
+
+                        for (int i = 1; i < words.Count; i++)
+                        {
+                            var word = words[i];
+                            var yDiff = Math.Abs(word.BoundingBox.Bottom - lastWord.BoundingBox.Bottom);
+
+                            if (yDiff > 2)
+                            {
+                                lineBuilder.AppendLine();
+                                if (yDiff > 10)
+                                {
+                                    lineBuilder.AppendLine();
+                                }
+                            }
+                            else
+                            {
+                                lineBuilder.Append(" ");
+                            }
+                            lineBuilder.Append(word.Text);
+                            lastWord = word;
+                        }
+
+                        pages.Add(new PageContent 
+                        { 
+                            PageNumber = page.Number, 
+                            Content = lineBuilder.ToString() 
+                        });
+                    }
+                }
+                break;
+
+            case ".docx":
+                using (var doc = WordprocessingDocument.Open(filePath, false))
+                {
+                    var body = doc.MainDocumentPart?.Document.Body;
+                    if (body != null)
+                    {
+                        var sb = new StringBuilder();
+                        foreach (var paragraph in body.Descendants<Paragraph>())
+                        {
+                            var pText = string.Concat(paragraph.Descendants<WText>().Select(t => t.Text));
+                            if (!string.IsNullOrWhiteSpace(pText))
+                            {
+                                sb.AppendLine(pText);
+                            }
+                        }
+                        pages.Add(new PageContent { PageNumber = null, Content = sb.ToString() });
+                    }
+                }
+                break;
+
+            case ".pptx":
+                using (var doc = PresentationDocument.Open(filePath, false))
+                {
+                    var presentation = doc.PresentationPart?.Presentation;
+                    if (presentation?.SlideIdList != null)
+                    {
+                        int slideIndex = 1;
+                        foreach (var slideId in presentation.SlideIdList.Elements<SlideId>())
+                        {
+                            var slidePart = doc.PresentationPart?.GetPartById(slideId.RelationshipId!) as SlidePart;
+                            if (slidePart?.Slide == null) continue;
+
+                            var sb = new StringBuilder();
+                            foreach (var textNode in slidePart.Slide.Descendants<A.Text>())
+                            {
+                                if (!string.IsNullOrWhiteSpace(textNode.Text))
+                                {
+                                    sb.AppendLine(textNode.Text);
+                                }
+                            }
+                            pages.Add(new PageContent { PageNumber = slideIndex++, Content = sb.ToString() });
+                        }
+                    }
+                }
+                break;
+
+            case ".doc":
+                throw new NotSupportedException(".doc requires conversion to .docx.");
+        }
+
+        return pages;
     }
 
     private string ExtractPdfText(string filePath)

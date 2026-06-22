@@ -21,7 +21,6 @@ public sealed class ChatSourceDto
     public string DocumentTitle { get; set; } = string.Empty;
     public string? ChapterTitle { get; set; }
     public int? PageNumber { get; set; }
-    public int? ChunkOrder { get; set; }
 }
 
 public sealed class ChatSessionSummaryDto
