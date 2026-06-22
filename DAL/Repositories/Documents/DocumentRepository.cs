@@ -341,7 +341,7 @@ public class DocumentRepository : IDocumentRepository
 
     public Task<List<UploadJob>> GetActiveUploadJobsByOwnerAsync(Guid ownerUserId, CancellationToken cancellationToken = default)
         => _dbContext.UploadJobs.AsNoTracking()
-            .Where(x => x.OwnerUserId == ownerUserId && x.Status == "processing")
+            .Where(x => x.OwnerUserId == ownerUserId && (x.Status == "pending" || x.Status == "processing"))
             .OrderByDescending(x => x.UpdatedAt)
             .Take(10)
             .ToListAsync(cancellationToken);

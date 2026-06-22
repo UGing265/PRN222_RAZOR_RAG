@@ -1,4 +1,5 @@
 using BLL.Interfaces.Documents;
+using BLL.Interfaces.Notifications;
 using DAL.Data;
 using DAL.Entities;
 using Microsoft.AspNetCore.Http;
@@ -11,12 +12,18 @@ public class UploadProcessingService : IUploadProcessingService
 {
     private readonly DBContext _dbContext;
     private readonly IDocumentService _documentService;
+    private readonly INotificationService _notificationService;
     private readonly ILogger<UploadProcessingService> _logger;
 
-    public UploadProcessingService(DBContext dbContext, IDocumentService documentService, ILogger<UploadProcessingService> logger)
+    public UploadProcessingService(
+        DBContext dbContext, 
+        IDocumentService documentService, 
+        INotificationService notificationService,
+        ILogger<UploadProcessingService> logger)
     {
         _dbContext = dbContext;
         _documentService = documentService;
+        _notificationService = notificationService;
         _logger = logger;
     }
 
@@ -37,6 +44,7 @@ public class UploadProcessingService : IUploadProcessingService
         job.Message = "Đang tải tệp từ lưu trữ S3";
         job.UpdatedAt = DateTime.UtcNow;
         await _dbContext.SaveChangesAsync(cancellationToken);
+        await _notificationService.SendUploadProgressAsync(job.Id.ToString(), job.ProgressPercent, job.Message, job.OwnerUserId, cancellationToken);
 
         var fileName = job.FileName;
         var contentType = ResolveContentType(fileName);
@@ -52,6 +60,7 @@ public class UploadProcessingService : IUploadProcessingService
         job.Message = "Đang phân tích nội dung văn bản";
         job.UpdatedAt = DateTime.UtcNow;
         await _dbContext.SaveChangesAsync(cancellationToken);
+        await _notificationService.SendUploadProgressAsync(job.Id.ToString(), job.ProgressPercent, job.Message, job.OwnerUserId, cancellationToken);
 
         var tempInfo = new FileInfo(tempFileName);
         var formFile = new TempFileFormFile(tempFileName, fileName, tempInfo.Length, contentType);
@@ -63,12 +72,14 @@ public class UploadProcessingService : IUploadProcessingService
             job.Message = $"Đang tạo chỉ mục và lưu Vector ({percent}%)";
             job.UpdatedAt = DateTime.UtcNow;
             await _dbContext.SaveChangesAsync(cancellationToken);
+            await _notificationService.SendUploadProgressAsync(job.Id.ToString(), job.ProgressPercent, job.Message, job.OwnerUserId, cancellationToken);
         }, cancellationToken);
 
         job.ProgressPercent = 95;
         job.Message = "Hoàn tất xử lý tài liệu";
         job.UpdatedAt = DateTime.UtcNow;
         await _dbContext.SaveChangesAsync(cancellationToken);
+        await _notificationService.SendUploadProgressAsync(job.Id.ToString(), job.ProgressPercent, job.Message, job.OwnerUserId, cancellationToken);
 
         if (File.Exists(tempFileName)) File.Delete(tempFileName);
 
@@ -85,6 +96,8 @@ public class UploadProcessingService : IUploadProcessingService
         job.IsNotified = false;
 
         await _dbContext.SaveChangesAsync(cancellationToken);
+        await _notificationService.SendUploadProgressAsync(job.Id.ToString(), job.ProgressPercent, job.Message, job.OwnerUserId, cancellationToken);
+        await _notificationService.SendDocumentStatusUpdatedAsync(document.Id, document.Title, document.Status, job.OwnerUserId, cancellationToken);
     }
 
     private static string ResolveContentType(string fileName)

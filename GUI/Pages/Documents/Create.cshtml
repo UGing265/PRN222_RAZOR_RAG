@@ -157,25 +157,14 @@
 </style>
 
 <div class="page-shell grain">
-    <div class="container-fluid px-4 px-md-5 py-4 py-md-5" style="max-width: 900px;">
-        
+    <div class="container-fluid px-4 px-md-5 py-5" style="max-width: 1300px;">
         <!-- Header -->
-        <div class="d-flex align-items-center justify-content-between mb-5 flex-wrap gap-3">
-            <div>
-                <span class="font-mono-xs text-coral-deep" style="font-weight: 700; letter-spacing: 0.15em;">KHÔNG GIAN LÀM VIỆC</span>
-                <h1 class="hero-title mt-2 mb-0" style="font-size: clamp(2.2rem, 5vw, 3.2rem); color: var(--brown); line-height: 1.1;">Tải Lên Tài Liệu</h1>
-            </div>
-            <div>
-                <a asp-page="/Documents/Mine" class="btn btn-outline-dark pill-button px-4 py-2 d-inline-flex align-items-center gap-2" style="font-size: 0.88rem;">
-                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
-                        <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/>
-                    </svg>
-                    Quay Lại Thư Viện
-                </a>
-            </div>
+        <div class="mb-5">
+            <span class="font-mono-xs text-coral-deep" style="font-weight: 700; letter-spacing: 0.15em;">KHÔNG GIAN LÀM VIỆC</span>
+            <h1 class="hero-title mt-2 mb-3" style="font-size: clamp(2.5rem, 5vw, 3.5rem); color: var(--brown); line-height: 1.1;">Tải Lên Tài Liệu</h1>
         </div>
 
-        <div class="upload-card-glass shadow-sm">
+        <div class="upload-card-glass shadow-sm mx-auto" style="max-width: 900px;">
             <form method="post" enctype="multipart/form-data" id="uploadForm">
                 <div asp-validation-summary="ModelOnly" class="alert alert-danger py-2 rounded-3 mb-4"></div>
 
@@ -519,6 +508,14 @@
                 if (!input.files || input.files.length === 0) return;
                 e.preventDefault();
 
+                // Client-side 100 MB guard — fires before any network request
+                const MAX_SIZE = 100 * 1024 * 1024;
+                if (input.files[0].size > MAX_SIZE) {
+                    const sizeMb = (input.files[0].size / 1024 / 1024).toFixed(1);
+                    showPremiumToast(`File "${input.files[0].name}" (${sizeMb} MB) vượt quá giới hạn 100 MB. Vui lòng chọn file nhỏ hơn.`, 'danger');
+                    return;
+                }
+
                 progressShell.classList.remove('d-none');
                 progressBar.style.width = '0%';
                 progressLabel.textContent = '0%';
@@ -533,18 +530,42 @@
                 }, 220);
 
                 try {
-                    const response = await fetch(form.action, {
+                    // Remove any existing dynamic alerts
+                    const oldAlerts = form.querySelectorAll('.alert-dynamic-upload');
+                    oldAlerts.forEach(a => a.remove());
+
+                    const response = await fetch(form.action || window.location.pathname, {
                         method: 'POST',
                         body: new FormData(form),
-                        headers: { 'X-Requested-With': 'XMLHttpRequest' }
+                        headers: { 
+                            'X-Requested-With': 'XMLHttpRequest',
+                            'RequestVerificationToken': document.querySelector('input[name="__RequestVerificationToken"]').value
+                        }
                     });
                     clearInterval(timer);
 
                     if (!response.ok) {
-                        throw new Error('Upload failed');
+                        const errText = await response.text();
+                        throw new Error(errText || 'Upload failed');
                     }
 
                     const data = await response.json();
+                    if (data && data.success === false) {
+                        progressShell.classList.add('d-none');
+                        const errorAlert = document.createElement('div');
+                        errorAlert.className = 'alert alert-danger alert-dismissible fade show mt-3 alert-dynamic-upload';
+                        errorAlert.role = 'alert';
+                        errorAlert.innerHTML = `
+                            <strong>Lỗi tải lên:</strong>
+                            <ul class="mb-0 mt-1">
+                                ${data.errors.map(err => `<li>${err}</li>`).join('')}
+                            </ul>
+                            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                        `;
+                        form.insertBefore(errorAlert, form.firstChild);
+                        return;
+                    }
+
                     progressBar.style.width = '100%';
                     progressLabel.textContent = '100%';
                     progressMeta.textContent = 'Hoàn tất. Đang chuyển hướng...';
@@ -554,7 +575,15 @@
                     }, 800);
                 } catch (error) {
                     clearInterval(timer);
-                    form.submit();
+                    progressShell.classList.add('d-none');
+                    const errorAlert = document.createElement('div');
+                    errorAlert.className = 'alert alert-danger alert-dismissible fade show mt-3 alert-dynamic-upload';
+                    errorAlert.role = 'alert';
+                    errorAlert.innerHTML = `
+                        <strong>Lỗi hệ thống:</strong> ${error.message || 'Có lỗi xảy ra trong quá trình upload.'}
+                        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                    `;
+                    form.insertBefore(errorAlert, form.firstChild);
                 }
             });
         })();
@@ -646,6 +675,200 @@
                     window.reinitGlassDropdown('SubjectId');
                 }
             });
-        })();
-    </script>
+
+             // Global refresh function to update without full page reload
+             window.updateSubjectsDropdowns = function (newSubjects, newTerms, newSubjectTermMap, newDocTypes, newLanguages, newDocSources) {
+                 var docTypeEl = document.getElementById('DocumentTypeId');
+                 var langEl = document.getElementById('LanguageId');
+                 var docSourceEl = document.getElementById('DocumentSourceId');
+
+                 // 1. Update the mapping
+                 subjectToTerm = {};
+                 for (var k in newSubjectTermMap) {
+                     if (newSubjectTermMap.hasOwnProperty(k)) {
+                         subjectToTerm[k.toLowerCase()] = newSubjectTermMap[k].toLowerCase();
+                     }
+                 }
+ 
+                 // 2. Re-populate allSubjectOptions
+                 allSubjectOptions = [{ val: '', text: 'Chọn Môn Học', termId: null }];
+                 newSubjects.forEach(function (s) {
+                     allSubjectOptions.push({
+                         val: s.id,
+                         text: s.code,
+                         termId: s.termId ? s.termId.toLowerCase() : null
+                     });
+                 });
+ 
+                 // 3. Update AcademicTermId options
+                 var prevTermVal = termEl.value;
+                 while (termEl.options.length > 0) {
+                     termEl.remove(0);
+                 }
+                 
+                 // Add default option
+                 var defaultTermOpt = document.createElement('option');
+                 defaultTermOpt.value = '';
+                 defaultTermOpt.textContent = 'Chọn Học Kỳ';
+                 termEl.add(defaultTermOpt);
+ 
+                 newTerms.forEach(function (t) {
+                     var termOpt = document.createElement('option');
+                     termOpt.value = t.id;
+                     termOpt.textContent = t.name;
+                     termEl.add(termOpt);
+                 });
+ 
+                 // Restore previous term value if valid
+                 var termRestored = false;
+                 for (var i = 0; i < termEl.options.length; i++) {
+                     if (termEl.options[i].value === prevTermVal) {
+                         termEl.selectedIndex = i;
+                         termRestored = true;
+                         break;
+                     }
+                 }
+                 if (!termRestored) {
+                     termEl.selectedIndex = 0;
+                 }
+
+                 // 4. Update DocumentTypeId options
+                 if (docTypeEl && newDocTypes) {
+                     var prevDocTypeVal = docTypeEl.value;
+                     while (docTypeEl.options.length > 0) {
+                         docTypeEl.remove(0);
+                     }
+                     var defaultTypeOpt = document.createElement('option');
+                     defaultTypeOpt.value = '';
+                     defaultTypeOpt.textContent = 'Chọn Loại Học Liệu';
+                     docTypeEl.add(defaultTypeOpt);
+
+                     newDocTypes.forEach(function (dt) {
+                         var opt = document.createElement('option');
+                         opt.value = dt.id;
+                         opt.textContent = dt.name;
+                         docTypeEl.add(opt);
+                     });
+
+                     var typeRestored = false;
+                     for (var i = 0; i < docTypeEl.options.length; i++) {
+                         if (docTypeEl.options[i].value === prevDocTypeVal) {
+                             docTypeEl.selectedIndex = i;
+                             typeRestored = true;
+                             break;
+                         }
+                     }
+                     if (!typeRestored) {
+                         docTypeEl.selectedIndex = 0;
+                     }
+                 }
+
+                 // 5. Update LanguageId options
+                 if (langEl && newLanguages) {
+                     var prevLangVal = langEl.value;
+                     while (langEl.options.length > 0) {
+                         langEl.remove(0);
+                     }
+                     var defaultLangOpt = document.createElement('option');
+                     defaultLangOpt.value = '';
+                     defaultLangOpt.textContent = 'Chọn Ngôn Ngữ';
+                     langEl.add(defaultLangOpt);
+
+                     newLanguages.forEach(function (l) {
+                         var opt = document.createElement('option');
+                         opt.value = l.id;
+                         opt.textContent = l.name;
+                         langEl.add(opt);
+                     });
+
+                     var langRestored = false;
+                     for (var i = 0; i < langEl.options.length; i++) {
+                         if (langEl.options[i].value === prevLangVal) {
+                             langEl.selectedIndex = i;
+                             langRestored = true;
+                             break;
+                         }
+                     }
+                     if (!langRestored) {
+                         langEl.selectedIndex = 0;
+                     }
+                 }
+
+                 // 6. Update DocumentSourceId options
+                 if (docSourceEl && newDocSources) {
+                     var prevSourceVal = docSourceEl.value;
+                     while (docSourceEl.options.length > 0) {
+                         docSourceEl.remove(0);
+                     }
+                     var defaultSourceOpt = document.createElement('option');
+                     defaultSourceOpt.value = '';
+                     defaultSourceOpt.textContent = '-- Chọn nguồn (tuỳ chọn) --';
+                     docSourceEl.add(defaultSourceOpt);
+
+                     newDocSources.forEach(function (ds) {
+                         var opt = document.createElement('option');
+                         opt.value = ds.id;
+                         opt.textContent = ds.name;
+                         docSourceEl.add(opt);
+                     });
+
+                     var sourceRestored = false;
+                     for (var i = 0; i < docSourceEl.options.length; i++) {
+                         if (docSourceEl.options[i].value === prevSourceVal) {
+                             docSourceEl.selectedIndex = i;
+                             sourceRestored = true;
+                             break;
+                         }
+                     }
+                     if (!sourceRestored) {
+                         docSourceEl.selectedIndex = 0;
+                     }
+                 }
+ 
+                 // 7. Trigger TERM change to filter and update SUBJECT select
+                 termEl.dispatchEvent(new Event('change'));
+ 
+                 // 8. Re-initialize the custom glass-dropdown UI
+                 if (window.reinitGlassDropdown) {
+                     window.reinitGlassDropdown('SubjectId');
+                     window.reinitGlassDropdown('AcademicTermId');
+                     window.reinitGlassDropdown('DocumentTypeId');
+                     window.reinitGlassDropdown('LanguageId');
+                     window.reinitGlassDropdown('DocumentSourceId');
+                 }
+             };
+         })();
+     </script>
+ 
+     <script>
+         document.addEventListener("DOMContentLoaded", function () {
+             function setupSignalRUpload() {
+                 const connection = window.signalrConnection;
+                 if (!connection) {
+                     setTimeout(setupSignalRUpload, 100);
+                     return;
+                 }
+                 connection.on("ReceiveSubjectsAssignedUpdated", function () {
+                     console.log("ReceiveSubjectsAssignedUpdated: Fetching updated subjects and other lookups...");
+                     
+                     fetch('/upload?handler=RefreshSubjects')
+                         .then(response => {
+                             if (!response.ok) throw new Error('Failed to fetch subjects');
+                             return response.json();
+                         })
+                         .then(data => {
+                             if (window.updateSubjectsDropdowns) {
+                                 window.updateSubjectsDropdowns(data.subjects, data.academicTerms, data.subjectTermMap, data.documentTypes, data.languages, data.documentSources);
+                                 showPremiumToast("Danh sách môn học và các trường học liệu đã được cập nhật trực tiếp theo thời gian thực!", "info");
+                             }
+                         })
+                         .catch(err => {
+                             console.error("Error updating subjects: ", err);
+                             showPremiumToast("Có lỗi xảy ra khi tự động cập nhật danh sách học liệu.", "danger");
+                         });
+                 });
+             }
+             setupSignalRUpload();
+         });
+     </script>
 }

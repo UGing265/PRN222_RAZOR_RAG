@@ -1,130 +1,166 @@
-using BLL.DTOs.Chat;
+using BLL.DTOs.Documents;
 using BLL.Interfaces.Documents;
 using Microsoft.AspNetCore.Authorization;
-using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
-using Microsoft.AspNetCore.Mvc.Rendering;
-using System;
-using System.Collections.Generic;
-using System.Linq;
+using Microsoft.Extensions.Caching.Memory;
 using System.Security.Claims;
-using System.Threading.Tasks;
+using System.Text.Json;
+using Markdig;
 
 namespace GUI.Pages.Documents;
 
 [Authorize]
 public class CompareModel : PageModel
 {
-    private readonly ICompareService _compareService;
     private readonly IDocumentService _documentService;
+    private readonly IDocumentComparisonService _documentComparisonService;
+    private readonly IComparisonPdfExporter _pdfExporter;
+    private readonly IMemoryCache _cache;
 
-    public CompareModel(ICompareService compareService, IDocumentService documentService)
+    public CompareModel(
+        IDocumentService documentService,
+        IDocumentComparisonService documentComparisonService,
+        IComparisonPdfExporter pdfExporter,
+        IMemoryCache cache)
     {
-        _compareService = compareService;
         _documentService = documentService;
+        _documentComparisonService = documentComparisonService;
+        _pdfExporter = pdfExporter;
+        _cache = cache;
     }
 
-    // --- Legacy Mode Properties ---
-    [BindProperty]
-    public IFormFile? File1 { get; set; }
-
-    [BindProperty]
-    public IFormFile? File2 { get; set; }
-
-    public CompareResult? LegacyResult { get; set; }
-
-    // --- DB Mode Properties ---
+    public string? ComparisonResultHtml { get; set; }
+    public string? ErrorMessage { get; set; }
+    
+    // We need to keep track of the selected documents to re-render them if a postback happens.
     [BindProperty]
     public List<Guid> SelectedDocumentIds { get; set; } = new();
 
-    [BindProperty]
-    public string? Question { get; set; }
+    public List<SubjectDto> Subjects { get; set; } = new();
 
-    public ComparisonResultDto? DbResult { get; set; }
-
-    public List<SelectListItem> AvailableDocuments { get; set; } = new();
-
-    public string? ErrorMessage { get; set; }
+    public string? ExportKey { get; set; }
 
     public async Task OnGetAsync()
     {
-        await LoadDocumentsAsync();
+        Subjects = await _documentService.GetSubjectsAsync();
     }
 
-    public async Task<IActionResult> OnPostLegacyAsync()
+    public async Task<IActionResult> OnGetSearchAsync(string? query, Guid? subjectId)
     {
-        await LoadDocumentsAsync(); // Reload UI
-
-        if (File1 == null || File2 == null)
-        {
-            ErrorMessage = "Vui lòng chọn cả hai tệp để so sánh.";
-            return Page();
-        }
-
-        var ext1 = System.IO.Path.GetExtension(File1.FileName).ToLowerInvariant();
-        var ext2 = System.IO.Path.GetExtension(File2.FileName).ToLowerInvariant();
-
-        var allowedExtensions = new[] { ".txt", ".md", ".pdf", ".docx", ".pptx" };
-        if (!allowedExtensions.Contains(ext1) || !allowedExtensions.Contains(ext2))
-        {
-            ErrorMessage = "Định dạng tệp không được hỗ trợ. Vui lòng chọn .txt, .md, .pdf, .docx, .pptx.";
-            return Page();
-        }
-
-        try
-        {
-            LegacyResult = await _compareService.CompareFilesAsync(File1, File2);
-        }
-        catch (Exception ex)
-        {
-            ErrorMessage = "Đã xảy ra lỗi trong quá trình so sánh: " + ex.Message;
-        }
-
-        return Page();
-    }
-
-    public async Task<IActionResult> OnPostDbAsync()
-    {
-        await LoadDocumentsAsync(); // Reload UI
-
-        if (SelectedDocumentIds == null || SelectedDocumentIds.Count < 2)
-        {
-            ErrorMessage = "Vui lòng chọn ít nhất 2 tài liệu từ hệ thống để so sánh.";
-            return Page();
-        }
-
-        var userIdClaim = User.FindFirstValue(ClaimTypes.NameIdentifier);
-        if (string.IsNullOrEmpty(userIdClaim) || !Guid.TryParse(userIdClaim, out var userId))
+        var userIdString = User.FindFirstValue(ClaimTypes.NameIdentifier);
+        if (!Guid.TryParse(userIdString, out var userId))
         {
             return Unauthorized();
         }
 
+        // Search both owned and public documents
+        var searchResult = await _documentService.GetAllDocumentsAsync(
+            query: query,
+            subjectId: subjectId,
+            page: 1,
+            pageSize: 10,
+            requesterUserId: userId,
+            sortBy: "date_desc"
+        );
+
+        var documents = searchResult.Documents.Select(d => new
+        {
+            id = d.Id,
+            title = d.Title,
+            subjectName = d.SubjectName ?? "Không có môn học",
+            visibility = d.Visibility,
+            ownerEmail = d.OwnerEmail
+        });
+
+        return new JsonResult(documents);
+    }
+
+    public async Task<IActionResult> OnGetExportPdfAsync(string key)
+    {
+        if (string.IsNullOrWhiteSpace(key)) return BadRequest();
+
+        if (!_cache.TryGetValue<ComparisonExportRequest>(key, out var payload) || payload is null)
+        {
+            ErrorMessage = "Phiên xuất PDF đã hết hạn. Vui lòng chạy lại phân tích.";
+            return Page();
+        }
+
+        // Ownership check: only the original requester (or admin) can download.
+        var requesterEmail = User.FindFirstValue(ClaimTypes.Email);
+        if (!User.IsInRole("Admin") &&
+            !string.Equals(requesterEmail, payload.RequesterEmail, StringComparison.OrdinalIgnoreCase))
+        {
+            return Forbid();
+        }
+
+        var pdfBytes = _pdfExporter.Build(payload);
+        var fileName = $"compare-{DateTime.UtcNow:yyyyMMdd-HHmmss}.pdf";
+        return File(pdfBytes, "application/pdf", fileName);
+    }
+
+    public async Task<IActionResult> OnPostAsync()
+    {
+        var userIdString = User.FindFirstValue(ClaimTypes.NameIdentifier);
+        if (!Guid.TryParse(userIdString, out var userId))
+        {
+            return RedirectToPage("/Auth/Login");
+        }
+
+        if (SelectedDocumentIds == null || SelectedDocumentIds.Count < 2 || SelectedDocumentIds.Count > 5)
+        {
+            ErrorMessage = "Vui lòng chọn từ 2 đến 5 tài liệu để so sánh.";
+            Subjects = await _documentService.GetSubjectsAsync();
+            return Page();
+        }
+
+        var isAdmin = User.IsInRole("Admin");
+
         try
         {
-            DbResult = await _compareService.CompareDocumentsAsync(SelectedDocumentIds, Question, userId);
+            var rawMarkdown = await _documentComparisonService.CompareDocumentsAsync(SelectedDocumentIds, userId, isAdmin);
+            
+            // Log the raw markdown to see what Gemini actually returned
+            Console.WriteLine("=== RAW MARKDOWN FROM GEMINI ===");
+            Console.WriteLine(rawMarkdown);
+            Console.WriteLine("================================");
+            
+            var pipeline = new Markdig.MarkdownPipelineBuilder()
+                .UseAdvancedExtensions()
+                .UsePipeTables()
+                .Build();
+            ComparisonResultHtml = Markdig.Markdown.ToHtml(rawMarkdown, pipeline);
+
+            // Stash raw markdown + metadata in cache so the export handler can build a PDF
+            var exportKey = Guid.NewGuid().ToString("N");
+            var titles = await ResolveDocumentTitlesAsync(SelectedDocumentIds);
+            var cacheEntry = new ComparisonExportRequest
+            {
+                RawMarkdown = rawMarkdown,
+                DocumentTitles = titles,
+                RequesterEmail = User.FindFirstValue(ClaimTypes.Email) ?? userIdString,
+                GeneratedAtUtc = DateTime.UtcNow,
+            };
+            _cache.Set(exportKey, cacheEntry, TimeSpan.FromMinutes(5));
+            ExportKey = exportKey;
         }
         catch (Exception ex)
         {
-            ErrorMessage = "Đã xảy ra lỗi trong quá trình phân tích: " + ex.Message;
+            ErrorMessage = ex.Message;
         }
 
+        Subjects = await _documentService.GetSubjectsAsync();
         return Page();
     }
 
-    private async Task LoadDocumentsAsync()
+    private async Task<IReadOnlyList<string>> ResolveDocumentTitlesAsync(List<Guid> ids)
     {
-        var userIdClaim = User.FindFirstValue(ClaimTypes.NameIdentifier);
-        if (Guid.TryParse(userIdClaim, out var userId))
+        var titles = new List<string>(ids.Count);
+        foreach (var id in ids)
         {
-            var myDocs = await _documentService.GetMyDocumentsAsync(userId, null, null, null, null, null, null, null, 1, 100);
-            AvailableDocuments = myDocs.Documents
-                .Where(d => d.Status == "completed" || d.Status == "approved")
-                .Select(d => new SelectListItem
-                {
-                    Value = d.Id.ToString(),
-                    Text = d.Title
-                }).ToList();
+            var doc = await _documentService.GetDocumentDetailsAsync(id, chunkPage: 1, chunkPageSize: 1, incrementViewCount: false);
+            titles.Add(doc?.Title ?? $"Tài liệu {id.ToString().Substring(0, 8)}");
         }
+        return titles;
     }
 }

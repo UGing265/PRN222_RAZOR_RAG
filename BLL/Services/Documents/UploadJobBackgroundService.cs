@@ -1,4 +1,5 @@
 using BLL.Interfaces.Documents;
+using BLL.Interfaces.Notifications;
 using DAL.Interfaces.Documents;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
@@ -26,6 +27,7 @@ public class UploadJobBackgroundService : BackgroundService
                 using var scope = _scopeFactory.CreateScope();
                 var db = scope.ServiceProvider.GetRequiredService<IUploadJobRepository>();
                 var processor = scope.ServiceProvider.GetRequiredService<IUploadProcessingService>();
+                var notificationService = scope.ServiceProvider.GetRequiredService<INotificationService>();
 
                 var job = await db.GetNextPendingJobAsync(stoppingToken);
                 if (job is null)
@@ -41,6 +43,7 @@ public class UploadJobBackgroundService : BackgroundService
                     job.Message = "Thiếu document id";
                     job.UpdatedAt = DateTime.UtcNow;
                     await db.SaveChangesAsync(stoppingToken);
+                    await notificationService.SendUploadProgressAsync(job.Id.ToString(), 0, "Thiếu document id", job.OwnerUserId, stoppingToken);
                     continue;
                 }
 
@@ -49,6 +52,7 @@ public class UploadJobBackgroundService : BackgroundService
                 job.Message = "Đang xử lý";
                 job.UpdatedAt = DateTime.UtcNow;
                 await db.SaveChangesAsync(stoppingToken);
+                await notificationService.SendUploadProgressAsync(job.Id.ToString(), job.ProgressPercent, job.Message, job.OwnerUserId, stoppingToken);
 
                 _logger.LogInformation("Processing upload job {JobId} for document {DocumentId}", job.Id, job.DocumentId);
                 try 
@@ -62,6 +66,7 @@ public class UploadJobBackgroundService : BackgroundService
                 {
                     job.Status = "failed";
                     job.Message = "Lỗi xử lý: " + (ex.Message.Length > 200 ? ex.Message.Substring(0, 200) : ex.Message);
+                    await notificationService.SendUploadProgressAsync(job.Id.ToString(), job.ProgressPercent, job.Message, job.OwnerUserId, stoppingToken);
                     throw;
                 }
                 finally 

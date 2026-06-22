@@ -38,23 +38,3 @@
     </div>
 }
 </div>
-
-<script>
-    if (!window.uploadJobsPollingStarted) {
-        window.uploadJobsPollingStarted = true;
-        setInterval(() => {
-            fetch('/documents/mine', { headers: { 'X-Requested-With': 'XMLHttpRequest' } })
-                .then(res => res.text())
-                .then(html => {
-                    var parser = new DOMParser();
-                    var doc = parser.parseFromString(html, 'text/html');
-                    var newContent = doc.getElementById('upload-jobs-wrapper-content');
-                    var currentWrapper = document.getElementById('upload-jobs-wrapper-content');
-                    if (newContent && currentWrapper) {
-                        currentWrapper.innerHTML = newContent.innerHTML;
-                    }
-                })
-                .catch(err => console.error('Upload polling error:', err));
-        }, 1000);
-    }
-</script>

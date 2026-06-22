@@ -28,3 +28,6 @@ better-auth/.env
 ## OS & General
 .DS_Store
 Thumbs.db
+
+## DB
+DbChecker/
