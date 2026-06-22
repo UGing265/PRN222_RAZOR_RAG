@@ -710,7 +710,7 @@ document.addEventListener('DOMContentLoaded', function () {
                     <div>
                         <div class="fw-semibold" style="color: var(--foreground); font-size: 0.84rem;">${escapeHtml(s.documentTitle)}</div>
                         ${s.chapterTitle ? `<div class="text-muted-foreground" style="font-size: 0.78rem;">📖 ${escapeHtml(s.chapterTitle)}</div>` : ''}
-                        ${s.pageNumber ? `<div class="text-muted-foreground" style="font-size: 0.75rem;">Trang ${s.pageNumber}</div>` : ''}
+                        ${s.pageNumber ? `<div class="text-muted-foreground" style="font-size: 0.75rem;">Trang ${s.pageNumber}</div>` : `<div class="text-muted-foreground" style="font-size: 0.75rem;">Đoạn số ${s.chunkOrder + 1}</div>`}
                     </div>
                 </div>
             </div>

@@ -18,6 +18,7 @@
 GUI/appsettings.Development.json
 GUI/appsettings.Local.json
 GUI/appsettings.*.local.json
+GUI/appsettings.json
 
 ## Node.js & Better Auth
 node_modules/
