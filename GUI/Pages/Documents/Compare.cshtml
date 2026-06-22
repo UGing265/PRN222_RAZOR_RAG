@@ -258,12 +258,34 @@
             let selectedDocs = [];
             
             // Re-populate if coming back from POST
-            const existingInputs = hiddenInputsContainer.querySelectorAll("input");
-            if (existingInputs.length > 0) {
-                existingInputs.forEach(input => {
-                    selectedDocs.push({ id: input.value, title: "Tài liệu đã chọn (" + input.value.substring(0, 8) + ")" });
-                });
+            @if (Model.SelectedDocuments != null && Model.SelectedDocuments.Any())
+            {
+                @foreach (var doc in Model.SelectedDocuments)
+                {
+                    var escapedTitle = doc.Title.Replace("'", "\\'");
+                    <text>
+                    selectedDocs.push({ 
+                        id: '@doc.Id', 
+                        title: '@Html.Raw(escapedTitle)', 
+                        subjectId: '@doc.SubjectId' 
+                    });
+                    </text>
+                }
+                <text>
                 renderSelectedDocs();
+                </text>
+            }
+            else
+            {
+                <text>
+                const existingInputs = hiddenInputsContainer.querySelectorAll("input");
+                if (existingInputs.length > 0) {
+                    existingInputs.forEach(input => {
+                        selectedDocs.push({ id: input.value, title: "Tài liệu đã chọn (" + input.value.substring(0, 8) + ")", subjectId: null });
+                    });
+                    renderSelectedDocs();
+                }
+                </text>
             }
 
             let searchTimeout = null;
@@ -309,7 +331,7 @@
                                         </div>
                                     `;
                                     item.onclick = function () {
-                                        addDocument(doc.id, doc.title);
+                                        addDocument(doc.id, doc.title, doc.subjectId, doc.subjectName);
                                         searchInput.value = "";
                                         searchResults.style.display = "none";
                                     };
@@ -354,7 +376,7 @@
                 }
             });
 
-            function addDocument(id, title) {
+            function addDocument(id, title, subjectId, subjectName) {
                 if (selectedDocs.length >= 5) {
                     if(typeof showPremiumToast === "function") {
                         showPremiumToast("Chỉ chọn tối đa 5 tài liệu.", "danger");
@@ -363,8 +385,23 @@
                     }
                     return;
                 }
+                
+                // Enforce that all selected documents belong to the same subject
+                if (selectedDocs.length > 0) {
+                    const currentSubjectId = selectedDocs[0].subjectId;
+                    if (currentSubjectId !== subjectId) {
+                        const errorMsg = "Tài liệu này thuộc môn học khác. Bạn chỉ có thể so sánh các tài liệu chung một môn học.";
+                        if(typeof showPremiumToast === "function") {
+                            showPremiumToast(errorMsg, "danger");
+                        } else {
+                            alert(errorMsg);
+                        }
+                        return;
+                    }
+                }
+                
                 if (!selectedDocs.find(d => d.id === id)) {
-                    selectedDocs.push({ id, title });
+                    selectedDocs.push({ id, title, subjectId });
                     renderSelectedDocs();
                 }
             }

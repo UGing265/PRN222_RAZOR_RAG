@@ -68,6 +68,7 @@ public class CompareModel : PageModel
         {
             id = d.Id,
             title = d.Title,
+            subjectId = d.SubjectId,
             subjectName = d.SubjectName ?? "Không có môn học",
             visibility = d.Visibility,
             ownerEmail = d.OwnerEmail
@@ -99,6 +100,8 @@ public class CompareModel : PageModel
         return File(pdfBytes, "application/pdf", fileName);
     }
 
+    public List<DocumentDetailsDto> SelectedDocuments { get; set; } = new();
+
     public async Task<IActionResult> OnPostAsync()
     {
         var userIdString = User.FindFirstValue(ClaimTypes.NameIdentifier);
@@ -111,6 +114,7 @@ public class CompareModel : PageModel
         {
             TempData["ErrorMessage"] = "Vui lòng chọn từ 2 đến 5 tài liệu để so sánh.";
             Subjects = await _documentService.GetSubjectsAsync();
+            await PopulateSelectedDocumentsAsync();
             return Page();
         }
 
@@ -150,7 +154,23 @@ public class CompareModel : PageModel
         }
 
         Subjects = await _documentService.GetSubjectsAsync();
+        await PopulateSelectedDocumentsAsync();
         return Page();
+    }
+
+    private async Task PopulateSelectedDocumentsAsync()
+    {
+        if (SelectedDocumentIds != null && SelectedDocumentIds.Any())
+        {
+            foreach (var id in SelectedDocumentIds)
+            {
+                var doc = await _documentService.GetDocumentDetailsAsync(id, 1, 1, false);
+                if (doc != null)
+                {
+                    SelectedDocuments.Add(doc);
+                }
+            }
+        }
     }
 
     private async Task<IReadOnlyList<string>> ResolveDocumentTitlesAsync(List<Guid> ids)
