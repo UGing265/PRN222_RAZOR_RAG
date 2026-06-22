@@ -288,6 +288,7 @@
 </style>
 
 @section Scripts {
+<script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
 <script>
 document.addEventListener('DOMContentLoaded', function () {
     // ── State ──
@@ -669,36 +670,17 @@ document.addEventListener('DOMContentLoaded', function () {
         });
     }
 
-    // ── Simple markdown renderer ──
+    // ── Markdown renderer using marked.js ──
     function renderMarkdown(text) {
         if (!text) return '';
-        let html = escapeHtml(text);
+        
+        // Configure marked options
+        marked.setOptions({
+            breaks: true, // Convert \n to <br> for conversational layout
+            gfm: true     // Enable GitHub Flavored Markdown (tables, autolinks, task lists)
+        });
 
-        // Code blocks
-        html = html.replace(/```(\w*)\n([\s\S]*?)```/g, '<pre><code>$2</code></pre>');
-        // Inline code
-        html = html.replace(/`([^`]+)`/g, '<code>$1</code>');
-        // Bold
-        html = html.replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>');
-        // Italic
-        html = html.replace(/\*(.+?)\*/g, '<em>$1</em>');
-        // Headers
-        html = html.replace(/^### (.+)$/gm, '<h5 class="fw-bold mt-2 mb-1" style="font-size:0.95rem;">$1</h5>');
-        html = html.replace(/^## (.+)$/gm, '<h4 class="fw-bold mt-2 mb-1" style="font-size:1rem;">$1</h4>');
-        html = html.replace(/^# (.+)$/gm, '<h3 class="fw-bold mt-2 mb-1" style="font-size:1.1rem;">$1</h3>');
-        // Unordered lists
-        html = html.replace(/^[-*] (.+)$/gm, '<li>$1</li>');
-        html = html.replace(/(<li>.*<\/li>\n?)+/g, '<ul>$&</ul>');
-        // Ordered lists
-        html = html.replace(/^\d+\. (.+)$/gm, '<li>$1</li>');
-        // Line breaks → paragraphs
-        html = html.replace(/\n\n/g, '</p><p>');
-        html = html.replace(/\n/g, '<br>');
-        html = '<p>' + html + '</p>';
-        // Clean up empty paragraphs
-        html = html.replace(/<p>\s*<\/p>/g, '');
-
-        return html;
+        return marked.parse(text);
     }
 
     // ── Utilities ──
