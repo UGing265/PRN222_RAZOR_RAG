@@ -1,5 +1,6 @@
 using System.Runtime.CompilerServices;
 using System.Text;
+using System.Text.RegularExpressions;
 using BLL.DTOs.Chat;
 using BLL.Interfaces.Chat;
 using BLL.Interfaces.Documents;
@@ -49,11 +50,12 @@ public class ChatService : IChatService
 
             // 4. Embed câu hỏi thành vector
             _logger.LogInformation("Embedding user question for session {SessionId}", session.Id);
-            var queryEmbedding = await _embeddingService.EmbedAsync(request.Message, cancellationToken);
+            var enhancedQuery = await EnhanceQueryAsync(request.Message, cancellationToken);
+            var queryEmbedding = await _embeddingService.EmbedAsync(enhancedQuery, cancellationToken);
 
             // 5. Tìm Top K chunks liên quan
-            _logger.LogInformation("Searching similar chunks. DocumentId={DocumentId}, TopK={TopK}", session.DocumentId, TopKChunks);
-            var relevantChunks = await _chatRepository.SearchSimilarChunksAsync(queryEmbedding, TopKChunks, session.DocumentId, cancellationToken);
+            _logger.LogInformation("Searching similar chunks. DocumentIds={DocumentIds}, TopK={TopK}", string.Join(",", request.DocumentIds ?? new List<Guid>()), TopKChunks);
+            var relevantChunks = await _chatRepository.SearchSimilarChunksAsync(queryEmbedding, TopKChunks, request.DocumentIds, cancellationToken);
 
             // 6. Build System Prompt
             var systemPrompt = BuildSystemPrompt(relevantChunks);
@@ -65,8 +67,9 @@ public class ChatService : IChatService
             _logger.LogInformation("Calling Gemini for chat response. SessionId={SessionId}, ChunksFound={ChunksFound}", session.Id, relevantChunks.Count);
             var reply = await _geminiChatService.GenerateAsync(systemPrompt, geminiHistory, cancellationToken);
 
-            // 9. Lưu response Assistant vào DB
-            await SaveAssistantMessageAsync(session.Id, reply, cancellationToken);
+            // 9. Lưu response Assistant vào DB (kèm RetrievedChunkIds để phục vụ "Nguồn trích dẫn" khi load lại lịch sử)
+            var chunkIds = relevantChunks.Select(c => c.Id).ToList();
+            await SaveAssistantMessageAsync(session.Id, reply, chunkIds, cancellationToken);
 
             // 10. Extract sources và trả về
             var sources = ExtractSources(relevantChunks);
@@ -99,8 +102,9 @@ public class ChatService : IChatService
         var session = await GetOrCreateSessionAsync(userId, request, cancellationToken);
         await SaveUserMessageAsync(session.Id, request.Message, cancellationToken);
         var historyMessages = await _chatRepository.GetRecentMessagesAsync(session.Id, MaxHistoryMessages, cancellationToken);
-        var queryEmbedding = await _embeddingService.EmbedAsync(request.Message, cancellationToken);
-        var relevantChunks = await _chatRepository.SearchSimilarChunksAsync(queryEmbedding, TopKChunks, session.DocumentId, cancellationToken);
+        var enhancedQuery = await EnhanceQueryAsync(request.Message, cancellationToken);
+        var queryEmbedding = await _embeddingService.EmbedAsync(enhancedQuery, cancellationToken);
+        var relevantChunks = await _chatRepository.SearchSimilarChunksAsync(queryEmbedding, TopKChunks, request.DocumentIds, cancellationToken);
         var systemPrompt = BuildSystemPrompt(relevantChunks);
         var geminiHistory = BuildGeminiHistory(historyMessages);
 
@@ -114,11 +118,12 @@ public class ChatService : IChatService
             yield return chunk;
         }
 
-        // 7. Lưu response đầy đủ vào DB sau khi stream xong
+        // 7. Lưu response đầy đủ vào DB sau khi stream xong (kèm RetrievedChunkIds)
         var completeReply = fullResponse.ToString();
         if (!string.IsNullOrWhiteSpace(completeReply))
         {
-            await SaveAssistantMessageAsync(session.Id, completeReply, cancellationToken);
+            var chunkIds = relevantChunks.Select(c => c.Id).ToList();
+            await SaveAssistantMessageAsync(session.Id, completeReply, chunkIds, cancellationToken);
         }
     }
 
@@ -128,7 +133,7 @@ public class ChatService : IChatService
         return sessions.Select(s => new ChatSessionSummaryDto
         {
             Id = s.Id,
-            DocumentId = s.DocumentId,
+            DocumentId = Guid.Empty, // Deprecated, we can just leave it empty or map the first document. But for DTO, maybe return first
             Title = s.Title,
             CreatedAt = s.CreatedAt
         }).ToList();
@@ -174,9 +179,9 @@ public class ChatService : IChatService
         var session = new ChatSession
         {
             UserId = userId,
-            DocumentId = request.DocumentId!.Value,
             Title = title,
-            CreatedAt = DateTime.UtcNow
+            CreatedAt = DateTime.UtcNow,
+            SessionDocuments = request.DocumentIds?.Select(id => new ChatSessionDocument { DocumentId = id }).ToList() ?? new List<ChatSessionDocument>()
         };
 
         return await _chatRepository.CreateSessionAsync(session, cancellationToken);
@@ -194,14 +199,15 @@ public class ChatService : IChatService
         await _chatRepository.AddMessageAsync(message, cancellationToken);
     }
 
-    private async Task SaveAssistantMessageAsync(Guid sessionId, string content, CancellationToken cancellationToken)
+    private async Task SaveAssistantMessageAsync(Guid sessionId, string content, List<Guid>? retrievedChunkIds, CancellationToken cancellationToken)
     {
         var message = new ChatMessage
         {
             SessionId = sessionId,
             Role = ChatRole.Assistant,
             Content = content,
-            CreatedAt = DateTime.UtcNow
+            CreatedAt = DateTime.UtcNow,
+            RetrievedChunkIds = retrievedChunkIds ?? []
         };
         await _chatRepository.AddMessageAsync(message, cancellationToken);
     }
@@ -211,46 +217,38 @@ public class ChatService : IChatService
     /// </summary>
     private static string BuildSystemPrompt(List<DocumentChunk> chunks)
     {
-        var sb = new StringBuilder();
-
-        sb.AppendLine("Bạn là trợ lý thông tin nội bộ của hệ thống tài liệu học thuật.");
-        sb.AppendLine();
-        sb.AppendLine("### LUẬT BẮT BUỘC:");
-        sb.AppendLine("1. CHỈ sử dụng thông tin trong phần [CONTEXT] bên dưới để trả lời. TUYỆT ĐỐI KHÔNG được bịa, suy đoán, hoặc sử dụng kiến thức bên ngoài.");
-        sb.AppendLine("2. Nếu không tìm thấy thông tin liên quan trong [CONTEXT], trả lời CHÍNH XÁC: \"Xin lỗi, tôi không tìm thấy thông tin liên quan trong tài liệu được cung cấp.\"");
-        sb.AppendLine("3. Cuối mỗi câu/đoạn cung cấp thông tin, BẮT BUỘC trích dẫn theo format: (Nguồn: [Tên tài liệu] - [Tên chương], Trang [số trang])");
-        sb.AppendLine("4. Trả lời bằng Tiếng Việt, rõ ràng, có cấu trúc, sử dụng markdown khi cần thiết.");
-        sb.AppendLine("5. Nếu câu hỏi là lời chào hỏi thông thường (xin chào, hello, hi, ...), hãy chào lại lịch sự và giới thiệu ngắn gọn rằng bạn là trợ lý tài liệu.");
-        sb.AppendLine();
+        var contextBuilder = new StringBuilder();
 
         if (chunks.Count == 0)
         {
-            sb.AppendLine("[CONTEXT]");
-            sb.AppendLine("Không có tài liệu nào được cung cấp.");
-            sb.AppendLine("[/CONTEXT]");
+            contextBuilder.AppendLine("[CONTEXT]");
+            contextBuilder.AppendLine("Không có tài liệu nào được cung cấp.");
+            contextBuilder.AppendLine("[/CONTEXT]");
         }
         else
         {
-            sb.AppendLine("[CONTEXT]");
+            contextBuilder.AppendLine("[CONTEXT]");
             for (var i = 0; i < chunks.Count; i++)
             {
                 var chunk = chunks[i];
                 var docTitle = chunk.Document?.Title ?? "N/A";
                 var chapterTitle = chunk.Chapter?.Title ?? "N/A";
-                var page = chunk.PageNumber?.ToString() ?? "N/A";
+                var page = (chunk.PageNumber.HasValue && chunk.PageNumber.Value > 0)
+                    ? chunk.PageNumber.Value.ToString()
+                    : "không có";
 
-                sb.AppendLine($"--- Chunk {i + 1} ---");
-                sb.AppendLine($"Tài liệu: {docTitle}");
-                sb.AppendLine($"Chương: {chapterTitle}");
-                sb.AppendLine($"Trang: {page}");
-                sb.AppendLine("Nội dung:");
-                sb.AppendLine(chunk.Content);
-                sb.AppendLine();
+                contextBuilder.AppendLine($"--- Chunk {i + 1} ---");
+                contextBuilder.AppendLine($"Tài liệu: {docTitle}");
+                contextBuilder.AppendLine($"Chương: {chapterTitle}");
+                contextBuilder.AppendLine($"Trang: {page}");
+                contextBuilder.AppendLine("Nội dung:");
+                contextBuilder.AppendLine(chunk.Content);
+                contextBuilder.AppendLine();
             }
-            sb.AppendLine("[/CONTEXT]");
+            contextBuilder.AppendLine("[/CONTEXT]");
         }
 
-        return sb.ToString();
+        return BLL.Constants.PromptTemplates.RAG_SYSTEM_PROMPT.Replace("{context_chunks}", contextBuilder.ToString());
     }
 
     /// <summary>
@@ -285,6 +283,67 @@ public class ChatService : IChatService
             .GroupBy(s => new { s.DocumentId, s.ChapterTitle, s.PageNumber })
             .Select(g => g.First())
             .ToList();
+    }
+
+    private static readonly HashSet<string> VietnameseUnmarkedWords = new(StringComparer.OrdinalIgnoreCase)
+    {
+        "la", "gi", "cua", "trong", "tren", "duoi", "va", "hoac", "de", "cho", "tai", "lieu", 
+        "co", "khong", "nao", "dau", "the", "lam", "sao", "mot", "hai", "ba", "bon", "nam",
+        "tim", "kiem", "thuat", "toan", "cau", "truc", "du", "lieu", "mang", "danh", "sach",
+        "lien", "ket", "cay", "nhi", "phan", "do", "thi", "nhe", "nha", "oi", "dung", "sai"
+    };
+
+    private static bool IsProbablyVietnamese(string text)
+    {
+        if (string.IsNullOrWhiteSpace(text)) return false;
+
+        // 1. Kiểm tra ký tự tiếng Việt có dấu
+        var hasVietnameseDiacritics = Regex.IsMatch(text, @"[áàảãạăắằẳẵặâấầẩẫậéèẻẽẹêếềểễệíìỉĩịóòỏõọôốồổỗộơớờởỡợúùủũụưứừửữựýỳỷỹỵđÁÀẢÃẠĂẮẰẲẴẶÂẤẦẨẪẬÉÈẺẼẸÊẾỀỂỄỆÍÌỈĨỊÓÒỎÕỌÔỐỒỔỖỘƠỚỜỞỠỢÚÙỦŨỤƯỨỪỬỮỰÝỲỶỸÝĐ]");
+        if (hasVietnameseDiacritics) return true;
+
+        // 2. Tách các từ riêng biệt và đối chiếu với từ điển tiếng Việt không dấu phổ biến
+        var words = Regex.Split(text, @"\P{L}+");
+        foreach (var word in words)
+        {
+            if (VietnameseUnmarkedWords.Contains(word))
+            {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    private async Task<string> EnhanceQueryAsync(string originalQuery, CancellationToken cancellationToken)
+    {
+        if (!IsProbablyVietnamese(originalQuery))
+        {
+            return originalQuery;
+        }
+
+        var systemPrompt = "You are a professional technical translator. Translate the user's computer science query from Vietnamese to English. Optimize the translation to be used for semantic vector search in English textbooks. Return ONLY the final translated English query, without any explanation, markdown, quotes or extra text.";
+        var history = new List<GeminiChatMessage>
+        {
+            new GeminiChatMessage { Role = ChatRole.User, Content = originalQuery }
+        };
+
+        try
+        {
+            var englishQuery = await _geminiChatService.GenerateAsync(systemPrompt, history, cancellationToken);
+            var cleaned = englishQuery.Trim().Trim('"', '\'', '`');
+            
+            if (!string.IsNullOrWhiteSpace(cleaned) && !cleaned.Equals(originalQuery, StringComparison.OrdinalIgnoreCase))
+            {
+                _logger.LogInformation("Query enhanced: '{Original}' -> '{Original} | {Translated}'", originalQuery, originalQuery, cleaned);
+                return $"{originalQuery} | {cleaned}";
+            }
+        }
+        catch (Exception ex)
+        {
+            _logger.LogWarning(ex, "Failed to translate query. Using original query.");
+        }
+
+        return originalQuery;
     }
 
     #endregion

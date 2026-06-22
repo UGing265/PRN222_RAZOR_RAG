@@ -3,6 +3,8 @@ using BLL.DTOs.Chat;
 using BLL.Interfaces.Chat;
 using BLL.Interfaces.Documents;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
+using Pgvector.EntityFrameworkCore;
 
 namespace GUI.Endpoints;
 
@@ -77,6 +79,27 @@ public static class ChatEndpoints
             });
         });
 
+        group.MapGet("/debug-text-search", async (
+            DAL.Data.DBContext context,
+            [FromQuery] string q,
+            CancellationToken ct) =>
+        {
+            var matchedChunks = await context.DocumentChunks
+                .Where(c => c.Content.Contains(q))
+                .Select(c => new
+                {
+                    c.Id,
+                    c.DocumentId,
+                    DocTitle = c.Document.Title,
+                    ChapterTitle = c.Chapter != null ? c.Chapter.Title : "N/A",
+                    c.PageNumber,
+                    c.Content
+                })
+                .ToListAsync(ct);
+
+            return Results.Ok(matchedChunks);
+        });
+
         group.MapGet("/documents", async (
             IDocumentService documents,
             ClaimsPrincipal user,
@@ -123,8 +146,8 @@ public static class ChatEndpoints
             if (string.IsNullOrWhiteSpace(request.Message))
                 return Results.BadRequest(new { error = "Message is required." });
 
-            if (!request.SessionId.HasValue && (!request.DocumentId.HasValue || request.DocumentId.Value == Guid.Empty))
-                return Results.BadRequest(new { error = "Vui lòng chọn một tài liệu cụ thể để bắt đầu chat." });
+            if (!request.SessionId.HasValue && (request.DocumentIds == null || request.DocumentIds.Count == 0))
+                return Results.BadRequest(new { error = "Vui lòng chọn ít nhất một tài liệu để bắt đầu chat." });
 
             var response = await chat.SendMessageAsync(userId, request, ct);
             return Results.Ok(response);
@@ -149,10 +172,10 @@ public static class ChatEndpoints
                 return;
             }
 
-            if (!request.SessionId.HasValue && (!request.DocumentId.HasValue || request.DocumentId.Value == Guid.Empty))
+            if (!request.SessionId.HasValue && (request.DocumentIds == null || request.DocumentIds.Count == 0))
             {
                 http.Response.ContentType = "text/event-stream";
-                await http.Response.WriteAsync($"data: [ERROR] Vui lòng chọn một tài liệu cụ thể (ở menu thả xuống phía trên) để bắt đầu phiên chat.\n\n", ct);
+                await http.Response.WriteAsync($"data: [ERROR] Vui lòng chọn ít nhất một tài liệu (ở menu thả xuống phía trên) để bắt đầu phiên chat.\n\n", ct);
                 await http.Response.Body.FlushAsync(ct);
                 return;
             }
@@ -166,7 +189,8 @@ public static class ChatEndpoints
             {
                 await foreach (var chunk in chat.StreamMessageAsync(userId, request, ct))
                 {
-                    await http.Response.WriteAsync($"data: {chunk}\n\n", ct);
+                    var safeChunk = chunk?.Replace("\n", "\\n") ?? string.Empty;
+                    await http.Response.WriteAsync($"data: {safeChunk}\n\n", ct);
                     await http.Response.Body.FlushAsync(ct);
                 }
                 await http.Response.WriteAsync("data: [DONE]\n\n", ct);

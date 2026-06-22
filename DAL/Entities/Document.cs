@@ -80,4 +80,6 @@ public partial class Document
     public virtual ICollection<UserBookmark> UserBookmarks { get; set; } = new List<UserBookmark>();
 
     public virtual ICollection<DocumentReport> DocumentReports { get; set; } = new List<DocumentReport>();
+
+    public virtual ICollection<ChatSessionDocument> ChatSessionDocuments { get; set; } = new List<ChatSessionDocument>();
 }

@@ -39,6 +39,7 @@ public static class ServiceCollectionExtensions
         services.AddScoped<IChapterSegmentationService, GeminiChapterSegmentationService>();
         services.AddScoped<IUploadProcessingService, UploadProcessingService>();
         services.AddScoped<IFileParserService, SimpleFileParserService>();
+        services.AddScoped<ICompareService, CompareService>();
         services.AddScoped<IEmbeddingService, GeminiEmbeddingService>();
         services.AddScoped<IDocumentComparisonService, DocumentComparisonService>();
         services.AddSingleton<IComparisonPdfExporter, QuestPdfComparisonExporter>();

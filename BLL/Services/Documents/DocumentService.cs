@@ -1266,4 +1266,58 @@ public class DocumentService : IDocumentService
 
     public Task<Dictionary<Guid, (Guid UserId, string FullName)>> GetSubjectLecturerMapAsync(CancellationToken cancellationToken = default)
         => _documentRepository.GetSubjectLecturerMapAsync(cancellationToken);
+
+    /// <summary>
+    /// Upload file → S3 → Create Document entity → Enqueue indexing job → Return result.
+    /// </summary>
+    public async Task<DocumentUploadResultDto> UploadAndProcessAsync(IFormFile file, Guid userId, CancellationToken cancellationToken = default)
+    {
+        ValidateFile(file);
+
+        var title = Path.GetFileNameWithoutExtension(file.FileName).Trim();
+        if (string.IsNullOrWhiteSpace(title)) title = "Untitled Document";
+
+        // Create document entity
+        var createResult = await CreateDocumentAsync(new DocumentCreateInput
+        {
+            OwnerUserId = userId,
+            Title = title,
+            FileName = file.FileName,
+            FileSizeBytes = file.Length,
+            FileContentType = file.ContentType
+        }, file, cancellationToken);
+
+        // Upload to S3
+        var (s3Key, s3Url) = await UploadOriginalFileToS3Async(createResult.Id, file, cancellationToken);
+
+        // Enqueue background indexing job (extract → chunk → embed)
+        await EnqueueUploadJobAsync(userId, createResult.Id, file.FileName, s3Key, file.Length, cancellationToken);
+
+        return new DocumentUploadResultDto
+        {
+            DocumentId = createResult.Id,
+            FileName = file.FileName,
+            Status = "processing"
+        };
+    }
+
+    /// <summary>
+    /// Approve a document: change status from "completed" to "approved".
+    /// </summary>
+    public async Task ApproveDocumentAsync(Guid documentId, Guid approverId, CancellationToken cancellationToken = default)
+    {
+        var document = await _documentRepository.GetDocumentAsync(documentId, cancellationToken)
+            ?? throw new InvalidOperationException($"Document not found: {documentId}");
+
+        if (document.Status is not "completed" and not "pending")
+        {
+            throw new InvalidOperationException($"Cannot approve document with status '{document.Status}'. Must be 'completed' or 'pending'.");
+        }
+
+        document.Status = "approved";
+        document.ApprovedAt = DateTime.UtcNow;
+        document.UpdatedAt = DateTime.UtcNow;
+
+        await _documentRepository.SaveChangesAsync(cancellationToken);
+    }
 }

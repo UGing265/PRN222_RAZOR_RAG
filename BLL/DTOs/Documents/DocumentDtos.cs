@@ -128,3 +128,22 @@ public sealed class DeleteDocumentViewData
     public int FileCount { get; set; }
     public int ChunkCount { get; set; }
 }
+
+/// <summary>
+/// Result of uploading and triggering the indexing pipeline for a document.
+/// </summary>
+public sealed class DocumentUploadResultDto
+{
+    public Guid DocumentId { get; init; }
+    public string FileName { get; init; } = string.Empty;
+    public string Status { get; init; } = string.Empty;
+}
+
+/// <summary>
+/// Preview of a single chunk for UI display.
+/// </summary>
+public sealed class DocumentChunkPreviewDto
+{
+    public int ChunkIndex { get; init; }
+    public string ContentPreview { get; init; } = string.Empty;
+}

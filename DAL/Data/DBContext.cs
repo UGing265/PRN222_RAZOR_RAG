@@ -48,6 +48,8 @@ public partial class DBContext : DbContext
 
     public virtual DbSet<ChatSession> ChatSessions { get; set; }
 
+    public virtual DbSet<ChatSessionDocument> ChatSessionDocuments { get; set; }
+
     public virtual DbSet<ChatMessage> ChatMessages { get; set; }
 
     public virtual DbSet<UserSubject> UserSubjects { get; set; }
@@ -600,7 +602,6 @@ public partial class DBContext : DbContext
                 .HasDefaultValueSql("uuid_generate_v4()")
                 .HasColumnName("id");
             entity.Property(e => e.UserId).HasColumnName("user_id");
-            entity.Property(e => e.DocumentId).HasColumnName("document_id");
             entity.Property(e => e.Title)
                 .HasMaxLength(500)
                 .HasColumnName("title");
@@ -612,11 +613,26 @@ public partial class DBContext : DbContext
                 .HasForeignKey(d => d.UserId)
                 .OnDelete(DeleteBehavior.Cascade)
                 .HasConstraintName("chat_sessions_user_id_fkey");
+        });
 
-            entity.HasOne(d => d.Document).WithMany()
+        modelBuilder.Entity<ChatSessionDocument>(entity =>
+        {
+            entity.HasKey(e => new { e.SessionId, e.DocumentId }).HasName("chat_session_documents_pkey");
+
+            entity.ToTable("chat_session_documents");
+
+            entity.Property(e => e.SessionId).HasColumnName("session_id");
+            entity.Property(e => e.DocumentId).HasColumnName("document_id");
+
+            entity.HasOne(d => d.Session).WithMany(p => p.SessionDocuments)
+                .HasForeignKey(d => d.SessionId)
+                .OnDelete(DeleteBehavior.Cascade)
+                .HasConstraintName("chat_session_documents_session_id_fkey");
+
+            entity.HasOne(d => d.Document).WithMany(p => p.ChatSessionDocuments)
                 .HasForeignKey(d => d.DocumentId)
                 .OnDelete(DeleteBehavior.Cascade)
-                .HasConstraintName("chat_sessions_document_id_fkey");
+                .HasConstraintName("chat_session_documents_document_id_fkey");
         });
 
         modelBuilder.Entity<ChatMessage>(entity =>
@@ -645,6 +661,20 @@ public partial class DBContext : DbContext
                 .HasForeignKey(d => d.SessionId)
                 .OnDelete(DeleteBehavior.Cascade)
                 .HasConstraintName("chat_messages_session_id_fkey");
+
+            // JSON ValueConverter + ValueComparer for RetrievedChunkIds
+            // (EF Core 8 chuẩn — tránh warning "no value comparer configured")
+            entity.Property(e => e.RetrievedChunkIds)
+                .HasColumnName("retrieved_chunk_ids")
+                .HasColumnType("jsonb")
+                .HasDefaultValueSql("'[]'::jsonb")
+                .HasConversion(
+                    v => System.Text.Json.JsonSerializer.Serialize(v, (System.Text.Json.JsonSerializerOptions?)null),
+                    v => System.Text.Json.JsonSerializer.Deserialize<List<Guid>>(v, (System.Text.Json.JsonSerializerOptions?)null) ?? new List<Guid>(),
+                    new Microsoft.EntityFrameworkCore.ChangeTracking.ValueComparer<List<Guid>>(
+                        (c1, c2) => c1!.SequenceEqual(c2!),
+                        c => c.Aggregate(0, (a, v) => HashCode.Combine(a, v.GetHashCode())),
+                        c => c.ToList()));
         });
 
         OnModelCreatingPartial(modelBuilder);

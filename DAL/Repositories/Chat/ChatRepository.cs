@@ -64,15 +64,15 @@ public class ChatRepository : IChatRepository
     public async Task<List<DocumentChunk>> SearchSimilarChunksAsync(
         Vector queryEmbedding,
         int topK,
-        Guid? documentId,
+        List<Guid>? documentIds,
         CancellationToken cancellationToken = default)
     {
         var query = _context.DocumentChunks
             .Where(c => c.Embedding != null);
 
-        if (documentId.HasValue)
+        if (documentIds != null && documentIds.Count > 0)
         {
-            query = query.Where(c => c.DocumentId == documentId.Value);
+            query = query.Where(c => documentIds.Contains(c.DocumentId));
         }
 
         return await query
@@ -88,6 +88,30 @@ public class ChatRepository : IChatRepository
         await _context.ChatSessions
             .Where(s => s.Id == sessionId)
             .ExecuteUpdateAsync(s => s.SetProperty(e => e.Title, title), cancellationToken);
+    }
+
+    public async Task AddDocumentToSessionAsync(Guid sessionId, Guid documentId, CancellationToken cancellationToken = default)
+    {
+        var exists = await _context.ChatSessionDocuments
+            .AnyAsync(csd => csd.SessionId == sessionId && csd.DocumentId == documentId, cancellationToken);
+
+        if (!exists)
+        {
+            _context.ChatSessionDocuments.Add(new ChatSessionDocument
+            {
+                SessionId = sessionId,
+                DocumentId = documentId
+            });
+            await _context.SaveChangesAsync(cancellationToken);
+        }
+    }
+
+    public async Task<List<Guid>> GetActiveDocumentIdsAsync(Guid sessionId, CancellationToken cancellationToken = default)
+    {
+        return await _context.ChatSessionDocuments
+            .Where(csd => csd.SessionId == sessionId)
+            .Select(csd => csd.DocumentId)
+            .ToListAsync(cancellationToken);
     }
 
     public async Task SaveChangesAsync(CancellationToken cancellationToken = default)

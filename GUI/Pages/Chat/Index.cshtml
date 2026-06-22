@@ -25,15 +25,21 @@
                             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--coral)" stroke-width="2.2">
                                 <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/>
                             </svg>
-                            <select id="documentSelect" class="form-select pill-input" style="max-width: 340px; font-size: 0.88rem;">
-                                <option value="">Tất cả tài liệu</option>
+                            <select id="documentSelect" class="form-select pill-input" style="max-width: 300px; font-size: 0.88rem;">
+                                <option value="">-- Chọn tài liệu --</option>
                                 @foreach (var doc in Model.ChatDocuments)
                                 {
                                     <option value="@doc.Id">@doc.Title @(!string.IsNullOrWhiteSpace(doc.SubjectName) ? $"({doc.SubjectName})" : "")</option>
                                 }
                             </select>
+                            <button type="button" id="addDocBtn" class="btn btn-dark pill-button px-3 py-1 d-flex align-items-center gap-1" style="font-size: 0.85rem;">
+                                <i class="bi bi-plus-lg"></i> Thêm
+                            </button>
                         </div>
-                        <span id="statusBadge" class="badge rounded-pill" style="background: var(--coral-soft); color: var(--brown); font-size: 0.72rem; padding: 6px 14px;">Sẵn sàng</span>
+                        <div class="d-flex align-items-center gap-2 text-end">
+                            <div id="selectedDocsBadges" class="d-flex flex-wrap gap-1 justify-content-end" style="max-width: 300px;"></div>
+                            <span id="statusBadge" class="badge rounded-pill" style="background: var(--coral-soft); color: var(--brown); font-size: 0.72rem; padding: 6px 14px; white-space: nowrap;">Sẵn sàng</span>
+                        </div>
                     </div>
 
                     <!-- Messages container -->
@@ -45,7 +51,7 @@
                                 Assistant
                             </div>
                             <div class="chat-msg-content">
-                                Xin chào! 👋 Tôi là trợ lý tài liệu AI. Hãy chọn một tài liệu ở trên và đặt câu hỏi — tôi sẽ trả lời dựa trên nội dung tài liệu đã được index.
+                                Xin chào! 👋 Tôi là trợ lý tài liệu AI. Hãy chọn một tài liệu ở trên, bấm <strong>Thêm</strong> và đặt câu hỏi — tôi sẽ trả lời dựa trên nội dung tài liệu đã được index.
                             </div>
                         </div>
                     </div>
@@ -67,12 +73,21 @@
             <div class="col-lg-4 d-flex flex-column gap-4">
                 <!-- Sources panel -->
                 <div class="soft-panel editorial-shadow p-4">
-                    <div class="d-flex align-items-center gap-2 mb-3">
-                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--coral)" stroke-width="2.2"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg>
-                        <h2 class="h6 mb-0 fw-bold">Nguồn trích dẫn</h2>
+                    <div class="d-flex align-items-center justify-content-between mb-3">
+                        <div class="d-flex align-items-center gap-2">
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--coral)" stroke-width="2.2"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg>
+                            <h2 class="h6 mb-0 fw-bold">Nguồn tài liệu</h2>
+                        </div>
+                        <button type="button" id="clearDocsBtn" class="btn btn-sm btn-link text-danger p-0 text-decoration-none" style="font-size: 0.8rem; display: none;">Xóa tất cả</button>
                     </div>
-                    <div id="sourcesPanel">
-                        <div class="text-muted-foreground" style="font-size: 0.85rem;">Các nguồn tài liệu sẽ hiển thị ở đây sau khi AI trả lời.</div>
+                    
+                    <div id="selectedDocsList" class="d-flex flex-column gap-2 mb-3">
+                        <div class="text-muted-foreground" style="font-size: 0.85rem;" id="noDocsMsg">Chưa có tài liệu nào được chọn.</div>
+                    </div>
+
+                    <div id="aiCitationsContainer" style="display: none; border-top: 1px dashed var(--border); padding-top: 15px;">
+                        <h6 class="fw-bold mb-2" style="font-size: 0.85rem; color: var(--coral);">Trích dẫn từ AI:</h6>
+                        <div id="sourcesPanel"></div>
                     </div>
                 </div>
 
@@ -149,17 +164,82 @@
         padding: 2px 6px;
         border-radius: 6px;
         font-size: 0.85em;
+        font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
     }
     .chat-msg-content pre {
-        background: rgba(82, 39, 27, 0.04);
+        background: #f8f9fa;
+        border: 1px solid var(--border);
         border-radius: 12px;
         padding: 12px 16px;
         overflow-x: auto;
-        margin: 0.5em 0;
+        margin: 0.8em 0;
+        position: relative;
     }
     .chat-msg-content pre code {
         background: none;
         padding: 0;
+        font-size: 0.88em;
+    }
+
+    /* ── Copy Code Button ── */
+    .copy-code-btn {
+        position: absolute;
+        top: 6px;
+        right: 6px;
+        background: #ffffff;
+        border: 1px solid var(--border);
+        border-radius: 6px;
+        padding: 4px 8px;
+        font-size: 0.72rem;
+        color: var(--muted-foreground);
+        cursor: pointer;
+        opacity: 0;
+        transition: opacity 0.2s ease, background-color 0.2s ease;
+        display: flex;
+        align-items: center;
+        gap: 4px;
+        z-index: 10;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.04);
+    }
+    .chat-msg-content pre:hover .copy-code-btn {
+        opacity: 1;
+    }
+    .copy-code-btn:hover {
+        background: #f1f3f5;
+        color: var(--foreground);
+    }
+
+    /* ── Tables ── */
+    .chat-msg-content table {
+        width: 100%;
+        border-collapse: collapse;
+        margin: 1rem 0;
+        font-size: 0.88rem;
+        background: #ffffff;
+        border-radius: 8px;
+        overflow: hidden;
+        border: 1px solid var(--border);
+    }
+    .chat-msg-content th {
+        background-color: #f8f9fa;
+        font-weight: 600;
+        color: var(--foreground);
+        border-bottom: 2px solid var(--border);
+    }
+    .chat-msg-content th, .chat-msg-content td {
+        padding: 10px 14px;
+        border-right: 1px solid var(--border);
+        border-bottom: 1px solid var(--border);
+        text-align: left;
+    }
+    .chat-msg-content th:last-child, .chat-msg-content td:last-child {
+        border-right: none;
+    }
+    .chat-msg-content tr:last-child td {
+        border-bottom: none;
+    }
+    .chat-msg-content tr:nth-child(even) {
+        background-color: rgba(0, 0, 0, 0.01);
     }
 
     /* ── Typing indicator ── */
@@ -189,19 +269,39 @@
         to { opacity: 1; transform: translateY(0); }
     }
 
-    /* ── Source cards ── */
-    .source-card {
+    /* ── Source & Doc cards ── */
+    .source-card, .doc-card {
         background: rgba(255,255,255,0.7);
         border: 1px solid var(--border);
-        border-radius: 14px;
-        padding: 10px 14px;
+        border-radius: 10px;
+        padding: 8px 12px;
         font-size: 0.82rem;
         transition: all 0.2s ease;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
     }
-    .source-card:hover {
+    .source-card:hover, .doc-card:hover {
         background: rgba(255,255,255,0.95);
         border-color: var(--coral-soft);
         box-shadow: 0 4px 12px rgba(73, 33, 24, 0.06);
+    }
+    
+    .remove-doc-btn {
+        background: none;
+        border: none;
+        color: var(--muted);
+        cursor: pointer;
+        padding: 4px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        border-radius: 50%;
+        transition: all 0.2s;
+    }
+    .remove-doc-btn:hover {
+        background: rgba(220, 53, 69, 0.1);
+        color: #dc3545;
     }
 
     /* ── Session items ── */
@@ -253,11 +353,15 @@
 </style>
 
 @section Scripts {
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/highlight.js@11.9.0/styles/github.min.css">
+<script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/highlight.js@11.9.0/highlight.min.js"></script>
 <script>
 document.addEventListener('DOMContentLoaded', function () {
     // ── State ──
     let currentSessionId = null;
     let isStreaming = false;
+    let selectedDocs = []; // Array of { id, title }
 
     // ── DOM refs ──
     const chatMessages = document.getElementById('chatMessages');
@@ -265,7 +369,15 @@ document.addEventListener('DOMContentLoaded', function () {
     const chatInput = document.getElementById('chatInput');
     const sendBtn = document.getElementById('sendBtn');
     const sendIcon = document.getElementById('sendIcon');
+    
     const documentSelect = document.getElementById('documentSelect');
+    const addDocBtn = document.getElementById('addDocBtn');
+    const clearDocsBtn = document.getElementById('clearDocsBtn');
+    const selectedDocsList = document.getElementById('selectedDocsList');
+    const selectedDocsBadges = document.getElementById('selectedDocsBadges');
+    const noDocsMsg = document.getElementById('noDocsMsg');
+    
+    const aiCitationsContainer = document.getElementById('aiCitationsContainer');
     const sourcesPanel = document.getElementById('sourcesPanel');
     const sessionsPanel = document.getElementById('sessionsPanel');
     const statusBadge = document.getElementById('statusBadge');
@@ -273,6 +385,69 @@ document.addEventListener('DOMContentLoaded', function () {
 
     // ── Init ──
     loadSessions();
+
+    // ── Document Selection Logic ──
+    addDocBtn.addEventListener('click', function() {
+        const option = documentSelect.options[documentSelect.selectedIndex];
+        if (!option.value) return;
+
+        const docId = option.value;
+        const docTitle = option.text;
+
+        if (!selectedDocs.find(d => d.id === docId)) {
+            selectedDocs.push({ id: docId, title: docTitle });
+            renderSelectedDocs();
+            documentSelect.selectedIndex = 0; // Reset select
+        }
+    });
+
+    clearDocsBtn.addEventListener('click', function() {
+        selectedDocs = [];
+        renderSelectedDocs();
+    });
+
+    // Delegate remove click
+    selectedDocsList.addEventListener('click', function(e) {
+        const btn = e.target.closest('.remove-doc-btn');
+        if (btn) {
+            const docId = btn.dataset.id;
+            selectedDocs = selectedDocs.filter(d => d.id !== docId);
+            renderSelectedDocs();
+        }
+    });
+
+    function renderSelectedDocs() {
+        if (selectedDocs.length === 0) {
+            noDocsMsg.style.display = 'block';
+            clearDocsBtn.style.display = 'none';
+            selectedDocsList.innerHTML = '';
+            selectedDocsList.appendChild(noDocsMsg);
+            selectedDocsBadges.innerHTML = '';
+            return;
+        }
+
+        noDocsMsg.style.display = 'none';
+        clearDocsBtn.style.display = 'inline-block';
+        
+        // Render in sidebar
+        selectedDocsList.innerHTML = selectedDocs.map(doc => `
+            <div class="doc-card">
+                <span class="text-truncate" style="max-width: 85%;" title="${escapeHtml(doc.title)}">
+                    <i class="bi bi-file-earmark-text me-1 text-primary"></i>${escapeHtml(doc.title)}
+                </span>
+                <button type="button" class="remove-doc-btn" data-id="${doc.id}" title="Xóa">
+                    <i class="bi bi-x-lg"></i>
+                </button>
+            </div>
+        `).join('');
+
+        // Render in header badges
+        selectedDocsBadges.innerHTML = selectedDocs.map(doc => `
+            <span class="badge bg-light text-dark border text-truncate" style="max-width: 150px; font-weight: normal;" title="${escapeHtml(doc.title)}">
+                ${escapeHtml(doc.title)}
+            </span>
+        `).join('');
+    }
 
     // ── Load sessions ──
     async function loadSessions() {
@@ -318,6 +493,10 @@ document.addEventListener('DOMContentLoaded', function () {
             });
             scrollToBottom();
 
+            // Clear AI Citations when loading old session
+            aiCitationsContainer.style.display = 'none';
+            sourcesPanel.innerHTML = '';
+
             // Update active session highlight
             sessionsPanel.querySelectorAll('.session-item').forEach(el => {
                 el.classList.toggle('active', el.dataset.sessionId === sessionId);
@@ -339,9 +518,12 @@ document.addEventListener('DOMContentLoaded', function () {
                     <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M12 2L2 7l10 5 10-5-10-5z"/><path d="M2 17l10 5 10-5"/><path d="M2 12l10 5 10-5"/></svg>
                     Assistant
                 </div>
-                <div class="chat-msg-content">Xin chào! 👋 Hãy chọn tài liệu và đặt câu hỏi để bắt đầu phiên chat mới.</div>
+                <div class="chat-msg-content">Xin chào! 👋 Hãy chọn tài liệu (bấm nút "Thêm") và đặt câu hỏi để bắt đầu phiên chat mới.</div>
             </div>`;
-        sourcesPanel.innerHTML = '<div class="text-muted-foreground" style="font-size: 0.85rem;">Các nguồn tài liệu sẽ hiển thị ở đây sau khi AI trả lời.</div>';
+        
+        aiCitationsContainer.style.display = 'none';
+        sourcesPanel.innerHTML = '';
+        
         sessionsPanel.querySelectorAll('.session-item').forEach(el => el.classList.remove('active'));
         chatInput.focus();
     });
@@ -352,10 +534,11 @@ document.addEventListener('DOMContentLoaded', function () {
         const message = chatInput.value.trim();
         if (!message || isStreaming) return;
 
+        const docIds = selectedDocs.map(d => d.id);
+        
         // Validate: must select a specific document when starting a new session
-        const docId = documentSelect.value || null;
-        if (!currentSessionId && !docId) {
-            appendMessage('assistant', '⚠️ Vui lòng chọn một tài liệu cụ thể ở menu thả xuống phía trên trước khi bắt đầu chat.');
+        if (!currentSessionId && docIds.length === 0) {
+            appendMessage('assistant', '⚠️ Vui lòng chọn ít nhất một tài liệu (bấm nút "Thêm") trước khi bắt đầu chat.');
             scrollToBottom();
             return;
         }
@@ -369,12 +552,16 @@ document.addEventListener('DOMContentLoaded', function () {
         const body = {
             message: message,
             sessionId: currentSessionId,
-            documentId: docId
+            documentIds: docIds
         };
 
         isStreaming = true;
         setStatus('Đang trả lời...', true);
         setSendLoading(true);
+
+        // Hide old citations
+        aiCitationsContainer.style.display = 'none';
+        sourcesPanel.innerHTML = '';
 
         // Create assistant placeholder with typing indicator
         const assistantDiv = createAssistantPlaceholder();
@@ -427,11 +614,14 @@ document.addEventListener('DOMContentLoaded', function () {
                         continue;
                     }
 
-                    fullText += data;
+                    fullText += data.replace(/\\n/g, '\n');
                     contentEl.innerHTML = renderMarkdown(fullText);
                     scrollToBottom();
                 }
             }
+
+            // Highlight final streamed code block
+            highlightCodeBlocks(assistantDiv);
 
             // If we got no text at all, try non-streaming endpoint as fallback
             if (!fullText) {
@@ -444,6 +634,7 @@ document.addEventListener('DOMContentLoaded', function () {
                     const data = await fallbackRes.json();
                     fullText = data.reply;
                     contentEl.innerHTML = renderMarkdown(fullText);
+                    highlightCodeBlocks(assistantDiv);
                     if (data.sessionId) currentSessionId = data.sessionId;
                     if (data.sources && data.sources.length > 0) {
                         renderSources(data.sources);
@@ -484,6 +675,9 @@ document.addEventListener('DOMContentLoaded', function () {
             <div class="chat-msg-content">${isUser ? escapeHtml(content) : renderMarkdown(content)}</div>
         `;
         chatMessages.appendChild(div);
+        if (!isUser) {
+            highlightCodeBlocks(div);
+        }
     }
 
     function createAssistantPlaceholder() {
@@ -504,13 +698,15 @@ document.addEventListener('DOMContentLoaded', function () {
     // ── Sources rendering ──
     function renderSources(sources) {
         if (!sources || sources.length === 0) {
-            sourcesPanel.innerHTML = '<div class="text-muted-foreground" style="font-size: 0.85rem;">Không tìm thấy nguồn trích dẫn.</div>';
+            aiCitationsContainer.style.display = 'none';
             return;
         }
+        
+        aiCitationsContainer.style.display = 'block';
         sourcesPanel.innerHTML = sources.map((s, i) => `
             <div class="source-card mb-2">
                 <div class="d-flex align-items-start gap-2">
-                    <span class="chunk-chip flex-shrink-0">${i + 1}</span>
+                    <span class="chunk-chip flex-shrink-0 badge bg-primary rounded-circle" style="width:20px;height:20px;padding:0;line-height:20px;text-align:center;">${i + 1}</span>
                     <div>
                         <div class="fw-semibold" style="color: var(--foreground); font-size: 0.84rem;">${escapeHtml(s.documentTitle)}</div>
                         ${s.chapterTitle ? `<div class="text-muted-foreground" style="font-size: 0.78rem;">📖 ${escapeHtml(s.chapterTitle)}</div>` : ''}
@@ -548,36 +744,48 @@ document.addEventListener('DOMContentLoaded', function () {
         });
     }
 
-    // ── Simple markdown renderer ──
+    // ── Markdown renderer using marked.js ──
     function renderMarkdown(text) {
         if (!text) return '';
-        let html = escapeHtml(text);
+        
+        // Configure marked options
+        marked.setOptions({
+            breaks: true, // Convert \n to <br> for conversational layout
+            gfm: true     // Enable GitHub Flavored Markdown (tables, autolinks, task lists)
+        });
 
-        // Code blocks
-        html = html.replace(/```(\w*)\n([\s\S]*?)```/g, '<pre><code>$2</code></pre>');
-        // Inline code
-        html = html.replace(/`([^`]+)`/g, '<code>$1</code>');
-        // Bold
-        html = html.replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>');
-        // Italic
-        html = html.replace(/\*(.+?)\*/g, '<em>$1</em>');
-        // Headers
-        html = html.replace(/^### (.+)$/gm, '<h5 class="fw-bold mt-2 mb-1" style="font-size:0.95rem;">$1</h5>');
-        html = html.replace(/^## (.+)$/gm, '<h4 class="fw-bold mt-2 mb-1" style="font-size:1rem;">$1</h4>');
-        html = html.replace(/^# (.+)$/gm, '<h3 class="fw-bold mt-2 mb-1" style="font-size:1.1rem;">$1</h3>');
-        // Unordered lists
-        html = html.replace(/^[-*] (.+)$/gm, '<li>$1</li>');
-        html = html.replace(/(<li>.*<\/li>\n?)+/g, '<ul>$&</ul>');
-        // Ordered lists
-        html = html.replace(/^\d+\. (.+)$/gm, '<li>$1</li>');
-        // Line breaks → paragraphs
-        html = html.replace(/\n\n/g, '</p><p>');
-        html = html.replace(/\n/g, '<br>');
-        html = '<p>' + html + '</p>';
-        // Clean up empty paragraphs
-        html = html.replace(/<p>\s*<\/p>/g, '');
+        return marked.parse(text);
+    }
 
-        return html;
+    // ── Syntax highlighting and copy button integration ──
+    function highlightCodeBlocks(container) {
+        if (typeof hljs !== 'undefined') {
+            container.querySelectorAll('pre code').forEach((el) => {
+                if (!el.dataset.highlighted) {
+                    hljs.highlightElement(el);
+                    el.dataset.highlighted = 'true';
+                    
+                    // Add copy button
+                    const pre = el.parentElement;
+                    if (pre && !pre.querySelector('.copy-code-btn')) {
+                        const btn = document.createElement('button');
+                        btn.className = 'copy-code-btn';
+                        btn.type = 'button';
+                        btn.innerHTML = '<i class="bi bi-clipboard"></i> Copy';
+                        btn.title = 'Sao chép mã nguồn';
+                        btn.addEventListener('click', () => {
+                            navigator.clipboard.writeText(el.textContent).then(() => {
+                                btn.innerHTML = '<i class="bi bi-check-lg text-success"></i> Copied!';
+                                setTimeout(() => {
+                                    btn.innerHTML = '<i class="bi bi-clipboard"></i> Copy';
+                                }, 2000);
+                            });
+                        });
+                        pre.appendChild(btn);
+                    }
+                }
+            });
+        }
     }
 
     // ── Utilities ──

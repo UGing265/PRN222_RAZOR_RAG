@@ -4,7 +4,7 @@ public sealed class ChatRequest
 {
     public Guid? SessionId { get; set; }
     public string Message { get; set; } = string.Empty;
-    public Guid? DocumentId { get; set; }
+    public List<Guid>? DocumentIds { get; set; }
 }
 
 public sealed class ChatResponse
@@ -46,4 +46,16 @@ public sealed class GeminiChatMessage
 {
     public string Role { get; set; } = string.Empty;
     public string Content { get; set; } = string.Empty;
+}
+
+/// <summary>
+/// Result of comparing multiple documents via LLM.
+/// Field names match the COMPARISON_PROMPT JSON schema exactly for direct deserialization.
+/// </summary>
+public sealed class ComparisonResultDto
+{
+    public decimal SimilarityPercentage { get; set; }
+    public string SimilarityExplanation { get; set; } = string.Empty;
+    public List<string> SimilarPoints { get; set; } = [];
+    public Dictionary<string, List<string>> DifferentPoints { get; set; } = new();
 }
