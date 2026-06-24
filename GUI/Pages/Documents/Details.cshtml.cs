@@ -44,7 +44,8 @@ public class DetailsModel : PageModel
                 return Unauthorized();
             }
 
-            string cookieKey = $"ViewedDoc_{userId}_{slug}";
+            string safeSlug = Convert.ToBase64String(System.Text.Encoding.UTF8.GetBytes(slug)).Replace("=", "").Replace("+", "-").Replace("/", "_");
+            string cookieKey = $"ViewedDoc_{userId}_{safeSlug}";
             bool hasViewed = Request.Cookies.ContainsKey(cookieKey);
             bool isAdmin = User.IsInRole("Admin");
 
@@ -129,7 +130,7 @@ public class DetailsModel : PageModel
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error while loading document details for slug: {Slug}", slug);
-            TempData["ErrorMessage"] = "Không thể tải chi tiết tài liệu. Lỗi: " + ex.Message + " | " + ex.StackTrace?.Substring(0, Math.Min(ex.StackTrace.Length, 200));
+            TempData["ErrorMessage"] = "Không thể tải chi tiết tài liệu.";
             return RedirectToPage("/Documents/All");
         }
     }
