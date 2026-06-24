@@ -4,353 +4,221 @@
     ViewData["Title"] = "Chat";
 }
 
-<div class="page-shell grain">
-    <div class="container-fluid px-4 px-md-5 py-4 py-md-5">
-        <div class="d-flex justify-content-between align-items-start gap-3 mb-4">
-            <div>
-                <div class="kicker">— Knowledge chat</div>
-                <h1 class="hero-title" style="font-size: clamp(2.5rem, 5vw, 4.5rem);">Chat</h1>
-                <p class="text-muted-foreground mt-2 mb-0">Hỏi đáp với tài liệu, trích nguồn và tìm thông tin nhanh chóng.</p>
-            </div>
-            <a asp-page="/Documents/AllDocuments" class="font-mono-xs text-muted-foreground link-plain">← Khám Phá</a>
-        </div>
+@using System.Text.Json
 
-        <div class="row g-4">
-            <!-- Main Chat Area -->
-            <div class="col-lg-8">
-                <div class="soft-panel editorial-shadow p-4 p-md-5 d-flex flex-column" style="min-height: 70vh;">
-                    <!-- Header: Document selector + status -->
-                    <div class="d-flex justify-content-between align-items-center mb-3 flex-wrap gap-2">
-                        <div class="d-flex align-items-center gap-2 flex-grow-1">
-                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--coral)" stroke-width="2.2">
-                                <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/>
-                            </svg>
-                            <select id="documentSelect" class="form-select pill-input" style="max-width: 300px; font-size: 0.88rem;">
-                                <option value="">-- Chọn tài liệu --</option>
-                                @foreach (var doc in Model.ChatDocuments)
-                                {
-                                    <option value="@doc.Id">@doc.Title @(!string.IsNullOrWhiteSpace(doc.SubjectName) ? $"({doc.SubjectName})" : "")</option>
-                                }
-                            </select>
-                            <button type="button" id="addDocBtn" class="btn btn-dark pill-button px-3 py-1 d-flex align-items-center gap-1" style="font-size: 0.85rem;">
-                                <i class="bi bi-plus-lg"></i> Thêm
-                            </button>
-                        </div>
-                        <div class="d-flex align-items-center gap-2 text-end">
-                            <div id="selectedDocsBadges" class="d-flex flex-wrap gap-1 justify-content-end" style="max-width: 300px;"></div>
-                            <span id="statusBadge" class="badge rounded-pill" style="background: var(--coral-soft); color: var(--brown); font-size: 0.72rem; padding: 6px 14px; white-space: nowrap;">Sẵn sàng</span>
-                        </div>
-                    </div>
-
-                    <!-- Messages container -->
-                    <div id="chatMessages" class="flex-grow-1 d-flex flex-column gap-3 mb-4 overflow-auto" style="min-height: 48vh; max-height: 56vh; scroll-behavior: smooth;">
-                        <!-- Welcome message -->
-                        <div class="chat-msg chat-msg-assistant">
-                            <div class="chat-msg-label">
-                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M12 2L2 7l10 5 10-5-10-5z"/><path d="M2 17l10 5 10-5"/><path d="M2 12l10 5 10-5"/></svg>
-                                Assistant
-                            </div>
-                            <div class="chat-msg-content">
-                                Xin chào! 👋 Tôi là trợ lý tài liệu AI. Hãy chọn một tài liệu ở trên, bấm <strong>Thêm</strong> và đặt câu hỏi — tôi sẽ trả lời dựa trên nội dung tài liệu đã được index.
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- Input area -->
-                    <div class="border-top border-border pt-3">
-                        <form id="chatForm" class="d-flex gap-2">
-                            <input id="chatInput" class="form-control pill-input flex-grow-1" placeholder="Nhập câu hỏi của bạn..." autocomplete="off" />
-                            <button id="sendBtn" class="btn btn-dark pill-button px-4 d-flex align-items-center gap-2" type="submit">
-                                <svg id="sendIcon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
-                                <span>Gửi</span>
-                            </button>
-                        </form>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Right Sidebar: Sources + Sessions -->
-            <div class="col-lg-4 d-flex flex-column gap-4">
-                <!-- Sources panel -->
-                <div class="soft-panel editorial-shadow p-4">
-                    <div class="d-flex align-items-center justify-content-between mb-3">
-                        <div class="d-flex align-items-center gap-2">
-                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--coral)" stroke-width="2.2"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg>
-                            <h2 class="h6 mb-0 fw-bold">Nguồn tài liệu</h2>
-                        </div>
-                        <button type="button" id="clearDocsBtn" class="btn btn-sm btn-link text-danger p-0 text-decoration-none" style="font-size: 0.8rem; display: none;">Xóa tất cả</button>
-                    </div>
-                    
-                    <div id="selectedDocsList" class="d-flex flex-column gap-2 mb-3">
-                        <div class="text-muted-foreground" style="font-size: 0.85rem;" id="noDocsMsg">Chưa có tài liệu nào được chọn.</div>
-                    </div>
-
-                    <div id="aiCitationsContainer" style="display: none; border-top: 1px dashed var(--border); padding-top: 15px;">
-                        <h6 class="fw-bold mb-2" style="font-size: 0.85rem; color: var(--coral);">Trích dẫn từ AI:</h6>
-                        <div id="sourcesPanel"></div>
-                    </div>
-                </div>
-
-                <!-- Sessions panel -->
-                <div class="soft-panel editorial-shadow p-4">
-                    <div class="d-flex align-items-center justify-content-between mb-3">
-                        <div class="d-flex align-items-center gap-2">
-                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--coral)" stroke-width="2.2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
-                            <h2 class="h6 mb-0 fw-bold">Lịch sử phiên</h2>
-                        </div>
-                        <button id="newSessionBtn" class="btn btn-sm pill-button d-flex align-items-center gap-1" style="background: var(--coral-soft); color: var(--brown); font-size: 0.75rem; padding: 5px 12px;" title="Tạo phiên chat mới">
-                            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
-                            Phiên mới
-                        </button>
-                    </div>
-                    <div id="sessionsPanel" class="d-flex flex-column gap-2" style="max-height: 300px; overflow-y: auto;">
-                        <div class="text-muted-foreground" style="font-size: 0.85rem;">Chưa có phiên chat nào.</div>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-</div>
+<script src="https://cdn.tailwindcss.com"></script>
+<style>
+  .chat-root, #searchModal {
+    --bg: #f6e8de;
+    --card: #fdf6f1;
+    --card-2: #ffffff;
+    --fg: #2a1f1a;
+    --muted: #8a7a72;
+    --border: #ead9cd;
+    --accent: #f0dccd;
+    --primary: #e08a6a;
+    --primary-hover: #d4795a;
+    --primary-fg: #ffffff;
+    --dark: #3a3a3a;
+  }
+</style>
+<script>
+    tailwind.config = {
+        corePlugins: {
+            preflight: false, // Don't conflict with Bootstrap
+        },
+        theme: {
+            extend: {
+                colors: {
+                    background: 'var(--bg)',
+                    foreground: 'var(--fg)',
+                    card: { DEFAULT: 'var(--card)', secondary: 'var(--card-2)' },
+                    border: 'var(--border)',
+                    muted: { foreground: 'var(--muted)' },
+                    accent: { DEFAULT: 'var(--accent)', foreground: 'var(--fg)' },
+                    primary: { DEFAULT: 'var(--primary)', hover: 'var(--primary-hover)', foreground: 'var(--primary-fg)' },
+                    dark: 'var(--dark)'
+                }
+            }
+        }
+    }
+</script>
+<link rel="stylesheet" href="https://unpkg.com/lucide-static@latest/font/lucide.css">
 
 <style>
-    /* ── Chat message bubbles ── */
-    .chat-msg {
-        max-width: 82%;
-        animation: msgFadeIn 0.3s cubic-bezier(0.16, 1, 0.3, 1);
-    }
-    .chat-msg-assistant {
-        align-self: flex-start;
-    }
-    .chat-msg-user {
-        align-self: flex-end;
-    }
-    .chat-msg-label {
-        font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
-        font-size: 10px;
-        letter-spacing: 0.12em;
-        text-transform: uppercase;
-        margin-bottom: 6px;
-        display: flex;
-        align-items: center;
-        gap: 5px;
-    }
-    .chat-msg-assistant .chat-msg-label { color: var(--coral); }
-    .chat-msg-user .chat-msg-label { color: rgba(255,255,255,0.6); text-align: right; justify-content: flex-end; }
+    /* ===== BOOTSTRAP OVERRIDES for Chat Page ===== */
+    .chat-root, #searchModal {
+        --background: oklch(0.97 0.025 50);
+        --foreground: oklch(0.28 0.05 35);
+        --card: oklch(0.985 0.018 55);
+        --primary: oklch(0.72 0.16 40);
+        --primary-foreground: oklch(0.99 0.005 60);
+        --muted-foreground: oklch(0.5 0.04 40);
+        --accent: oklch(0.9 0.05 45);
+        --border: oklch(0.89 0.03 50);
+        --chip: oklch(0.32 0.04 40);
+        --chip-foreground: oklch(0.97 0.02 60);
 
-    .chat-msg-content {
-        padding: 14px 18px;
-        border-radius: 20px;
-        font-size: 0.92rem;
-        line-height: 1.65;
-        word-break: break-word;
-    }
-    .chat-msg-assistant .chat-msg-content {
-        background: rgba(255, 255, 255, 0.85);
-        border: 1px solid var(--border);
-        color: var(--foreground);
-    }
-    .chat-msg-user .chat-msg-content {
-        background: var(--brown);
-        color: #fff;
-    }
-
-    /* ── Markdown inside messages ── */
-    .chat-msg-content p { margin: 0 0 0.5em; }
-    .chat-msg-content p:last-child { margin-bottom: 0; }
-    .chat-msg-content ul, .chat-msg-content ol { margin: 0.25em 0; padding-left: 1.3em; }
-    .chat-msg-content strong { font-weight: 700; }
-    .chat-msg-content code {
-        background: rgba(82, 39, 27, 0.06);
-        padding: 2px 6px;
-        border-radius: 6px;
-        font-size: 0.85em;
-        font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
-    }
-    .chat-msg-content pre {
-        background: #f8f9fa;
-        border: 1px solid var(--border);
-        border-radius: 12px;
-        padding: 12px 16px;
-        overflow-x: auto;
-        margin: 0.8em 0;
-        position: relative;
-    }
-    .chat-msg-content pre code {
-        background: none;
-        padding: 0;
-        font-size: 0.88em;
-    }
-
-    /* ── Copy Code Button ── */
-    .copy-code-btn {
-        position: absolute;
-        top: 6px;
-        right: 6px;
-        background: #ffffff;
-        border: 1px solid var(--border);
-        border-radius: 6px;
-        padding: 4px 8px;
-        font-size: 0.72rem;
-        color: var(--muted-foreground);
-        cursor: pointer;
-        opacity: 0;
-        transition: opacity 0.2s ease, background-color 0.2s ease;
-        display: flex;
-        align-items: center;
-        gap: 4px;
-        z-index: 10;
-        box-shadow: 0 2px 4px rgba(0,0,0,0.04);
-    }
-    .chat-msg-content pre:hover .copy-code-btn {
-        opacity: 1;
-    }
-    .copy-code-btn:hover {
-        background: #f1f3f5;
-        color: var(--foreground);
-    }
-
-    /* ── Tables ── */
-    .chat-msg-content table {
-        width: 100%;
-        border-collapse: collapse;
-        margin: 1rem 0;
-        font-size: 0.88rem;
-        background: #ffffff;
-        border-radius: 8px;
-        overflow: hidden;
-        border: 1px solid var(--border);
-    }
-    .chat-msg-content th {
-        background-color: #f8f9fa;
-        font-weight: 600;
-        color: var(--foreground);
-        border-bottom: 2px solid var(--border);
-    }
-    .chat-msg-content th, .chat-msg-content td {
-        padding: 10px 14px;
-        border-right: 1px solid var(--border);
-        border-bottom: 1px solid var(--border);
-        text-align: left;
-    }
-    .chat-msg-content th:last-child, .chat-msg-content td:last-child {
-        border-right: none;
-    }
-    .chat-msg-content tr:last-child td {
-        border-bottom: none;
-    }
-    .chat-msg-content tr:nth-child(even) {
-        background-color: rgba(0, 0, 0, 0.01);
-    }
-
-    /* ── Typing indicator ── */
-    .typing-indicator {
-        display: inline-flex;
-        align-items: center;
-        gap: 4px;
-        padding: 4px 0;
-    }
-    .typing-indicator span {
-        width: 7px;
-        height: 7px;
-        background: var(--coral);
-        border-radius: 50%;
-        animation: typingBounce 1.2s infinite;
-        opacity: 0.6;
-    }
-    .typing-indicator span:nth-child(2) { animation-delay: 0.15s; }
-    .typing-indicator span:nth-child(3) { animation-delay: 0.3s; }
-
-    @@keyframes typingBounce {
-        0%, 60%, 100% { transform: translateY(0); opacity: 0.6; }
-        30% { transform: translateY(-6px); opacity: 1; }
-    }
-    @@keyframes msgFadeIn {
-        from { opacity: 0; transform: translateY(10px); }
-        to { opacity: 1; transform: translateY(0); }
-    }
-
-    /* ── Source & Doc cards ── */
-    .source-card, .doc-card {
-        background: rgba(255,255,255,0.7);
-        border: 1px solid var(--border);
-        border-radius: 10px;
-        padding: 8px 12px;
-        font-size: 0.82rem;
-        transition: all 0.2s ease;
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-    }
-    .source-card:hover, .doc-card:hover {
-        background: rgba(255,255,255,0.95);
-        border-color: var(--coral-soft);
-        box-shadow: 0 4px 12px rgba(73, 33, 24, 0.06);
     }
     
-    .remove-doc-btn {
-        background: none;
-        border: none;
-        color: var(--muted);
-        cursor: pointer;
-        padding: 4px;
+    .chat-root { background: var(--background) !important; color: var(--foreground) !important; font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif !important; }
+    .chat-root * { box-sizing: border-box; }
+    .chat-root button { font-family: inherit; }
+    .chat-root input, .chat-root select { font-family: inherit; }
+    .chat-root h1, .chat-root h2, .chat-root h3, .chat-root h6 { font-family: inherit; color: var(--foreground); margin-bottom: 0; }
+    .chat-root ul { list-style: none; padding-left: 0; margin-bottom: 0; }
+    .chat-root p { margin-bottom: 0; }
+    .chat-root form { margin: 0; }
+
+    /* ===== Scrollbars ===== */
+    .chat-scroll::-webkit-scrollbar { width: 6px; height: 6px; }
+    .chat-scroll::-webkit-scrollbar-track { background: transparent; }
+    .chat-scroll::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+
+    /* ===== Markdown ===== */
+    .markdown-body p { margin: 0 0 0.5em; }
+    .markdown-body p:last-child { margin-bottom: 0; }
+    .markdown-body ul, .markdown-body ol { margin: 0.25em 0; padding-left: 1.3em; list-style-type: disc; }
+    .markdown-body strong { font-weight: 700; }
+    .markdown-body code { background: rgba(82,39,27,0.06); padding: 2px 6px; border-radius: 6px; font-size: 0.85em; font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace; }
+    .markdown-body pre { background: #f8f9fa; border: 1px solid var(--border); border-radius: 12px; padding: 12px 16px; overflow-x: auto; margin: 0.8em 0; position: relative; }
+    .markdown-body pre code { background: none; padding: 0; font-size: 0.88em; }
+    .markdown-body table { width: 100%; border-collapse: collapse; margin: 1rem 0; font-size: 0.88rem; background: #fff; border-radius: 8px; overflow: hidden; border: 1px solid var(--border); }
+    .markdown-body th { background-color: #f8f9fa; font-weight: 600; border-bottom: 2px solid var(--border); padding: 10px 14px; text-align: left; }
+    .markdown-body td { padding: 10px 14px; border-bottom: 1px solid var(--border); }
+
+    /* ===== Typing indicator ===== */
+    .typing-indicator { display: inline-flex; align-items: center; gap: 4px; padding: 4px 0; }
+    .typing-indicator span { width: 7px; height: 7px; background: var(--primary); border-radius: 50%; animation: typingBounce 1.2s infinite; opacity: 0.6; }
+    .typing-indicator span:nth-child(2) { animation-delay: 0.15s; }
+    .typing-indicator span:nth-child(3) { animation-delay: 0.3s; }
+    @@keyframes typingBounce { 0%,60%,100% { transform: translateY(0); opacity: 0.6; } 30% { transform: translateY(-6px); opacity: 1; } }
+    @@keyframes msgFadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+    .chat-anim { animation: msgFadeIn 0.3s cubic-bezier(0.16,1,0.3,1); }
+
+    /* Xóa bỏ khoảng trắng bao quanh layout chính cho trang Chat */
+    .main-stage {
+        padding: 0 !important;
+        height: 100vh;
         display: flex;
-        align-items: center;
-        justify-content: center;
-        border-radius: 50%;
-        transition: all 0.2s;
+        flex-direction: column;
     }
-    .remove-doc-btn:hover {
-        background: rgba(220, 53, 69, 0.1);
-        color: #dc3545;
-    }
-
-    /* ── Session items ── */
-    .session-item {
-        padding: 10px 14px;
-        border-radius: 14px;
-        cursor: pointer;
-        transition: all 0.2s ease;
-        border: 1px solid transparent;
-    }
-    .session-item:hover {
-        background: rgba(255,255,255,0.6);
-        border-color: var(--border);
-    }
-    .session-item.active {
-        background: var(--coral-soft);
-        border-color: rgba(216, 106, 88, 0.2);
-    }
-    .session-item .session-title {
-        font-size: 0.84rem;
-        font-weight: 500;
-        color: var(--foreground);
-        white-space: nowrap;
-        overflow: hidden;
-        text-overflow: ellipsis;
-    }
-    .session-item .session-time {
-        font-family: ui-monospace, monospace;
-        font-size: 10px;
-        color: var(--muted);
-        letter-spacing: 0.04em;
-    }
-
-    /* ── Scrollbar styling ── */
-    #chatMessages::-webkit-scrollbar, #sessionsPanel::-webkit-scrollbar { width: 5px; }
-    #chatMessages::-webkit-scrollbar-track, #sessionsPanel::-webkit-scrollbar-track { background: transparent; }
-    #chatMessages::-webkit-scrollbar-thumb, #sessionsPanel::-webkit-scrollbar-thumb { background: var(--coral-soft); border-radius: 10px; }
-
-    /* ── Send button states ── */
-    #sendBtn:disabled {
-        opacity: 0.6;
-        cursor: not-allowed;
-    }
-    #sendBtn .spinner-border {
-        width: 16px;
-        height: 16px;
-        border-width: 2px;
+    .main-stage > .d-lg-none {
+        padding: 16px;
+        margin-bottom: 0 !important;
     }
 </style>
+
+<div class="chat-root" style="flex: 1; overflow: hidden; display: flex; flex-direction: column; min-height: 0;">
+  <!-- CHAT + SIDEBAR -->
+  <div style="display: flex; flex: 1; min-height: 0; width: 100%;">
+    
+    <!-- LEFT SIDEBAR -->
+    <aside style="width: 288px; flex-shrink: 0; display: flex; flex-direction: column; overflow: hidden;">
+      <div style="display: flex; align-items: center; justify-content: space-between; padding: 16px; padding-bottom: 8px; flex-shrink: 0;">
+        <h2 style="font-size: 0.75rem; font-weight: 600; letter-spacing: 0.05em; color: var(--muted-foreground); text-transform: uppercase;">LỊCH SỬ PHIÊN</h2>
+        <button id="newSessionBtn" style="display: flex; align-items: center; gap: 4px; border-radius: 9999px; background: var(--primary); color: var(--primary-foreground); padding: 6px 12px; font-size: 0.75rem; font-weight: 500; border: none; cursor: pointer;">
+          <svg style="width: 14px; height: 14px; stroke: currentColor; fill: none; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round;" viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+          Phiên mới
+        </button>
+      </div>
+      <ul id="sessionsPanel" class="chat-scroll" style="flex: 1; overflow-y: auto; display: flex; flex-direction: column; gap: 8px; padding: 8px 16px 16px 16px; margin: 0; list-style: none;">
+        <div style="font-size: 0.85rem; color: var(--muted-foreground);">Chưa có phiên chat nào.</div>
+      </ul>
+    </aside>
+
+    <!-- MAIN CHAT AREA -->
+    <main style="position: relative; flex: 1; display: flex; flex-direction: column; min-width: 0; overflow: hidden;">
+      <div style="pointer-events: none; position: absolute; inset: 0; background: radial-gradient(ellipse 55% 45% at 50% 50%, color-mix(in oklab, var(--primary) 35%, transparent) 0%, transparent 70%); z-index: 0;"></div>
+      
+      <div style="position: relative; display: flex; flex-direction: column; flex: 1; min-height: 0; z-index: 1;">
+        <!-- Header -->
+        <header style="display: flex; align-items: center; justify-content: space-between; padding: 20px 32px;">
+          <div style="display: flex; align-items: center; gap: 12px;">
+            <h1 style="font-size: 1.5rem; font-weight: 600;">StudyMate AI</h1>
+            <span id="statusBadge" style="border-radius: 9999px; background: var(--chip); color: var(--chip-foreground); padding: 4px 12px; font-size: 0.75rem; font-weight: 500;">Sẵn sàng</span>
+          </div>
+          <div style="display: flex; align-items: center; gap: 12px;">
+            <span style="border-radius: 9999px; background: var(--chip); color: var(--chip-foreground); padding: 4px 12px; font-size: 0.75rem; font-weight: 500;"><span id="docCount">0</span> tài liệu</span>
+            <button type="button" onclick="window.openSearch()" aria-label="Tìm tài liệu" style="width: 36px; height: 36px; border-radius: 9999px; display: flex; align-items: center; justify-content: center; background: none; border: none; cursor: pointer; color: var(--foreground); transition: background 0.15s;" onmouseover="this.style.background='var(--accent)'" onmouseout="this.style.background='none'">
+              <svg style="width: 16px; height: 16px; stroke: currentColor; fill: none; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round;" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+            </button>
+          </div>
+        </header>
+
+        <!-- Messages -->
+        <div id="chatMessages" class="chat-scroll" style="flex: 1; overflow-y: auto; padding: 32px; display: flex; flex-direction: column; gap: 16px;">
+          <div style="width: 100%; max-width: 48rem; margin: 0 auto;">
+            <div style="font-size: 0.75rem; font-weight: 600; tracking-wider: 0.05em; color: var(--primary); margin-bottom: 8px; text-transform: uppercase;">ASSISTANT</div>
+            <div style="font-size: 0.875rem; line-height: 1.625;">
+              Xin chào! 👋 Tôi là trợ lý tài liệu AI. Bấm vào icon kính lúp ở góc trên bên phải để tìm và gắn tài liệu — tôi sẽ sẵn sàng trả lời câu hỏi của bạn.
+            </div>
+          </div>
+        </div>
+
+        <!-- Composer -->
+        <div style="padding: 0 32px 24px 32px;">
+          <div style="max-width: 48rem; margin: 0 auto; display: flex; flex-direction: column;">
+            <form id="chatForm" style="display: flex; align-items: center; gap: 8px; border-radius: 9999px; background: var(--card); padding: 8px 8px 8px 20px; border: 1px solid var(--border);">
+              <input id="chatInput" type="text" placeholder="Hỏi điều gì đó về tài liệu môn học..."
+                style="flex: 1; background: transparent; font-size: 0.875rem; padding: 8px 0; border: none; outline: none; color: var(--foreground); box-shadow: none;" />
+              <button id="sendBtn" type="submit" style="display: flex; align-items: center; gap: 8px; border-radius: 9999px; background: var(--primary); color: var(--primary-foreground); padding: 8px 20px; font-size: 0.875rem; font-weight: 500; border: none; cursor: pointer; transition: opacity 0.15s;" onmouseover="this.style.opacity='0.9'" onmouseout="this.style.opacity='1'">
+                <svg style="width: 16px; height: 16px; stroke: currentColor; fill: none; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round;" viewBox="0 0 24 24"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
+                Gửi
+              </button>
+            </form>
+
+            <div style="margin-top: 16px;">
+              <div style="font-size: 0.75rem; font-weight: 600; letter-spacing: 0.05em; color: var(--muted-foreground); margin-bottom: 4px; display: flex; justify-content: space-between;">
+                <span>NGUỒN TÀI LIỆU</span>
+                <button type="button" id="clearDocsBtn" style="display: none; font-size: 0.75rem; color: #ef4444; background: none; border: none; cursor: pointer; padding: 0;">Xóa tất cả</button>
+              </div>
+              <div id="attached-list">
+                <p style="font-size: 0.875rem; font-style: italic; color: var(--muted-foreground);">Chưa có tài liệu nào được chọn. Bấm 🔍 để tìm và gắn.</p>
+              </div>
+            </div>
+
+            <div id="aiCitationsContainer" style="display: none; padding-top: 12px; margin-top: 12px; border-top: 1px solid var(--border);">
+              <h6 style="font-size: 0.75rem; font-weight: 700; margin-bottom: 8px; color: var(--primary);">Trích dẫn từ AI:</h6>
+              <div id="sourcesPanel" style="display: flex; flex-direction: column; gap: 8px;"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </main>
+
+  </div>
+</div>
+
+<!-- Search Modal -->
+<div id="modal" style="display: none; position: fixed; inset: 0; z-index: 50; align-items: center; justify-content: center; padding: 16px;">
+  <div style="position: absolute; inset: 0; background: rgba(0,0,0,.5);"></div>
+  <div style="position: relative; width: 100%; max-width: 48rem; max-height: 85vh; border-radius: 24px; display: flex; flex-direction: column; overflow: hidden; background: var(--background); border: 1px solid var(--border); padding: 32px; z-index: 51;">
+    <button type="button" onclick="window.closeSearch()" style="position: absolute; right: 20px; top: 20px; color: var(--muted-foreground); background: none; border: none; cursor: pointer; font-size: 1.25rem;">✕</button>
+    <h3 style="font-size: 1.25rem; font-weight: 600; margin-bottom: 16px;">Tìm & gắn tài liệu</h3>
+
+    <div style="display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 12px; margin-bottom: 24px;">
+      <input id="nameQ" placeholder="Tên tài liệu..." style="height: 40px; border-radius: 9999px; background: var(--card); padding: 0 16px; font-size: 0.875rem; border: 1px solid var(--border); outline: none;" />
+      <select id="semesterFilter" style="height: 40px; border-radius: 9999px; background: var(--card); padding: 0 16px; font-size: 0.875rem; border: 1px solid var(--border); outline: none;">
+        <option value="">-- Tất cả học kỳ --</option>
+      </select>
+      <select id="subjectFilter" style="height: 40px; border-radius: 9999px; background: var(--card); padding: 0 16px; font-size: 0.875rem; border: 1px solid var(--border); outline: none;">
+        <option value="">-- Chọn kỳ trước --</option>
+      </select>
+      <select id="materialFilter" style="height: 40px; border-radius: 9999px; background: var(--card); padding: 0 16px; font-size: 0.875rem; border: 1px solid var(--border); outline: none;">
+        <option value="">-- Tất cả loại --</option>
+      </select>
+    </div>
+
+    <div id="modal-body" class="chat-scroll" style="flex: 1; overflow-y: auto; display: flex; flex-direction: column; gap: 20px;">
+      <!-- Search results will be injected here -->
+    </div>
+
+    <div style="display: flex; justify-content: flex-end; margin-top: 24px;">
+      <button type="button" onclick="window.closeSearch()" style="border-radius: 9999px; background: var(--primary); color: var(--primary-foreground); padding: 8px 24px; font-size: 0.875rem; font-weight: 500; border: none; cursor: pointer; transition: opacity 0.15s;" onmouseover="this.style.opacity='0.9'" onmouseout="this.style.opacity='1'">Xong</button>
+    </div>
+  </div>
+</div>
 
 @section Scripts {
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/highlight.js@11.9.0/styles/github.min.css">
@@ -358,103 +226,219 @@
 <script src="https://cdn.jsdelivr.net/npm/highlight.js@11.9.0/highlight.min.js"></script>
 <script>
 document.addEventListener('DOMContentLoaded', function () {
-    // ── State ──
-    let currentSessionId = null;
-    let isStreaming = false;
-    let selectedDocs = []; // Array of { id, title }
+    // ── Backend Docs Data ──
+    const DOCS = @Html.Raw(JsonSerializer.Serialize(Model.ChatDocuments.Select(d => new {
+        id = d.Id,
+        name = d.Title,
+        semester = d.AcademicTermName ?? "Chưa xác định",
+        subject = d.SubjectName ?? "Chưa xác định",
+        material = d.DocumentTypeName ?? "Chưa xác định"
+    })));
+
+    // Extract unique filter options
+    const SEMESTERS = [...new Set(DOCS.map(d => d.semester))].filter(Boolean).sort();
+    const MATERIAL_TYPES = [...new Set(DOCS.map(d => d.material))].filter(Boolean).sort();
+    const SUBJECTS_BY_SEMESTER = {};
+    DOCS.forEach(d => {
+        if (!SUBJECTS_BY_SEMESTER[d.semester]) SUBJECTS_BY_SEMESTER[d.semester] = new Set();
+        SUBJECTS_BY_SEMESTER[d.semester].add(d.subject);
+    });
+    Object.keys(SUBJECTS_BY_SEMESTER).forEach(k => {
+        SUBJECTS_BY_SEMESTER[k] = [...SUBJECTS_BY_SEMESTER[k]].sort();
+    });
+
+    // ── Filter State ──
+    let selectedDocs = []; // Array of { id, title, semester, subject }
 
     // ── DOM refs ──
-    const chatMessages = document.getElementById('chatMessages');
-    const chatForm = document.getElementById('chatForm');
-    const chatInput = document.getElementById('chatInput');
-    const sendBtn = document.getElementById('sendBtn');
-    const sendIcon = document.getElementById('sendIcon');
+    const $ = (id) => document.getElementById(id);
+    const nameQ = $("nameQ");
+    const semesterFilter = $("semesterFilter");
+    const subjectFilter = $("subjectFilter");
+    const materialFilter = $("materialFilter");
+    const modalBody = $("modal-body");
     
-    const documentSelect = document.getElementById('documentSelect');
-    const addDocBtn = document.getElementById('addDocBtn');
-    const clearDocsBtn = document.getElementById('clearDocsBtn');
-    const selectedDocsList = document.getElementById('selectedDocsList');
-    const selectedDocsBadges = document.getElementById('selectedDocsBadges');
-    const noDocsMsg = document.getElementById('noDocsMsg');
+    const chatMessages = $('chatMessages');
+    const chatForm = $('chatForm');
+    const chatInput = $('chatInput');
+    const sendBtn = $('sendBtn');
     
-    const aiCitationsContainer = document.getElementById('aiCitationsContainer');
-    const sourcesPanel = document.getElementById('sourcesPanel');
-    const sessionsPanel = document.getElementById('sessionsPanel');
-    const statusBadge = document.getElementById('statusBadge');
-    const newSessionBtn = document.getElementById('newSessionBtn');
+    const clearDocsBtn = $('clearDocsBtn');
+    const docCount = $('docCount');
+    
+    const aiCitationsContainer = $('aiCitationsContainer');
+    const sourcesPanel = $('sourcesPanel');
+    const sessionsPanel = $('sessionsPanel');
+    const statusBadge = $('statusBadge');
+    const newSessionBtn = $('newSessionBtn');
 
-    // ── Init ──
-    loadSessions();
+    let currentSessionId = null;
+    let isStreaming = false;
 
-    // ── Document Selection Logic ──
-    addDocBtn.addEventListener('click', function() {
-        const option = documentSelect.options[documentSelect.selectedIndex];
-        if (!option.value) return;
-
-        const docId = option.value;
-        const docTitle = option.text;
-
-        if (!selectedDocs.find(d => d.id === docId)) {
-            selectedDocs.push({ id: docId, title: docTitle });
-            renderSelectedDocs();
-            documentSelect.selectedIndex = 0; // Reset select
+    // ── Setup Filters for Modal ──
+    function initFilters() {
+        SEMESTERS.forEach(s => semesterFilter.insertAdjacentHTML("beforeend", `<option value="${escapeHtml(s)}">${escapeHtml(s)}</option>`));
+        MATERIAL_TYPES.forEach(x => materialFilter.insertAdjacentHTML("beforeend", `<option value="${escapeHtml(x)}">${escapeHtml(x)}</option>`));
+    }
+    
+    semesterFilter.addEventListener('change', function() {
+        const sem = this.value;
+        subjectFilter.innerHTML = `<option value="">-- Chọn kỳ trước --</option>`;
+        if (sem) {
+            (SUBJECTS_BY_SEMESTER[sem] || []).forEach(s => {
+                subjectFilter.insertAdjacentHTML("beforeend", `<option value="${escapeHtml(s)}">${escapeHtml(s)}</option>`);
+            });
         }
+        renderModal();
     });
+    
+    subjectFilter.addEventListener('change', renderModal);
+    materialFilter.addEventListener('change', renderModal);
+    nameQ.addEventListener('input', renderModal);
+
+    function renderModal() {
+        const q = nameQ.value.trim().toLowerCase();
+        const semId = semesterFilter.value;
+        const subId = subjectFilter.value;
+        const type = materialFilter.value;
+        
+        const results = DOCS.filter(d => 
+            (!q || d.name.toLowerCase().includes(q)) &&
+            (!semId || d.semester === semId) &&
+            (!subId || d.subject === subId) &&
+            (!type || d.material === type)
+        );
+
+        const semsToRender = semId ? [semId] : SEMESTERS;
+        const semsHtml = semsToRender.map(sem => {
+            const subs = SUBJECTS_BY_SEMESTER[sem] || [];
+            if (!subs.length) return "";
+            return `<div style="margin-bottom: 20px;">
+              <h3 style="font-size: 0.75rem; font-weight: 600; letter-spacing: 0.05em; color: var(--muted-foreground); margin-bottom: 8px; text-transform: uppercase;">${escapeHtml(sem)}</h3>
+              <div style="display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px;">
+                ${subs.map(s => `<button type="button" onclick="window.pickSubject('${escapeHtml(sem)}','${escapeHtml(s)}')"
+                  style="border-radius: 16px; background: var(--card); padding: 12px 16px; border: 1px solid var(--border); text-align: left; cursor: pointer; transition: background 0.15s; ${subId===s ? 'box-shadow: 0 0 0 2px var(--primary); background: var(--accent);' : ''}"
+                  onmouseover="if('${subId}'!=='${s}')this.style.background='color-mix(in oklab, var(--accent) 50%, transparent)'" onmouseout="if('${subId}'!=='${s}')this.style.background='var(--card)'">
+                  <div style="font-weight: 500; font-size: 0.875rem;">${escapeHtml(s)}</div>
+                </button>`).join("")}
+              </div>
+            </div>`;
+        }).join("");
+        
+        const resHtml = `<div style="margin-top: 24px;">
+            <h3 style="font-size: 0.75rem; font-weight: 600; letter-spacing: 0.05em; color: var(--muted-foreground); margin-bottom: 8px; text-transform: uppercase;">KẾT QUẢ (${results.length})</h3>
+            ${results.length === 0 ? `<p style="font-size: 0.875rem; color: var(--muted-foreground);">Không tìm thấy tài liệu nào.</p>` :
+              `<div style="display: flex; flex-direction: column; gap: 8px;">${results.map(d => {
+                  const is = selectedDocs.some(x => x.id === d.id);
+                  return `<div style="display: flex; align-items: center; justify-content: space-between; border-radius: 16px; background: var(--card); padding: 12px 16px; border: 1px solid var(--border);">
+                    <div>
+                      <div style="font-weight: 500; font-size: 0.875rem;">${escapeHtml(d.name)}</div>
+                      <div style="font-size: 0.75rem; color: var(--muted-foreground);">${escapeHtml(d.material)} · ${escapeHtml(d.subject)}</div>
+                    </div>
+                    <button type="button" onclick="window.toggleAttach('${d.id}')"
+                      style="border-radius: 9999px; padding: 6px 20px; font-size: 0.875rem; font-weight: 500; cursor: pointer; border: none; ${is ? 'background: var(--accent); color: var(--foreground);' : 'background: var(--primary); color: var(--primary-foreground);'}">
+                      ${is ? 'Đã gắn' : 'Gắn'}
+                    </button>
+                  </div>`;
+              }).join("")}</div>`
+            }
+        </div>`;
+        
+        modalBody.innerHTML = semsHtml + resHtml;
+    }
+
+    window.pickSubject = function(sem, sub) {
+        semesterFilter.value = sem;
+        semesterFilter.dispatchEvent(new Event('change'));
+        subjectFilter.value = sub;
+        renderModal();
+    };
+
+    
+    window.toggleAttach = function(id) {
+        const isSelected = selectedDocs.some(x => x.id === id);
+        if (isSelected) {
+            window.removeDoc(id);
+        } else {
+            window.addDoc(id);
+        }
+        renderModal();
+    };
+
+    window.addDoc = function(id) {
+        const d = DOCS.find(x => x.id === id);
+        if (d && !selectedDocs.some(x => x.id === id)) { 
+            selectedDocs.push({ id: d.id, title: d.name, semester: d.semester, subject: d.subject }); 
+            renderSelectedDocs(); 
+        }
+    };
+    
+    window.removeDoc = function(id) { 
+        selectedDocs = selectedDocs.filter(d => d.id !== id); 
+        renderSelectedDocs(); 
+        if (!document.getElementById("modal").classList.contains("hidden")) {
+            renderModal();
+        }
+    };
 
     clearDocsBtn.addEventListener('click', function() {
         selectedDocs = [];
         renderSelectedDocs();
-    });
-
-    // Delegate remove click
-    selectedDocsList.addEventListener('click', function(e) {
-        const btn = e.target.closest('.remove-doc-btn');
-        if (btn) {
-            const docId = btn.dataset.id;
-            selectedDocs = selectedDocs.filter(d => d.id !== docId);
-            renderSelectedDocs();
+        if (!document.getElementById("modal").classList.contains("hidden")) {
+            renderModal();
         }
     });
 
     function renderSelectedDocs() {
+        docCount.textContent = `${selectedDocs.length} tài liệu`;
+        const el = document.getElementById("attached-list");
         if (selectedDocs.length === 0) {
-            noDocsMsg.style.display = 'block';
+            el.innerHTML = `<p style="font-size:0.875rem; font-style:italic; color:var(--muted);">Chưa có tài liệu nào được chọn. Bấm 🔍 để tìm và gắn.</p>`;
             clearDocsBtn.style.display = 'none';
-            selectedDocsList.innerHTML = '';
-            selectedDocsList.appendChild(noDocsMsg);
-            selectedDocsBadges.innerHTML = '';
-            return;
-        }
-
-        noDocsMsg.style.display = 'none';
-        clearDocsBtn.style.display = 'inline-block';
-        
-        // Render in sidebar
-        selectedDocsList.innerHTML = selectedDocs.map(doc => `
-            <div class="doc-card">
-                <span class="text-truncate" style="max-width: 85%;" title="${escapeHtml(doc.title)}">
-                    <i class="bi bi-file-earmark-text me-1 text-primary"></i>${escapeHtml(doc.title)}
-                </span>
-                <button type="button" class="remove-doc-btn" data-id="${doc.id}" title="Xóa">
-                    <i class="bi bi-x-lg"></i>
+        } else {
+            clearDocsBtn.style.display = 'inline-block';
+            el.innerHTML = `<div style="display:flex; flex-wrap:wrap; gap:10px;">${selectedDocs.map(d => `
+              <span style="display:inline-flex; align-items:center; gap:8px; border-radius:12px; padding:6px 14px; font-size:0.875rem; font-weight:500; background:var(--card); border:1px solid var(--border); box-shadow:0 2px 4px rgba(0,0,0,0.02);">
+                <svg style="width:16px; height:16px; color:var(--primary);" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline></svg>
+                ${escapeHtml(d.title)}
+                <button type="button" onclick="window.removeDoc('${d.id}')" aria-label="Gỡ" style="background:none; border:none; padding:4px; margin-left:4px; margin-right:-6px; color:var(--muted-foreground); cursor:pointer; display:flex; align-items:center; justify-content:center; border-radius:9999px; transition:all 0.15s;" onmouseover="this.style.background='var(--accent)'; this.style.color='var(--foreground)'" onmouseout="this.style.background='none'; this.style.color='var(--muted-foreground)'">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
                 </button>
-            </div>
-        `).join('');
-
-        // Render in header badges
-        selectedDocsBadges.innerHTML = selectedDocs.map(doc => `
-            <span class="badge bg-light text-dark border text-truncate" style="max-width: 150px; font-weight: normal;" title="${escapeHtml(doc.title)}">
-                ${escapeHtml(doc.title)}
-            </span>
-        `).join('');
+              </span>`).join("")}</div>`;
+        }
     }
+    
+    window.openSearch = function() {
+        const modal = document.getElementById("modal");
+        modal.style.display = "flex";
+        renderModal();
+    };
+    
+    window.closeSearch = function() {
+        const modal = document.getElementById("modal");
+        modal.style.display = "none";
+    };
+
+    // ── Init ──
+    initFilters();
+    renderModal();
+    loadSessions();
+
+    let globalSessions = [];
 
     // ── Load sessions ──
-    async function loadSessions() {
+    async function loadSessions(autoBindNewest = false) {
         try {
             const res = await fetch('/api/chat/sessions');
             if (!res.ok) return;
             const sessions = await res.json();
+            globalSessions = sessions;
+            
+            if (autoBindNewest && !currentSessionId && sessions && sessions.length > 0) {
+                const newest = sessions.reduce((prev, current) => (new Date(prev.createdAt) > new Date(current.createdAt)) ? prev : current);
+                currentSessionId = newest.id;
+            }
+            
             renderSessions(sessions);
         } catch (e) {
             console.error('Failed to load sessions:', e);
@@ -463,25 +447,38 @@ document.addEventListener('DOMContentLoaded', function () {
 
     function renderSessions(sessions) {
         if (!sessions || sessions.length === 0) {
-            sessionsPanel.innerHTML = '<div class="text-muted-foreground" style="font-size: 0.85rem;">Chưa có phiên chat nào.</div>';
+            sessionsPanel.innerHTML = '<div style="font-size: 0.85rem; color: var(--muted-foreground);">Chưa có phiên chat nào.</div>';
             return;
         }
         sessionsPanel.innerHTML = sessions.map(s => `
-            <div class="session-item ${s.id === currentSessionId ? 'active' : ''}" data-session-id="${s.id}">
-                <div class="session-title">${escapeHtml(s.title)}</div>
-                <div class="session-time">${formatDate(s.createdAt)}</div>
-            </div>
+            <li><button type="button" onclick="window.loadSession('${s.id}')" style="width: 100%; text-align: left; border-radius: 16px; padding: 10px 12px; transition: background 0.15s; border: none; cursor: pointer; background: ${s.id === currentSessionId ? 'var(--accent)' : 'transparent'};" onmouseover="if('${s.id}'!=='${currentSessionId}')this.style.background='color-mix(in oklab, var(--accent) 50%, transparent)'" onmouseout="if('${s.id}'!=='${currentSessionId}')this.style.background='transparent'">
+              <div style="font-size: 0.875rem; font-weight: 500; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">${escapeHtml(s.title)}</div>
+              <div style="font-size: 0.75rem; color: var(--muted-foreground); margin-top: 2px;">${formatDate(s.createdAt)}</div>
+            </button></li>
         `).join('');
-
-        sessionsPanel.querySelectorAll('.session-item').forEach(el => {
-            el.addEventListener('click', () => loadSession(el.dataset.sessionId));
-        });
     }
 
     // ── Load a specific session's messages ──
-    async function loadSession(sessionId) {
+    window.loadSession = async function(sessionId) {
         currentSessionId = sessionId;
         setStatus('Đang tải...', true);
+        
+        // Restore selected documents for this session
+        const session = globalSessions.find(s => s.id === sessionId);
+        if (session && session.documentIds && session.documentIds.length > 0) {
+            selectedDocs = [];
+            session.documentIds.forEach(id => {
+                const d = DOCS.find(doc => String(doc.id) === String(id));
+                if (d && !selectedDocs.some(x => x.id === d.id)) {
+                    selectedDocs.push({ id: d.id, title: d.name, semester: d.semester, subject: d.subject });
+                }
+            });
+            renderSelectedDocs();
+        } else {
+            selectedDocs = [];
+            renderSelectedDocs();
+        }
+
         try {
             const res = await fetch(`/api/chat/sessions/${sessionId}/messages`);
             if (!res.ok) throw new Error('Failed to load messages');
@@ -493,14 +490,11 @@ document.addEventListener('DOMContentLoaded', function () {
             });
             scrollToBottom();
 
-            // Clear AI Citations when loading old session
             aiCitationsContainer.style.display = 'none';
             sourcesPanel.innerHTML = '';
 
             // Update active session highlight
-            sessionsPanel.querySelectorAll('.session-item').forEach(el => {
-                el.classList.toggle('active', el.dataset.sessionId === sessionId);
-            });
+            loadSessions(); // re-render to update classes
 
             setStatus('Sẵn sàng', false);
         } catch (e) {
@@ -513,18 +507,17 @@ document.addEventListener('DOMContentLoaded', function () {
     newSessionBtn.addEventListener('click', () => {
         currentSessionId = null;
         chatMessages.innerHTML = `
-            <div class="chat-msg chat-msg-assistant">
-                <div class="chat-msg-label">
-                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M12 2L2 7l10 5 10-5-10-5z"/><path d="M2 17l10 5 10-5"/><path d="M2 12l10 5 10-5"/></svg>
-                    Assistant
-                </div>
-                <div class="chat-msg-content">Xin chào! 👋 Hãy chọn tài liệu (bấm nút "Thêm") và đặt câu hỏi để bắt đầu phiên chat mới.</div>
-            </div>`;
+          <div style="width: 100%; max-width: 48rem; margin: 0 auto;">
+            <div style="font-size: 0.75rem; font-weight: 600; tracking-wider: 0.05em; color: var(--primary); margin-bottom: 8px; text-transform: uppercase;">ASSISTANT</div>
+            <div style="font-size: 0.875rem; line-height: 1.625;">
+              Xin chào! 👋 Tôi là trợ lý tài liệu AI. Bấm vào icon kính lúp ở góc trên bên phải để tìm và gắn tài liệu — tôi sẽ sẵn sàng trả lời câu hỏi của bạn.
+            </div>
+          </div>`;
         
         aiCitationsContainer.style.display = 'none';
         sourcesPanel.innerHTML = '';
         
-        sessionsPanel.querySelectorAll('.session-item').forEach(el => el.classList.remove('active'));
+        loadSessions(); // removes active state
         chatInput.focus();
     });
 
@@ -536,19 +529,16 @@ document.addEventListener('DOMContentLoaded', function () {
 
         const docIds = selectedDocs.map(d => d.id);
         
-        // Validate: must select a specific document when starting a new session
         if (!currentSessionId && docIds.length === 0) {
-            appendMessage('assistant', '⚠️ Vui lòng chọn ít nhất một tài liệu (bấm nút "Thêm") trước khi bắt đầu chat.');
+            appendMessage('assistant', '⚠️ Vui lòng chọn ít nhất một tài liệu ở khung trên trước khi bắt đầu chat.');
             scrollToBottom();
             return;
         }
 
-        // Add user message
         appendMessage('user', message);
         chatInput.value = '';
         scrollToBottom();
 
-        // Prepare request
         const body = {
             message: message,
             sessionId: currentSessionId,
@@ -559,16 +549,14 @@ document.addEventListener('DOMContentLoaded', function () {
         setStatus('Đang trả lời...', true);
         setSendLoading(true);
 
-        // Hide old citations
         aiCitationsContainer.style.display = 'none';
         sourcesPanel.innerHTML = '';
 
-        // Create assistant placeholder with typing indicator
         const assistantDiv = createAssistantPlaceholder();
         chatMessages.appendChild(assistantDiv);
         scrollToBottom();
 
-        const contentEl = assistantDiv.querySelector('.chat-msg-content');
+        const contentEl = assistantDiv.querySelector('.markdown-body');
 
         try {
             const res = await fetch('/api/chat/messages/stream', {
@@ -577,13 +565,12 @@ document.addEventListener('DOMContentLoaded', function () {
                 body: JSON.stringify(body)
             });
 
-            // Handle auth redirect or HTTP errors
             if (res.redirected || !res.ok) {
                 const statusCode = res.status;
                 if (statusCode === 401 || statusCode === 403 || res.redirected) {
-                    contentEl.innerHTML = '<span style="color: var(--coral);">⚠️ Phiên đăng nhập đã hết hạn. Vui lòng tải lại trang và đăng nhập lại.</span>';
+                    contentEl.innerHTML = '<span style="color: #ef4444;">⚠️ Phiên đăng nhập đã hết hạn. Vui lòng tải lại trang và đăng nhập lại.</span>';
                 } else {
-                    contentEl.innerHTML = `<span style="color: var(--coral);">⚠️ Lỗi từ máy chủ (HTTP ${statusCode}). Vui lòng thử lại.</span>`;
+                    contentEl.innerHTML = `<span style="color: #ef4444;">⚠️ Lỗi từ máy chủ (HTTP ${statusCode}). Vui lòng thử lại.</span>`;
                 }
                 return;
             }
@@ -599,15 +586,13 @@ document.addEventListener('DOMContentLoaded', function () {
 
                 buffer += decoder.decode(value, { stream: true });
                 const lines = buffer.split('\n');
-                buffer = lines.pop(); // keep incomplete line
+                buffer = lines.pop();
 
                 for (const line of lines) {
                     if (!line.startsWith('data: ')) continue;
                     const data = line.substring(6);
 
-                    if (data === '[DONE]') {
-                        continue;
-                    }
+                    if (data === '[DONE]') continue;
                     if (data.startsWith('[ERROR]')) {
                         fullText += '\n⚠️ ' + data.substring(7).trim();
                         contentEl.innerHTML = renderMarkdown(fullText);
@@ -620,10 +605,8 @@ document.addEventListener('DOMContentLoaded', function () {
                 }
             }
 
-            // Highlight final streamed code block
             highlightCodeBlocks(assistantDiv);
 
-            // If we got no text at all, try non-streaming endpoint as fallback
             if (!fullText) {
                 const fallbackRes = await fetch('/api/chat/messages', {
                     method: 'POST',
@@ -642,12 +625,11 @@ document.addEventListener('DOMContentLoaded', function () {
                 }
             }
 
-            // Reload sessions to pick up new/updated session
-            await loadSessions();
+            await loadSessions(true);
 
         } catch (err) {
             console.error('Stream error:', err);
-            contentEl.innerHTML = '<span style="color: var(--coral);">⚠️ Đã xảy ra lỗi khi kết nối. Vui lòng thử lại.</span>';
+            contentEl.innerHTML = '<span style="color: #ef4444;">⚠️ Đã xảy ra lỗi khi kết nối. Vui lòng thử lại.</span>';
         } finally {
             isStreaming = false;
             setStatus('Sẵn sàng', false);
@@ -656,24 +638,31 @@ document.addEventListener('DOMContentLoaded', function () {
         }
     });
 
-    // ── Also fetch sources after streaming via the non-stream endpoint ──
-    // We hook into the stream flow: after a stream completes, we call the message API once
-    // to get structured sources. We modify the send flow above for this.
-
-    // ── Helper: append a message bubble ──
     function appendMessage(role, content) {
         const isUser = role === 'user';
         const div = document.createElement('div');
-        div.className = `chat-msg chat-msg-${isUser ? 'user' : 'assistant'}`;
-        div.innerHTML = `
-            <div class="chat-msg-label">
-                ${isUser
-                    ? 'You'
-                    : `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M12 2L2 7l10 5 10-5-10-5z"/><path d="M2 17l10 5 10-5"/><path d="M2 12l10 5 10-5"/></svg> Assistant`
-                }
-            </div>
-            <div class="chat-msg-content">${isUser ? escapeHtml(content) : renderMarkdown(content)}</div>
-        `;
+        div.className = 'chat-anim';
+        
+        if (isUser) {
+            div.innerHTML = `
+                <div style="width: 100%; max-width: 48rem; margin: 0 auto; display: flex; flex-direction: column; align-items: flex-end;">
+                  <div style="font-size: 0.75rem; font-weight: 600; letter-spacing: 0.05em; color: var(--foreground); margin-bottom: 8px; text-transform: uppercase;">Bạn</div>
+                  <div class="msg-bubble" style="background: var(--primary); color: var(--primary-foreground); padding: 12px 20px; border-radius: 24px; font-size: 0.875rem; line-height: 1.625; max-width: 80%;">
+                    ${escapeHtml(content)}
+                  </div>
+                </div>
+            `;
+        } else {
+            div.innerHTML = `
+                <div style="width: 100%; max-width: 48rem; margin: 0 auto;">
+                  <div style="font-size: 0.75rem; font-weight: 600; letter-spacing: 0.05em; color: var(--primary); margin-bottom: 8px; text-transform: uppercase;">Assistant</div>
+                  <div class="markdown-body msg-bubble" style="font-size: 0.875rem; line-height: 1.625; color: var(--foreground);">
+                    ${renderMarkdown(content)}
+                  </div>
+                </div>
+            `;
+        }
+        
         chatMessages.appendChild(div);
         if (!isUser) {
             highlightCodeBlocks(div);
@@ -682,20 +671,18 @@ document.addEventListener('DOMContentLoaded', function () {
 
     function createAssistantPlaceholder() {
         const div = document.createElement('div');
-        div.className = 'chat-msg chat-msg-assistant';
+        div.className = 'chat-anim';
         div.innerHTML = `
-            <div class="chat-msg-label">
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M12 2L2 7l10 5 10-5-10-5z"/><path d="M2 17l10 5 10-5"/><path d="M2 12l10 5 10-5"/></svg>
-                Assistant
-            </div>
-            <div class="chat-msg-content">
+            <div style="width: 100%; max-width: 48rem; margin: 0 auto;">
+              <div style="font-size: 0.75rem; font-weight: 600; letter-spacing: 0.05em; color: var(--primary); margin-bottom: 8px; text-transform: uppercase;">Assistant</div>
+              <div class="markdown-body msg-bubble" style="font-size: 0.875rem; line-height: 1.625; color: var(--foreground);">
                 <div class="typing-indicator"><span></span><span></span><span></span></div>
+              </div>
             </div>
         `;
         return div;
     }
 
-    // ── Sources rendering ──
     function renderSources(sources) {
         if (!sources || sources.length === 0) {
             aiCitationsContainer.style.display = 'none';
@@ -704,37 +691,32 @@ document.addEventListener('DOMContentLoaded', function () {
         
         aiCitationsContainer.style.display = 'block';
         sourcesPanel.innerHTML = sources.map((s, i) => `
-            <div class="source-card mb-2">
-                <div class="d-flex align-items-start gap-2">
-                    <span class="chunk-chip flex-shrink-0 badge bg-primary rounded-circle" style="width:20px;height:20px;padding:0;line-height:20px;text-align:center;">${i + 1}</span>
-                    <div>
-                        <div class="fw-semibold" style="color: var(--foreground); font-size: 0.84rem;">${escapeHtml(s.documentTitle)}</div>
-                        ${s.chapterTitle ? `<div class="text-muted-foreground" style="font-size: 0.78rem;">📖 ${escapeHtml(s.chapterTitle)}</div>` : ''}
-                        ${s.pageNumber ? `<div class="text-muted-foreground" style="font-size: 0.75rem;">Trang ${s.pageNumber}</div>` : ''}
-                    </div>
+            <div style="display: flex; align-items: center; justify-content: space-between; border-radius: 16px; background: var(--card); padding: 12px 16px; border: 1px solid var(--border);">
+              <div style="display: flex; gap: 12px; align-items: center; min-width: 0; flex: 1;">
+                <span style="display: flex; width: 24px; height: 24px; flex-shrink: 0; align-items: center; justify-content: center; border-radius: 9999px; background: var(--accent); font-size: 0.75rem; font-weight: 600; color: var(--foreground);">${i + 1}</span>
+                <div style="min-width: 0; flex: 1;">
+                    <div style="font-weight: 500; font-size: 0.875rem; color: var(--foreground);">${escapeHtml(s.documentTitle)}</div>
+                    ${s.chapterTitle ? `<div style="margin-top: 2px; font-size: 0.75rem; color: var(--muted-foreground);">📖 ${escapeHtml(s.chapterTitle)}</div>` : ''}
+                    ${s.pageNumber ? `<div style="margin-top: 2px; font-size: 0.75rem; color: var(--muted-foreground);">Trang ${s.pageNumber}</div>` : ''}
                 </div>
+              </div>
             </div>
         `).join('');
     }
 
-    // ── Status helpers ──
     function setStatus(text, loading) {
-        statusBadge.innerHTML = loading
-            ? `<span class="spinner-border spinner-border-sm me-1" role="status"></span>${text}`
-            : text;
-        statusBadge.style.background = loading ? 'var(--brown)' : 'var(--coral-soft)';
-        statusBadge.style.color = loading ? '#fff' : 'var(--brown)';
+        statusBadge.innerHTML = text;
+        statusBadge.style.background = loading ? 'var(--accent)' : 'var(--chip)';
+        statusBadge.style.color = loading ? 'var(--foreground)' : 'var(--chip-foreground)';
     }
 
     function setSendLoading(loading) {
         sendBtn.disabled = loading;
         chatInput.disabled = loading;
         if (loading) {
-            sendIcon.style.display = 'none';
-            sendBtn.querySelector('span').textContent = 'Đang gửi...';
+            sendBtn.innerHTML = 'Đang gửi...';
         } else {
-            sendIcon.style.display = '';
-            sendBtn.querySelector('span').textContent = 'Gửi';
+            sendBtn.innerHTML = '<svg style="width: 16px; height: 16px; stroke: currentColor; fill: none; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round;" viewBox="0 0 24 24"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg> Gửi';
         }
     }
 
@@ -744,55 +726,28 @@ document.addEventListener('DOMContentLoaded', function () {
         });
     }
 
-    // ── Markdown renderer using marked.js ──
     function renderMarkdown(text) {
         if (!text) return '';
-        
-        // Configure marked options
-        marked.setOptions({
-            breaks: true, // Convert \n to <br> for conversational layout
-            gfm: true     // Enable GitHub Flavored Markdown (tables, autolinks, task lists)
-        });
-
+        marked.setOptions({ breaks: true, gfm: true });
         return marked.parse(text);
     }
 
-    // ── Syntax highlighting and copy button integration ──
     function highlightCodeBlocks(container) {
         if (typeof hljs !== 'undefined') {
             container.querySelectorAll('pre code').forEach((el) => {
                 if (!el.dataset.highlighted) {
                     hljs.highlightElement(el);
                     el.dataset.highlighted = 'true';
-                    
-                    // Add copy button
-                    const pre = el.parentElement;
-                    if (pre && !pre.querySelector('.copy-code-btn')) {
-                        const btn = document.createElement('button');
-                        btn.className = 'copy-code-btn';
-                        btn.type = 'button';
-                        btn.innerHTML = '<i class="bi bi-clipboard"></i> Copy';
-                        btn.title = 'Sao chép mã nguồn';
-                        btn.addEventListener('click', () => {
-                            navigator.clipboard.writeText(el.textContent).then(() => {
-                                btn.innerHTML = '<i class="bi bi-check-lg text-success"></i> Copied!';
-                                setTimeout(() => {
-                                    btn.innerHTML = '<i class="bi bi-clipboard"></i> Copy';
-                                }, 2000);
-                            });
-                        });
-                        pre.appendChild(btn);
-                    }
                 }
             });
         }
     }
 
-    // ── Utilities ──
     function escapeHtml(str) {
-        const div = document.createElement('div');
-        div.textContent = str;
-        return div.innerHTML;
+        if (!str) return '';
+        return String(str).replace(/[&<>"']/g, c => ({
+            "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;"
+        }[c]));
     }
 
     function formatDate(dateStr) {
@@ -809,7 +764,6 @@ document.addEventListener('DOMContentLoaded', function () {
         return d.toLocaleDateString('vi-VN');
     }
 
-    // ── Keyboard shortcut ──
     chatInput.addEventListener('keydown', function (e) {
         if (e.key === 'Enter' && !e.shiftKey) {
             e.preventDefault();

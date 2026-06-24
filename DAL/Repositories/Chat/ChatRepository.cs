@@ -32,6 +32,7 @@ public class ChatRepository : IChatRepository
     public async Task<List<ChatSession>> GetUserSessionsAsync(Guid userId, CancellationToken cancellationToken = default)
     {
         return await _context.ChatSessions
+            .Include(s => s.SessionDocuments)
             .Where(s => s.UserId == userId)
             .OrderByDescending(s => s.CreatedAt)
             .ToListAsync(cancellationToken);

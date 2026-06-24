@@ -133,7 +133,7 @@ public class ChatService : IChatService
         return sessions.Select(s => new ChatSessionSummaryDto
         {
             Id = s.Id,
-            DocumentId = Guid.Empty, // Deprecated, we can just leave it empty or map the first document. But for DTO, maybe return first
+            DocumentIds = s.SessionDocuments?.Select(sd => sd.DocumentId).ToList() ?? new List<Guid>(),
             Title = s.Title,
             CreatedAt = s.CreatedAt
         }).ToList();

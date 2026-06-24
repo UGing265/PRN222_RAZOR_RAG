@@ -3,7 +3,7 @@
     string IconFor(string key) => key switch
     {
         "discover" => "<circle cx=\"12\" cy=\"12\" r=\"10\"/><polygon points=\"16.24 7.76 14.12 14.12 7.76 16.24 9.88 9.88 16.24 7.76\"/>",
-        "chat"     => "<path d=\"M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z\"/>",
+        "chat"     => "<path d=\"M12 8V4H8\"/><rect width=\"16\" height=\"12\" x=\"4\" y=\"8\" rx=\"2\"/><path d=\"M2 14h2\"/><path d=\"M20 14h2\"/><path d=\"M15 13v2\"/><path d=\"M9 13v2\"/>",
         "library"  => "<path d=\"M4 19.5A2.5 2.5 0 0 1 6.5 17H20\"/><path d=\"M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z\"/>",
         "upload"   => "<path d=\"M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4\"/><polyline points=\"17 8 12 3 7 8\"/><line x1=\"12\" y1=\"3\" x2=\"12\" y2=\"15\"/>",
         "doc"      => "<path d=\"M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z\"/><polyline points=\"14 2 14 8 20 8\"/>",
@@ -18,7 +18,7 @@
 <aside class="sidebar offcanvas-lg offcanvas-start" id="sidebarMenu" tabindex="-1">
     <div>
         <div class="d-flex align-items-center justify-content-between mb-4 sidebar-header-row">
-            <a asp-page="/Index" class="d-flex align-items-center gap-2 text-decoration-none text-foreground sidebar-text">
+            <a asp-page="/Index" class="d-flex align-items-center gap-2 text-decoration-none sidebar-text">
                 <span class="brand-mark" style="width: 36px; height: 36px; min-width: 36px;">S</span>
                 <div class="lh-sm" style="overflow: hidden;">
                     <div class="fw-semibold" style="white-space: nowrap; font-size: 0.95rem;">StudyMate AI</div>
