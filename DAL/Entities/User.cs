@@ -31,6 +31,10 @@ public partial class User
 
     public string? DisplayUsername { get; set; }
 
+    public bool MustChangePassword { get; set; }
+
+    public DateTime? PasswordChangedAt { get; set; }
+
     public virtual ICollection<Document> Documents { get; set; } = new List<Document>();
 
     public virtual Role Role { get; set; } = null!;
