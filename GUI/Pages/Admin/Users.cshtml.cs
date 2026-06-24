@@ -3,6 +3,7 @@ using BLL.Interfaces.Auth;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
+using System.Security.Claims;
 using QuestPDF.Fluent;
 using QuestPDF.Helpers;
 using QuestPDF.Infrastructure;
@@ -57,7 +58,8 @@ namespace GUI.Pages.Admin
 
         public async Task<IActionResult> OnPostApproveAsync(Guid id, CancellationToken cancellationToken)
         {
-            var success = await _authService.ApproveUserAsync(id, cancellationToken);
+            if (!Guid.TryParse(User.FindFirstValue(System.Security.Claims.ClaimTypes.NameIdentifier), out var adminUserId)) return Unauthorized();
+            var success = await _authService.ApproveUserAsync(adminUserId, id, cancellationToken);
             if (success)
             {
                 TempData["SuccessMessage"] = "Đã phê duyệt người dùng thành công.";
@@ -71,7 +73,8 @@ namespace GUI.Pages.Admin
 
         public async Task<IActionResult> OnPostRejectOrBlockAsync(Guid id, CancellationToken cancellationToken)
         {
-            var success = await _authService.RejectOrBlockUserAsync(id, cancellationToken);
+            if (!Guid.TryParse(User.FindFirstValue(System.Security.Claims.ClaimTypes.NameIdentifier), out var adminUserId)) return Unauthorized();
+            var success = await _authService.RejectOrBlockUserAsync(adminUserId, id, cancellationToken);
             if (success)
             {
                 TempData["SuccessMessage"] = "Đã thực hiện thao tác thành công.";
@@ -85,7 +88,8 @@ namespace GUI.Pages.Admin
 
         public async Task<IActionResult> OnPostUnblockAsync(Guid id, CancellationToken cancellationToken)
         {
-            var success = await _authService.UnblockUserAsync(id, cancellationToken);
+            if (!Guid.TryParse(User.FindFirstValue(System.Security.Claims.ClaimTypes.NameIdentifier), out var adminUserId)) return Unauthorized();
+            var success = await _authService.UnblockUserAsync(adminUserId, id, cancellationToken);
             if (success)
             {
                 TempData["SuccessMessage"] = "Đã mở khóa tài khoản người dùng thành công.";

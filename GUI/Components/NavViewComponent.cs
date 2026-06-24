@@ -60,17 +60,17 @@ public sealed class NavViewComponent : ViewComponent
             _logger.LogDebug("Nav cache HIT key={Key}", cacheKey);
             // Active state is page-specific and lives inside the cached model;
             // refresh it for the current page before returning.
-            UpdateActiveState(cached, page);
+            UpdateActiveState(cached, page, HttpContext.Request.QueryString.Value ?? "");
             return View(cached);
         }
 
         _logger.LogDebug("Nav cache MISS key={Key}", cacheKey);
-        var model = BuildModel(page, isAuthenticated, roleId, fullName, email);
+        var model = BuildModel(page, isAuthenticated, roleId, fullName, email, HttpContext.Request.QueryString.Value ?? "");
         _cache.Set(cacheKey, model, CacheTtl);
         return View(model);
     }
 
-    private static NavViewModel BuildModel(string page, bool isAuth, short roleId, string fullName, string email)
+    private static NavViewModel BuildModel(string page, bool isAuth, short roleId, string fullName, string email, string queryString)
     {
         var model = new NavViewModel
         {
@@ -97,10 +97,23 @@ public sealed class NavViewComponent : ViewComponent
             model.NavLinks.Add(new NavLink { Page = "/Admin/Documents", Label = "Quản Lý Tài Liệu", IconKey = "doc" });
             model.NavLinks.Add(new NavLink { Page = "/Admin/Users", Label = "Quản Lý Thành Viên", IconKey = "users" });
             model.NavLinks.Add(new NavLink { Page = "/Admin/Metadata/Subjects/Index", Label = "Quản Lý Danh Mục", IconKey = "metadata" });
+            model.NavLinks.Add(new NavLink { Page = "/Admin/AuditLogs", Label = "Lịch Sử Hệ Thống", IconKey = "audit" });
         }
         else
         {
-            model.NavLinks.Add(new NavLink { Page = "/Documents/All", Label = "Khám Phá", IconKey = "discover" });
+            var khamPhaLink = new NavLink 
+            { 
+                Page = "/Documents/All", 
+                Label = "Khám Phá", 
+                IconKey = "discover",
+                SubLinks = new List<NavLink>
+                {
+                    new NavLink { Page = "/Documents/All", Label = "Tất Cả Tài Liệu" },
+                    new NavLink { Page = "/Documents/All", QueryString = "?isBookmarked=true", Label = "Tài Liệu Đã Lưu" }
+                }
+            };
+            model.NavLinks.Add(khamPhaLink);
+
             if (roleId == 2 || roleId == 3)
             {
                 model.NavLinks.Add(new NavLink { Page = "/Chat/Index", Label = "Trò Chuyện AI", IconKey = "chat" });
@@ -113,16 +126,41 @@ public sealed class NavViewComponent : ViewComponent
             }
         }
 
-        UpdateActiveState(model, page);
+        UpdateActiveState(model, page, queryString);
         return model;
     }
 
-    private static void UpdateActiveState(NavViewModel model, string page)
+    private static void UpdateActiveState(NavViewModel model, string page, string queryString = "")
     {
         foreach (var link in model.NavLinks)
         {
-            link.Active = !string.IsNullOrEmpty(page) &&
-                          page.Equals(link.Page, StringComparison.OrdinalIgnoreCase);
+            bool isActivePage = !string.IsNullOrEmpty(page) && page.Equals(link.Page, StringComparison.OrdinalIgnoreCase);
+            
+            // Check sublinks
+            if (link.SubLinks.Count > 0)
+            {
+                bool anySubActive = false;
+                foreach (var sub in link.SubLinks)
+                {
+                    bool isSubPageMatch = !string.IsNullOrEmpty(page) && page.Equals(sub.Page, StringComparison.OrdinalIgnoreCase);
+                    bool isQueryMatch = string.IsNullOrEmpty(sub.QueryString) || (queryString != null && queryString.Contains("isBookmarked=true", StringComparison.OrdinalIgnoreCase));
+                    // Simple heuristic for active state on bookmarks
+                    if (isSubPageMatch && ((string.IsNullOrEmpty(sub.QueryString) && !queryString.Contains("isBookmarked")) || (!string.IsNullOrEmpty(sub.QueryString) && queryString.Contains("isBookmarked=true", StringComparison.OrdinalIgnoreCase))))
+                    {
+                        sub.Active = true;
+                        anySubActive = true;
+                    }
+                    else
+                    {
+                        sub.Active = false;
+                    }
+                }
+                link.Active = anySubActive || isActivePage;
+            }
+            else
+            {
+                link.Active = isActivePage;
+            }
         }
     }
 }

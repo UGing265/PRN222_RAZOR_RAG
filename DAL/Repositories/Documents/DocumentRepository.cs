@@ -29,7 +29,7 @@ public class DocumentRepository : IDocumentRepository
 
     public Task<Document?> GetDocumentAsync(Guid documentId, CancellationToken cancellationToken = default)
         => _dbContext.Documents
-            
+
             .Include(x => x.Subject)
             .Include(x => x.DocumentType)
             .Include(x => x.Language)
@@ -40,7 +40,7 @@ public class DocumentRepository : IDocumentRepository
         => _dbContext.Documents.AsNoTracking()
             .Include(x => x.DocumentFiles)
             .Include(x => x.DocumentChunks)
-            
+
             .Include(x => x.Subject)
             .Include(x => x.DocumentType)
             .Include(x => x.Language)
@@ -51,35 +51,50 @@ public class DocumentRepository : IDocumentRepository
 
     public Task<Document?> GetDocumentBySlugAsync(string slug, CancellationToken cancellationToken = default)
         => _dbContext.Documents
-            
+
             .Include(x => x.Subject)
             .Include(x => x.DocumentType)
             .Include(x => x.Language)
             .Include(x => x.AcademicTerm)
             .FirstOrDefaultAsync(x => x.Slug == slug, cancellationToken);
 
-    public Task<Document?> GetDocumentBySlugAsync(string slug, Guid? requesterUserId, bool isAdmin = false, CancellationToken cancellationToken = default)
+    public async Task<Document?> GetDocumentBySlugAsync(string slug, Guid? requesterUserId, bool isAdmin = false, CancellationToken cancellationToken = default)
     {
         var q = _dbContext.Documents.AsNoTracking()
-            
+            .Include(x => x.OwnerUser)
             .Include(x => x.Subject)
             .Include(x => x.DocumentType)
             .Include(x => x.Language)
             .Include(x => x.AcademicTerm)
             .Where(x => x.Slug == slug);
-            
+
         if (!isAdmin)
         {
-            if (requesterUserId is not null)
+            var requesterRole = (short?)null;
+            if (requesterUserId.HasValue)
             {
-                q = q.Where(x => x.Visibility != "private" || x.OwnerUserId == requesterUserId.Value);
+                requesterRole = await _dbContext.Users
+                    .Where(u => u.Id == requesterUserId.Value)
+                    .Select(u => u.RoleId)
+                    .FirstOrDefaultAsync(cancellationToken);
+            }
+
+            // Must not be blocked (unless owner), and must be Role 1 or 2
+            q = q.Where(x => ((x.OwnerUser.RoleId == 1 || x.OwnerUser.RoleId == 2) && !x.OwnerUser.IsBlocked) || x.OwnerUserId == requesterUserId);
+
+            // Must be completed/approved unless owner
+            q = q.Where(x => (x.Status == "completed" || x.Status == "approved" || x.Status == "done") || x.OwnerUserId == requesterUserId);
+
+            if (requesterRole == 3) // Student
+            {
+                q = q.Where(x => x.Visibility == "public" || x.OwnerUserId == requesterUserId);
             }
             else
             {
-                q = q.Where(x => x.Visibility != "private");
+                q = q.Where(x => x.Visibility != "private" || x.OwnerUserId == requesterUserId);
             }
         }
-        return q.FirstOrDefaultAsync(cancellationToken);
+        return await q.FirstOrDefaultAsync(cancellationToken);
     }
 
     public Task<Document?> GetDocumentWithFilesAsync(Guid documentId, CancellationToken cancellationToken = default)
@@ -87,7 +102,7 @@ public class DocumentRepository : IDocumentRepository
             .Include(x => x.DocumentFiles)
             .Include(x => x.DocumentChunks)
             .Include(x => x.DocumentChapters)
-            
+
             .Include(x => x.Subject)
             .Include(x => x.DocumentType)
             .Include(x => x.Language)
@@ -100,7 +115,7 @@ public class DocumentRepository : IDocumentRepository
             .Include(x => x.DocumentFiles)
             .Include(x => x.DocumentChunks)
             .Include(x => x.DocumentChapters)
-            
+
             .Include(x => x.Subject)
             .Include(x => x.DocumentType)
             .Include(x => x.Language)
@@ -126,7 +141,7 @@ public class DocumentRepository : IDocumentRepository
     {
         var q = _dbContext.Documents.AsNoTracking()
             .Include(x => x.DocumentFiles)
-            
+
             .Include(x => x.Subject)
             .Include(x => x.DocumentType)
             .Include(x => x.Language)
@@ -182,7 +197,7 @@ public class DocumentRepository : IDocumentRepository
     public Task<int> CountDocumentsByOwnerAsync(Guid ownerUserId, string? query, Guid? subjectId, Guid? termId, Guid? documentTypeId, Guid? languageId, Guid? documentSourceId, CancellationToken cancellationToken = default)
     {
         var q = _dbContext.Documents.AsNoTracking()
-            
+
             .Include(x => x.Subject)
             .Where(x => x.OwnerUserId == ownerUserId && x.Status == "completed");
 
@@ -219,19 +234,40 @@ public class DocumentRepository : IDocumentRepository
         return q.CountAsync(cancellationToken);
     }
 
-    public Task<List<Document>> GetDocumentsAsync(string? query, Guid? subjectId, int page, int pageSize, Guid? requesterUserId = null, string? sortBy = null, Guid? documentTypeId = null, Guid? languageId = null, Guid? documentSourceId = null, CancellationToken cancellationToken = default)
+    public async Task<List<Document>> GetDocumentsAsync(string? query, Guid? subjectId, int page, int pageSize, Guid? requesterUserId = null, string? sortBy = null, Guid? documentTypeId = null, Guid? languageId = null, Guid? documentSourceId = null, bool? bookmarkedOnly = null, CancellationToken cancellationToken = default)
     {
         var q = _dbContext.Documents.AsNoTracking()
             .Include(x => x.DocumentFiles)
             .Include(x => x.OwnerUser)
-            
+
             .Include(x => x.Subject)
             .Include(x => x.DocumentType)
             .Include(x => x.Language)
             .Include(x => x.AcademicTerm)
-            .Where(x => x.Status == "completed" && (x.OwnerUser.RoleId == 1 || x.OwnerUser.RoleId == 2));
+            .Where(x => x.Status == "completed" && (x.OwnerUser.RoleId == 1 || x.OwnerUser.RoleId == 2) && !x.OwnerUser.IsBlocked);
 
-        q = q.Where(x => x.Visibility != "private");
+        var requesterRole = (short?)null;
+        if (requesterUserId.HasValue)
+        {
+            requesterRole = await _dbContext.Users
+                .Where(u => u.Id == requesterUserId.Value)
+                .Select(u => u.RoleId)
+                .FirstOrDefaultAsync(cancellationToken);
+        }
+
+        if (requesterRole == 3) // Student
+        {
+            q = q.Where(x => x.Visibility == "public" || x.OwnerUserId == requesterUserId);
+        }
+        else
+        {
+            q = q.Where(x => x.Visibility != "private" || x.OwnerUserId == requesterUserId);
+        }
+
+        if (bookmarkedOnly == true && requesterUserId.HasValue)
+        {
+            q = q.Where(x => _dbContext.UserBookmarks.Any(b => b.DocumentId == x.Id && b.UserId == requesterUserId.Value));
+        }
 
         if (!string.IsNullOrWhiteSpace(query))
         {
@@ -287,20 +323,25 @@ public class DocumentRepository : IDocumentRepository
             q = q.OrderByDescending(x => x.UpdatedAt);
         }
 
-        return q.Skip((page - 1) * pageSize)
+        return await q.Skip((page - 1) * pageSize)
             .Take(pageSize)
             .ToListAsync(cancellationToken);
     }
 
-    public Task<int> CountDocumentsAsync(string? query, Guid? subjectId, Guid? requesterUserId = null, Guid? documentTypeId = null, Guid? languageId = null, Guid? documentSourceId = null, CancellationToken cancellationToken = default)
+    public Task<int> CountDocumentsAsync(string? query, Guid? subjectId, Guid? requesterUserId = null, Guid? documentTypeId = null, Guid? languageId = null, Guid? documentSourceId = null, bool? bookmarkedOnly = null, CancellationToken cancellationToken = default)
     {
         var q = _dbContext.Documents.AsNoTracking()
             .Include(x => x.OwnerUser)
-            
+
             .Include(x => x.Subject)
             .Where(x => x.Status == "completed" && (x.OwnerUser.RoleId == 1 || x.OwnerUser.RoleId == 2));
 
         q = q.Where(x => x.Visibility != "private");
+
+        if (bookmarkedOnly == true && requesterUserId.HasValue)
+        {
+            q = q.Where(x => _dbContext.UserBookmarks.Any(b => b.DocumentId == x.Id && b.UserId == requesterUserId.Value));
+        }
 
         if (!string.IsNullOrWhiteSpace(query))
         {
@@ -348,14 +389,14 @@ public class DocumentRepository : IDocumentRepository
 
     public Task<Document?> GetOwnedDocumentAsync(Guid documentId, Guid ownerUserId, CancellationToken cancellationToken = default)
         => _dbContext.Documents
-            
+
             .Include(x => x.Subject)
             .Include(x => x.AcademicTerm)
             .FirstOrDefaultAsync(x => x.Id == documentId && x.OwnerUserId == ownerUserId, cancellationToken);
 
     public Task<Document?> GetOwnedDocumentBySlugAsync(string slug, Guid ownerUserId, CancellationToken cancellationToken = default)
         => _dbContext.Documents
-            
+
             .Include(x => x.Subject)
             .Include(x => x.AcademicTerm)
             .FirstOrDefaultAsync(x => x.Slug == slug && x.OwnerUserId == ownerUserId, cancellationToken);
@@ -543,7 +584,7 @@ public class DocumentRepository : IDocumentRepository
         IQueryable<Document> q = _dbContext.Documents.AsNoTracking()
             .Include(x => x.DocumentFiles)
             .Include(x => x.OwnerUser)
-            
+
             .Include(x => x.Subject)
             .Include(x => x.DocumentType)
             .Include(x => x.Language);
@@ -551,7 +592,7 @@ public class DocumentRepository : IDocumentRepository
         if (!string.IsNullOrWhiteSpace(query))
         {
             var lowerQuery = query.Trim().ToLower();
-            q = q.Where(x => x.Title.ToLower().Contains(lowerQuery) 
+            q = q.Where(x => x.Title.ToLower().Contains(lowerQuery)
                 || (x.Subject != null && x.Subject.Name.ToLower().Contains(lowerQuery))
                 || (x.Subject != null && x.Subject.Code.ToLower().Contains(lowerQuery))
                 || (x.OwnerUser != null && x.OwnerUser.Email.ToLower().Contains(lowerQuery))
@@ -576,7 +617,7 @@ public class DocumentRepository : IDocumentRepository
         if (!string.IsNullOrWhiteSpace(query))
         {
             var lowerQuery = query.Trim().ToLower();
-            q = q.Where(x => x.Title.ToLower().Contains(lowerQuery) 
+            q = q.Where(x => x.Title.ToLower().Contains(lowerQuery)
                 || (x.Subject != null && x.Subject.Name.ToLower().Contains(lowerQuery))
                 || (x.Subject != null && x.Subject.Code.ToLower().Contains(lowerQuery))
                 || (x.OwnerUser != null && x.OwnerUser.Email.ToLower().Contains(lowerQuery))
@@ -628,6 +669,12 @@ public class DocumentRepository : IDocumentRepository
         _dbContext.DocumentReports.RemoveRange(reports);
     }
 
+    public async Task RemoveDocumentBookmarksByDocumentAsync(Guid documentId, CancellationToken cancellationToken = default)
+    {
+        var bookmarks = await _dbContext.UserBookmarks.Where(x => x.DocumentId == documentId).ToListAsync(cancellationToken);
+        _dbContext.UserBookmarks.RemoveRange(bookmarks);
+    }
+
     public async Task<Dictionary<Guid, string>> GetDocumentTextAsync(List<Guid> documentIds, CancellationToken cancellationToken = default)
     {
         if (documentIds == null || documentIds.Count == 0)
@@ -646,6 +693,12 @@ public class DocumentRepository : IDocumentRepository
             .ToDictionary(
                 g => g.Key,
                 g => string.Join("\n\n", g.Select(c => c.Content)));
+    }
+
+    public async Task AddAuditLogAsync(AuditLog log, CancellationToken cancellationToken = default)
+    {
+        await _dbContext.AuditLogs.AddAsync(log, cancellationToken);
+        await _dbContext.SaveChangesAsync(cancellationToken);
     }
 
     public Task SaveChangesAsync(CancellationToken cancellationToken = default)
@@ -685,7 +738,7 @@ public class DocumentRepository : IDocumentRepository
         var list = await _dbContext.UserSubjects.AsNoTracking()
             .Include(x => x.User)
             .ToListAsync(cancellationToken);
-        
+
         var dict = new Dictionary<Guid, (Guid UserId, string FullName)>();
         foreach (var item in list)
         {
@@ -693,5 +746,44 @@ public class DocumentRepository : IDocumentRepository
         }
         return dict;
     }
-}
 
+    public async Task<bool> ToggleBookmarkAsync(Guid documentId, Guid userId, CancellationToken cancellationToken = default)
+    {
+        var existing = await _dbContext.UserBookmarks
+            .FirstOrDefaultAsync(x => x.DocumentId == documentId && x.UserId == userId, cancellationToken);
+
+        if (existing != null)
+        {
+            _dbContext.UserBookmarks.Remove(existing);
+            await _dbContext.SaveChangesAsync(cancellationToken);
+            return false;
+        }
+        else
+        {
+            await _dbContext.UserBookmarks.AddAsync(new UserBookmark
+            {
+                DocumentId = documentId,
+                UserId = userId,
+                CreatedAt = DateTime.UtcNow
+            }, cancellationToken);
+            await _dbContext.SaveChangesAsync(cancellationToken);
+            return true;
+        }
+    }
+
+    public Task<bool> IsBookmarkedAsync(Guid documentId, Guid userId, CancellationToken cancellationToken = default)
+    {
+        return _dbContext.UserBookmarks
+            .AnyAsync(x => x.DocumentId == documentId && x.UserId == userId, cancellationToken);
+    }
+
+    public Task<List<Guid>> GetBookmarkedDocumentIdsAsync(Guid userId, List<Guid> documentIds, CancellationToken cancellationToken = default)
+    {
+        if (documentIds == null || documentIds.Count == 0) return Task.FromResult(new List<Guid>());
+
+        return _dbContext.UserBookmarks
+            .Where(x => x.UserId == userId && documentIds.Contains(x.DocumentId))
+            .Select(x => x.DocumentId)
+            .ToListAsync(cancellationToken);
+    }
+}

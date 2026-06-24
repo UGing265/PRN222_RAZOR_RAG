@@ -131,6 +131,13 @@ namespace DAL.Migrations
                         .HasColumnName("created_at")
                         .HasDefaultValueSql("now()");
 
+                    b.Property<string>("RetrievedChunkIds")
+                        .IsRequired()
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("jsonb")
+                        .HasColumnName("retrieved_chunk_ids")
+                        .HasDefaultValueSql("'[]'::jsonb");
+
                     b.Property<string>("Role")
                         .IsRequired()
                         .HasMaxLength(20)
@@ -678,31 +685,31 @@ namespace DAL.Migrations
                         new
                         {
                             Id = new Guid("aaaaaaaa-aaaa-aaaa-aaaa-111111111111"),
-                            CreatedAt = new DateTime(2026, 6, 17, 13, 28, 11, 732, DateTimeKind.Utc).AddTicks(7372),
+                            CreatedAt = new DateTime(2026, 6, 24, 14, 0, 27, 610, DateTimeKind.Utc).AddTicks(683),
                             Name = "Giáo trình"
                         },
                         new
                         {
                             Id = new Guid("aaaaaaaa-aaaa-aaaa-aaaa-222222222222"),
-                            CreatedAt = new DateTime(2026, 6, 17, 13, 28, 11, 732, DateTimeKind.Utc).AddTicks(7374),
+                            CreatedAt = new DateTime(2026, 6, 24, 14, 0, 27, 610, DateTimeKind.Utc).AddTicks(685),
                             Name = "Slide bài giảng"
                         },
                         new
                         {
                             Id = new Guid("aaaaaaaa-aaaa-aaaa-aaaa-333333333333"),
-                            CreatedAt = new DateTime(2026, 6, 17, 13, 28, 11, 732, DateTimeKind.Utc).AddTicks(7375),
+                            CreatedAt = new DateTime(2026, 6, 24, 14, 0, 27, 610, DateTimeKind.Utc).AddTicks(686),
                             Name = "Đề thi mẫu"
                         },
                         new
                         {
                             Id = new Guid("aaaaaaaa-aaaa-aaaa-aaaa-444444444444"),
-                            CreatedAt = new DateTime(2026, 6, 17, 13, 28, 11, 732, DateTimeKind.Utc).AddTicks(7376),
+                            CreatedAt = new DateTime(2026, 6, 24, 14, 0, 27, 610, DateTimeKind.Utc).AddTicks(688),
                             Name = "Tài liệu tham khảo"
                         },
                         new
                         {
                             Id = new Guid("aaaaaaaa-aaaa-aaaa-aaaa-555555555555"),
-                            CreatedAt = new DateTime(2026, 6, 17, 13, 28, 11, 732, DateTimeKind.Utc).AddTicks(7378),
+                            CreatedAt = new DateTime(2026, 6, 24, 14, 0, 27, 610, DateTimeKind.Utc).AddTicks(689),
                             Name = "Hướng dẫn thực hành"
                         });
                 });
@@ -746,21 +753,21 @@ namespace DAL.Migrations
                         {
                             Id = new Guid("bbbbbbbb-bbbb-bbbb-bbbb-111111111111"),
                             Code = "vi",
-                            CreatedAt = new DateTime(2026, 6, 17, 13, 28, 11, 732, DateTimeKind.Utc).AddTicks(7399),
+                            CreatedAt = new DateTime(2026, 6, 24, 14, 0, 27, 610, DateTimeKind.Utc).AddTicks(710),
                             Name = "Tiếng Việt"
                         },
                         new
                         {
                             Id = new Guid("bbbbbbbb-bbbb-bbbb-bbbb-222222222222"),
                             Code = "en",
-                            CreatedAt = new DateTime(2026, 6, 17, 13, 28, 11, 732, DateTimeKind.Utc).AddTicks(7401),
+                            CreatedAt = new DateTime(2026, 6, 24, 14, 0, 27, 610, DateTimeKind.Utc).AddTicks(712),
                             Name = "Tiếng Anh"
                         },
                         new
                         {
                             Id = new Guid("bbbbbbbb-bbbb-bbbb-bbbb-333333333333"),
                             Code = "ja",
-                            CreatedAt = new DateTime(2026, 6, 17, 13, 28, 11, 732, DateTimeKind.Utc).AddTicks(7402),
+                            CreatedAt = new DateTime(2026, 6, 24, 14, 0, 27, 610, DateTimeKind.Utc).AddTicks(714),
                             Name = "Tiếng Nhật"
                         });
                 });
@@ -850,28 +857,28 @@ namespace DAL.Migrations
                         {
                             Id = new Guid("55555555-5555-5555-5555-555555555555"),
                             Code = "PRN222",
-                            CreatedAt = new DateTime(2026, 6, 17, 13, 28, 11, 732, DateTimeKind.Utc).AddTicks(5129),
+                            CreatedAt = new DateTime(2026, 6, 24, 14, 0, 27, 609, DateTimeKind.Utc).AddTicks(8034),
                             Name = "Phát triển ứng dụng với .NET"
                         },
                         new
                         {
                             Id = new Guid("66666666-6666-6666-6666-666666666666"),
                             Code = "SWD392",
-                            CreatedAt = new DateTime(2026, 6, 17, 13, 28, 11, 732, DateTimeKind.Utc).AddTicks(5132),
+                            CreatedAt = new DateTime(2026, 6, 24, 14, 0, 27, 609, DateTimeKind.Utc).AddTicks(8038),
                             Name = "Kỹ nghệ phần mềm"
                         },
                         new
                         {
                             Id = new Guid("77777777-7777-7777-7777-777777777777"),
                             Code = "DBI202",
-                            CreatedAt = new DateTime(2026, 6, 17, 13, 28, 11, 732, DateTimeKind.Utc).AddTicks(5134),
+                            CreatedAt = new DateTime(2026, 6, 24, 14, 0, 27, 609, DateTimeKind.Utc).AddTicks(8040),
                             Name = "Cơ sở dữ liệu"
                         },
                         new
                         {
                             Id = new Guid("88888888-8888-8888-8888-888888888888"),
                             Code = "PRN231",
-                            CreatedAt = new DateTime(2026, 6, 17, 13, 28, 11, 732, DateTimeKind.Utc).AddTicks(5135),
+                            CreatedAt = new DateTime(2026, 6, 24, 14, 0, 27, 609, DateTimeKind.Utc).AddTicks(8041),
                             Name = "Lập trình ứng dụng phân tán"
                         });
                 });

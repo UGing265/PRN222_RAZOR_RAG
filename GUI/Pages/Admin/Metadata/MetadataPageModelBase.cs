@@ -67,6 +67,8 @@ public abstract class MetadataPageModelBase : PageModel
         {
             await action();
             SetSuccess(successMessage);
+            var notificationService = HttpContext.RequestServices.GetRequiredService<BLL.Interfaces.Notifications.INotificationService>();
+            await notificationService.SendMetadataUpdatedAsync("Metadata", "Create", new { }, default);
         }
         catch (InvalidOperationException ex)
         {
@@ -92,6 +94,8 @@ public abstract class MetadataPageModelBase : PageModel
             else
             {
                 SetSuccess(successMessage);
+                var notificationService = HttpContext.RequestServices.GetRequiredService<BLL.Interfaces.Notifications.INotificationService>();
+                await notificationService.SendMetadataUpdatedAsync("Metadata", "Update", new { }, default);
             }
         }
         catch (InvalidOperationException ex)
@@ -115,9 +119,15 @@ public abstract class MetadataPageModelBase : PageModel
         {
             var ok = await action();
             if (ok)
+            {
                 SetSuccess(successMessage);
+                var notificationService = HttpContext.RequestServices.GetRequiredService<BLL.Interfaces.Notifications.INotificationService>();
+                await notificationService.SendMetadataUpdatedAsync("Metadata", "Delete", new { }, default);
+            }
             else
+            {
                 SetError(notFoundMessage);
+            }
         }
         catch (Exception ex)
         {

@@ -98,6 +98,11 @@ public class UploadProcessingService : IUploadProcessingService
         await _dbContext.SaveChangesAsync(cancellationToken);
         await _notificationService.SendUploadProgressAsync(job.Id.ToString(), job.ProgressPercent, job.Message, job.OwnerUserId, cancellationToken);
         await _notificationService.SendDocumentStatusUpdatedAsync(document.Id, document.Title, document.Status, job.OwnerUserId, cancellationToken);
+
+        if (document.Visibility != "private")
+        {
+            await _notificationService.SendNewPublicDocumentAvailableAsync(document.Id, document.Title, cancellationToken);
+        }
     }
 
     private static string ResolveContentType(string fileName)

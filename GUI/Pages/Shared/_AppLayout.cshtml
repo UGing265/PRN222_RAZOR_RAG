@@ -92,6 +92,29 @@
                         }, 2500);
                     });
 
+                    connection.on("ReceiveRoleChanged", function (newRole) {
+                        showPremiumToast("Quyền hạn tài khoản của bạn đã được Admin thay đổi. Vui lòng đăng nhập lại để cập nhật hệ thống.", "warning");
+                        setTimeout(function () {
+                            window.location.href = "/Auth/Logout";
+                        }, 3000);
+                    });
+
+                    connection.on("ReceiveReportsUpdated", function () {
+                        if (!window.location.pathname.toLowerCase().includes('/admin/documents')) {
+                            showPremiumToast("Có thay đổi mới về Báo cáo vi phạm. Vui lòng kiểm tra trang Quản lý tài liệu!", "info");
+                        }
+                    });
+
+                    connection.on("ReceiveLibraryRefresh", function () {
+                        setTimeout(function () {
+                            if (typeof submitAjaxForm === "function") {
+                                submitAjaxForm();
+                            } else {
+                                window.location.reload();
+                            }
+                        }, 2500);
+                    });
+
                     connection.start()
                         .then(() => console.log("SignalR Connection established successfully."))
                         .catch(err => console.error("SignalR Connection Error: ", err));

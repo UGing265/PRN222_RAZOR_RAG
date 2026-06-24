@@ -20,7 +20,7 @@
     var allLangs = Model.Languages;
     var allSources = Model.DocumentSources;
     
-    bool isSearchMode = !string.IsNullOrEmpty(query);
+    bool isSearchMode = !string.IsNullOrEmpty(query) || Model.IsBookmarked == true;
     bool isSubjectMode = selectedSubjectId.HasValue;
     bool isTermMode = selectedTermId.HasValue && !isSubjectMode && !isSearchMode;
     bool isRootMode = !selectedTermId.HasValue && !isSubjectMode && !isSearchMode;
@@ -214,12 +214,24 @@
         <!-- Header & Breadcrumbs -->
         <div class="mb-5">
             <span class="font-mono-xs text-coral-deep" style="font-weight: 700; letter-spacing: 0.15em;">HỆ SINH THÁI</span>
-            <h1 class="hero-title mt-2 mb-3" style="font-size: clamp(2.5rem, 5vw, 3.5rem); color: var(--brown); line-height: 1.1;">Khám Phá</h1>
+            <div class="d-flex align-items-center justify-content-between flex-wrap gap-3 mt-2 mb-3">
+                <h1 class="hero-title mb-0" style="font-size: clamp(2.5rem, 5vw, 3.5rem); color: var(--brown); line-height: 1.1;">
+                    @(Model.IsBookmarked == true ? "Tài Liệu Đã Lưu" : "Khám Phá")
+                </h1>
+            </div>
             
             <nav aria-label="breadcrumb">
                 <ol class="breadcrumb breadcrumb-glass d-inline-flex mb-0 font-mono-xs align-items-center">
-                    <li class="breadcrumb-item"><a href="?">Tất Cả Học Kỳ</a></li>
-                    @if (selectedTerm != null || isSubjectMode || isSearchMode)
+                    <li class="breadcrumb-item"><a href="/" class="text-muted text-decoration-none">Trang chủ</a></li>
+                    @if (Model.IsBookmarked == true)
+                    {
+                        <li class="breadcrumb-item active text-muted">Tài liệu đã lưu</li>
+                        @if (!string.IsNullOrEmpty(query))
+                        {
+                            <li class="breadcrumb-item active text-muted">Kết quả tìm kiếm: "@query"</li>
+                        }
+                    }
+                    else if (selectedTerm != null || isSubjectMode || isSearchMode)
                     {
                         if (isSearchMode && !selectedTermId.HasValue && !selectedSubjectId.HasValue)
                         {
@@ -306,6 +318,10 @@
             <!-- Search & Filter Form -->
             <form method="get" asp-page="/Documents/All" class="mb-5" id="filterForm">
                 <input type="hidden" name="termId" value="@selectedTermId" />
+                @if (Model.IsBookmarked == true)
+                {
+                    <input type="hidden" name="isBookmarked" value="true" />
+                }
                 <div class="search-glass-container p-3 d-flex flex-column gap-3">
                     
                     <!-- ROW 1: Search Input & Search Button -->
@@ -521,12 +537,24 @@
                                         </span>
                                     </div>
 
-                                    <a asp-page="/Documents/Details" asp-route-slug="@item.Slug" class="read-doc-btn">
-                                        <span>Đọc ngay</span>
-                                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-                                            <line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/>
-                                        </svg>
-                                    </a>
+                                    <div class="d-flex align-items-center gap-2">
+                                        <button type="button" class="btn btn-premium-secondary px-0 d-inline-flex align-items-center justify-content-center bookmark-toggle-btn shadow-sm" 
+                                                data-document-id="@item.Id" 
+                                                data-bookmarked="@item.IsBookmarked.ToString().ToLower()"
+                                                style="border-radius: 50%; width: 36px; height: 36px; background: rgba(255, 255, 255, 0.7); border: 1.5px solid rgba(82, 39, 27, 0.08);"
+                                                title="@(item.IsBookmarked ? "Bỏ lưu tài liệu" : "Lưu tài liệu")">
+                                            <svg class="bookmark-icon" width="16" height="16" viewBox="0 0 24 24" fill="@(item.IsBookmarked ? "var(--coral)" : "none")" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="color: @(item.IsBookmarked ? "var(--coral)" : "var(--brown)"); transition: all 0.3s ease;">
+                                                <path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"></path>
+                                            </svg>
+                                        </button>
+
+                                        <a asp-page="/Documents/Details" asp-route-slug="@item.Slug" class="read-doc-btn">
+                                            <span>Đọc ngay</span>
+                                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                                                <line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/>
+                                            </svg>
+                                        </a>
+                                    </div>
                                 </div>
                             </div>
                         </div>
@@ -606,6 +634,67 @@
                     submitAjaxForm();
                 });
                 
+                function bindBookmarkToggles() {
+                    const container = document.getElementById('resultsContainer');
+                    if (!container) return;
+                    container.querySelectorAll('.bookmark-toggle-btn').forEach(btn => {
+                        if (btn.dataset.bound) return;
+                        btn.dataset.bound = "true";
+                        
+                        btn.addEventListener('click', async function(e) {
+                            e.preventDefault();
+                            e.stopPropagation();
+                            const docId = this.dataset.documentId;
+                            const isCurrentlyBookmarked = this.dataset.bookmarked === 'true';
+                            const originalTitle = this.getAttribute('title');
+                            
+                            this.dataset.bookmarked = (!isCurrentlyBookmarked).toString();
+                            this.setAttribute('title', !isCurrentlyBookmarked ? "Bỏ lưu tài liệu" : "Lưu tài liệu");
+                            const svg = this.querySelector('.bookmark-icon');
+                            if (!isCurrentlyBookmarked) {
+                                svg.setAttribute('fill', 'var(--coral)');
+                                svg.style.color = 'var(--coral)';
+                            } else {
+                                svg.setAttribute('fill', 'none');
+                                svg.style.color = 'var(--brown)';
+                            }
+                            
+                            try {
+                                const response = await fetch(`/api/documents/${docId}/bookmark`, {
+                                    method: 'POST',
+                                    headers: { 'Content-Type': 'application/json' }
+                                });
+                                if (!response.ok) throw new Error('Failed');
+                                const data = await response.json();
+                                
+                                this.dataset.bookmarked = data.isBookmarked.toString();
+                                this.setAttribute('title', data.isBookmarked ? "Bỏ lưu tài liệu" : "Lưu tài liệu");
+                                if (data.isBookmarked) {
+                                    svg.setAttribute('fill', 'var(--coral)');
+                                    svg.style.color = 'var(--coral)';
+                                    if (typeof showPremiumToast === 'function') showPremiumToast('Đã lưu tài liệu vào Bookmark', 'success');
+                                } else {
+                                    svg.setAttribute('fill', 'none');
+                                    svg.style.color = 'var(--brown)';
+                                    if (typeof showPremiumToast === 'function') showPremiumToast('Đã xóa tài liệu khỏi Bookmark', 'info');
+                                }
+                            } catch (error) {
+                                console.error('Bookmark error:', error);
+                                this.dataset.bookmarked = isCurrentlyBookmarked.toString();
+                                this.setAttribute('title', originalTitle);
+                                if (isCurrentlyBookmarked) {
+                                    svg.setAttribute('fill', 'var(--coral)');
+                                    svg.style.color = 'var(--coral)';
+                                } else {
+                                    svg.setAttribute('fill', 'none');
+                                    svg.style.color = 'var(--brown)';
+                                }
+                                if (typeof showPremiumToast === 'function') showPremiumToast('Lỗi khi lưu tài liệu', 'danger');
+                            }
+                        });
+                    });
+                }
+                
                 function submitAjaxForm() {
                     const url = new URL(form.action || window.location.href);
                     const formData = new FormData(form);
@@ -627,6 +716,7 @@
                             container.innerHTML = newContainer.innerHTML;
                             window.history.pushState({}, '', url);
                             bindPaginationLinks();
+                            bindBookmarkToggles();
                         } else {
                             form.submit();
                         }
@@ -657,6 +747,7 @@
                                     container.innerHTML = newContainer.innerHTML;
                                     window.history.pushState({}, '', url);
                                     bindPaginationLinks();
+                                    bindBookmarkToggles();
                                 } else {
                                     window.location.href = url;
                                 }
@@ -670,10 +761,76 @@
                 }
                 
                 bindPaginationLinks();
+                bindBookmarkToggles();
                 
+
                 window.addEventListener('popstate', function() {
                     window.location.reload();
                 });
+                
+                // SignalR Sync for Bookmarks, Deletions, and Visibility
+                function setupBookmarkSync() {
+                    const connection = window.signalrConnection;
+                    if (!connection) {
+                        setTimeout(setupBookmarkSync, 100);
+                        return;
+                    }
+                    
+                    const currentUserId = '@(User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value)';
+
+                    connection.on("ReceiveBookmarkUpdated", function (payload) {
+                        const urlParams = new URLSearchParams(window.location.search);
+                        const isBookmarkView = urlParams.get('isBookmarked') === 'true';
+                        
+                        if (isBookmarkView) {
+                            if (typeof submitAjaxForm === 'function') {
+                                submitAjaxForm();
+                            } else {
+                                window.location.reload();
+                            }
+                        } else {
+                            const btn = container.querySelector(`.bookmark-toggle-btn[data-document-id="${payload.documentId}"]`);
+                            if (btn) {
+                                btn.dataset.bookmarked = payload.isBookmarked.toString();
+                                btn.setAttribute('title', payload.isBookmarked ? "Bỏ lưu tài liệu" : "Lưu tài liệu");
+                                const svg = btn.querySelector('.bookmark-icon');
+                                if (payload.isBookmarked) {
+                                    svg.setAttribute('fill', 'var(--coral)');
+                                    svg.style.color = 'var(--coral)';
+                                } else {
+                                    svg.setAttribute('fill', 'none');
+                                    svg.style.color = 'var(--brown)';
+                                }
+                            }
+                        }
+                    });
+
+                    connection.on('ReceiveDocumentDeleted', (payload) => {
+                        if (typeof submitAjaxForm === 'function') submitAjaxForm();
+                        else window.location.reload();
+                    });
+
+                    connection.on("ReceiveDocumentUpdated", function (payload) {
+                        console.log("ReceiveDocumentUpdated:", payload);
+                        const docExists = document.getElementById('doc-card-' + payload.documentId);
+                        
+                        if (!docExists && payload.visibility !== "private") {
+                            if (typeof submitAjaxForm === 'function') submitAjaxForm();
+                            else window.location.reload();
+                        } else if (docExists) {
+                            if (typeof submitAjaxForm === 'function') submitAjaxForm();
+                            else window.location.reload();
+                        }
+                    });
+
+                    connection.on('ReceiveNewPublicDocument', (payload) => {
+                        setTimeout(() => {
+                            if (typeof submitAjaxForm === 'function') submitAjaxForm();
+                            else window.location.reload();
+                        }, 1500);
+                    });
+                }
+                setupBookmarkSync();
             }
         });
     </script>

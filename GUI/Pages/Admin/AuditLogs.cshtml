@@ -1,0 +1,195 @@
+@page "/Admin/AuditLogs"
+@model GUI.Pages.Admin.AuditLogsModel
+
+@{
+    ViewData["Title"] = "Lịch Sử Hệ Thống";
+}
+
+<div class="page-shell grain">
+    <main class="container-fluid px-4 px-md-5 py-5" style="max-width: 1300px;">
+        <!-- Top Heading Area -->
+        <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center mb-5 gap-4">
+            <div>
+                <span class="font-mono-xs text-coral-deep" style="font-weight: 700; letter-spacing: 0.15em;">QUẢN TRỊ VIÊN</span>
+                <h1 class="hero-title mt-2 mb-3" style="font-size: clamp(2.5rem, 5vw, 3.5rem); color: var(--brown); line-height: 1.1;">Lịch Sử Hệ Thống</h1>
+                <p class="text-muted-foreground mb-3" style="font-size: 15px; font-weight: 400;">Theo dõi và kiểm toán mọi thao tác thay đổi dữ liệu của tài khoản Giảng Viên và Quản Trị Viên trên hệ thống.</p>
+                <div class="d-flex gap-2">
+                    <span class="badge px-3.5 py-2 border-0 rounded-pill text-white bg-dark" style="font-size: 13px; font-weight: 500; font-family: inherit; text-transform: none; letter-spacing: normal;">
+                        @Model.ViewModel.TotalCount Bản ghi Audit
+                    </span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Table Area -->
+        <div class="soft-panel editorial-shadow p-4 p-md-5" style="background: rgba(255,255,255,.72); border-radius: 24px;">
+            @if (!Model.ViewModel.Items.Any())
+            {
+                <div class="text-center py-5">
+                    <h3 class="text-muted-foreground" style="font-size: 15px; font-weight: 500; font-family: inherit;">Chưa có bản ghi lịch sử nào.</h3>
+                </div>
+            }
+            else
+            {
+                <div class="table-responsive">
+                    <table class="table table-hover align-middle mb-0" style="border-collapse: separate; border-spacing: 0 12px; font-family: inherit;">
+                        <thead>
+                            <tr class="text-muted-foreground" style="border: none; font-size: 13px; font-weight: 600; letter-spacing: 0.02em;">
+                                <th scope="col" class="pb-2 border-0 ps-3">Thời Gian</th>
+                                <th scope="col" class="pb-2 border-0">Người Thực Hiện</th>
+                                <th scope="col" class="pb-2 border-0">Thao Tác</th>
+                                <th scope="col" class="pb-2 border-0">Bảng Đích</th>
+                                <th scope="col" class="pb-2 border-0">Chi Tiết</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var log in Model.ViewModel.Items)
+                            {
+                                string actionText = log.Action switch {
+                                    "ApproveUser" => "Phê Duyệt Tài Khoản",
+                                    "RejectUser_Delete" => "Từ Chối Tài Khoản",
+                                    "BlockUser" => "Khóa Tài Khoản",
+                                    "UnblockUser" => "Mở Khóa Tài Khoản",
+                                    "CreateDocument" => "Tải Lên Tài Liệu",
+                                    "UpdateDocument" => "Cập Nhật Tài Liệu",
+                                    "DeleteDocument" => "Xóa Tài Liệu",
+                                    _ when log.Action.StartsWith("ResolveReport") => "Xử Lý Báo Cáo",
+                                    _ => log.Action
+                                };
+
+                                string targetStr = !string.IsNullOrEmpty(log.TargetName) ? $"<strong style=\"color: var(--brown);\">{log.TargetName}</strong>" : $"<strong>ID {log.TargetId.ToString().Substring(0, 8)}</strong>";
+                                string shortDesc = log.Action switch {
+                                    "ApproveUser" => $"Đã Phê Duyệt Tài Khoản Của {targetStr}",
+                                    "RejectUser_Delete" => $"Đã Từ Chối Và Xóa Tài Khoản {targetStr}",
+                                    "BlockUser" => $"Đã Khóa Tài Khoản Của {targetStr}",
+                                    "UnblockUser" => $"Đã Mở Khóa Cho {targetStr}",
+                                    "CreateDocument" => $"Đã Tải Lên Tài Liệu Mới: {targetStr}",
+                                    "UpdateDocument" => $"Đã Cập Nhật Tài Liệu: {targetStr}",
+                                    "DeleteDocument" => $"Đã Xóa Tài Liệu: {targetStr}",
+                                    _ when log.Action.StartsWith("ResolveReport") => $"Đã Xử Lý Báo Cáo: {targetStr}",
+                                    _ => log.Description ?? ""
+                                };
+
+                                <tr class="glass-row" style="background: rgba(255, 255, 255, 0.4); border-radius: 16px; box-shadow: 0 4px 12px rgba(0,0,0,0.02); transition: all 0.2s ease;">
+                                    <td class="ps-3 py-3 border-0 fw-medium text-muted-foreground" style="border-radius: 12px 0 0 12px; font-size: 14px;">
+                                        @log.CreatedAt.ToLocalTime().ToString("dd/MM/yyyy HH:mm:ss")
+                                    </td>
+                                    <td class="py-3 border-0">
+                                        <div class="d-flex flex-column">
+                                            <div class="fw-bold text-foreground" style="font-size: 14px;">@log.UserFullName</div>
+                                            <div class="text-muted-foreground" style="font-size: 12px; margin-top: 2px;">@log.UserEmail</div>
+                                        </div>
+                                    </td>
+                                    <td class="py-3 border-0">
+                                        <span class="fw-medium text-foreground" style="font-size: 13px;">@actionText</span>
+                                    </td>
+                                    <td class="py-3 border-0 text-muted-foreground" style="font-size: 14px;">
+                                        @log.TargetTable <br />
+                                        @if (!string.IsNullOrEmpty(log.TargetName))
+                                        {
+                                            <span style="font-size: 13px; font-weight: 700; color: #4a1f16;">@log.TargetName</span>
+                                        }
+                                        else
+                                        {
+                                            <span style="font-size: 11px;" title="@log.TargetId">ID: @log.TargetId.ToString().Substring(0, 8)...</span>
+                                        }
+                                    </td>
+                                    <td class="py-3 border-0 text-muted-foreground pe-3" style="border-radius: 0 12px 12px 0; font-size: 14px; max-width: 250px;">
+                                        @Html.Raw(shortDesc)
+                                    </td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+
+                <!-- Pagination -->
+                @if (Model.ViewModel.TotalPages > 1)
+                {
+                    <div class="d-flex justify-content-center mt-4 pt-3 border-top" style="border-color: rgba(0,0,0,0.05) !important;">
+                        <nav aria-label="Page navigation">
+                            <ul class="pagination gap-2 mb-0">
+                                <li class="page-item @(Model.ViewModel.Page <= 1 ? "disabled" : "")">
+                                    <a class="page-link rounded-pill border-0 text-dark" style="background: rgba(0,0,0,0.03);" asp-page="/Admin/AuditLogs" asp-route-p="@(Model.ViewModel.Page - 1)">
+                                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="15 18 9 12 15 6"/></svg>
+                                    </a>
+                                </li>
+                                
+                                @for (int i = 1; i <= Model.ViewModel.TotalPages; i++)
+                                {
+                                    <li class="page-item">
+                                        <a class="page-link rounded-pill border-0 @(i == Model.ViewModel.Page ? "active-page text-white" : "text-dark")" 
+                                           style="@(i == Model.ViewModel.Page ? "background: #4a1f16;" : "background: rgba(0,0,0,0.03);") font-weight: 600;"
+                                           asp-page="/Admin/AuditLogs" asp-route-p="@i">
+                                            @i
+                                        </a>
+                                    </li>
+                                }
+
+                                <li class="page-item @(Model.ViewModel.Page >= Model.ViewModel.TotalPages ? "disabled" : "")">
+                                    <a class="page-link rounded-pill border-0 text-dark" style="background: rgba(0,0,0,0.03);" asp-page="/Admin/AuditLogs" asp-route-p="@(Model.ViewModel.Page + 1)">
+                                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="9 18 15 12 9 6"/></svg>
+                                    </a>
+                                </li>
+                            </ul>
+                        </nav>
+                    </div>
+                }
+            }
+        </div>
+    </main>
+</div>
+
+@section Scripts {
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            if (window.signalrConnection) {
+                // Subscribe to the newly added event
+                window.signalrConnection.on("ReceiveAuditLogCreated", function () {
+                    console.log("ReceiveAuditLogCreated: Triggering silent refresh...");
+                    // Reload the page silently
+                    const url = new URL(window.location.href);
+                    fetch(url.toString(), {
+                        headers: {
+                            'X-Requested-With': 'XMLHttpRequest'
+                        }
+                    })
+                    .then(response => response.text())
+                    .then(html => {
+                        const parser = new DOMParser();
+                        const newDoc = parser.parseFromString(html, 'text/html');
+                        
+                        const currentContent = document.querySelector('.soft-panel');
+                        const newContent = newDoc.querySelector('.soft-panel');
+                        
+                        if (currentContent && newContent) {
+                            currentContent.innerHTML = newContent.innerHTML;
+                        }
+                        
+                        // Also update total count
+                        const currentBadge = document.querySelector('.badge.bg-dark');
+                        const newBadge = newDoc.querySelector('.badge.bg-dark');
+                        if (currentBadge && newBadge) {
+                            currentBadge.innerHTML = newBadge.innerHTML;
+                        }
+                    })
+                    .catch(err => console.error("Error silently refreshing audit logs:", err));
+                });
+            }
+        });
+    </script>
+}
+
+<style>
+    .glass-row:hover {
+        transform: translateY(-2px);
+        background: rgba(255, 255, 255, 0.72) !important;
+        box-shadow: 0 8px 20px rgba(74, 31, 22, 0.05) !important;
+    }
+    .page-link:hover {
+        background: rgba(0,0,0,0.08) !important;
+    }
+    .active-page:hover {
+        background: #361610 !important;
+    }
+</style>

@@ -51,6 +51,7 @@ public static class DocumentEndpoints
             [FromQuery] Guid? subjectId,
             [FromQuery] int page = 1,
             [FromQuery] int pageSize = 50,
+            [FromQuery] bool? isBookmarked = null,
             CancellationToken ct = default) =>
         {
             if (!TryGetUserId(user, out var userId)) return Results.Unauthorized();
@@ -61,6 +62,7 @@ public static class DocumentEndpoints
                 page: page,
                 pageSize: pageSize,
                 requesterUserId: userId,
+                bookmarkedOnly: isBookmarked,
                 cancellationToken: ct);
 
             var items = result.Documents.Select(d => new
@@ -104,6 +106,29 @@ public static class DocumentEndpoints
                 return Results.BadRequest(new { error = ex.Message });
             }
         }).RequireAuthorization();
+
+        // 4. Toggle Bookmark
+        group.MapPost("/{id:guid}/bookmark", async (
+            Guid id,
+            IDocumentService documents,
+            BLL.Interfaces.Notifications.INotificationService notifications,
+            ClaimsPrincipal user,
+            CancellationToken ct) =>
+        {
+            if (!TryGetUserId(user, out var userId)) return Results.Unauthorized();
+
+            try
+            {
+                bool isBookmarked = await documents.ToggleBookmarkAsync(id, userId, ct);
+                await notifications.SendBookmarkUpdatedAsync(id, userId, isBookmarked, ct);
+                return Results.Ok(new { isBookmarked = isBookmarked });
+            }
+            catch (Exception ex)
+            {
+                return Results.Problem(detail: ex.Message, title: "Bookmark toggle failed");
+            }
+        }).RequireAuthorization()
+          .DisableAntiforgery();
 
         return routes;
     }

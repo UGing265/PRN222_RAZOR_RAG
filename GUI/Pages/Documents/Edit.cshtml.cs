@@ -1,5 +1,6 @@
 using BLL.DTOs.Documents;
 using BLL.Interfaces.Documents;
+using BLL.Interfaces.Notifications;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
@@ -11,11 +12,13 @@ namespace GUI.Pages.Documents;
 public class EditModel : PageModel
 {
     private readonly IDocumentService _documentService;
+    private readonly INotificationService _notificationService;
     private readonly ILogger<EditModel> _logger;
 
-    public EditModel(IDocumentService documentService, ILogger<EditModel> logger)
+    public EditModel(IDocumentService documentService, INotificationService notificationService, ILogger<EditModel> logger)
     {
         _documentService = documentService;
+        _notificationService = notificationService;
         _logger = logger;
     }
 
@@ -124,6 +127,8 @@ public class EditModel : PageModel
         try
         {
             await _documentService.UpdateDocumentAsync(EditModelData.Id, userId, editInput, cancellationToken);
+            await _notificationService.SendDocumentUpdatedAsync(EditModelData.Id, EditModelData.Title, EditModelData.Visibility, userId, cancellationToken);
+
             TempData["SuccessMessage"] = "Đã cập nhật thông tin tài liệu.";
             return RedirectToPage("/Documents/Mine");
         }

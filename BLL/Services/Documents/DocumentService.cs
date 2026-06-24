@@ -131,6 +131,19 @@ public class DocumentService : IDocumentService
         };
 
         var saved = await _documentRepository.AddDocumentAsync(document, cancellationToken);
+        
+        var auditLog = new DAL.Entities.AuditLog
+        {
+            UserId = input.OwnerUserId,
+            Action = "CreateDocument",
+            TargetTable = "Documents",
+            TargetId = saved.Id,
+            Description = $"User {input.OwnerUserId} uploaded new document {saved.Id}",
+            CreatedAt = DateTime.UtcNow
+        };
+        await _documentRepository.AddAuditLogAsync(auditLog, cancellationToken);
+        await _notificationService.SendAuditLogCreatedAsync(cancellationToken);
+        
         return new DocumentCreateResultDto { Id = saved.Id, Slug = saved.Slug ?? string.Empty };
     }
 
@@ -284,7 +297,7 @@ public class DocumentService : IDocumentService
         }
     }
 
-    public async Task<DocumentDetailsDto?> GetDocumentDetailsAsync(Guid documentId, int chunkPage = 1, int chunkPageSize = 10, bool incrementViewCount = true, CancellationToken cancellationToken = default)
+    public async Task<DocumentDetailsDto?> GetDocumentDetailsAsync(Guid documentId, int chunkPage = 1, int chunkPageSize = 10, bool incrementViewCount = true, Guid? requesterUserId = null, CancellationToken cancellationToken = default)
     {
         var document = await _documentRepository.GetDocumentWithFilesAsync(documentId, cancellationToken);
         if (document is null) return null;
@@ -295,11 +308,16 @@ public class DocumentService : IDocumentService
         chunkPage = Math.Clamp(chunkPage, 1, totalPages);
         var pageChunks = orderedChunks.Skip((chunkPage - 1) * chunkPageSize).Take(chunkPageSize).ToList();
 
-        // Increment view count only on the first page load to avoid inflating count during chunk pagination
         if (incrementViewCount && chunkPage == 1)
         {
             document.ViewCount++;
             await _documentRepository.SaveChangesAsync(cancellationToken);
+        }
+
+        bool isBookmarked = false;
+        if (requesterUserId.HasValue)
+        {
+            isBookmarked = await _documentRepository.IsBookmarkedAsync(documentId, requesterUserId.Value, cancellationToken);
         }
 
         return new DocumentDetailsDto
@@ -331,6 +349,7 @@ public class DocumentService : IDocumentService
             DownloadCount = document.DownloadCount,
             ApprovedAt = document.ApprovedAt,
             FileCount = document.DocumentFiles?.Count ?? 0,
+            IsBookmarked = isBookmarked,
             Files = (document.DocumentFiles ?? []).Select(f => new DocumentFileDto
             {
                 Id = f.Id,
@@ -382,14 +401,14 @@ public class DocumentService : IDocumentService
     {
         var document = await _documentRepository.GetDocumentBySlugAsync(slug, requesterUserId, isAdmin, cancellationToken);
         if (document is null) return null;
-        return await GetDocumentDetailsAsync(document.Id, chunkPage, chunkPageSize, incrementViewCount, cancellationToken);
+        return await GetDocumentDetailsAsync(document.Id, chunkPage, chunkPageSize, incrementViewCount, requesterUserId, cancellationToken);
     }
 
     public async Task<DocumentDetailsDto?> GetOwnedDocumentDetailsBySlugAsync(string slug, Guid ownerUserId, CancellationToken cancellationToken = default)
     {
         var document = await _documentRepository.GetOwnedDocumentBySlugAsync(slug, ownerUserId, cancellationToken);
         if (document is null) return null;
-        return await GetDocumentDetailsAsync(document.Id, 1, 10, false, cancellationToken);
+        return await GetDocumentDetailsAsync(document.Id, 1, 10, false, ownerUserId, cancellationToken);
     }
 
 
@@ -407,6 +426,7 @@ public class DocumentService : IDocumentService
 
         var documentIds = documents.Select(x => x.Id).ToList();
         var previewTexts = await _documentRepository.GetPreviewTextsAsync(documentIds, cancellationToken);
+        var bookmarkedIds = await _documentRepository.GetBookmarkedDocumentIdsAsync(ownerUserId, documentIds, cancellationToken);
 
         return new MyDocumentsDto
         {
@@ -430,7 +450,8 @@ public class DocumentService : IDocumentService
                 FileCount = x.DocumentFiles.Count,
                 ChunkCount = x.TotalChunks,
                 PreviewText = !string.IsNullOrWhiteSpace(x.Description) ? x.Description : (previewTexts.TryGetValue(x.Id, out var content) ? content : string.Empty),
-                ViewCount = x.ViewCount
+                ViewCount = x.ViewCount,
+                IsBookmarked = bookmarkedIds.Contains(x.Id)
             }).ToList(),
             TotalDocuments = totalDocuments,
             PendingDocuments = await _documentRepository.CountDocumentsByStatusAsync(ownerUserId, "pending", cancellationToken),
@@ -456,18 +477,22 @@ public class DocumentService : IDocumentService
         };
     }
 
-    public async Task<MyDocumentsDto> GetAllDocumentsAsync(string? query, Guid? subjectId, int page = 1, int pageSize = 6, Guid? requesterUserId = null, string? sortBy = null, Guid? documentTypeId = null, Guid? languageId = null, Guid? documentSourceId = null, CancellationToken cancellationToken = default)
+    public async Task<MyDocumentsDto> GetAllDocumentsAsync(string? query, Guid? subjectId, int page = 1, int pageSize = 6, Guid? requesterUserId = null, string? sortBy = null, Guid? documentTypeId = null, Guid? languageId = null, Guid? documentSourceId = null, bool? bookmarkedOnly = null, CancellationToken cancellationToken = default)
     {
         pageSize = Math.Clamp(pageSize, 6, 12);
         page = Math.Max(page, 1);
-        var totalDocuments = await _documentRepository.CountDocumentsAsync(query, subjectId, requesterUserId, documentTypeId, languageId, documentSourceId, cancellationToken);
+        var totalDocuments = await _documentRepository.CountDocumentsAsync(query, subjectId, requesterUserId, documentTypeId, languageId, documentSourceId, bookmarkedOnly, cancellationToken);
         var totalPages = Math.Max(1, (int)Math.Ceiling(totalDocuments / (double)pageSize));
         page = Math.Clamp(page, 1, totalPages);
 
-        var documents = await _documentRepository.GetDocumentsAsync(query, subjectId, page, pageSize, requesterUserId, sortBy, documentTypeId, languageId, documentSourceId, cancellationToken);
+        var documents = await _documentRepository.GetDocumentsAsync(query, subjectId, page, pageSize, requesterUserId, sortBy, documentTypeId, languageId, documentSourceId, bookmarkedOnly, cancellationToken);
 
         var documentIds = documents.Select(x => x.Id).ToList();
         var previewTexts = await _documentRepository.GetPreviewTextsAsync(documentIds, cancellationToken);
+        
+        var bookmarkedIds = requesterUserId.HasValue 
+            ? await _documentRepository.GetBookmarkedDocumentIdsAsync(requesterUserId.Value, documentIds, cancellationToken)
+            : new List<Guid>();
 
         return new MyDocumentsDto
         {
@@ -492,7 +517,8 @@ public class DocumentService : IDocumentService
                 ChunkCount = x.TotalChunks,
                 PreviewText = !string.IsNullOrWhiteSpace(x.Description) ? x.Description : (previewTexts.TryGetValue(x.Id, out var content) ? content : string.Empty),
                 OwnerEmail = x.OwnerUser?.Email,
-                ViewCount = x.ViewCount
+                ViewCount = x.ViewCount,
+                IsBookmarked = bookmarkedIds.Contains(x.Id)
             }).ToList(),
             TotalDocuments = totalDocuments,
             PendingDocuments = 0,
@@ -554,7 +580,7 @@ public class DocumentService : IDocumentService
         };
     }
 
-    public async Task DeleteDocumentAsync(Guid documentId, CancellationToken cancellationToken = default)
+    public async Task DeleteDocumentAsync(Guid deletedByUserId, Guid documentId, CancellationToken cancellationToken = default)
     {
         var document = await _documentRepository.GetDocumentAsync(documentId, cancellationToken)
             ?? throw new InvalidOperationException("Document not found.");
@@ -565,10 +591,25 @@ public class DocumentService : IDocumentService
         await _documentRepository.RemoveDocumentChunksByDocumentAsync(documentId, cancellationToken);
         await _documentRepository.RemoveDocumentChaptersByDocumentAsync(documentId, cancellationToken);
         await _documentRepository.RemoveDocumentReportsByDocumentAsync(documentId, cancellationToken);
+        await _documentRepository.RemoveDocumentBookmarksByDocumentAsync(documentId, cancellationToken);
+
+        var auditLog = new DAL.Entities.AuditLog
+        {
+            UserId = deletedByUserId,
+            Action = "DeleteDocument",
+            TargetTable = "Documents",
+            TargetId = documentId,
+            Description = $"User {deletedByUserId} deleted document {documentId}",
+            CreatedAt = DateTime.UtcNow
+        };
+        await _documentRepository.AddAuditLogAsync(auditLog, cancellationToken);
+        await _notificationService.SendAuditLogCreatedAsync(cancellationToken);
+
         await _documentRepository.RemoveDocumentAsync(document, cancellationToken);
         await _documentRepository.SaveChangesAsync(cancellationToken);
 
         await _notificationService.SendDocumentStatusUpdatedAsync(document.Id, document.Title, "deleted", document.OwnerUserId, cancellationToken);
+        await _notificationService.SendDocumentDeletedAsync(document.Id, document.Title, cancellationToken);
     }
 
     public async Task DeleteDocumentAssetsAsync(Guid documentId, CancellationToken cancellationToken = default)
@@ -688,12 +729,27 @@ public class DocumentService : IDocumentService
         document.DocumentSourceId = input.DocumentSourceId;
         document.UpdatedAt = DateTime.UtcNow;
 
+        var auditLog = new DAL.Entities.AuditLog
+        {
+            UserId = ownerUserId,
+            Action = "UpdateDocument",
+            TargetTable = "Documents",
+            TargetId = document.Id,
+            Description = $"Lecturer updated document {document.Id}",
+            CreatedAt = DateTime.UtcNow
+        };
+        await _documentRepository.AddAuditLogAsync(auditLog, cancellationToken);
+        await _notificationService.SendAuditLogCreatedAsync(cancellationToken);
+
         await _documentRepository.SaveChangesAsync(cancellationToken);
     }
 
     public Task<List<UploadJobSummaryDto>> GetUploadJobsAsync(Guid ownerUserId, CancellationToken cancellationToken = default) => GetActiveUploadJobsAsync(ownerUserId, cancellationToken);
 
-
+    public async Task<bool> ToggleBookmarkAsync(Guid documentId, Guid userId, CancellationToken cancellationToken = default)
+    {
+        return await _documentRepository.ToggleBookmarkAsync(documentId, userId, cancellationToken);
+    }
 
     public async Task<List<SubjectDto>> GetSubjectsAsync(CancellationToken cancellationToken = default)
     {
@@ -1124,14 +1180,26 @@ public class DocumentService : IDocumentService
         }).ToList();
     }
 
-    public async Task ResolveReportAsync(Guid reportId, string action, CancellationToken cancellationToken = default)
+    public async Task ResolveReportAsync(Guid adminUserId, Guid reportId, string action, CancellationToken cancellationToken = default)
     {
         var report = await _documentRepository.GetDocumentReportAsync(reportId, cancellationToken)
             ?? throw new InvalidOperationException("Báo cáo không tồn tại.");
 
+        var auditLog = new DAL.Entities.AuditLog
+        {
+            UserId = adminUserId,
+            Action = $"ResolveReport_{action}",
+            TargetTable = "Documents",
+            TargetId = report.DocumentId,
+            Description = $"Admin resolved report {reportId} with action: {action}",
+            CreatedAt = DateTime.UtcNow
+        };
+        await _documentRepository.AddAuditLogAsync(auditLog, cancellationToken);
+        await _notificationService.SendAuditLogCreatedAsync(cancellationToken);
+
         if (action.Equals("delete", StringComparison.OrdinalIgnoreCase))
         {
-            await DeleteDocumentAsync(report.DocumentId, cancellationToken);
+            await DeleteDocumentAsync(adminUserId, report.DocumentId, cancellationToken);
         }
         else
         {

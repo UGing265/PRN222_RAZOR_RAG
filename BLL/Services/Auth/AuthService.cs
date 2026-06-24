@@ -185,7 +185,7 @@ public class AuthService : IAuthService
         return users.Select(Map).ToList();
     }
 
-    public async Task<bool> ApproveUserAsync(Guid userId, CancellationToken cancellationToken = default)
+    public async Task<bool> ApproveUserAsync(Guid adminUserId, Guid userId, CancellationToken cancellationToken = default)
     {
         var user = await _authRepository.GetUserByIdAsync(userId, cancellationToken);
         if (user is null)
@@ -197,10 +197,23 @@ public class AuthService : IAuthService
         user.IsBlocked = false;
         user.UpdatedAt = DateTime.UtcNow;
         await _authRepository.UpdateUserAsync(user, cancellationToken);
+        
+        var auditLog = new DAL.Entities.AuditLog
+        {
+            UserId = adminUserId,
+            Action = "ApproveUser",
+            TargetTable = "Users",
+            TargetId = userId,
+            Description = $"Admin approved user {userId}",
+            CreatedAt = DateTime.UtcNow
+        };
+        await _authRepository.AddAuditLogAsync(auditLog, cancellationToken);
+        await _notificationService.SendAuditLogCreatedAsync(cancellationToken);
+        
         return true;
     }
 
-    public async Task<bool> RejectOrBlockUserAsync(Guid userId, CancellationToken cancellationToken = default)
+    public async Task<bool> RejectOrBlockUserAsync(Guid adminUserId, Guid userId, CancellationToken cancellationToken = default)
     {
         var user = await _authRepository.GetUserByIdAsync(userId, cancellationToken);
         if (user is null)
@@ -220,13 +233,29 @@ public class AuthService : IAuthService
             await _authRepository.UpdateUserAsync(user, cancellationToken);
         }
 
+        var actionName = (!user.IsActive && !user.IsBlocked) ? "RejectUser_Delete" : "BlockUser";
+        var auditLog = new DAL.Entities.AuditLog
+        {
+            UserId = adminUserId,
+            Action = actionName,
+            TargetTable = "Users",
+            TargetId = userId,
+            Description = $"Admin performed {actionName} on user {userId}",
+            CreatedAt = DateTime.UtcNow
+        };
+        await _authRepository.AddAuditLogAsync(auditLog, cancellationToken);
+        await _notificationService.SendAuditLogCreatedAsync(cancellationToken);
+
         // Notify client to force logout
         await _notificationService.SendForceLogoutAsync(userId, cancellationToken);
+        
+        // Broadcast to everyone to refresh the library (hides/shows user's documents)
+        await _notificationService.SendLibraryRefreshAsync(cancellationToken);
 
         return true;
     }
 
-    public async Task<bool> UnblockUserAsync(Guid userId, CancellationToken cancellationToken = default)
+    public async Task<bool> UnblockUserAsync(Guid adminUserId, Guid userId, CancellationToken cancellationToken = default)
     {
         var user = await _authRepository.GetUserByIdAsync(userId, cancellationToken);
         if (user is null)
@@ -238,7 +267,48 @@ public class AuthService : IAuthService
         user.IsActive = true;
         user.UpdatedAt = DateTime.UtcNow;
         await _authRepository.UpdateUserAsync(user, cancellationToken);
+
+        var auditLog = new DAL.Entities.AuditLog
+        {
+            UserId = adminUserId,
+            Action = "UnblockUser",
+            TargetTable = "Users",
+            TargetId = userId,
+            Description = $"Admin unblocked user {userId}",
+            CreatedAt = DateTime.UtcNow
+        };
+        await _authRepository.AddAuditLogAsync(auditLog, cancellationToken);
+        await _notificationService.SendAuditLogCreatedAsync(cancellationToken);
+        
+        await _notificationService.SendLibraryRefreshAsync(cancellationToken);
+        
         return true;
+    }
+
+    public async Task<AuditLogListDto> GetAuditLogsAsync(int page = 1, int pageSize = 20, CancellationToken cancellationToken = default)
+    {
+        var (items, totalCount, targetNames) = await _authRepository.GetAuditLogsAsync(page, pageSize, cancellationToken);
+        
+        return new AuditLogListDto
+        {
+            Items = items.Select(x => new AuditLogDto
+            {
+                Id = x.Id,
+                UserId = x.UserId,
+                UserEmail = x.User?.Email ?? "Unknown",
+                UserFullName = x.User?.FullName ?? "Unknown",
+                Action = x.Action,
+                TargetTable = x.TargetTable,
+                TargetId = x.TargetId,
+                TargetName = targetNames.ContainsKey(x.TargetId) ? targetNames[x.TargetId] : null,
+                IpAddress = x.IpAddress,
+                Description = x.Description,
+                CreatedAt = x.CreatedAt
+            }).ToList(),
+            TotalCount = totalCount,
+            Page = page,
+            PageSize = pageSize
+        };
     }
 
     public async Task<(int SuccessCount, List<string> Errors)> BulkRegisterFromExcelAsync(Stream excelStream, short roleId, CancellationToken cancellationToken = default)

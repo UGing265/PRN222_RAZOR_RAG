@@ -12,4 +12,6 @@ public interface IAuthRepository
     Task<User?> GetUserByIdAsync(Guid userId, CancellationToken cancellationToken = default);
     Task UpdateUserAsync(User user, CancellationToken cancellationToken = default);
     Task DeleteUserAsync(User user, CancellationToken cancellationToken = default);
+    Task AddAuditLogAsync(AuditLog log, CancellationToken cancellationToken = default);
+    Task<(List<AuditLog> Items, int TotalCount, Dictionary<Guid, string> TargetNames)> GetAuditLogsAsync(int page, int pageSize, CancellationToken cancellationToken = default);
 }

@@ -43,6 +43,9 @@ public class AllModel : PageModel
     [BindProperty(Name = "page", SupportsGet = true)]
     public int PageNum { get; set; } = 1;
 
+    [BindProperty(Name = "isBookmarked", SupportsGet = true)]
+    public bool? IsBookmarked { get; set; }
+
     public AllDocumentsViewModel ViewModel { get; set; } = new();
 
     public List<SubjectDto> Subjects { get; set; } = new();
@@ -58,7 +61,7 @@ public class AllModel : PageModel
         {
             var userId = Guid.TryParse(User.FindFirstValue(ClaimTypes.NameIdentifier), out var parsedUserId) ? parsedUserId : (Guid?)null;
             var result = await _documentService.GetAllDocumentsAsync(
-                Q, SubjectId, PageNum, 6, userId, SortBy, DocumentTypeId, LanguageId, DocumentSourceId, cancellationToken);
+                Q, SubjectId, PageNum, 6, userId, SortBy, DocumentTypeId, LanguageId, DocumentSourceId, IsBookmarked, cancellationToken);
 
             ViewModel = new AllDocumentsViewModel
             {
@@ -80,7 +83,8 @@ public class AllModel : PageModel
                     ChunkCount = x.ChunkCount,
                     PreviewText = x.PreviewText,
                     OwnerEmail = x.OwnerEmail,
-                    ViewCount = x.ViewCount
+                    ViewCount = x.ViewCount,
+                    IsBookmarked = x.IsBookmarked
                 }).ToList(),
                 TotalDocuments = result.TotalDocuments,
                 Page = result.Page,

@@ -21,7 +21,9 @@ public sealed class NavViewModel
 public sealed class NavLink
 {
     public string Page { get; set; } = string.Empty;
+    public string QueryString { get; set; } = string.Empty;
     public string Label { get; set; } = string.Empty;
     public string IconKey { get; set; } = string.Empty;
     public bool Active { get; set; }
+    public List<NavLink> SubLinks { get; set; } = new();
 }

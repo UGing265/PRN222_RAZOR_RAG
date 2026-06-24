@@ -890,7 +890,15 @@
                             }
                             connection.on("ReceiveSubjectsAssignedUpdated", function () {
                                 console.log("ReceiveSubjectsAssignedUpdated: Fetching updated subjects and other lookups...");
+                                fetchLookups();
+                            });
 
+                            connection.on("ReceiveMetadataUpdated", function (data) {
+                                console.log("ReceiveMetadataUpdated: Fetching updated lookups...", data);
+                                fetchLookups();
+                            });
+
+                            function fetchLookups() {
                                 fetch('/upload?handler=RefreshSubjects')
                                     .then(response => {
                                         if (!response.ok) throw new Error('Failed to fetch subjects');
@@ -899,14 +907,14 @@
                                     .then(data => {
                                         if (window.updateSubjectsDropdowns) {
                                             window.updateSubjectsDropdowns(data.subjects, data.academicTerms, data.subjectTermMap, data.documentTypes, data.languages, data.documentSources);
-                                            showPremiumToast("Danh sách môn học và các trường học liệu đã được cập nhật trực tiếp theo thời gian thực!", "info");
+                                            showPremiumToast("Danh mục hệ thống đã được tự động làm mới từ máy chủ theo thời gian thực!", "info");
                                         }
                                     })
                                     .catch(err => {
-                                        console.error("Error updating subjects: ", err);
+                                        console.error("Error updating lookups: ", err);
                                         showPremiumToast("Có lỗi xảy ra khi tự động cập nhật danh sách học liệu.", "danger");
                                     });
-                            });
+                            }
                         }
                         setupSignalRUpload();
                     });

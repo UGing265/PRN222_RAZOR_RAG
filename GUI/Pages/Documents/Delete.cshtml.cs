@@ -1,4 +1,5 @@
 using BLL.Interfaces.Documents;
+using BLL.Interfaces.Notifications;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
@@ -10,11 +11,13 @@ namespace GUI.Pages.Documents;
 public class DeleteModel : PageModel
 {
     private readonly IDocumentService _documentService;
+    private readonly INotificationService _notificationService;
     private readonly ILogger<DeleteModel> _logger;
 
-    public DeleteModel(IDocumentService documentService, ILogger<DeleteModel> logger)
+    public DeleteModel(IDocumentService documentService, INotificationService notificationService, ILogger<DeleteModel> logger)
     {
         _documentService = documentService;
+        _notificationService = notificationService;
         _logger = logger;
     }
 
@@ -79,7 +82,8 @@ public class DeleteModel : PageModel
                 return NotFound();
             }
 
-            await _documentService.DeleteDocumentAsync(canDelete.Id, cancellationToken);
+            await _documentService.DeleteDocumentAsync(userId, canDelete.Id, cancellationToken);
+            // SignalR broadcast is now handled centrally in DocumentService.DeleteDocumentAsync
 
             TempData["SuccessMessage"] = "Đã xoá tài liệu.";
             return RedirectToPage("/Documents/Mine");
