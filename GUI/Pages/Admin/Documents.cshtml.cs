@@ -91,6 +91,16 @@ namespace GUI.Pages.Admin
                 {
                     return Unauthorized();
                 }
+
+                // Block delete while document is still being processed (AI parsing).
+                // Race-condition guard: the UI already hides the button, but a request
+                // can still come in via direct form submit.
+                if (string.Equals(matchedDoc?.Status, "processing", StringComparison.OrdinalIgnoreCase))
+                {
+                    TempData["ErrorMessage"] = $"Không thể xóa tài liệu \"{docTitle}\" vì đang trong quá trình xử lý AI. Vui lòng đợi hoàn tất rồi thử lại.";
+                    return RedirectToPage("/Admin/Documents", new { tab = "files", q, subjectId, page });
+                }
+
                 await _documentService.DeleteDocumentAsync(adminUserId, id, cancellationToken);
 
                 // Note: SignalR broadcast is now handled centrally in DocumentService.DeleteDocumentAsync

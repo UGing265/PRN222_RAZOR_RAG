@@ -127,9 +127,20 @@
                                                 }
                                             </td>
                                             <td class="py-3 border-0 text-end pe-3" style="border-radius: 0 12px 12px 0;">
-                                                <button type="button" class="btn btn-outline-danger btn-sm rounded-pill px-3 py-1.5 d-inline-flex align-items-center gap-1" onclick="confirmDelete('@item.Id', '@Html.Raw(System.Text.Encodings.Web.JavaScriptEncoder.Default.Encode(item.Title))')">
-                                                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>Xóa
-                                                </button>
+                                                @if (item.Status == "processing")
+                                                {
+                                                    <span class="d-inline-flex align-items-center gap-1 px-3 py-1.5 rounded-pill"
+                                                          style="font-size: 12px; font-weight: 500; background: rgba(255, 193, 7, 0.08); border: 1px solid rgba(255, 193, 7, 0.25); color: #b78a02; cursor: not-allowed;"
+                                                          title="Không thể xóa tài liệu đang trong quá trình xử lý AI. Vui lòng đợi hoàn tất.">
+                                                        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>Đang xử lý
+                                                    </span>
+                                                }
+                                                else
+                                                {
+                                                    <button type="button" class="btn btn-outline-danger btn-sm rounded-pill px-3 py-1.5 d-inline-flex align-items-center gap-1" onclick="confirmDelete('@item.Id', '@Html.Raw(System.Text.Encodings.Web.JavaScriptEncoder.Default.Encode(item.Title))')">
+                                                        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>Xóa
+                                                    </button>
+                                                }
                                             </td>
                                         </tr>
                                     }
