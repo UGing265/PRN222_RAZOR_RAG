@@ -1,5 +1,6 @@
 using BLL.Extensions;
 using BLL.Interfaces.Notifications;
+using BLL.Services.Email;
 using GUI.Endpoints;
 using GUI.Hubs;
 using GUI.Services;
@@ -61,7 +62,7 @@ builder.Services.AddAuthentication(options =>
                 if (Guid.TryParse(userIdClaim, out var userId))
                 {
                     var user = await dbContext.Users.AsNoTracking().FirstOrDefaultAsync(u => u.Id == userId);
-                    if (user == null || !user.IsActive || user.IsBlocked)
+                    if (user == null || !user.IsActive || user.IsBlocked || !user.EmailVerified)
                     {
                         context.RejectPrincipal();
                         await context.HttpContext.SignOutAsync(CookieAuthenticationDefaults.AuthenticationScheme);
@@ -108,10 +109,26 @@ app.UseRouting();
 app.UseAuthentication();
 app.UseAuthorization();
 
+app.UseMiddleware<GUI.Middleware.ForceChangePasswordMiddleware>();
+
 app.MapRazorPages();
 app.MapChatEndpoints();
 app.MapDocumentEndpoints();
 app.MapHub<SystemHub>("/systemHub");
+
+using (var scope = app.Services.CreateScope())
+{
+    var cfg = scope.ServiceProvider.GetRequiredService<IConfiguration>();
+    var smtpServer = cfg["SmtpSettings:Server"];
+    var senderEmail = cfg["SmtpSettings:SenderEmail"];
+    if (string.IsNullOrWhiteSpace(smtpServer) || string.IsNullOrWhiteSpace(senderEmail))
+    {
+        var logger = app.Services.GetRequiredService<ILogger<Program>>();
+        logger.LogWarning(
+            "SMTP not configured — emails will be written to console only. " +
+            "Admin user verification emails will NOT be delivered in production.");
+    }
+}
 
 app.Run();
 

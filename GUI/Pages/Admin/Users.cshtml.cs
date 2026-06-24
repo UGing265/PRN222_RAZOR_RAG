@@ -30,9 +30,9 @@ namespace GUI.Pages.Admin
             return Page();
         }
 
-        public async Task<IActionResult> OnPostCreateUserAsync(string fullName, string email, string password, short roleId, CancellationToken cancellationToken)
+        public async Task<IActionResult> OnPostCreateUserAsync(string fullName, string email, short roleId, CancellationToken cancellationToken)
         {
-            if (string.IsNullOrWhiteSpace(fullName) || string.IsNullOrWhiteSpace(email) || string.IsNullOrWhiteSpace(password))
+            if (string.IsNullOrWhiteSpace(fullName) || string.IsNullOrWhiteSpace(email))
             {
                 TempData["ErrorMessage"] = "Vui lòng điền đầy đủ thông tin để tạo tài khoản.";
                 return RedirectToPage();
@@ -40,8 +40,9 @@ namespace GUI.Pages.Admin
 
             try
             {
-                await _authService.RegisterAsync(fullName, email, password, roleId, cancellationToken);
-                TempData["SuccessMessage"] = $"Đã tạo tài khoản cho '{fullName}' thành công.";
+                var created = await _authService.RegisterAsync(fullName, email, roleId, cancellationToken);
+                TempData["SuccessMessage"] =
+                    $"Đã tạo user {created.Email}. Email xác nhận đang được gửi tới hộp thư người dùng.";
             }
             catch (InvalidOperationException ex)
             {

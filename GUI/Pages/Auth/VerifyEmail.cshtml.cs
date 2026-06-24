@@ -28,11 +28,11 @@ namespace GUI.Pages.Auth
                 var verified = await _authService.VerifyEmailTokenAsync(token, cancellationToken);
                 if (verified)
                 {
-                    TempData["SuccessMessage"] = "Xác thực email thành công! Tài khoản của bạn đã được kích hoạt. Hãy đăng nhập.";
+                    TempData["SuccessMessage"] = "Email đã được xác nhận. Vui lòng đăng nhập bằng mật khẩu tạm đã được gửi qua email.";
                 }
                 else
                 {
-                    TempData["ErrorMessage"] = "Mã xác thực không hợp lệ hoặc đã hết hạn. Vui lòng thử đăng ký lại.";
+                    TempData["ErrorMessage"] = "Link xác nhận không hợp lệ hoặc đã hết hạn. Liên hệ Admin để được cấp lại.";
                 }
             }
             catch (Exception ex)
