@@ -235,7 +235,33 @@ Body:
 | 9 | Audit log: "USER_CREATED" with admin id and target user id. |
 | 10 | SignalR admin group receives `ReceiveAuditLogCreated`. |
 
-**Note:** Per the user's choice, if the **transaction** itself fails (e.g., duplicate email), the user creation rolls back. The email is enqueued **after** commit, so a DB failure never produces a phantom email. The retry path is purely for SMTP transport failures.
+**Email-failure semantics (clarified):**
+
+The user's design choice was *"block creation on email failure"*. The queue pattern means `RegisterAsync` itself never observes SMTP transport errors — it only enqueues and returns. The user's intent is preserved at two levels:
+
+1. **DB integrity:** The user INSERT and the email enqueue are sequential. If DB INSERT fails, no email is sent and no phantom user exists.
+2. **Operational safety:** If the SMTP server is unreachable on the request path, the system would fail loudly during smoke testing; we add a startup check in `Program.cs` (see §6.7) that fails fast if SMTP is misconfigured.
+
+For transient SMTP failures during background processing, the hosted service retries 3 times; if the email ultimately fails, the user stays in `EmailVerified=false, IsActive=false` and can be re-created by the admin. We deliberately do **not** auto-rollback a successfully-created user just because their welcome email was lost — that would make SMTP uptime a hard dependency of admin user creation, which contradicts the throttle-queue requirement.
+
+### 6.7 SMTP startup check
+
+`Program.cs` adds (after `var app = builder.Build();`):
+
+```csharp
+using (var scope = app.Services.CreateScope())
+{
+    var smtp = scope.ServiceProvider.GetRequiredService<IOptions<SmtpSettings>>().Value;
+    if (string.IsNullOrWhiteSpace(smtp.Server) || string.IsNullOrWhiteSpace(smtp.SenderEmail))
+    {
+        var logger = app.Services.GetRequiredService<ILogger<Program>>();
+        logger.LogWarning("SMTP not configured — emails will be written to console only. " +
+            "User verification flow will NOT work in production without this.");
+    }
+}
+```
+
+This is a warning, not a hard failure, so local dev without SMTP still works.
 
 ### 6.2 Excel bulk import
 
@@ -389,8 +415,9 @@ The `App:BaseUrl` is used to construct the absolute verification URL embedded in
 | Email invalid format on create | Razor validation, "Email không hợp lệ" |
 | Duplicate email on create | 400 "Email đã tồn tại" |
 | DB insert fails | Rollback, 500 "Tạo user thất bại" (no email sent) |
-| SMTP fails (manual) | Email stays in queue, retries; admin still sees success. User won't verify until email arrives. |
-| SMTP fails (bulk) | Retry per-job up to 3 times; after that, log warning and drop. Admin sees `PendingEmailCount` shrinking in real-time via SignalR or refresh. |
+| SMTP startup misconfigured | Warning logged on app start; emails fall back to console (existing dev mode) |
+| SMTP transient failure (manual) | Hosted service retries 3x (1s/2s/4s backoff). If all fail, log warning + drop. User stays `EmailVerified=false`. Admin sees success message but user never receives email. Recovery: admin deletes user and re-creates (no resend button in this iteration). |
+| SMTP transient failure (bulk) | Same as above, per-job. Final failure logged with `To` email so admin can investigate. |
 | Token expired (>15 min) | VerifyEmail page → "Link đã hết hạn, liên hệ admin" |
 | Token malformed / wrong email | Same as above |
 | User changes password same as old | "Mật khẩu mới phải khác mật khẩu cũ" |
@@ -489,3 +516,5 @@ The `App:BaseUrl` is used to construct the absolute verification URL embedded in
 6. Manual smoke test of all 5 error scenarios + happy path.
 7. Update `docs/project-changelog.md` and `docs/development-roadmap.md`.
 8. PR review, merge into `feat/send-stmp-email-to-user`.
+
+**Operational caveat:** The email queue is in-process. If the app restarts during a large bulk import, queued-but-unsent emails are lost. Admin should verify counts after import completes before considering it done. Document this in the admin bulk-import UI tooltip.
