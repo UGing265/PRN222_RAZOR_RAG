@@ -8,7 +8,7 @@
 
 <script src="https://cdn.tailwindcss.com"></script>
 <style>
-  .chat-root, #searchModal {
+  .chat-root, #modal {
     --bg: #f6e8de;
     --card: #fdf6f1;
     --card-2: #ffffff;
@@ -47,7 +47,7 @@
 
 <style>
     /* ===== BOOTSTRAP OVERRIDES for Chat Page ===== */
-    .chat-root, #searchModal {
+    .chat-root, #modal {
         --background: oklch(0.97 0.025 50);
         --foreground: oklch(0.28 0.05 35);
         --card: oklch(0.985 0.018 55);
@@ -147,7 +147,7 @@
         </header>
 
         <!-- Messages -->
-        <div id="chatMessages" class="chat-scroll" style="flex: 1; overflow-y: auto; padding: 32px; display: flex; flex-direction: column; gap: 16px;">
+        <div id="chatMessages" class="chat-scroll" style="flex: 1; overflow-y: auto; padding: 32px 32px 60px 32px; display: flex; flex-direction: column; gap: 16px; -webkit-mask-image: linear-gradient(to bottom, transparent 0%, black 24px, black calc(100% - 60px), transparent 100%); mask-image: linear-gradient(to bottom, transparent 0%, black 24px, black calc(100% - 60px), transparent 100%);">
           <div style="width: 100%; max-width: 48rem; margin: 0 auto;">
             <div style="font-size: 0.75rem; font-weight: 600; tracking-wider: 0.05em; color: var(--primary); margin-bottom: 8px; text-transform: uppercase;">ASSISTANT</div>
             <div style="font-size: 0.875rem; line-height: 1.625;">
@@ -191,21 +191,21 @@
 </div>
 
 <!-- Search Modal -->
-<div id="modal" style="display: none; position: fixed; inset: 0; z-index: 50; align-items: center; justify-content: center; padding: 16px;">
+<div id="modal" style="display: none; position: fixed; inset: 0; z-index: 1060; align-items: center; justify-content: center; padding: 16px;">
   <div style="position: absolute; inset: 0; background: rgba(0,0,0,.5);"></div>
-  <div style="position: relative; width: 100%; max-width: 48rem; max-height: 85vh; border-radius: 24px; display: flex; flex-direction: column; overflow: hidden; background: var(--background); border: 1px solid var(--border); padding: 32px; z-index: 51;">
+  <div style="position: relative; width: 100%; max-width: 64rem; max-height: 85vh; border-radius: 24px; display: flex; flex-direction: column; overflow: hidden; background: var(--background, #fff); border: 1px solid var(--border); padding: 32px; z-index: 1061;">
     <button type="button" onclick="window.closeSearch()" style="position: absolute; right: 20px; top: 20px; color: var(--muted-foreground); background: none; border: none; cursor: pointer; font-size: 1.25rem;">✕</button>
     <h3 style="font-size: 1.25rem; font-weight: 600; margin-bottom: 16px;">Tìm & gắn tài liệu</h3>
 
-    <div style="display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 12px; margin-bottom: 24px;">
-      <input id="nameQ" placeholder="Tên tài liệu..." style="height: 40px; border-radius: 9999px; background: var(--card); padding: 0 16px; font-size: 0.875rem; border: 1px solid var(--border); outline: none;" />
-      <select id="semesterFilter" style="height: 40px; border-radius: 9999px; background: var(--card); padding: 0 16px; font-size: 0.875rem; border: 1px solid var(--border); outline: none;">
+    <div style="display: grid; grid-template-columns: 2fr 1fr 1.5fr 1.2fr; gap: 16px; margin-bottom: 24px;">
+      <input id="nameQ" placeholder="Tên tài liệu..." style="height: 48px; border-radius: 14px; background: rgba(255, 255, 255, 0.65); padding: 0 16px; font-size: 0.92rem; border: 1px solid rgba(82, 39, 27, 0.08); outline: none;" />
+      <select id="semesterFilter" class="form-glass-select w-100">
         <option value="">-- Tất cả học kỳ --</option>
       </select>
-      <select id="subjectFilter" style="height: 40px; border-radius: 9999px; background: var(--card); padding: 0 16px; font-size: 0.875rem; border: 1px solid var(--border); outline: none;">
+      <select id="subjectFilter" class="form-glass-select w-100">
         <option value="">-- Chọn kỳ trước --</option>
       </select>
-      <select id="materialFilter" style="height: 40px; border-radius: 9999px; background: var(--card); padding: 0 16px; font-size: 0.875rem; border: 1px solid var(--border); outline: none;">
+      <select id="materialFilter" class="form-glass-select w-100">
         <option value="">-- Tất cả loại --</option>
       </select>
     </div>
@@ -231,7 +231,7 @@ document.addEventListener('DOMContentLoaded', function () {
         id = d.Id,
         name = d.Title,
         semester = d.AcademicTermName ?? "Chưa xác định",
-        subject = d.SubjectName ?? "Chưa xác định",
+        subject = d.SubjectCode ?? d.SubjectName ?? "Chưa xác định",
         material = d.DocumentTypeName ?? "Chưa xác định"
     })));
 
@@ -279,6 +279,11 @@ document.addEventListener('DOMContentLoaded', function () {
     function initFilters() {
         SEMESTERS.forEach(s => semesterFilter.insertAdjacentHTML("beforeend", `<option value="${escapeHtml(s)}">${escapeHtml(s)}</option>`));
         MATERIAL_TYPES.forEach(x => materialFilter.insertAdjacentHTML("beforeend", `<option value="${escapeHtml(x)}">${escapeHtml(x)}</option>`));
+        
+        if (window.reinitGlassDropdown) {
+            window.reinitGlassDropdown('semesterFilter');
+            window.reinitGlassDropdown('materialFilter');
+        }
     }
     
     semesterFilter.addEventListener('change', function() {
@@ -289,12 +294,22 @@ document.addEventListener('DOMContentLoaded', function () {
                 subjectFilter.insertAdjacentHTML("beforeend", `<option value="${escapeHtml(s)}">${escapeHtml(s)}</option>`);
             });
         }
+        if (window.reinitGlassDropdown) {
+            window.reinitGlassDropdown('subjectFilter');
+        }
         renderModal();
     });
     
     subjectFilter.addEventListener('change', renderModal);
     materialFilter.addEventListener('change', renderModal);
     nameQ.addEventListener('input', renderModal);
+
+    let viewMode = 'list';
+
+    window.toggleViewMode = function(mode) {
+        viewMode = mode;
+        renderModal();
+    };
 
     function renderModal() {
         const q = nameQ.value.trim().toLowerCase();
@@ -315,9 +330,9 @@ document.addEventListener('DOMContentLoaded', function () {
             if (!subs.length) return "";
             return `<div style="margin-bottom: 20px;">
               <h3 style="font-size: 0.75rem; font-weight: 600; letter-spacing: 0.05em; color: var(--muted-foreground); margin-bottom: 8px; text-transform: uppercase;">${escapeHtml(sem)}</h3>
-              <div style="display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px;">
+              <div style="display: flex; flex-wrap: wrap; gap: 8px;">
                 ${subs.map(s => `<button type="button" onclick="window.pickSubject('${escapeHtml(sem)}','${escapeHtml(s)}')"
-                  style="border-radius: 16px; background: var(--card); padding: 12px 16px; border: 1px solid var(--border); text-align: left; cursor: pointer; transition: background 0.15s; ${subId===s ? 'box-shadow: 0 0 0 2px var(--primary); background: var(--accent);' : ''}"
+                  style="border-radius: 9999px; background: var(--card); padding: 6px 16px; border: 1px solid var(--border); text-align: center; cursor: pointer; transition: background 0.15s; ${subId===s ? 'box-shadow: 0 0 0 2px var(--primary); background: var(--accent);' : ''}"
                   onmouseover="if('${subId}'!=='${s}')this.style.background='color-mix(in oklab, var(--accent) 50%, transparent)'" onmouseout="if('${subId}'!=='${s}')this.style.background='var(--card)'">
                   <div style="font-weight: 500; font-size: 0.875rem;">${escapeHtml(s)}</div>
                 </button>`).join("")}
@@ -326,20 +341,39 @@ document.addEventListener('DOMContentLoaded', function () {
         }).join("");
         
         const resHtml = `<div style="margin-top: 24px;">
-            <h3 style="font-size: 0.75rem; font-weight: 600; letter-spacing: 0.05em; color: var(--muted-foreground); margin-bottom: 8px; text-transform: uppercase;">KẾT QUẢ (${results.length})</h3>
+            <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px;">
+              <h3 style="font-size: 0.75rem; font-weight: 600; letter-spacing: 0.05em; color: var(--muted-foreground); text-transform: uppercase; margin: 0;">KẾT QUẢ (${results.length})</h3>
+              <div style="display: flex; gap: 4px; background: rgba(0,0,0,0.05); padding: 4px; border-radius: 8px;">
+                <button type="button" onclick="window.toggleViewMode('list')" style="padding: 4px 12px; border-radius: 4px; border: none; cursor: pointer; font-size: 0.75rem; font-weight: 500; color: var(--foreground); transition: 0.15s; background: ${viewMode === 'list' ? 'var(--card)' : 'transparent'}; box-shadow: ${viewMode === 'list' ? '0 1px 3px rgba(0,0,0,0.1)' : 'none'};">Dòng</button>
+                <button type="button" onclick="window.toggleViewMode('grid')" style="padding: 4px 12px; border-radius: 4px; border: none; cursor: pointer; font-size: 0.75rem; font-weight: 500; color: var(--foreground); transition: 0.15s; background: ${viewMode === 'grid' ? 'var(--card)' : 'transparent'}; box-shadow: ${viewMode === 'grid' ? '0 1px 3px rgba(0,0,0,0.1)' : 'none'};">Ô</button>
+              </div>
+            </div>
             ${results.length === 0 ? `<p style="font-size: 0.875rem; color: var(--muted-foreground);">Không tìm thấy tài liệu nào.</p>` :
-              `<div style="display: flex; flex-direction: column; gap: 8px;">${results.map(d => {
+              `<div style="${viewMode === 'list' ? 'display: flex; flex-direction: column; gap: 8px;' : 'display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: 12px;'}">${results.map(d => {
                   const is = selectedDocs.some(x => x.id === d.id);
-                  return `<div style="display: flex; align-items: center; justify-content: space-between; border-radius: 16px; background: var(--card); padding: 12px 16px; border: 1px solid var(--border);">
-                    <div>
-                      <div style="font-weight: 500; font-size: 0.875rem;">${escapeHtml(d.name)}</div>
-                      <div style="font-size: 0.75rem; color: var(--muted-foreground);">${escapeHtml(d.material)} · ${escapeHtml(d.subject)}</div>
-                    </div>
-                    <button type="button" onclick="window.toggleAttach('${d.id}')"
-                      style="border-radius: 9999px; padding: 6px 20px; font-size: 0.875rem; font-weight: 500; cursor: pointer; border: none; ${is ? 'background: var(--accent); color: var(--foreground);' : 'background: var(--primary); color: var(--primary-foreground);'}">
-                      ${is ? 'Đã gắn' : 'Gắn'}
-                    </button>
-                  </div>`;
+                  if (viewMode === 'list') {
+                      return `<div style="display: flex; align-items: center; justify-content: space-between; border-radius: 16px; background: var(--card); padding: 12px 16px; border: 1px solid var(--border);">
+                        <div>
+                          <div style="font-weight: 500; font-size: 0.875rem;">${escapeHtml(d.name)}</div>
+                          <div style="font-size: 0.75rem; color: var(--muted-foreground);">${escapeHtml(d.material)} · ${escapeHtml(d.subject)}</div>
+                        </div>
+                        <button type="button" onclick="window.toggleAttach('${d.id}')"
+                          style="flex-shrink: 0; margin-left: 12px; border-radius: 9999px; padding: 6px 20px; font-size: 0.875rem; font-weight: 500; cursor: pointer; border: none; transition: 0.15s; ${is ? 'background: var(--accent); color: var(--foreground);' : 'background: var(--primary); color: var(--primary-foreground);'}">
+                          ${is ? 'Đã gắn' : 'Gắn'}
+                        </button>
+                      </div>`;
+                  } else {
+                      return `<div style="display: flex; flex-direction: column; justify-content: space-between; border-radius: 16px; background: var(--card); padding: 16px; border: 1px solid var(--border); height: 100%;">
+                        <div style="margin-bottom: 16px;">
+                          <div style="font-weight: 500; font-size: 0.875rem; margin-bottom: 4px; line-height: 1.4;">${escapeHtml(d.name)}</div>
+                          <div style="font-size: 0.75rem; color: var(--muted-foreground);">${escapeHtml(d.material)} · ${escapeHtml(d.subject)}</div>
+                        </div>
+                        <button type="button" onclick="window.toggleAttach('${d.id}')"
+                          style="width: 100%; border-radius: 9999px; padding: 6px; font-size: 0.875rem; font-weight: 500; cursor: pointer; border: none; transition: 0.15s; ${is ? 'background: var(--accent); color: var(--foreground);' : 'background: var(--primary); color: var(--primary-foreground);'}">
+                          ${is ? 'Đã gắn' : 'Gắn'}
+                        </button>
+                      </div>`;
+                  }
               }).join("")}</div>`
             }
         </div>`;
