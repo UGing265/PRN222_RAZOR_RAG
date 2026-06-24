@@ -106,6 +106,9 @@
                     });
 
                     connection.on("ReceiveLibraryRefresh", function () {
+                        if (window.location.pathname.toLowerCase().includes('/admin/')) {
+                            return;
+                        }
                         setTimeout(function () {
                             if (typeof submitAjaxForm === "function") {
                                 submitAjaxForm();
@@ -113,6 +116,45 @@
                                 window.location.reload();
                             }
                         }, 2500);
+                    });
+
+                    connection.on("ReceiveMetadataUpdated", function (message) {
+                        console.log("ReceiveMetadataUpdated: metadata updated. Refreshing views...", message);
+                        
+                        const isDelete = message && message.actionType === "Delete";
+                        const deletedId = message && message.data ? message.data.entityId : null;
+                        
+                        if (isDelete && deletedId) {
+                            const urlParams = new URLSearchParams(window.location.search);
+                            if (window.location.pathname.toLowerCase().includes('/documents/all')) {
+                                const currentSubject = urlParams.get('subjectId');
+                                const currentTerm = urlParams.get('termId');
+                                if ((currentSubject && currentSubject.toLowerCase() === deletedId.toLowerCase()) || 
+                                    (currentTerm && currentTerm.toLowerCase() === deletedId.toLowerCase())) {
+                                    window.location.href = '/Documents/All';
+                                    return;
+                                }
+                            }
+                        }
+
+                        if (window.location.pathname.toLowerCase().includes('/admin/categories') || window.location.pathname.toLowerCase().includes('/admin/metadata')) {
+                            if (typeof window.loadMetadataPage === "function") {
+                                window.loadMetadataPage(window.location.href, true);
+                            }
+                            return;
+                        }
+                        
+                        if (window.location.pathname.toLowerCase().includes('/upload')) {
+                            return;
+                        }
+
+                        setTimeout(function () {
+                            if (typeof submitAjaxForm === "function") {
+                                submitAjaxForm();
+                            } else if (!window.location.pathname.toLowerCase().includes('/admin/')) {
+                                window.location.reload();
+                            }
+                        }, 1000);
                     });
 
                     connection.start()
@@ -126,6 +168,170 @@
             document.querySelectorAll('.modal').forEach(function(modal) {
                 document.body.appendChild(modal);
             });
+
+            // Initialize AJAX tab navigation & CRUD for metadata pages
+            if (window.location.pathname.toLowerCase().includes('/admin/categories') || window.location.pathname.toLowerCase().includes('/admin/metadata')) {
+                initMetadataAjax();
+            }
+
+            function initMetadataAjax() {
+                const containerSelector = '#metadataMainContainer';
+                
+                // Intercept tab link clicks
+                document.body.addEventListener('click', function(e) {
+                    const tabLink = e.target.closest('.metadata-tab-btn');
+                    if (tabLink) {
+                        e.preventDefault();
+                        const targetUrl = tabLink.href;
+                        loadMetadataPage(targetUrl);
+                    }
+                });
+
+                // Intercept form submissions
+                document.body.addEventListener('submit', function(e) {
+                    const form = e.target.closest('#metadataMainContainer form, .modal form');
+                    if (form && form.method.toLowerCase() === 'post') {
+                        e.preventDefault();
+                        submitMetadataForm(form);
+                    }
+                });
+
+                function loadMetadataPage(url, isRealtimeSync = false) {
+                    const container = document.querySelector(containerSelector);
+                    if (!container) return;
+                    
+                    container.style.opacity = '0.4';
+                    
+                    fetch(url)
+                    .then(res => {
+                        if (!res.ok) throw new Error("Load failed");
+                        return res.text();
+                    })
+                    .then(html => {
+                        const parser = new DOMParser();
+                        const doc = parser.parseFromString(html, 'text/html');
+                        const newContainer = doc.querySelector(containerSelector);
+                        
+                        if (newContainer) {
+                            if (!isRealtimeSync) {
+                                closeAllModals();
+                            }
+
+                            // Clean up existing modals in body to avoid duplicates/stale modals
+                            document.querySelectorAll('body > .modal').forEach(el => el.remove());
+
+                            container.innerHTML = newContainer.innerHTML;
+                            
+                            document.querySelectorAll('.modal').forEach(function(modal) {
+                                document.body.appendChild(modal);
+                            });
+
+                            executeScripts(container);
+                            checkToasts(container);
+
+                            if (!isRealtimeSync) {
+                                window.history.pushState(null, '', url);
+                            }
+                        } else {
+                            window.location.href = url;
+                        }
+                        container.style.opacity = '1';
+                    })
+                    .catch(err => {
+                        console.error(err);
+                        container.style.opacity = '1';
+                        if (!isRealtimeSync) {
+                            window.location.href = url;
+                        }
+                    });
+                }
+
+                function submitMetadataForm(form) {
+                    const action = form.action || window.location.href;
+                    const formData = new FormData(form);
+                    const container = document.querySelector(containerSelector);
+                    if (!container) return;
+                    
+                    container.style.opacity = '0.4';
+                    
+                    fetch(action, {
+                        method: 'POST',
+                        body: formData,
+                        headers: {
+                            'X-Requested-With': 'XMLHttpRequest',
+                            'RequestVerificationToken': document.querySelector('input[name="__RequestVerificationToken"]')?.value || ''
+                        }
+                    })
+                    .then(res => res.text())
+                    .then(html => {
+                        const parser = new DOMParser();
+                        const doc = parser.parseFromString(html, 'text/html');
+                        const newContainer = doc.querySelector(containerSelector);
+                        
+                        if (newContainer) {
+                            closeAllModals();
+                            
+                            // Clean up existing modals in body to avoid duplicates/stale modals
+                            document.querySelectorAll('body > .modal').forEach(el => el.remove());
+
+                            container.innerHTML = newContainer.innerHTML;
+                            
+                            document.querySelectorAll('.modal').forEach(function(modal) {
+                                document.body.appendChild(modal);
+                            });
+
+                            executeScripts(container);
+                            checkToasts(container);
+                        } else {
+                            window.location.reload();
+                        }
+                        container.style.opacity = '1';
+                    })
+                    .catch(err => {
+                        console.error(err);
+                        container.style.opacity = '1';
+                        window.location.reload();
+                    });
+                }
+
+                function closeAllModals() {
+                    const openModalEl = document.querySelector('.modal.show');
+                    if (openModalEl) {
+                        const modal = bootstrap.Modal.getInstance(openModalEl);
+                        if (modal) modal.hide();
+                    }
+                    document.querySelectorAll('.modal-backdrop').forEach(el => el.remove());
+                    document.body.classList.remove('modal-open');
+                    document.body.style.overflow = '';
+                    document.body.style.paddingRight = '';
+                }
+
+                function executeScripts(parent) {
+                    parent.querySelectorAll('script').forEach(oldScript => {
+                        const newScript = document.createElement('script');
+                        Array.from(oldScript.attributes).forEach(attr => newScript.setAttribute(attr.name, attr.value));
+                        newScript.appendChild(document.createTextNode(oldScript.innerHTML));
+                        oldScript.parentNode.replaceChild(newScript, oldScript);
+                    });
+                }
+
+                function checkToasts(parent) {
+                    const successDiv = parent.querySelector('.toast-metadata-success');
+                    const errorDiv = parent.querySelector('.toast-metadata-error');
+                    if (successDiv && typeof showPremiumToast === 'function') {
+                        showPremiumToast(successDiv.dataset.message, 'success');
+                    }
+                    if (errorDiv && typeof showPremiumToast === 'function') {
+                        showPremiumToast(errorDiv.dataset.message, 'danger');
+                    }
+                }
+                
+                window.loadMetadataPage = loadMetadataPage;
+
+                window.addEventListener('popstate', function() {
+                    loadMetadataPage(window.location.href);
+                });
+            }
         });
     </script>
 
