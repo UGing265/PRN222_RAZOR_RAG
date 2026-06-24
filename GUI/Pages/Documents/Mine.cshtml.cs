@@ -84,7 +84,8 @@ public class MineModel : PageModel
                     ChunkCount = x.ChunkCount,
                     PreviewText = x.PreviewText,
                     OwnerEmail = x.OwnerEmail,
-                    ViewCount = x.ViewCount
+                    ViewCount = x.ViewCount,
+                    IsBookmarked = x.IsBookmarked
                 }).ToList(),
                 TotalDocuments = result.TotalDocuments,
                 PendingDocuments = result.PendingDocuments,

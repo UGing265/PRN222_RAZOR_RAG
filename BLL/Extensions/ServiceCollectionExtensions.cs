@@ -14,6 +14,7 @@ using DAL.Repositories.Auth;
 using DAL.Repositories.Chat;
 using DAL.Repositories.Documents;
 using Microsoft.EntityFrameworkCore;
+using Npgsql;
 using Microsoft.EntityFrameworkCore.Diagnostics;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
@@ -24,8 +25,13 @@ public static class ServiceCollectionExtensions
 {
     public static IServiceCollection AddBusinessLayer(this IServiceCollection services, IConfiguration configuration)
     {
+        var connectionString = configuration.GetConnectionString("DefaultConnection");
+        var dataSourceBuilder = new Npgsql.NpgsqlDataSourceBuilder(connectionString);
+        dataSourceBuilder.UseVector();
+        var dataSource = dataSourceBuilder.Build();
+
         services.AddDbContext<DBContext>(options =>
-            options.UseNpgsql(configuration.GetConnectionString("DefaultConnection"), o => o.UseVector().EnableRetryOnFailure())
+            options.UseNpgsql(dataSource, o => o.UseVector().EnableRetryOnFailure())
                 .ConfigureWarnings(w => w.Ignore(RelationalEventId.MultipleCollectionIncludeWarning)));
 
         services.AddDataProtection();

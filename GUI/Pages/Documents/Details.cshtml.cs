@@ -90,6 +90,7 @@ public class DetailsModel : PageModel
                 DownloadCount = documentDetails.DownloadCount,
                 ApprovedAt = documentDetails.ApprovedAt,
                 FileCount = documentDetails.FileCount,
+                IsBookmarked = documentDetails.IsBookmarked,
                 ChunkPage = ChunkPage,
                 ChunkPageSize = ChunkPageSize,
                 TotalChunkPages = Math.Max(1, (int)Math.Ceiling(documentDetails.TotalChunks / (double)Math.Clamp(ChunkPageSize, 4, 10))),
@@ -116,8 +117,8 @@ public class DetailsModel : PageModel
                 Chunks = documentDetails.Chunks.Select(x => new DocumentChunkViewModel
                 {
                     ChunkOrder = x.ChunkOrder,
-                    Content = x.Content,
-                    WordCount = x.Content.Split((char[]?)null, StringSplitOptions.RemoveEmptyEntries).Length,
+                    Content = x.Content ?? string.Empty,
+                    WordCount = (x.Content ?? string.Empty).Split((char[]?)null, StringSplitOptions.RemoveEmptyEntries).Length,
                     ChunkHash = x.ChunkHash,
                     HasEmbedding = x.HasEmbedding
                 }).ToList()

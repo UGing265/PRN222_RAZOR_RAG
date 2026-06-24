@@ -57,6 +57,7 @@ public sealed class DocumentListItemDto
     public string? Visibility { get; init; }
     public string? OwnerEmail { get; init; }
     public int ViewCount { get; init; }
+    public bool IsBookmarked { get; init; }
 }
 
 public sealed class DocumentDetailsDto
@@ -88,6 +89,7 @@ public sealed class DocumentDetailsDto
     public int DownloadCount { get; init; }
     public DateTime? ApprovedAt { get; init; }
     public int FileCount { get; init; }
+    public bool IsBookmarked { get; init; }
     public List<DocumentFileDto> Files { get; init; } = [];
     public List<DocumentChunkDto> Chunks { get; init; } = [];
     public List<DocumentChapterDto> Chapters { get; init; } = [];

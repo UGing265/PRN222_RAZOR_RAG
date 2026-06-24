@@ -113,6 +113,8 @@ public class DocumentDetailsViewModel
     public int DownloadCount { get; set; }
     public DateTime? ApprovedAt { get; set; }
     public int FileCount { get; set; }
+    public bool IsBookmarked { get; set; }
+
     public int ChunkPage { get; set; } = 1;
     public int ChunkPageSize { get; set; } = 10;
     public int TotalChunkPages { get; set; } = 1;
@@ -180,6 +182,7 @@ public class DocumentListItemViewModel
     public string? Visibility { get; set; }
     public string? OwnerEmail { get; set; }
     public int ViewCount { get; set; }
+    public bool IsBookmarked { get; set; }
 }
 
 public class MyDocumentsViewModel

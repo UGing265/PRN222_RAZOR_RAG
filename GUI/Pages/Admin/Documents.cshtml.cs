@@ -88,8 +88,8 @@ namespace GUI.Pages.Admin
 
                 await _documentService.DeleteDocumentAsync(id, cancellationToken);
 
-                // Notify all clients viewing this document via SignalR
-                await _notificationService.SendDocumentDeletedAsync(id, docTitle, cancellationToken);
+                // Note: SignalR broadcast is now handled centrally in DocumentService.DeleteDocumentAsync
+                // await _notificationService.SendDocumentDeletedAsync(id, docTitle, cancellationToken);
 
                 TempData["SuccessMessage"] = "Đã xóa tài liệu khỏi hệ thống thành công.";
             }

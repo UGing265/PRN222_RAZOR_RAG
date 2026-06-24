@@ -111,7 +111,18 @@
                 </div>
             </div>
             
-            <div class="d-flex gap-2 flex-wrap flex-shrink-0">
+            <div class="d-flex gap-2 flex-wrap flex-shrink-0 align-items-center">
+                <!-- Bookmark Toggle -->
+                <button type="button" class="btn btn-premium-secondary px-0 d-inline-flex align-items-center justify-content-center bookmark-toggle-btn shadow-sm" 
+                        data-document-id="@Model.ViewModel.Id" 
+                        data-bookmarked="@Model.ViewModel.IsBookmarked.ToString().ToLower()"
+                        style="border-radius: 50%; width: 44px; height: 44px; transition: all 0.3s ease; background: rgba(255, 255, 255, 0.7); border: 1.5px solid rgba(82, 39, 27, 0.08);"
+                        title="@(Model.ViewModel.IsBookmarked ? "Bỏ lưu tài liệu" : "Lưu tài liệu")">
+                    <svg class="bookmark-icon" width="20" height="20" viewBox="0 0 24 24" fill="@(Model.ViewModel.IsBookmarked ? "var(--coral)" : "none")" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="color: @(Model.ViewModel.IsBookmarked ? "var(--coral)" : "var(--brown)"); transition: all 0.3s ease;">
+                        <path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"></path>
+                    </svg>
+                </button>
+
                 @if (isOwner)
                 {
                     <a asp-page="/Documents/Edit" asp-route-slug="@Model.ViewModel.Slug" class="btn btn-premium-primary pill-button px-4 py-2.5 d-inline-flex align-items-center gap-2" style="font-size: 0.88rem;">
@@ -535,13 +546,113 @@
                     const currentId = (currentDocumentId || '').toLowerCase();
                     if (deletedId !== currentId) return;
 
-                    showPremiumToast(`Tài liệu "${payload.title || 'này'}" đã bị Admin xóa khỏi hệ thống. Đang chuyển hướng...`, 'danger');
+                    showPremiumToast(`Tài liệu "${payload.title || 'này'}" đã bị xóa khỏi hệ thống. Đang chuyển hướng...`, 'danger');
                     setTimeout(() => { window.location.href = '/Documents/All'; }, 3000);
+                });
+
+                const currentUserId = '@(User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value)';
+                connection.on('ReceiveDocumentUpdated', (payload) => {
+                    const changedId = (payload.documentId || '').toLowerCase();
+                    const currentId = (currentDocumentId || '').toLowerCase();
+                    if (changedId !== currentId) return;
+
+                    if (payload.visibility === 'private' && (payload.ownerUserId || '').toLowerCase() !== (currentUserId || '').toLowerCase()) {
+                        showPremiumToast(`Tài liệu "${payload.title || 'này'}" đã được chuyển sang chế độ riêng tư. Đang chuyển hướng...`, 'warning');
+                        setTimeout(() => { window.location.href = '/Documents/All'; }, 3000);
+                    } else {
+                        showPremiumToast(`Tài liệu này vừa được cập nhật thông tin. Đang làm mới...`, 'info');
+                        setTimeout(() => { window.location.reload(); }, 2000);
+                    }
+                });
+
+                // Sync bookmark state across tabs
+                connection.on('ReceiveBookmarkUpdated', (payload) => {
+                    const updatedDocId = (payload.documentId || '').toLowerCase();
+                    const currentId = (currentDocumentId || '').toLowerCase();
+                    if (updatedDocId !== currentId) return;
+
+                    const btn = document.querySelector('.bookmark-toggle-btn');
+                    if (btn) {
+                        btn.dataset.bookmarked = payload.isBookmarked.toString();
+                        btn.setAttribute('title', payload.isBookmarked ? "Bỏ lưu tài liệu" : "Lưu tài liệu");
+                        const svg = btn.querySelector('.bookmark-icon');
+                        if (payload.isBookmarked) {
+                            svg.setAttribute('fill', 'var(--coral)');
+                            svg.style.color = 'var(--coral)';
+                        } else {
+                            svg.setAttribute('fill', 'none');
+                            svg.style.color = 'var(--brown)';
+                        }
+                    }
                 });
             }
 
             setupDocumentDeletedListener();
         })();
+    </script>
+
+    <script>
+        // Bookmark logic
+        document.querySelectorAll('.bookmark-toggle-btn').forEach(btn => {
+            btn.addEventListener('click', async function() {
+                const docId = this.dataset.documentId;
+                const isCurrentlyBookmarked = this.dataset.bookmarked === 'true';
+                const originalTitle = this.getAttribute('title');
+                
+                // Optimistic UI update
+                this.dataset.bookmarked = (!isCurrentlyBookmarked).toString();
+                this.setAttribute('title', !isCurrentlyBookmarked ? "Bỏ lưu tài liệu" : "Lưu tài liệu");
+                const svg = this.querySelector('.bookmark-icon');
+                if (!isCurrentlyBookmarked) {
+                    svg.setAttribute('fill', 'var(--coral)');
+                    svg.style.color = 'var(--coral)';
+                } else {
+                    svg.setAttribute('fill', 'none');
+                    svg.style.color = 'var(--brown)';
+                }
+                
+                try {
+                    const response = await fetch(`/api/documents/${docId}/bookmark`, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json'
+                        }
+                    });
+                    
+                    if (!response.ok) {
+                        throw new Error('Failed to toggle bookmark');
+                    }
+                    
+                    const data = await response.json();
+                    
+                    // Sync with actual server state
+                    this.dataset.bookmarked = data.isBookmarked.toString();
+                    this.setAttribute('title', data.isBookmarked ? "Bỏ lưu tài liệu" : "Lưu tài liệu");
+                    if (data.isBookmarked) {
+                        svg.setAttribute('fill', 'var(--coral)');
+                        svg.style.color = 'var(--coral)';
+                        if (typeof showPremiumToast === 'function') showPremiumToast('Đã lưu tài liệu vào Bookmark', 'success');
+                    } else {
+                        svg.setAttribute('fill', 'none');
+                        svg.style.color = 'var(--brown)';
+                        if (typeof showPremiumToast === 'function') showPremiumToast('Đã xóa tài liệu khỏi Bookmark', 'info');
+                    }
+                } catch (error) {
+                    console.error('Error toggling bookmark:', error);
+                    // Revert UI on error
+                    this.dataset.bookmarked = isCurrentlyBookmarked.toString();
+                    this.setAttribute('title', originalTitle);
+                    if (isCurrentlyBookmarked) {
+                        svg.setAttribute('fill', 'var(--coral)');
+                        svg.style.color = 'var(--coral)';
+                    } else {
+                        svg.setAttribute('fill', 'none');
+                        svg.style.color = 'var(--brown)';
+                    }
+                    if (typeof showPremiumToast === 'function') showPremiumToast('Có lỗi xảy ra khi cập nhật bookmark', 'danger');
+                }
+            });
+        });
     </script>
 }
 

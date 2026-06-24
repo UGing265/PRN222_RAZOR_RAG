@@ -219,7 +219,7 @@ public class DocumentRepository : IDocumentRepository
         return q.CountAsync(cancellationToken);
     }
 
-    public Task<List<Document>> GetDocumentsAsync(string? query, Guid? subjectId, int page, int pageSize, Guid? requesterUserId = null, string? sortBy = null, Guid? documentTypeId = null, Guid? languageId = null, Guid? documentSourceId = null, CancellationToken cancellationToken = default)
+    public Task<List<Document>> GetDocumentsAsync(string? query, Guid? subjectId, int page, int pageSize, Guid? requesterUserId = null, string? sortBy = null, Guid? documentTypeId = null, Guid? languageId = null, Guid? documentSourceId = null, bool? bookmarkedOnly = null, CancellationToken cancellationToken = default)
     {
         var q = _dbContext.Documents.AsNoTracking()
             .Include(x => x.DocumentFiles)
@@ -232,6 +232,11 @@ public class DocumentRepository : IDocumentRepository
             .Where(x => x.Status == "completed" && (x.OwnerUser.RoleId == 1 || x.OwnerUser.RoleId == 2));
 
         q = q.Where(x => x.Visibility != "private");
+
+        if (bookmarkedOnly == true && requesterUserId.HasValue)
+        {
+            q = q.Where(x => _dbContext.UserBookmarks.Any(b => b.DocumentId == x.Id && b.UserId == requesterUserId.Value));
+        }
 
         if (!string.IsNullOrWhiteSpace(query))
         {
@@ -292,7 +297,7 @@ public class DocumentRepository : IDocumentRepository
             .ToListAsync(cancellationToken);
     }
 
-    public Task<int> CountDocumentsAsync(string? query, Guid? subjectId, Guid? requesterUserId = null, Guid? documentTypeId = null, Guid? languageId = null, Guid? documentSourceId = null, CancellationToken cancellationToken = default)
+    public Task<int> CountDocumentsAsync(string? query, Guid? subjectId, Guid? requesterUserId = null, Guid? documentTypeId = null, Guid? languageId = null, Guid? documentSourceId = null, bool? bookmarkedOnly = null, CancellationToken cancellationToken = default)
     {
         var q = _dbContext.Documents.AsNoTracking()
             .Include(x => x.OwnerUser)
@@ -301,6 +306,11 @@ public class DocumentRepository : IDocumentRepository
             .Where(x => x.Status == "completed" && (x.OwnerUser.RoleId == 1 || x.OwnerUser.RoleId == 2));
 
         q = q.Where(x => x.Visibility != "private");
+
+        if (bookmarkedOnly == true && requesterUserId.HasValue)
+        {
+            q = q.Where(x => _dbContext.UserBookmarks.Any(b => b.DocumentId == x.Id && b.UserId == requesterUserId.Value));
+        }
 
         if (!string.IsNullOrWhiteSpace(query))
         {
@@ -693,5 +703,44 @@ public class DocumentRepository : IDocumentRepository
         }
         return dict;
     }
-}
 
+    public async Task<bool> ToggleBookmarkAsync(Guid documentId, Guid userId, CancellationToken cancellationToken = default)
+    {
+        var existing = await _dbContext.UserBookmarks
+            .FirstOrDefaultAsync(x => x.DocumentId == documentId && x.UserId == userId, cancellationToken);
+        
+        if (existing != null)
+        {
+            _dbContext.UserBookmarks.Remove(existing);
+            await _dbContext.SaveChangesAsync(cancellationToken);
+            return false;
+        }
+        else
+        {
+            await _dbContext.UserBookmarks.AddAsync(new UserBookmark
+            {
+                DocumentId = documentId,
+                UserId = userId,
+                CreatedAt = DateTime.UtcNow
+            }, cancellationToken);
+            await _dbContext.SaveChangesAsync(cancellationToken);
+            return true;
+        }
+    }
+
+    public Task<bool> IsBookmarkedAsync(Guid documentId, Guid userId, CancellationToken cancellationToken = default)
+    {
+        return _dbContext.UserBookmarks
+            .AnyAsync(x => x.DocumentId == documentId && x.UserId == userId, cancellationToken);
+    }
+
+    public Task<List<Guid>> GetBookmarkedDocumentIdsAsync(Guid userId, List<Guid> documentIds, CancellationToken cancellationToken = default)
+    {
+        if (documentIds == null || documentIds.Count == 0) return Task.FromResult(new List<Guid>());
+
+        return _dbContext.UserBookmarks
+            .Where(x => x.UserId == userId && documentIds.Contains(x.DocumentId))
+            .Select(x => x.DocumentId)
+            .ToListAsync(cancellationToken);
+    }
+}

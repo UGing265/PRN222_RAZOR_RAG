@@ -38,6 +38,16 @@ public class SignalRNotificationService : INotificationService
         await _hubContext.Clients.All.SendAsync("ReceiveDocumentDeleted", new { documentId, title }, cancellationToken);
     }
 
+    public async Task SendDocumentUpdatedAsync(Guid documentId, string title, string visibility, Guid ownerUserId, CancellationToken cancellationToken = default)
+    {
+        await _hubContext.Clients.All.SendAsync("ReceiveDocumentUpdated", new { documentId, title, visibility, ownerUserId }, cancellationToken);
+    }
+
+    public async Task SendNewPublicDocumentAvailableAsync(Guid documentId, string title, CancellationToken cancellationToken = default)
+    {
+        await _hubContext.Clients.All.SendAsync("ReceiveNewPublicDocument", new { documentId, title }, cancellationToken);
+    }
+
     public async Task SendUploadProgressAsync(string jobId, int progressPercent, string statusMessage, Guid ownerId, CancellationToken cancellationToken = default)
     {
         await _hubContext.Clients.Group($"User_{ownerId}").SendAsync("ReceiveUploadProgress", new { jobId, progressPercent, statusMessage }, cancellationToken);
@@ -56,5 +66,10 @@ public class SignalRNotificationService : INotificationService
     public async Task SendReportsUpdatedAsync(CancellationToken cancellationToken = default)
     {
         await _hubContext.Clients.Group("Role_Admin").SendAsync("ReceiveReportsUpdated", cancellationToken);
+    }
+
+    public async Task SendBookmarkUpdatedAsync(Guid documentId, Guid userId, bool isBookmarked, CancellationToken cancellationToken = default)
+    {
+        await _hubContext.Clients.Group($"User_{userId}").SendAsync("ReceiveBookmarkUpdated", new { documentId, isBookmarked }, cancellationToken);
     }
 }

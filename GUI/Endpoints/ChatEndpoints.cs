@@ -9,7 +9,7 @@ using Pgvector.EntityFrameworkCore;
 namespace GUI.Endpoints;
 
 /// <summary>
-/// Minimal API for the chat surface. Routes:
+/// Minimal API for the chat surface. Routes
 ///   GET  /api/chat/sessions
 ///   GET  /api/chat/sessions/{sessionId}/messages
 ///   GET  /api/chat/documents
@@ -63,7 +63,7 @@ public static class ChatEndpoints
             DAL.Interfaces.Documents.IDocumentRepository repo,
             CancellationToken ct) =>
         {
-            var raw = await repo.GetDocumentsAsync(null, null, 1, 100, null, null, null, null, null, ct);
+            var raw = await repo.GetDocumentsAsync(null, null, 1, 100, null, null, null, null, null, null, ct);
             return Results.Ok(new
             {
                 Count = raw.Count,
@@ -106,7 +106,7 @@ public static class ChatEndpoints
             CancellationToken ct) =>
         {
             Console.WriteLine("====== [DEBUG] API /api/chat/documents ĐƯỢC GỌI ======");
-            
+
             if (!TryGetUserId(user, out var userId))
             {
                 Console.WriteLine("[DEBUG] Không lấy được UserId từ Cookie. Trả về 401 Unauthorized.");
@@ -116,12 +116,7 @@ public static class ChatEndpoints
             Console.WriteLine($"[DEBUG] Đã lấy được UserId: {userId}. Đang lấy tài liệu từ Database...");
 
             var result = await documents.GetAllDocumentsAsync(
-                query: null,
-                subjectId: null,
-                page: 1,
-                pageSize: 100,
-                requesterUserId: userId,
-                cancellationToken: ct);
+                null, null, 1, 100, userId, null, null, null, null, null, ct);
 
             Console.WriteLine($"[DEBUG] Database trả về {result.Documents.Count} tài liệu thô.");
 
