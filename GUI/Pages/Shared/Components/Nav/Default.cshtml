@@ -233,9 +233,9 @@
 
                                 <div class="mb-3">
                                     <label for="inputRole" class="form-label small fw-semibold text-muted-foreground">Vai Trò / Đối Tượng</label>
-                                    <select class="form-select pill-input px-3" id="inputRole" style="border-color: rgba(82, 39, 27, 0.12);" disabled>
-                                        <option selected>@Model.RoleLabel</option>
-                                    </select>
+                                    <div class="form-control pill-input px-3 d-flex align-items-center" style="border-color: rgba(82, 39, 27, 0.12); background: rgba(82,39,27,0.03); cursor: not-allowed; color: var(--muted-foreground); pointer-events: none; user-select: none;">
+                                        @Model.RoleLabel
+                                    </div>
                                     <div class="form-text text-muted-foreground" style="font-size: 0.75rem;">Vai trò được cấp bởi hệ thống quản trị.</div>
                                 </div>
 
