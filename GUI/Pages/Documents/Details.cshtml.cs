@@ -128,8 +128,8 @@ public class DetailsModel : PageModel
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error while loading document details for {Slug}", slug);
-            TempData["ErrorMessage"] = "Không thể tải chi tiết tài liệu.";
+            _logger.LogError(ex, "Error while loading document details for slug: {Slug}", slug);
+            TempData["ErrorMessage"] = "Không thể tải chi tiết tài liệu. Lỗi: " + ex.Message + " | " + ex.StackTrace?.Substring(0, Math.Min(ex.StackTrace.Length, 200));
             return RedirectToPage("/Documents/All");
         }
     }
