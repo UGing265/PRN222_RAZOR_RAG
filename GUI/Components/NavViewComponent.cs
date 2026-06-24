@@ -97,6 +97,7 @@ public sealed class NavViewComponent : ViewComponent
             model.NavLinks.Add(new NavLink { Page = "/Admin/Documents", Label = "Quản Lý Tài Liệu", IconKey = "doc" });
             model.NavLinks.Add(new NavLink { Page = "/Admin/Users", Label = "Quản Lý Thành Viên", IconKey = "users" });
             model.NavLinks.Add(new NavLink { Page = "/Admin/Metadata/Subjects/Index", Label = "Quản Lý Danh Mục", IconKey = "metadata" });
+            model.NavLinks.Add(new NavLink { Page = "/Admin/AuditLogs", Label = "Lịch Sử Hệ Thống", IconKey = "audit" });
         }
         else
         {

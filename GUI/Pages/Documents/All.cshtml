@@ -815,21 +815,15 @@
                         const docExists = document.getElementById('doc-card-' + payload.documentId);
                         
                         if (!docExists && payload.visibility !== "private") {
-                            // Document changed from private to public/internal, reload to show it
-                            showPremiumToast("Tài liệu '" + payload.title + "' vừa được cập nhật hiển thị. Đang làm mới...", "info");
                             if (typeof submitAjaxForm === 'function') submitAjaxForm();
                             else window.location.reload();
                         } else if (docExists) {
-                            if (payload.visibility === "private" && payload.ownerUserId !== currentUserId) {
-                                showPremiumToast("Tài liệu '" + payload.title + "' đã được chuyển sang chế độ riêng tư.", "warning");
-                            }
                             if (typeof submitAjaxForm === 'function') submitAjaxForm();
                             else window.location.reload();
                         }
                     });
 
                     connection.on('ReceiveNewPublicDocument', (payload) => {
-                        showPremiumToast(`Có tài liệu mới: "${payload.title}". Đang cập nhật...`, 'info');
                         setTimeout(() => {
                             if (typeof submitAjaxForm === 'function') submitAjaxForm();
                             else window.location.reload();

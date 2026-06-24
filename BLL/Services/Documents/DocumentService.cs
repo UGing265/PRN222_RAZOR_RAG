@@ -131,6 +131,19 @@ public class DocumentService : IDocumentService
         };
 
         var saved = await _documentRepository.AddDocumentAsync(document, cancellationToken);
+        
+        var auditLog = new DAL.Entities.AuditLog
+        {
+            UserId = input.OwnerUserId,
+            Action = "CreateDocument",
+            TargetTable = "Documents",
+            TargetId = saved.Id,
+            Description = $"User {input.OwnerUserId} uploaded new document {saved.Id}",
+            CreatedAt = DateTime.UtcNow
+        };
+        await _documentRepository.AddAuditLogAsync(auditLog, cancellationToken);
+        await _notificationService.SendAuditLogCreatedAsync(cancellationToken);
+        
         return new DocumentCreateResultDto { Id = saved.Id, Slug = saved.Slug ?? string.Empty };
     }
 
@@ -567,7 +580,7 @@ public class DocumentService : IDocumentService
         };
     }
 
-    public async Task DeleteDocumentAsync(Guid documentId, CancellationToken cancellationToken = default)
+    public async Task DeleteDocumentAsync(Guid deletedByUserId, Guid documentId, CancellationToken cancellationToken = default)
     {
         var document = await _documentRepository.GetDocumentAsync(documentId, cancellationToken)
             ?? throw new InvalidOperationException("Document not found.");
@@ -578,6 +591,20 @@ public class DocumentService : IDocumentService
         await _documentRepository.RemoveDocumentChunksByDocumentAsync(documentId, cancellationToken);
         await _documentRepository.RemoveDocumentChaptersByDocumentAsync(documentId, cancellationToken);
         await _documentRepository.RemoveDocumentReportsByDocumentAsync(documentId, cancellationToken);
+        await _documentRepository.RemoveDocumentBookmarksByDocumentAsync(documentId, cancellationToken);
+
+        var auditLog = new DAL.Entities.AuditLog
+        {
+            UserId = deletedByUserId,
+            Action = "DeleteDocument",
+            TargetTable = "Documents",
+            TargetId = documentId,
+            Description = $"User {deletedByUserId} deleted document {documentId}",
+            CreatedAt = DateTime.UtcNow
+        };
+        await _documentRepository.AddAuditLogAsync(auditLog, cancellationToken);
+        await _notificationService.SendAuditLogCreatedAsync(cancellationToken);
+
         await _documentRepository.RemoveDocumentAsync(document, cancellationToken);
         await _documentRepository.SaveChangesAsync(cancellationToken);
 
@@ -701,6 +728,18 @@ public class DocumentService : IDocumentService
         document.Visibility = input.Visibility;
         document.DocumentSourceId = input.DocumentSourceId;
         document.UpdatedAt = DateTime.UtcNow;
+
+        var auditLog = new DAL.Entities.AuditLog
+        {
+            UserId = ownerUserId,
+            Action = "UpdateDocument",
+            TargetTable = "Documents",
+            TargetId = document.Id,
+            Description = $"Lecturer updated document {document.Id}",
+            CreatedAt = DateTime.UtcNow
+        };
+        await _documentRepository.AddAuditLogAsync(auditLog, cancellationToken);
+        await _notificationService.SendAuditLogCreatedAsync(cancellationToken);
 
         await _documentRepository.SaveChangesAsync(cancellationToken);
     }
@@ -1141,14 +1180,26 @@ public class DocumentService : IDocumentService
         }).ToList();
     }
 
-    public async Task ResolveReportAsync(Guid reportId, string action, CancellationToken cancellationToken = default)
+    public async Task ResolveReportAsync(Guid adminUserId, Guid reportId, string action, CancellationToken cancellationToken = default)
     {
         var report = await _documentRepository.GetDocumentReportAsync(reportId, cancellationToken)
             ?? throw new InvalidOperationException("Báo cáo không tồn tại.");
 
+        var auditLog = new DAL.Entities.AuditLog
+        {
+            UserId = adminUserId,
+            Action = $"ResolveReport_{action}",
+            TargetTable = "Documents",
+            TargetId = report.DocumentId,
+            Description = $"Admin resolved report {reportId} with action: {action}",
+            CreatedAt = DateTime.UtcNow
+        };
+        await _documentRepository.AddAuditLogAsync(auditLog, cancellationToken);
+        await _notificationService.SendAuditLogCreatedAsync(cancellationToken);
+
         if (action.Equals("delete", StringComparison.OrdinalIgnoreCase))
         {
-            await DeleteDocumentAsync(report.DocumentId, cancellationToken);
+            await DeleteDocumentAsync(adminUserId, report.DocumentId, cancellationToken);
         }
         else
         {

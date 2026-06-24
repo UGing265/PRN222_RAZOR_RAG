@@ -48,6 +48,11 @@ public class SignalRNotificationService : INotificationService
         await _hubContext.Clients.All.SendAsync("ReceiveNewPublicDocument", new { documentId, title }, cancellationToken);
     }
 
+    public async Task SendAuditLogCreatedAsync(CancellationToken cancellationToken = default)
+    {
+        await _hubContext.Clients.Group("Role_Admin").SendAsync("ReceiveAuditLogCreated", cancellationToken);
+    }
+
     public async Task SendUploadProgressAsync(string jobId, int progressPercent, string statusMessage, Guid ownerId, CancellationToken cancellationToken = default)
     {
         await _hubContext.Clients.Group($"User_{ownerId}").SendAsync("ReceiveUploadProgress", new { jobId, progressPercent, statusMessage }, cancellationToken);
@@ -71,5 +76,10 @@ public class SignalRNotificationService : INotificationService
     public async Task SendBookmarkUpdatedAsync(Guid documentId, Guid userId, bool isBookmarked, CancellationToken cancellationToken = default)
     {
         await _hubContext.Clients.Group($"User_{userId}").SendAsync("ReceiveBookmarkUpdated", new { documentId, isBookmarked }, cancellationToken);
+    }
+
+    public async Task SendLibraryRefreshAsync(CancellationToken cancellationToken = default)
+    {
+        await _hubContext.Clients.All.SendAsync("ReceiveLibraryRefresh", cancellationToken);
     }
 }

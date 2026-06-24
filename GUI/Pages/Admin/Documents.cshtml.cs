@@ -5,6 +5,7 @@ using BLL.Interfaces.Notifications;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
+using System.Security.Claims;
 
 namespace GUI.Pages.Admin
 {
@@ -86,7 +87,11 @@ namespace GUI.Pages.Admin
                 var matchedDoc = ViewModel.Documents.FirstOrDefault(x => x.Id == id);
                 string docTitle = matchedDoc?.Title ?? id.ToString();
 
-                await _documentService.DeleteDocumentAsync(id, cancellationToken);
+                if (!Guid.TryParse(User.FindFirstValue(System.Security.Claims.ClaimTypes.NameIdentifier), out var adminUserId))
+                {
+                    return Unauthorized();
+                }
+                await _documentService.DeleteDocumentAsync(adminUserId, id, cancellationToken);
 
                 // Note: SignalR broadcast is now handled centrally in DocumentService.DeleteDocumentAsync
                 // await _notificationService.SendDocumentDeletedAsync(id, docTitle, cancellationToken);
@@ -103,17 +108,15 @@ namespace GUI.Pages.Admin
 
         public async Task<IActionResult> OnPostResolveReportAsync(Guid id, string resolution, CancellationToken cancellationToken)
         {
+            if (!Guid.TryParse(User.FindFirstValue(System.Security.Claims.ClaimTypes.NameIdentifier), out var adminUserId))
+            {
+                return Unauthorized();
+            }
+
             try
             {
-                await _documentService.ResolveReportAsync(id, resolution, cancellationToken);
-                if (resolution.Equals("delete", StringComparison.OrdinalIgnoreCase))
-                {
-                    TempData["SuccessMessage"] = "Đã xóa tài liệu bị báo cáo và giải quyết các báo cáo liên quan.";
-                }
-                else
-                {
-                    TempData["SuccessMessage"] = "Đã bỏ qua báo cáo vi phạm thành công.";
-                }
+                await _documentService.ResolveReportAsync(adminUserId, id, resolution, cancellationToken);
+                TempData["SuccessMessage"] = "Đã xử lý báo cáo vi phạm.";
             }
             catch (Exception ex)
             {

@@ -72,6 +72,16 @@
                         }
                     });
 
+                    connection.on("ReceiveLibraryRefresh", function () {
+                        setTimeout(function () {
+                            if (typeof submitAjaxForm === "function") {
+                                submitAjaxForm();
+                            } else {
+                                window.location.reload();
+                            }
+                        }, 2500);
+                    });
+
                     connection.start()
                         .then(() => console.log("SignalR Connection established successfully."))
                         .catch(err => console.error("SignalR Connection Error: ", err));

@@ -21,7 +21,7 @@ public interface IDocumentService
     Task<MyDocumentsDto> GetAllDocumentsAsync(string? query, Guid? subjectId, int page = 1, int pageSize = 6, Guid? requesterUserId = null, string? sortBy = null, Guid? documentTypeId = null, Guid? languageId = null, Guid? documentSourceId = null, bool? bookmarkedOnly = null, CancellationToken cancellationToken = default);
     Task<List<UploadJobSummaryDto>> GetActiveUploadJobsAsync(Guid ownerUserId, CancellationToken cancellationToken = default);
     Task<DeleteDocumentViewData?> GetDeleteDocumentViewDataBySlugAsync(string slug, Guid ownerUserId, CancellationToken cancellationToken = default);
-    Task DeleteDocumentAsync(Guid documentId, CancellationToken cancellationToken = default);
+    Task DeleteDocumentAsync(Guid deletedByUserId, Guid documentId, CancellationToken cancellationToken = default);
     Task UpdateDocumentAsync(Guid documentId, Guid ownerUserId, DocumentEditInput input, CancellationToken cancellationToken = default);
     Task DeleteDocumentAssetsAsync(Guid documentId, CancellationToken cancellationToken = default);
     Task<Stream> DownloadOriginalFileFromS3Async(Guid documentId, string s3Key, CancellationToken cancellationToken = default);
@@ -55,7 +55,7 @@ public interface IDocumentService
     Task<bool> DeleteAcademicTermAsync(Guid id, CancellationToken cancellationToken = default);
     Task<DocumentReportDto> ReportDocumentAsync(Guid documentId, Guid reporterUserId, string reason, CancellationToken cancellationToken = default);
     Task<List<DocumentReportDto>> GetPendingReportsAsync(CancellationToken cancellationToken = default);
-    Task ResolveReportAsync(Guid reportId, string action, CancellationToken cancellationToken = default);
+    Task ResolveReportAsync(Guid adminUserId, Guid reportId, string action, CancellationToken cancellationToken = default);
     Task<MyDocumentsDto> GetAdminDocumentsAsync(string? query, Guid? subjectId, int page = 1, int pageSize = 10, CancellationToken cancellationToken = default);
     Task SeedInitialDataAsync(CancellationToken cancellationToken = default);
 

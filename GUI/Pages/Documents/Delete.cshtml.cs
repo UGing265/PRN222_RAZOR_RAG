@@ -82,7 +82,7 @@ public class DeleteModel : PageModel
                 return NotFound();
             }
 
-            await _documentService.DeleteDocumentAsync(canDelete.Id, cancellationToken);
+            await _documentService.DeleteDocumentAsync(userId, canDelete.Id, cancellationToken);
             // SignalR broadcast is now handled centrally in DocumentService.DeleteDocumentAsync
 
             TempData["SuccessMessage"] = "Đã xoá tài liệu.";
