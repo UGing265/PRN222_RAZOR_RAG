@@ -73,6 +73,9 @@
                     });
 
                     connection.on("ReceiveLibraryRefresh", function () {
+                        if (window.location.pathname.toLowerCase().includes('/admin/')) {
+                            return;
+                        }
                         setTimeout(function () {
                             if (typeof submitAjaxForm === "function") {
                                 submitAjaxForm();
