@@ -1,9 +1,11 @@
 using BLL.DTOs.Auth;
 using BLL.Interfaces.Auth;
 using BLL.Interfaces.Notifications;
+using BLL.Services.Email;
 using DAL.Entities;
 using DAL.Interfaces.Auth;
 using Microsoft.AspNetCore.DataProtection;
+using Microsoft.Extensions.Configuration;
 using System.Security.Cryptography;
 
 namespace BLL.Services.Auth;
@@ -13,18 +15,28 @@ public class AuthService : IAuthService
     private readonly IAuthRepository _authRepository;
     private readonly ITimeLimitedDataProtector _protector;
     private readonly INotificationService _notificationService;
+    private readonly IEmailQueue _emailQueue;
+    private readonly string _appBaseUrl;
 
     public AuthService(
-        IAuthRepository authRepository, 
+        IAuthRepository authRepository,
         IDataProtectionProvider dataProtectionProvider,
-        INotificationService notificationService)
+        INotificationService notificationService,
+        IEmailQueue emailQueue,
+        IConfiguration configuration)
     {
         _authRepository = authRepository;
         _protector = dataProtectionProvider.CreateProtector("FptStudentEmailVerification").ToTimeLimitedDataProtector();
         _notificationService = notificationService;
+        _emailQueue = emailQueue;
+        _appBaseUrl = configuration["App:BaseUrl"] ?? "https://localhost:7065";
     }
 
-    public async Task<AuthUserDto> RegisterAsync(string fullName, string email, string password, short roleId, CancellationToken cancellationToken = default)
+    public async Task<AuthUserDto> RegisterAsync(
+        string fullName,
+        string email,
+        short roleId,
+        CancellationToken cancellationToken = default)
     {
         var normalizedEmail = email.Trim().ToLowerInvariant();
 
@@ -40,21 +52,36 @@ public class AuthService : IAuthService
             throw new InvalidOperationException("Role không hợp lệ.");
         }
 
+        var tempPassword = PasswordGenerator.Generate(12);
+        var passwordHash = HashPassword(tempPassword);
+
         var now = DateTime.UtcNow;
-        var hashedPassword = HashPassword(password);
         var user = new User
         {
             Id = Guid.NewGuid(),
             FullName = fullName.Trim(),
             Email = normalizedEmail,
-            PasswordHash = hashedPassword,
+            PasswordHash = passwordHash,
             RoleId = roleId,
-            IsActive = true,
+            IsActive = false,
+            IsBlocked = false,
+            EmailVerified = false,
+            MustChangePassword = true,
             CreatedAt = now,
             UpdatedAt = now
         };
 
         var created = await _authRepository.AddUserAsync(user, cancellationToken);
+
+        var verificationToken = GenerateEmailVerificationToken(normalizedEmail);
+        var verificationUrl = $"{_appBaseUrl.TrimEnd('/')}/Auth/VerifyEmail?token={Uri.EscapeDataString(verificationToken)}";
+
+        var subject = "[FPT RAG] Bạn đã được cấp quyền truy cập hệ thống";
+        var roleName = created.Role?.Name ?? roleId.ToString();
+        var body = BuildWelcomeEmailBody(created.FullName, roleName, normalizedEmail, tempPassword, verificationUrl);
+
+        _emailQueue.Enqueue(new EmailJob(normalizedEmail, subject, body));
+
         return Map(created);
     }
 
@@ -167,6 +194,7 @@ public class AuthService : IAuthService
             if (!user.IsActive)
             {
                 user.IsActive = true;
+                user.EmailVerified = true;
                 user.UpdatedAt = DateTime.UtcNow;
                 await _authRepository.UpdateUserAsync(user, cancellationToken);
             }
@@ -414,6 +442,59 @@ public class AuthService : IAuthService
         return (successCount, errors);
     }
 
+    public async Task<(bool Success, string? Error)> ChangePasswordAsync(
+        Guid userId,
+        string currentPassword,
+        string newPassword,
+        string confirmPassword,
+        CancellationToken cancellationToken = default)
+    {
+        if (newPassword != confirmPassword)
+            return (false, "Mật khẩu xác nhận không khớp.");
+
+        if (newPassword.Length < 6)
+            return (false, "Mật khẩu phải có ít nhất 6 ký tự.");
+
+        var user = await _authRepository.GetUserByIdAsync(userId, cancellationToken);
+        if (user == null)
+            return (false, "Người dùng không tồn tại.");
+
+        if (user.PasswordHash == "EXTERNAL_OAUTH_GOOGLE")
+            throw new InvalidOperationException(
+                "Tài khoản đăng nhập qua Google không thể đổi mật khẩu.");
+
+        if (!VerifyPassword(currentPassword, user.PasswordHash))
+            return (false, "Mật khẩu hiện tại không đúng.");
+
+        if (VerifyPassword(newPassword, user.PasswordHash))
+            return (false, "Mật khẩu mới phải khác mật khẩu cũ.");
+
+        user.PasswordHash = HashPassword(newPassword);
+        user.MustChangePassword = false;
+        user.PasswordChangedAt = DateTime.UtcNow;
+        user.UpdatedAt = DateTime.UtcNow;
+
+        await _authRepository.UpdateUserAsync(user, cancellationToken);
+
+        return (true, null);
+    }
+
+    private static string BuildWelcomeEmailBody(
+        string fullName, string roleName, string email, string tempPassword, string verificationUrl)
+    {
+        return $@"<p>Xin ch&agrave;o <strong>{System.Net.WebUtility.HtmlEncode(fullName)}</strong>,</p>
+<p>B&#7841;n v&#7915;a &#273;&#432;&#7907;c Admin c&#7845;p t&agrave;i kho&#7843;n truy c&#7853;p <strong>FPT RAG System</strong> v&#7899;i vai tr&ograve; <strong>{System.Net.WebUtility.HtmlEncode(roleName)}</strong>.</p>
+<p><strong>Th&ocirc;ng tin &#273;&#259;ng nh&#7853;p t&#7841;m:</strong><br>
+Email: <code>{System.Net.WebUtility.HtmlEncode(email)}</code><br>
+M&#7853;t kh&#7849;u t&#7841;m: <code>{System.Net.WebUtility.HtmlEncode(tempPassword)}</code>
+</p>
+<p><strong>B&#432;&#7899;c 1:</strong> Click link x&aacute;c nh&#7853;n trong v&ograve;ng 15 ph&uacute;t:<br>
+<a href=""{verificationUrl}"">{verificationUrl}</a>
+</p>
+<p><strong>B&#432;&#7899;c 2:</strong> &#272;&#259;ng nh&#7853;p b&#7851;ng m&#7853;t kh&#7849;u t&#7841;m &#7903; tr&ecirc;n.</p>
+<p><strong>B&#432;&#7899;c 3:</strong> H&#7879; th&#7889;ng s&#7869; y&ecirc;u c&#7847;u b&#7841;n &#273;&#7893;i m&#7853;t kh&#7849;u tr&#432;&#7899;c khi s&#7917; d&#7909;ng.</p>";
+    }
+
     private static string GetCellValueSafe(NPOI.SS.UserModel.ICell cell)
     {
         if (cell == null) return "";
@@ -490,7 +571,9 @@ public class AuthService : IAuthService
         RoleId = user.RoleId,
         RoleName = user.Role?.Name ?? user.RoleId.ToString(),
         IsActive = user.IsActive,
-        IsBlocked = user.IsBlocked
+        IsBlocked = user.IsBlocked,
+        EmailVerified = user.EmailVerified,
+        MustChangePassword = user.MustChangePassword
     };
 
     private static string HashPassword(string password)

@@ -9,4 +9,6 @@ public sealed class AuthUserDto
     public string RoleName { get; init; } = string.Empty;
     public bool IsActive { get; init; }
     public bool IsBlocked { get; init; }
+    public bool EmailVerified { get; init; }
+    public bool MustChangePassword { get; init; }
 }

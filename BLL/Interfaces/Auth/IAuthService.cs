@@ -4,7 +4,9 @@ namespace BLL.Interfaces.Auth;
 
 public interface IAuthService
 {
-    Task<AuthUserDto> RegisterAsync(string fullName, string email, string password, short roleId, CancellationToken cancellationToken = default);
+    Task<AuthUserDto> RegisterAsync(string fullName, string email, short roleId, CancellationToken cancellationToken = default);
+
+    Task<(bool Success, string? Error)> ChangePasswordAsync(Guid userId, string currentPassword, string newPassword, string confirmPassword, CancellationToken cancellationToken = default);
 
     Task<AuthUserDto?> ValidateCredentialsAsync(string email, string password, CancellationToken cancellationToken = default);
     Task<AuthUserDto> LoginOrRegisterExternalAsync(string email, string fullName, CancellationToken cancellationToken = default);
