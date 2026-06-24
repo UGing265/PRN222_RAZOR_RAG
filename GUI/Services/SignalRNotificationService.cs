@@ -36,11 +36,13 @@ public class SignalRNotificationService : INotificationService
     public async Task SendDocumentDeletedAsync(Guid documentId, string title, CancellationToken cancellationToken = default)
     {
         await _hubContext.Clients.All.SendAsync("ReceiveDocumentDeleted", new { documentId, title }, cancellationToken);
+        await _hubContext.Clients.Group("Role_Admin").SendAsync("ReceiveDocumentListUpdated", cancellationToken);
     }
 
     public async Task SendDocumentUpdatedAsync(Guid documentId, string title, string visibility, Guid ownerUserId, CancellationToken cancellationToken = default)
     {
         await _hubContext.Clients.All.SendAsync("ReceiveDocumentUpdated", new { documentId, title, visibility, ownerUserId }, cancellationToken);
+        await _hubContext.Clients.Group("Role_Admin").SendAsync("ReceiveDocumentListUpdated", cancellationToken);
     }
 
     public async Task SendNewPublicDocumentAvailableAsync(Guid documentId, string title, CancellationToken cancellationToken = default)
@@ -81,5 +83,10 @@ public class SignalRNotificationService : INotificationService
     public async Task SendLibraryRefreshAsync(CancellationToken cancellationToken = default)
     {
         await _hubContext.Clients.All.SendAsync("ReceiveLibraryRefresh", cancellationToken);
+    }
+
+    public async Task SendDocumentListUpdatedAsync(CancellationToken cancellationToken = default)
+    {
+        await _hubContext.Clients.Group("Role_Admin").SendAsync("ReceiveDocumentListUpdated", cancellationToken);
     }
 }

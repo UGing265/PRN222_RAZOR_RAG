@@ -1,5 +1,6 @@
 using BLL.DTOs.Documents;
 using BLL.Interfaces.Documents;
+using BLL.Interfaces.Notifications;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
@@ -13,11 +14,13 @@ namespace GUI.Pages.Documents;
 public class CreateModel : PageModel
 {
     private readonly IDocumentService _documentService;
+    private readonly INotificationService _notificationService;
     private readonly ILogger<CreateModel> _logger;
 
-    public CreateModel(IDocumentService documentService, ILogger<CreateModel> logger)
+    public CreateModel(IDocumentService documentService, INotificationService notificationService, ILogger<CreateModel> logger)
     {
         _documentService = documentService;
+        _notificationService = notificationService;
         _logger = logger;
     }
 
@@ -176,6 +179,9 @@ public class CreateModel : PageModel
             var s3Result = await _documentService.UploadOriginalFileToS3Async(savedDocument.Id, Input.UploadFile, cancellationToken);
 
             await _documentService.EnqueueUploadJobAsync(ownerUserId, savedDocument.Id, Input.UploadFile.FileName, s3Result.Key, Input.UploadFile.Length, cancellationToken);
+
+            // Notify Admin in real-time that a new document was created
+            await _notificationService.SendDocumentListUpdatedAsync(cancellationToken);
 
             TempData["SuccessMessage"] = "Upload đã được đưa vào hàng đợi xử lý nền.";
 
