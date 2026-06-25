@@ -12,6 +12,7 @@
         "login"    => "<path d=\"M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4\"/><polyline points=\"10 17 15 12 10 7\"/><line x1=\"15\" y1=\"12\" x2=\"3\" y2=\"12\"/>",
         "register" => "<path d=\"M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2\"/><circle cx=\"8.5\" cy=\"7\" r=\"4\"/><line x1=\"20\" y1=\"8\" x2=\"20\" y2=\"14\"/><line x1=\"23\" y1=\"11\" x2=\"17\" y2=\"11\"/>",
         "audit"    => "<polyline points=\"22 12 18 12 15 21 9 3 6 12 2 12\"/>",
+        "compare"  => "<path d=\"M12 3h7a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-7m0-18H5a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h7m0-18v18\"/>",
         _          => string.Empty
     };
 }
@@ -53,11 +54,12 @@
                                 </svg>
                             </a>
                             <div class="collapse @(link.Active ? "show" : "")" id="@collapseId">
-                                <nav class="nav flex-column gap-1 ms-4 mt-1 border-start border-2 border-light ps-2">
+                                <nav class="nav flex-column gap-1 ms-3 mt-1 ps-2">
                                     @foreach (var sub in link.SubLinks)
                                     {
-                                        <a class="nav-link sub-link py-1.5 px-3 @(sub.Active ? "active" : string.Empty)" href="@($"{sub.Page}{sub.QueryString}")" style="font-size: 0.82rem; border-radius: 8px;">
-                                            <span>@sub.Label</span>
+                                        <a class="nav-link sub-link py-1.5 px-3 @(sub.Active ? "active" : string.Empty)" href="@($"{sub.Page}{sub.QueryString}")" style="font-size: 0.82rem; border-radius: 8px; position: relative;">
+                                            <span style="display: inline-block; width: 4px; height: 4px; border-radius: 50%; background: currentColor; opacity: 0.4; margin-right: 8px; vertical-align: middle;"></span>
+                                            <span style="vertical-align: middle;">@sub.Label</span>
                                         </a>
                                     }
                                 </nav>
@@ -535,9 +537,6 @@
     display: none !important;
 }
 
-.shell.collapsed .sidebar [data-bs-toggle="collapse"] {
-    pointer-events: none;
-}
 </style>
 
 <script>
@@ -557,21 +556,6 @@ document.addEventListener("DOMContentLoaded", function() {
                 if (willCollapse) {
                     shell.classList.add('collapsed');
                     localStorage.setItem('sidebar_collapsed', 'true');
-                    
-                    // Force close all open submenus via Bootstrap API
-                    document.querySelectorAll('.sidebar .collapse.show').forEach(el => {
-                        const bsCollapse = bootstrap.Collapse.getInstance(el);
-                        if (bsCollapse) {
-                            bsCollapse.hide();
-                        } else {
-                            el.classList.remove('show');
-                        }
-                    });
-                    
-                    document.querySelectorAll('.sidebar [data-bs-toggle="collapse"]').forEach(el => {
-                        el.setAttribute('aria-expanded', 'false');
-                        el.classList.add('collapsed');
-                    });
                 } else {
                     shell.classList.remove('collapsed');
                     localStorage.setItem('sidebar_collapsed', 'false');
@@ -609,6 +593,16 @@ document.addEventListener("DOMContentLoaded", function() {
         });
     });
 
+    // Auto-expand sidebar if clicking a collapsed menu item while shell is collapsed
+    document.querySelectorAll('.sidebar [data-bs-toggle="collapse"]').forEach(el => {
+        el.addEventListener('click', function(e) {
+            if (shell && shell.classList.contains('collapsed')) {
+                if (collapseBtn) {
+                    collapseBtn.click();
+                }
+            }
+        });
+    });
 
     const settingsModal = document.getElementById('settingsModal');
     const profileCard = document.getElementById('profileCard');

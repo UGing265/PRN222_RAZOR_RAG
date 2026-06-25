@@ -115,6 +115,20 @@ public class ChatRepository : IChatRepository
             .ToListAsync(cancellationToken);
     }
 
+    public async Task DeleteSessionAsync(Guid sessionId, CancellationToken cancellationToken = default)
+    {
+        await _context.ChatSessions
+            .Where(s => s.Id == sessionId)
+            .ExecuteDeleteAsync(cancellationToken);
+    }
+
+    public async Task DeleteSessionsAsync(List<Guid> sessionIds, CancellationToken cancellationToken = default)
+    {
+        await _context.ChatSessions
+            .Where(s => sessionIds.Contains(s.Id))
+            .ExecuteDeleteAsync(cancellationToken);
+    }
+
     public async Task SaveChangesAsync(CancellationToken cancellationToken = default)
     {
         await _context.SaveChangesAsync(cancellationToken);

@@ -1,5 +1,6 @@
 @page "/documents/compare"
 @model GUI.Pages.Documents.CompareModel
+@using System.Text.Json
 @{
     ViewData["Title"] = "So Sánh Tài Liệu";
 }
@@ -16,7 +17,7 @@
         transition: all 0.3s ease;
         padding: 32px;
     }
-    
+
     .compare-glass-container:focus-within {
         box-shadow: 0 15px 50px rgba(216, 106, 88, 0.12);
         border-color: rgba(216, 106, 88, 0.2);
@@ -136,15 +137,14 @@
 
 <div class="page-shell grain">
     <div class="container-fluid px-4 px-md-5 py-5" style="max-width: 1300px;">
-        
+
         <!-- Header Section -->
         <div class="d-flex align-items-center justify-content-between mb-5 flex-wrap gap-3">
             <div>
                 <span class="font-mono-xs" style="font-weight: 700; letter-spacing: 0.15em; color: var(--coral);">TRÍ TUỆ NHÂN TẠO</span>
                 <h1 class="hero-title mt-2 mb-3" style="font-size: clamp(2.5rem, 5vw, 3.5rem); color: var(--brown); line-height: 1.1;">So Sánh Tài Liệu</h1>
                 <p class="text-muted-foreground mb-0" style="max-width: 600px; font-size: 1.05rem; line-height: 1.6;">
-                    Phân tích sâu sắc sự khác biệt và tương đồng giữa các tài liệu. 
-                    Lựa chọn từ 2 đến 5 tài liệu để bắt đầu.
+                    Phân tích sự khác biệt và tương đồng giữa các tài liệu.
                 </p>
             </div>
         </div>
@@ -154,34 +154,17 @@
         <!-- Compare Input Form -->
         <div class="compare-glass-container mb-5">
             <form method="post" id="compareForm">
-                <div class="row g-4 mb-4">
-                    <!-- Subject Filter -->
-                    <div class="col-md-4">
-                        <label class="form-label font-mono-xs mb-2" style="color: var(--muted);">Lọc theo môn học</label>
-                        <select id="subjectSelect" class="form-select form-control" style="background-color: rgba(255,255,255,0.7); border-radius: 14px;">
-                            <option value="">Tất cả môn học</option>
-                            @foreach(var subject in Model.Subjects.OrderBy(s => s.Code))
-                            {
-                                <option value="@subject.Id">@subject.Code - @subject.Name</option>
-                            }
-                        </select>
-                    </div>
-
-                    <!-- Search Box -->
-                    <div class="col-md-8 position-relative" style="max-width: 600px;">
-                        <label class="form-label font-mono-xs mb-2" style="color: var(--muted);">Tìm tài liệu</label>
-                        <div class="premium-search-box position-relative">
-                            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" class="premium-search-icon"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
-                            <input type="text" id="searchInput" class="premium-search-input" placeholder="Nhập tên tài liệu..." autocomplete="off" />
-                        </div>
-                        
-                        <!-- Search Results Dropdown -->
-                        <div id="searchResults" class="position-absolute w-100 mt-2 result-dropdown" style="display: none; z-index: 1000; top: 100%; left: 0; max-height: 350px; overflow-y: auto;">
-                            <div id="searchResultsList" class="d-flex flex-column">
-                                <!-- Results -->
-                            </div>
-                        </div>
-                    </div>
+                <div class="d-flex justify-content-center mb-5">
+                    <button type="button" onclick="window.openSearch()"
+                            class="btn btn-premium-secondary pill-button px-4 py-3 font-mono-xs d-flex align-items-center gap-2"
+                            style="background: rgba(255,255,255,0.9); border-color: rgba(216, 106, 88, 0.3); color: var(--brown); box-shadow: 0 4px 15px rgba(82, 39, 27, 0.05); transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);"
+                            onmouseover="this.style.transform='translateY(-2px)'; this.style.boxShadow='0 8px 25px rgba(216, 106, 88, 0.15)';"
+                            onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='0 4px 15px rgba(82, 39, 27, 0.05)';">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/>
+                        </svg>
+                        TÌM TÀI LIỆU SO SÁNH
+                    </button>
                 </div>
 
                 <!-- Selected Documents -->
@@ -189,7 +172,7 @@
                     <div class="d-flex justify-content-between align-items-end mb-3">
                         <label class="form-label font-mono-xs mb-0" style="color: var(--muted);">Tài Liệu Đã Chọn (<span id="selectedCount">0</span>/5)</label>
                     </div>
-                    
+
                     <div id="selectedDocsContainer" class="d-flex flex-wrap gap-2" style="min-height: 52px;">
                         <div id="emptySelectionMsg" class="w-100 py-3 px-4" style="border: 1px dashed rgba(82, 39, 27, 0.15); border-radius: 16px; background: rgba(255,255,255,0.4);">
                             <span class="text-muted-foreground text-sm">Chưa có tài liệu nào được chọn. Hãy tìm kiếm ở trên.</span>
@@ -220,7 +203,7 @@
             <div class="feature-card-premium" style="animation: fadeUp 800ms cubic-bezier(0.16, 1, 0.3, 1) forwards;">
                 <div class="d-flex justify-content-between align-items-center mb-5 flex-wrap gap-3">
                     <h2 class="hero-title m-0" style="font-size: 1.8rem; color: var(--brown);">Báo Cáo Phân Tích</h2>
-                    
+
                     @if (!string.IsNullOrEmpty(Model.ExportKey))
                     {
                         <a href="?handler=ExportPdf&amp;key=@Model.ExportKey"
@@ -231,7 +214,7 @@
                         </a>
                     }
                 </div>
-                
+
                 <div class="markdown-premium">
                     <div id="markdownContent" style="word-break: break-word;">
                         @Html.Raw(Model.ComparisonResultHtml)
@@ -242,13 +225,67 @@
     </div>
 </div>
 
+<!-- Search Modal -->
+<div id="modal" style="display: none; position: fixed; inset: 0; z-index: 1060; align-items: center; justify-content: center; padding: 16px;">
+    <div style="position: absolute; inset: 0; background: rgba(0,0,0,.5);" onclick="window.closeSearch()"></div>
+    <div style="position: relative; width: 100%; max-width: 64rem; max-height: 85vh; border-radius: 24px; display: flex; flex-direction: column; overflow: hidden; background: var(--card, #fff); border: 1px solid var(--border); padding: 32px; z-index: 1061;">
+        <button type="button" onclick="window.closeSearch()" style="position: absolute; right: 20px; top: 20px; color: var(--muted-foreground); background: none; border: none; cursor: pointer; font-size: 1.25rem;">✕</button>
+        <h3 style="font-size: 1.25rem; font-weight: 600; margin-bottom: 16px; color: var(--foreground);">Tìm & gắn tài liệu</h3>
+
+        <div style="display: grid; grid-template-columns: 2fr 1.2fr 1.2fr 1.2fr; gap: 12px; margin-bottom: 24px;">
+            <input id="nameQ" placeholder="Tên tài liệu..." style="height: 44px; border-radius: 12px; background: var(--bg); padding: 0 16px; font-size: 0.92rem; border: 1px solid var(--border); outline: none; color: var(--foreground);" />
+            <select id="semesterFilter" class="form-select" style="height: 44px; border-radius: 12px; background: var(--bg); border: 1px solid var(--border); color: var(--foreground);">
+                <option value="">Tất cả học kỳ</option>
+            </select>
+            <select id="subjectFilter" class="form-select" style="height: 44px; border-radius: 12px; background: var(--bg); border: 1px solid var(--border); color: var(--foreground);">
+                <option value="">Chọn kỳ trước</option>
+            </select>
+            <select id="materialFilter" class="form-select" style="height: 44px; border-radius: 12px; background: var(--bg); border: 1px solid var(--border); color: var(--foreground);">
+                <option value="">Tất cả loại</option>
+            </select>
+        </div>
+
+        <div id="modal-body" style="flex: 1; overflow-y: auto; display: flex; flex-direction: column; gap: 16px; padding-bottom: 12px; padding-right: 8px;">
+            <!-- Search results will be injected here -->
+        </div>
+
+        <div style="display: flex; justify-content: flex-end; margin-top: 16px; padding-top: 16px; border-top: 1px solid var(--border);">
+            <button type="button" onclick="window.closeSearch()" style="border-radius: 12px; background: var(--brown, #4a1f16); color: #fff; padding: 10px 32px; font-size: 0.9rem; font-weight: 500; border: none; cursor: pointer; transition: opacity 0.15s;" onmouseover="this.style.opacity='0.9'" onmouseout="this.style.opacity='1'">Xong</button>
+        </div>
+    </div>
+</div>
+
 @section Scripts {
     <script>
         document.addEventListener("DOMContentLoaded", function () {
-            const searchInput = document.getElementById("searchInput");
-            const subjectSelect = document.getElementById("subjectSelect");
-            const searchResults = document.getElementById("searchResults");
-            const searchResultsList = document.getElementById("searchResultsList");
+            const DOCS = @Html.Raw(JsonSerializer.Serialize(Model.CompareDocuments.Select(d => new
+            {
+                id = d.Id,
+                title = d.Title,
+                semester = d.AcademicTermName ?? "Chưa xác định",
+                subject = d.SubjectCode ?? d.SubjectName ?? "Chưa xác định",
+                material = d.DocumentTypeName ?? "Chưa xác định"
+            })));
+
+            const SEMESTERS = [...new Set(DOCS.map(d => d.semester))].filter(Boolean).sort();
+            const MATERIAL_TYPES = [...new Set(DOCS.map(d => d.material))].filter(Boolean).sort();
+            const SUBJECTS_BY_SEMESTER = {};
+            DOCS.forEach(d => {
+                if (!SUBJECTS_BY_SEMESTER[d.semester]) SUBJECTS_BY_SEMESTER[d.semester] = new Set();
+                SUBJECTS_BY_SEMESTER[d.semester].add(d.subject);
+            });
+            Object.keys(SUBJECTS_BY_SEMESTER).forEach(k => {
+                SUBJECTS_BY_SEMESTER[k] = [...SUBJECTS_BY_SEMESTER[k]].sort();
+            });
+
+            // ── DOM refs ──
+            const nameQ = document.getElementById("nameQ");
+            const semesterFilter = document.getElementById("semesterFilter");
+            const subjectFilter = document.getElementById("subjectFilter");
+            const materialFilter = document.getElementById("materialFilter");
+            const modalBody = document.getElementById("modal-body");
+            const modal = document.getElementById("modal");
+
             const selectedDocsContainer = document.getElementById("selectedDocsContainer");
             const emptySelectionMsg = document.getElementById("emptySelectionMsg");
             const hiddenInputsContainer = document.getElementById("hiddenInputsContainer");
@@ -256,7 +293,7 @@
             const selectedCount = document.getElementById("selectedCount");
 
             let selectedDocs = [];
-            
+
             // Re-populate if coming back from POST
             @if (Model.SelectedDocuments != null && Model.SelectedDocuments.Any())
             {
@@ -264,10 +301,10 @@
                 {
                     var escapedTitle = doc.Title.Replace("'", "\\'");
                     <text>
-                    selectedDocs.push({ 
-                        id: '@doc.Id', 
-                        title: '@Html.Raw(escapedTitle)', 
-                        subjectId: '@doc.SubjectId' 
+                    selectedDocs.push({
+                        id: '@doc.Id',
+                        title: '@Html.Raw(escapedTitle)',
+                        subjectId: '@doc.SubjectId'
                     });
                     </text>
                 }
@@ -288,95 +325,101 @@
                 </text>
             }
 
-            let searchTimeout = null;
+            // ── Setup Filters for Modal ──
+            function initFilters() {
+                SEMESTERS.forEach(s => semesterFilter.insertAdjacentHTML("beforeend", `<option value="${escapeHtml(s)}">${escapeHtml(s)}</option>`));
+                MATERIAL_TYPES.forEach(x => materialFilter.insertAdjacentHTML("beforeend", `<option value="${escapeHtml(x)}">${escapeHtml(x)}</option>`));
 
-            function triggerSearch() {
-                const query = searchInput.value.trim();
-                const subjectId = subjectSelect.value;
-                
-                if (query.length < 2 && !subjectId) {
-                    searchResults.style.display = "none";
-                    return;
+                if (window.reinitGlassDropdown) {
+                    window.reinitGlassDropdown('semesterFilter');
+                    window.reinitGlassDropdown('materialFilter');
                 }
-
-                clearTimeout(searchTimeout);
-                searchTimeout = setTimeout(() => {
-                    let url = `?handler=Search`;
-                    if (query) url += `&query=${encodeURIComponent(query)}`;
-                    if (subjectId) url += `&subjectId=${encodeURIComponent(subjectId)}`;
-
-                    fetch(url)
-                        .then(response => response.json())
-                        .then(data => {
-                            searchResultsList.innerHTML = "";
-                            if (data && data.length > 0) {
-                                data.forEach(doc => {
-                                    if (selectedDocs.find(d => d.id === doc.id)) return;
-
-                                    const item = document.createElement("div");
-                                    item.className = "result-item";
-                                    
-                                    const isPublic = doc.visibility === 'public' || doc.visibility === 'school_wide';
-                                    const visibilityColor = isPublic ? "color: #2b5c43; background: rgba(43,92,67,0.1);" : "color: var(--coral); background: rgba(216,106,88,0.1);";
-                                    const visibilityText = isPublic ? "Công khai" : "Cá nhân";
-
-                                    item.innerHTML = `
-                                        <div class="d-flex justify-content-between align-items-center mb-1">
-                                            <strong style="color: var(--brown); font-size: 0.95rem;">${doc.title}</strong>
-                                            <span class="rounded-pill px-2 py-1 font-mono-xs" style="${visibilityColor}">${visibilityText}</span>
-                                        </div>
-                                        <div class="text-muted-foreground d-flex align-items-center gap-1" style="font-size: 0.85rem;">
-                                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 19.5v-15A2.5 2.5 0 0 1 6.5 2H20v20H6.5a2.5 2.5 0 0 1 0-5H20"/></svg>
-                                            ${doc.subjectName}
-                                        </div>
-                                    `;
-                                    item.onclick = function () {
-                                        addDocument(doc.id, doc.title, doc.subjectId, doc.subjectName);
-                                        searchInput.value = "";
-                                        searchResults.style.display = "none";
-                                    };
-                                    searchResultsList.appendChild(item);
-                                });
-                                
-                                if(searchResultsList.children.length === 0) {
-                                    searchResultsList.innerHTML = '<div class="p-4 text-center text-muted-foreground">Tất cả tài liệu tìm được đã được chọn.</div>';
-                                }
-                                searchResults.style.display = "block";
-                            } else {
-                                searchResultsList.innerHTML = '<div class="p-4 text-center text-muted-foreground">Không tìm thấy tài liệu phù hợp.</div>';
-                                searchResults.style.display = "block";
-                            }
-                        })
-                        .catch(err => console.error("Lỗi tìm kiếm:", err));
-                }, 300);
             }
 
-            searchInput.addEventListener("input", triggerSearch);
-            
-            subjectSelect.addEventListener("change", function(e) {
-                // Remove searchInput.focus() to prevent keyboard popping up or weird focus issues
-                // that might cause the dropdown to blur/hide immediately.
-                triggerSearch();
-            });
+            function escapeHtml(str) {
+                if (!str) return "";
+                return str.replace(/[&<>'"]/g, tag => ({
+                    '&': '&amp;', '<': '&lt;', '>': '&gt;', "'": '&#39;', '"': '&quot;'
+                }[tag]));
+            }
 
-            document.addEventListener("click", function (e) {
-                if (!searchInput.contains(e.target) && !searchResults.contains(e.target) && !subjectSelect.contains(e.target)) {
-                    searchResults.style.display = "none";
+            semesterFilter.addEventListener('change', function () {
+                const sem = this.value;
+                subjectFilter.innerHTML = `<option value="">-- Chọn kỳ trước --</option>`;
+                if (sem) {
+                    (SUBJECTS_BY_SEMESTER[sem] || []).forEach(s => {
+                        subjectFilter.insertAdjacentHTML("beforeend", `<option value="${escapeHtml(s)}">${escapeHtml(s)}</option>`);
+                    });
                 }
-            });
 
-            // Prevent clicks inside the dropdown from hiding it via document click
-            searchResults.addEventListener("click", function (e) {
-                e.stopPropagation();
-            });
-
-            searchInput.addEventListener("focus", function() {
-                if (searchInput.value.trim().length >= 2 || subjectSelect.value) {
-                    triggerSearch();
+                if (window.reinitGlassDropdown) {
+                    window.reinitGlassDropdown('subjectFilter');
                 }
+
+                renderModal();
             });
 
-            function addDocument(id, title, subjectId, subjectName) {
+            subjectFilter.addEventListener('change', renderModal);
+            materialFilter.addEventListener('change', renderModal);
+            nameQ.addEventListener('input', renderModal);
+
+            window.openSearch = function () {
+                modal.style.display = 'flex';
+                renderModal();
+            }
+
+            window.closeSearch = function () {
+                modal.style.display = 'none';
+            }
+
+            function renderModal() {
+                const q = nameQ.value.toLowerCase();
+                const sem = semesterFilter.value;
+                const sub = subjectFilter.value;
+                const mat = materialFilter.value;
+
+                const filtered = DOCS.filter(d => {
+                    const matchQ = d.title.toLowerCase().includes(q) || d.subject.toLowerCase().includes(q);
+                    const matchSem = !sem || d.semester === sem;
+                    const matchSub = !sub || d.subject === sub;
+                    const matchMat = !mat || d.material === mat;
+                    return matchQ && matchSem && matchSub && matchMat;
+                }).slice(0, 50);
+
+                let html = `<div style="font-size: 0.75rem; font-weight: 600; letter-spacing: 0.05em; color: var(--muted-foreground);">KẾT QUẢ (${filtered.length})</div>`;
+                if (filtered.length === 0) {
+                    html += `<div style="text-align: center; color: var(--muted-foreground); padding: 40px 0;">Không tìm thấy tài liệu phù hợp.</div>`;
+                }
+
+                filtered.forEach(d => {
+                    const isSelected = selectedDocs.some(x => x.id === d.id);
+                    const btnStyle = isSelected
+                        ? `background: var(--bg); color: var(--foreground); border: 1px solid var(--border);`
+                        : `background: var(--coral-soft); color: var(--brown); border: 1px solid transparent;`;
+                    const btnText = isSelected ? "Đã chọn" : "Chọn";
+                    const btnOnclick = isSelected ? `onclick="removeDocument('${d.id}')"` : `onclick="addDocument('${d.id}', '${escapeHtml(d.title)}', '${escapeHtml(d.subject)}')";`;
+
+                    html += `
+                        <div style="display: flex; align-items: center; justify-content: space-between; padding: 16px; background: var(--bg); border: 1px solid var(--border); border-radius: 16px;">
+                            <div>
+                                <div style="font-weight: 500; font-size: 0.95rem; color: var(--foreground); margin-bottom: 4px;">${escapeHtml(d.title)}</div>
+                                <div style="font-size: 0.8rem; color: var(--muted-foreground); display: flex; gap: 8px; align-items: center;">
+                                    <span>${escapeHtml(d.material)}</span>
+                                    <span style="display: inline-block; width: 4px; height: 4px; border-radius: 50%; background: currentColor; opacity: 0.5;"></span>
+                                    <span>${escapeHtml(d.subject)}</span>
+                                </div>
+                            </div>
+                            <button type="button" ${btnOnclick} style="border-radius: 9999px; padding: 6px 16px; font-size: 0.85rem; font-weight: 500; cursor: pointer; transition: all 0.15s; ${btnStyle}">
+                                ${btnText}
+                            </button>
+                        </div>
+                    `;
+                });
+
+                modalBody.innerHTML = html;
+            }
+
+            window.addDocument = function(id, title, subject) {
                 if (selectedDocs.length >= 5) {
                     if(typeof showPremiumToast === "function") {
                         showPremiumToast("Chỉ chọn tối đa 5 tài liệu.", "danger");
@@ -385,11 +428,12 @@
                     }
                     return;
                 }
-                
-                // Enforce that all selected documents belong to the same subject
+
+                // Enforce that all selected documents belong to the same subject if needed
+                // For comparison, they usually do. Since chat search doesn't easily expose subjectId, we compare subject string.
                 if (selectedDocs.length > 0) {
-                    const currentSubjectId = selectedDocs[0].subjectId;
-                    if (currentSubjectId !== subjectId) {
+                    const currentSubject = selectedDocs[0].subjectId;
+                    if (currentSubject !== subject) {
                         const errorMsg = "Tài liệu này thuộc môn học khác. Bạn chỉ có thể so sánh các tài liệu chung một môn học.";
                         if(typeof showPremiumToast === "function") {
                             showPremiumToast(errorMsg, "danger");
@@ -399,22 +443,26 @@
                         return;
                     }
                 }
-                
+
                 if (!selectedDocs.find(d => d.id === id)) {
-                    selectedDocs.push({ id, title, subjectId });
+                    selectedDocs.push({ id, title, subjectId: subject });
                     renderSelectedDocs();
+                    renderModal(); // Update modal buttons
                 }
             }
 
             window.removeDocument = function(id) {
                 selectedDocs = selectedDocs.filter(d => d.id !== id);
                 renderSelectedDocs();
+                if(modal.style.display === 'flex') {
+                    renderModal();
+                }
             }
 
             function renderSelectedDocs() {
                 const pills = selectedDocsContainer.querySelectorAll('.doc-pill');
                 pills.forEach(p => p.remove());
-                
+
                 hiddenInputsContainer.innerHTML = "";
                 selectedCount.textContent = selectedDocs.length;
 
@@ -422,7 +470,7 @@
                     emptySelectionMsg.style.display = "block";
                 } else {
                     emptySelectionMsg.style.display = "none";
-                    
+
                     selectedDocs.forEach(doc => {
                         const pill = document.createElement("div");
                         pill.className = "doc-pill";
@@ -445,6 +493,7 @@
                 btnCompare.disabled = selectedDocs.length < 2 || selectedDocs.length > 5;
             }
 
+            initFilters();
             renderSelectedDocs();
         });
     </script>

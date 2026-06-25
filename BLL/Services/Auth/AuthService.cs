@@ -116,6 +116,11 @@ public class AuthService : IAuthService
             throw new InvalidOperationException("Tài khoản của bạn chưa được kích hoạt hoặc đang chờ Admin phê duyệt.");
         }
 
+        if (!user.EmailVerified)
+        {
+            throw new InvalidOperationException("Tài khoản của bạn chưa được xác thực email. Vui lòng kiểm tra hộp thư đến để xác thực.");
+        }
+
         return Map(user);
     }
 
