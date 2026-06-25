@@ -91,6 +91,12 @@ public class AuthService : IAuthService
         return Map(created);
     }
 
+    public async Task<AuthUserDto?> GetUserByIdAsync(Guid userId, CancellationToken cancellationToken = default)
+    {
+        var user = await _authRepository.GetUserByIdAsync(userId, cancellationToken);
+        return user is null ? null : Map(user);
+    }
+
     public async Task<AuthUserDto?> ValidateCredentialsAsync(string email, string password, CancellationToken cancellationToken = default)
     {
         var normalizedEmail = email.Trim().ToLowerInvariant();

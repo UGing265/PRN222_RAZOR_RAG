@@ -1,5 +1,6 @@
 using System.Security.Claims;
-using DAL.Interfaces.Auth;
+using BLL.Interfaces.Auth;
+using BLL.DTOs.Auth;
 
 namespace GUI.Middleware;
 
@@ -24,7 +25,7 @@ public sealed class ForceChangePasswordMiddleware
     private readonly RequestDelegate _next;
     public ForceChangePasswordMiddleware(RequestDelegate next) => _next = next;
 
-    public async Task InvokeAsync(HttpContext ctx, IAuthRepository authRepo)
+    public async Task InvokeAsync(HttpContext ctx, IAuthService authService)
     {
         if (ctx.User.Identity?.IsAuthenticated != true)
         {
@@ -41,7 +42,7 @@ public sealed class ForceChangePasswordMiddleware
         }
 
         if (!ctx.Items.TryGetValue("ForceChange.CurrentUser", out var cached)
-            || cached is not DAL.Entities.User user)
+            || cached is not AuthUserDto user)
         {
             var userIdStr = ctx.User.FindFirstValue(ClaimTypes.NameIdentifier);
             if (!Guid.TryParse(userIdStr, out var userId))
@@ -50,7 +51,7 @@ public sealed class ForceChangePasswordMiddleware
                 return;
             }
 
-            user = await authRepo.GetUserByIdAsync(userId);
+            user = await authService.GetUserByIdAsync(userId);
             if (user != null)
                 ctx.Items["ForceChange.CurrentUser"] = user;
         }
