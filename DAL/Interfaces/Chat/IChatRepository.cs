@@ -14,5 +14,7 @@ public interface IChatRepository
     Task UpdateSessionTitleAsync(Guid sessionId, string title, CancellationToken cancellationToken = default);
     Task AddDocumentToSessionAsync(Guid sessionId, Guid documentId, CancellationToken cancellationToken = default);
     Task<List<Guid>> GetActiveDocumentIdsAsync(Guid sessionId, CancellationToken cancellationToken = default);
+    Task DeleteSessionAsync(Guid sessionId, CancellationToken cancellationToken = default);
+    Task DeleteSessionsAsync(List<Guid> sessionIds, CancellationToken cancellationToken = default);
     Task SaveChangesAsync(CancellationToken cancellationToken = default);
 }

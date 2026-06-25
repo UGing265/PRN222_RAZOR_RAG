@@ -58,6 +58,30 @@ public static class ChatEndpoints
             return Results.Ok(messages);
         });
 
+        group.MapDelete("/sessions/{sessionId:guid}", async (
+            Guid sessionId,
+            IChatService chat,
+            ClaimsPrincipal user,
+            CancellationToken ct) =>
+        {
+            if (!TryGetUserId(user, out var userId)) return Results.Unauthorized();
+            var success = await chat.DeleteSessionAsync(userId, sessionId, ct);
+            if (!success) return Results.NotFound();
+            return Results.Ok();
+        });
+
+        group.MapPost("/sessions/bulk-delete", async (
+            [FromBody] List<Guid> sessionIds,
+            IChatService chat,
+            ClaimsPrincipal user,
+            CancellationToken ct) =>
+        {
+            if (!TryGetUserId(user, out var userId)) return Results.Unauthorized();
+            var success = await chat.DeleteSessionsAsync(userId, sessionIds, ct);
+            if (!success) return Results.BadRequest("Invalid session IDs");
+            return Results.Ok();
+        });
+
         group.MapGet("/debug-docs", async (
             IDocumentService documents,
             DAL.Interfaces.Documents.IDocumentRepository repo,

@@ -8,7 +8,7 @@
 
 <script src="https://cdn.tailwindcss.com"></script>
 <style>
-  .chat-root, #modal {
+  .chat-root, #modal, #confirmDeleteModal {
     --bg: #f6e8de;
     --card: #fdf6f1;
     --card-2: #ffffff;
@@ -47,7 +47,7 @@
 
 <style>
     /* ===== BOOTSTRAP OVERRIDES for Chat Page ===== */
-    .chat-root, #modal {
+    .chat-root, #modal, #confirmDeleteModal {
         --background: oklch(0.97 0.025 50);
         --foreground: oklch(0.28 0.05 35);
         --card: oklch(0.985 0.018 55);
@@ -120,12 +120,34 @@
     
     <!-- LEFT SIDEBAR -->
     <aside style="width: 288px; flex-shrink: 0; display: flex; flex-direction: column; overflow: hidden;">
-      <div style="display: flex; align-items: center; justify-content: space-between; padding: 16px; padding-bottom: 8px; flex-shrink: 0;">
+      <div id="sidebarHeaderNormal" style="display: flex; align-items: center; justify-content: space-between; padding: 16px; padding-bottom: 8px; flex-shrink: 0;">
         <h2 style="font-size: 0.75rem; font-weight: 600; letter-spacing: 0.05em; color: var(--muted-foreground); text-transform: uppercase;">LỊCH SỬ PHIÊN</h2>
-        <button id="newSessionBtn" style="display: flex; align-items: center; gap: 4px; border-radius: 9999px; background: var(--primary); color: var(--primary-foreground); padding: 6px 12px; font-size: 0.75rem; font-weight: 500; border: none; cursor: pointer;">
-          <svg style="width: 14px; height: 14px; stroke: currentColor; fill: none; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round;" viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
-          Phiên mới
-        </button>
+        <div style="display: flex; align-items: center; gap: 8px;">
+          <button id="newSessionBtn" style="display: flex; align-items: center; gap: 4px; border-radius: 9999px; background: var(--primary); color: var(--primary-foreground); padding: 6px 12px; font-size: 0.75rem; font-weight: 500; border: none; cursor: pointer;">
+            <svg style="width: 14px; height: 14px; stroke: currentColor; fill: none; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round;" viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+            Phiên mới
+          </button>
+          <div style="position: relative;">
+            <button id="sessionMenuBtn" type="button" onclick="document.getElementById('sessionMenuDropdown').style.display = document.getElementById('sessionMenuDropdown').style.display === 'none' ? 'block' : 'none'" style="display: flex; align-items: center; justify-content: center; width: 28px; height: 28px; border-radius: 50%; background: none; border: none; cursor: pointer; color: var(--muted-foreground);" onmouseover="this.style.background='var(--border)'" onmouseout="this.style.background='none'">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="1"/><circle cx="12" cy="5" r="1"/><circle cx="12" cy="19" r="1"/></svg>
+            </button>
+            <div id="sessionMenuDropdown" style="display: none; position: absolute; right: 0; top: 100%; margin-top: 4px; width: 140px; background: var(--card); border: 1px solid var(--border); border-radius: 8px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); z-index: 50;">
+              <button type="button" onclick="window.toggleBulkSelectMode(true)" style="width: 100%; text-align: left; padding: 8px 12px; font-size: 0.875rem; background: none; border: none; cursor: pointer; color: var(--foreground);" onmouseover="this.style.background='var(--accent)'" onmouseout="this.style.background='none'">
+                Chọn nhiều
+              </button>
+              <button type="button" onclick="window.selectAllSessions()" style="width: 100%; text-align: left; padding: 8px 12px; font-size: 0.875rem; background: none; border: none; cursor: pointer; color: var(--foreground);" onmouseover="this.style.background='var(--accent)'" onmouseout="this.style.background='none'">
+                Chọn tất cả
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div id="sidebarHeaderBulk" style="display: none; align-items: center; justify-content: space-between; padding: 16px; padding-bottom: 8px; flex-shrink: 0;">
+        <h2 id="bulkCountText" style="font-size: 0.75rem; font-weight: 600; letter-spacing: 0.05em; color: var(--muted-foreground); text-transform: uppercase;">Đã chọn 0</h2>
+        <div style="display: flex; align-items: center; gap: 8px;">
+          <button type="button" onclick="window.toggleBulkSelectMode(false)" style="border-radius: 9999px; background: var(--card); color: var(--foreground); padding: 6px 12px; font-size: 0.75rem; font-weight: 500; border: 1px solid var(--border); cursor: pointer;">Hủy</button>
+          <button type="button" onclick="window.deleteBulkSessions()" style="border-radius: 9999px; background: #ef4444; color: #ffffff; padding: 6px 12px; font-size: 0.75rem; font-weight: 500; border: none; cursor: pointer;">Xóa</button>
+        </div>
       </div>
       <ul id="sessionsPanel" class="chat-scroll" style="flex: 1; overflow-y: auto; display: flex; flex-direction: column; gap: 8px; padding: 8px 16px 16px 16px; margin: 0; list-style: none;">
         <div style="font-size: 0.85rem; color: var(--muted-foreground);">Chưa có phiên chat nào.</div>
@@ -221,6 +243,19 @@
 
     <div style="display: flex; justify-content: flex-end; margin-top: 24px;">
       <button type="button" onclick="window.closeSearch()" style="border-radius: 9999px; background: var(--primary); color: var(--primary-foreground); padding: 8px 24px; font-size: 0.875rem; font-weight: 500; border: none; cursor: pointer; transition: opacity 0.15s;" onmouseover="this.style.opacity='0.9'" onmouseout="this.style.opacity='1'">Xong</button>
+    </div>
+  </div>
+</div>
+
+<!-- Confirm Delete Modal -->
+<div id="confirmDeleteModal" style="display: none; position: fixed; inset: 0; z-index: 1100; align-items: center; justify-content: center; padding: 16px;">
+  <div style="position: absolute; inset: 0; background: rgba(0,0,0,.4);" onclick="window.closeConfirmDelete()"></div>
+  <div style="position: relative; width: 100%; max-width: 24rem; border-radius: 20px; display: flex; flex-direction: column; background: var(--background); border: 1px solid var(--border); padding: 24px; z-index: 1101; box-shadow: 0 10px 25px rgba(0,0,0,0.1);">
+    <h3 style="font-size: 1.125rem; font-weight: 600; margin-bottom: 12px; color: var(--foreground);">Xóa phiên chat</h3>
+    <p style="font-size: 0.875rem; color: var(--muted-foreground); margin-bottom: 24px; line-height: 1.5;">Bạn có chắc chắn muốn xóa vĩnh viễn lịch sử phiên chat này không? Hành động này không thể hoàn tác.</p>
+    <div style="display: flex; justify-content: flex-end; gap: 12px;">
+      <button type="button" onclick="window.closeConfirmDelete()" style="border-radius: 9999px; background: var(--card); color: var(--foreground); padding: 8px 16px; font-size: 0.875rem; font-weight: 500; border: 1px solid var(--border); cursor: pointer; transition: background 0.15s;" onmouseover="this.style.background='var(--border)'" onmouseout="this.style.background='var(--card)'">Hủy</button>
+      <button type="button" id="confirmDeleteBtn" style="border-radius: 9999px; background: #ef4444; color: #ffffff; padding: 8px 16px; font-size: 0.875rem; font-weight: 500; border: none; cursor: pointer; transition: opacity 0.15s;" onmouseover="this.style.opacity='0.9'" onmouseout="this.style.opacity='1'">Xóa</button>
     </div>
   </div>
 </div>
@@ -489,13 +524,183 @@ document.addEventListener('DOMContentLoaded', function () {
             sessionsPanel.innerHTML = '<div style="font-size: 0.85rem; color: var(--muted-foreground);">Chưa có phiên chat nào.</div>';
             return;
         }
-        sessionsPanel.innerHTML = sessions.map(s => `
-            <li><button type="button" onclick="window.loadSession('${s.id}')" style="width: 100%; text-align: left; border-radius: 16px; padding: 10px 12px; transition: background 0.15s; border: none; cursor: pointer; background: ${s.id === currentSessionId ? 'var(--accent)' : 'transparent'};" onmouseover="if('${s.id}'!=='${currentSessionId}')this.style.background='color-mix(in oklab, var(--accent) 50%, transparent)'" onmouseout="if('${s.id}'!=='${currentSessionId}')this.style.background='transparent'">
-              <div style="font-size: 0.875rem; font-weight: 500; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">${escapeHtml(s.title)}</div>
-              <div style="font-size: 0.75rem; color: var(--muted-foreground); margin-top: 2px;">${formatDate(s.createdAt)}</div>
-            </button></li>
-        `).join('');
+        sessionsPanel.innerHTML = sessions.map(s => {
+            if (isBulkSelectMode) {
+                const isChecked = selectedSessionIds.has(s.id);
+                return `
+                    <li style="display: flex; gap: 8px; align-items: center; border-radius: 16px; padding: 10px 12px; cursor: pointer; background: ${isChecked ? 'var(--accent)' : 'transparent'};" onclick="window.toggleSessionSelect('${s.id}')">
+                      <input type="checkbox" ${isChecked ? 'checked' : ''} style="accent-color: var(--primary); width: 16px; height: 16px; cursor: pointer;" onclick="event.stopPropagation(); window.toggleSessionSelect('${s.id}')" />
+                      <div style="flex: 1; min-width: 0;">
+                        <div style="font-size: 0.875rem; font-weight: 500; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">${escapeHtml(s.title)}</div>
+                        <div style="font-size: 0.75rem; color: var(--muted-foreground); margin-top: 2px;">${formatDate(s.createdAt)}</div>
+                      </div>
+                    </li>
+                `;
+            } else {
+                return `
+                    <li style="display: flex; gap: 4px; align-items: center; position: relative;" onmouseover="this.querySelector('.session-actions').style.opacity='1'" onmouseout="this.querySelector('.session-actions').style.opacity='0'">
+                      <button type="button" onclick="window.loadSession('${s.id}')" style="flex: 1; text-align: left; min-width: 0; border-radius: 16px; padding: 10px 12px; transition: background 0.15s; border: none; cursor: pointer; background: ${s.id === currentSessionId ? 'var(--accent)' : 'transparent'};" onmouseover="if('${s.id}'!=='${currentSessionId}')this.style.background='color-mix(in oklab, var(--accent) 50%, transparent)'" onmouseout="if('${s.id}'!=='${currentSessionId}')this.style.background='transparent'">
+                        <div style="font-size: 0.875rem; font-weight: 500; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">${escapeHtml(s.title)}</div>
+                        <div style="font-size: 0.75rem; color: var(--muted-foreground); margin-top: 2px;">${formatDate(s.createdAt)}</div>
+                      </button>
+                      <div class="session-actions" style="opacity: 0; transition: opacity 0.2s; display: flex; align-items: center; position: absolute; right: 8px; background: ${s.id === currentSessionId ? 'var(--accent)' : 'var(--background)'}; padding-left: 4px; border-radius: 8px;">
+                        <div style="position: relative;">
+                          <button type="button" onclick="event.stopPropagation(); window.toggleSessionItemMenu('${s.id}')" title="Tùy chọn" style="display: flex; align-items: center; justify-content: center; width: 28px; height: 28px; border-radius: 50%; background: none; border: none; cursor: pointer; color: var(--muted-foreground); transition: 0.15s;" onmouseover="this.style.background='var(--border)';" onmouseout="this.style.background='none';">
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="1"/><circle cx="12" cy="5" r="1"/><circle cx="12" cy="19" r="1"/></svg>
+                          </button>
+                          <div id="sessionItemMenu-${s.id}" style="display: none; position: absolute; right: 0; top: 100%; margin-top: 4px; width: 100px; background: var(--card); border: 1px solid var(--border); border-radius: 8px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); z-index: 50;">
+                            <button type="button" onclick="event.stopPropagation(); window.toggleSessionItemMenu('${s.id}'); window.deleteSession('${s.id}')" style="width: 100%; text-align: left; padding: 8px 12px; font-size: 0.875rem; background: none; border: none; cursor: pointer; color: #ef4444;" onmouseover="this.style.background='rgba(239, 68, 68, 0.1)'" onmouseout="this.style.background='none'">
+                              Xóa
+                            </button>
+                          </div>
+                        </div>
+                      </div>
+                    </li>
+                `;
+            }
+        }).join('');
     }
+
+    let sessionIdToDelete = null;
+    let isBulkSelectMode = false;
+    let selectedSessionIds = new Set();
+
+    document.addEventListener('click', function(e) {
+        const btn = document.getElementById('sessionMenuBtn');
+        const dropdown = document.getElementById('sessionMenuDropdown');
+        if (dropdown && btn && !btn.contains(e.target) && !dropdown.contains(e.target)) {
+            dropdown.style.display = 'none';
+        }
+
+        // Close item menus
+        document.querySelectorAll('[id^="sessionItemMenu-"]').forEach(menu => {
+            menu.style.display = 'none';
+        });
+    });
+
+    window.toggleSessionItemMenu = function(sessionId) {
+        // Close other item menus first
+        document.querySelectorAll('[id^="sessionItemMenu-"]').forEach(menu => {
+            if (menu.id !== `sessionItemMenu-${sessionId}`) {
+                menu.style.display = 'none';
+            }
+        });
+        
+        const menu = document.getElementById(`sessionItemMenu-${sessionId}`);
+        if (menu) {
+            menu.style.display = menu.style.display === 'none' ? 'block' : 'none';
+        }
+    };
+
+    window.selectAllSessions = function() {
+        window.toggleBulkSelectMode(true);
+        if (globalSessions) {
+            globalSessions.forEach(s => selectedSessionIds.add(s.id));
+            document.getElementById('bulkCountText').textContent = `Đã chọn ${selectedSessionIds.size}`;
+            renderSessions(globalSessions);
+        }
+    };
+
+    window.toggleBulkSelectMode = function(enable) {
+        isBulkSelectMode = enable;
+        selectedSessionIds.clear();
+        
+        const dropdown = document.getElementById('sessionMenuDropdown');
+        if (dropdown) dropdown.style.display = 'none';
+        
+        if (enable) {
+            document.getElementById('sidebarHeaderNormal').style.display = 'none';
+            document.getElementById('sidebarHeaderBulk').style.display = 'flex';
+            document.getElementById('bulkCountText').textContent = 'Đã chọn 0';
+        } else {
+            document.getElementById('sidebarHeaderNormal').style.display = 'flex';
+            document.getElementById('sidebarHeaderBulk').style.display = 'none';
+        }
+        
+        renderSessions(globalSessions);
+    };
+
+    window.toggleSessionSelect = function(sessionId) {
+        if (selectedSessionIds.has(sessionId)) {
+            selectedSessionIds.delete(sessionId);
+        } else {
+            selectedSessionIds.add(sessionId);
+        }
+        document.getElementById('bulkCountText').textContent = `Đã chọn ${selectedSessionIds.size}`;
+        renderSessions(globalSessions);
+    };
+
+    window.deleteBulkSessions = function() {
+        if (selectedSessionIds.size === 0) return;
+        
+        sessionIdToDelete = Array.from(selectedSessionIds);
+        const text = `Bạn có chắc chắn muốn xóa vĩnh viễn ${selectedSessionIds.size} phiên chat đã chọn không? Hành động này không thể hoàn tác.`;
+        document.querySelector('#confirmDeleteModal p').textContent = text;
+        document.getElementById('confirmDeleteModal').style.display = 'flex';
+    };
+
+    window.deleteSession = function(sessionId) {
+        sessionIdToDelete = sessionId;
+        document.querySelector('#confirmDeleteModal p').textContent = "Bạn có chắc chắn muốn xóa vĩnh viễn lịch sử phiên chat này không? Hành động này không thể hoàn tác.";
+        document.getElementById('confirmDeleteModal').style.display = 'flex';
+    };
+
+    window.closeConfirmDelete = function() {
+        document.getElementById('confirmDeleteModal').style.display = 'none';
+        sessionIdToDelete = null;
+    };
+
+    document.getElementById('confirmDeleteBtn').addEventListener('click', async function() {
+        if (!sessionIdToDelete) return;
+        
+        const idsToDelete = sessionIdToDelete;
+        window.closeConfirmDelete();
+
+        if (Array.isArray(idsToDelete)) {
+            // Bulk delete
+            try {
+                const res = await fetch(`/api/chat/sessions/bulk-delete`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(idsToDelete)
+                });
+                
+                if (res.ok) {
+                    window.toggleBulkSelectMode(false);
+                    if (idsToDelete.includes(currentSessionId)) {
+                        newSessionBtn.click();
+                    } else {
+                        await loadSessions();
+                    }
+                } else {
+                    alert("Đã có lỗi xảy ra khi xóa hàng loạt.");
+                }
+            } catch(e) {
+                console.error(e);
+            }
+        } else {
+            // Single delete
+            const sessionId = idsToDelete;
+            try {
+                const res = await fetch(`/api/chat/sessions/${sessionId}`, {
+                    method: 'DELETE'
+                });
+
+                if (res.ok) {
+                    if (currentSessionId === sessionId) {
+                        newSessionBtn.click(); // Reset to new session
+                    } else {
+                        await loadSessions(); // Refresh list
+                    }
+                } else {
+                    alert("Đã có lỗi xảy ra khi xóa phiên chat.");
+                }
+            } catch (e) {
+                console.error(e);
+                alert("Đã có lỗi xảy ra khi xóa phiên chat.");
+            }
+        }
+    });
 
     // ── Load a specific session's messages ──
     window.loadSession = async function(sessionId) {

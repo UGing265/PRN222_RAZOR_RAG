@@ -158,6 +158,32 @@ public class ChatService : IChatService
         }).ToList();
     }
 
+    public async Task<bool> DeleteSessionAsync(Guid userId, Guid sessionId, CancellationToken cancellationToken = default)
+    {
+        var session = await _chatRepository.GetSessionAsync(sessionId, cancellationToken);
+        if (session == null || session.UserId != userId)
+        {
+            return false;
+        }
+
+        await _chatRepository.DeleteSessionAsync(sessionId, cancellationToken);
+        return true;
+    }
+
+    public async Task<bool> DeleteSessionsAsync(Guid userId, List<Guid> sessionIds, CancellationToken cancellationToken = default)
+    {
+        if (sessionIds == null || !sessionIds.Any()) return false;
+
+        // Verify that all sessions belong to the user
+        var sessions = await _chatRepository.GetUserSessionsAsync(userId, cancellationToken);
+        var validSessionIds = sessions.Select(s => s.Id).Intersect(sessionIds).ToList();
+
+        if (validSessionIds.Count == 0) return false;
+
+        await _chatRepository.DeleteSessionsAsync(validSessionIds, cancellationToken);
+        return true;
+    }
+
     #region Private Helpers
 
     private async Task<ChatSession> GetOrCreateSessionAsync(Guid userId, ChatRequest request, CancellationToken cancellationToken)
