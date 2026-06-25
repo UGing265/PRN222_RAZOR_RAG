@@ -631,14 +631,18 @@
                 return;
             }
             
+            const actionAttrLower = (form.getAttribute('action') || '').toLowerCase();
+            const actionPropLower = (form.action || '').toLowerCase();
+            
+            if (actionAttrLower.includes('/auth/logout') || actionPropLower.includes('/auth/logout')) {
+                return;
+            }
+            
             e.preventDefault();
             
             let successMsg = "Đã thực hiện thao tác thành công.";
             let isModalForm = false;
             let modalId = "";
-            
-            const actionAttrLower = (form.getAttribute('action') || '').toLowerCase();
-            const actionPropLower = (form.action || '').toLowerCase();
             
             if (actionAttrLower.includes('handler=rejectorblock') || actionPropLower.includes('handler=rejectorblock')) {
                 successMsg = "Đã thực hiện thao tác thành công.";

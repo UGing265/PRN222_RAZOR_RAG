@@ -146,14 +146,43 @@ public class EditModel : PageModel
         }
     }
 
+    public async Task<IActionResult> OnGetRefreshSubjectsAsync(CancellationToken cancellationToken)
+    {
+        if (!Guid.TryParse(User.FindFirstValue(ClaimTypes.NameIdentifier), out var userId))
+        {
+            return Unauthorized();
+        }
+
+        var allSubjects = await _documentService.GetSubjectsByOwnerAsync(userId, cancellationToken);
+        var subjects = allSubjects.Where(s => s.AcademicTermId.HasValue).ToList();
+        var documentTypes = await _documentService.GetDocumentTypesAsync(cancellationToken);
+        var languages = await _documentService.GetLanguagesAsync(cancellationToken);
+        var documentSources = await _documentService.GetDocumentSourcesAsync(cancellationToken);
+        
+        var terms = await _documentService.GetAcademicTermsAsync(cancellationToken);
+        var academicTerms = terms.ToList();
+
+        var subjectTermMap = subjects
+            .ToDictionary(s => s.Id.ToString().ToLowerInvariant(), s => s.AcademicTermId!.Value.ToString().ToLowerInvariant());
+
+        return new JsonResult(new
+        {
+            subjects = subjects.Select(s => new { id = s.Id.ToString().ToLowerInvariant(), name = s.Name, termId = s.AcademicTermId?.ToString().ToLowerInvariant() }),
+            academicTerms = academicTerms.Select(t => new { id = t.Id.ToString().ToLowerInvariant(), name = t.Name }),
+            documentTypes = documentTypes.Select(dt => new { id = dt.Id.ToString().ToLowerInvariant(), name = dt.Name }),
+            languages = languages.Select(l => new { id = l.Id.ToString().ToLowerInvariant(), name = l.Name }),
+            documentSources = documentSources.Select(ds => new { id = ds.Id.ToString().ToLowerInvariant(), name = ds.Name }),
+            subjectTermMap = subjectTermMap
+        });
+    }
+
     private async Task PopulateLookupsAsync(CancellationToken cancellationToken, Guid userId)
     {
         var allSubjects = await _documentService.GetSubjectsByOwnerAsync(userId, cancellationToken);
-        Subjects = allSubjects;
+        Subjects = allSubjects.Where(s => s.AcademicTermId.HasValue).ToList();
 
         var allTerms = await _documentService.GetAcademicTermsAsync(cancellationToken);
-        var subjectTermIds = allSubjects.Where(s => s.AcademicTermId.HasValue).Select(s => s.AcademicTermId!.Value).ToHashSet();
-        AcademicTerms = allTerms.Where(t => subjectTermIds.Contains(t.Id)).ToList();
+        AcademicTerms = allTerms.ToList();
 
         DocumentTypes = await _documentService.GetDocumentTypesAsync(cancellationToken);
         Languages = await _documentService.GetLanguagesAsync(cancellationToken);

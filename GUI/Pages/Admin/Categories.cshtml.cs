@@ -58,9 +58,9 @@ public class CategoriesModel : PageModel
     // SUBJECTS
     public Task<IActionResult> OnPostCreateSubjectAsync(string code, string name, Guid? academicTermId, CancellationToken ct)
     {
-        if (string.IsNullOrWhiteSpace(code) || string.IsNullOrWhiteSpace(name) || !academicTermId.HasValue)
+        if (string.IsNullOrWhiteSpace(code) || string.IsNullOrWhiteSpace(name))
         {
-            SetError("Mã môn học, tên môn học và học kỳ không được để trống.");
+            SetError("Mã môn học, tên môn học không được để trống.");
             return Task.FromResult<IActionResult>(RedirectToPage("/Admin/Categories"));
         }
         return ExecuteActionAsync(
@@ -71,9 +71,9 @@ public class CategoriesModel : PageModel
 
     public Task<IActionResult> OnPostUpdateSubjectAsync(Guid id, string code, string name, Guid? academicTermId, CancellationToken ct)
     {
-        if (string.IsNullOrWhiteSpace(code) || string.IsNullOrWhiteSpace(name) || !academicTermId.HasValue)
+        if (string.IsNullOrWhiteSpace(code) || string.IsNullOrWhiteSpace(name))
         {
-            SetError("Mã môn học, tên môn học và học kỳ không được để trống.");
+            SetError("Mã môn học, tên môn học không được để trống.");
             return Task.FromResult<IActionResult>(RedirectToPage("/Admin/Categories"));
         }
         return ExecuteActionAsync(

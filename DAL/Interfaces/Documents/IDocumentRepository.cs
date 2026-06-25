@@ -47,22 +47,27 @@ public interface IDocumentRepository
     Task UpdateSubjectAsync(Subject subject, CancellationToken cancellationToken = default);
     Task DeleteSubjectAsync(Subject subject, CancellationToken cancellationToken = default);
     Task<DocumentType> AddDocumentTypeAsync(DocumentType documentType, CancellationToken cancellationToken = default);
+    Task<Subject?> GetSubjectWithRelationsAsync(Guid id, CancellationToken cancellationToken = default);
     Task<DocumentType?> GetDocumentTypeAsync(Guid id, CancellationToken cancellationToken = default);
+    Task<DocumentType?> GetDocumentTypeWithRelationsAsync(Guid id, CancellationToken cancellationToken = default);
     Task UpdateDocumentTypeAsync(DocumentType documentType, CancellationToken cancellationToken = default);
     Task DeleteDocumentTypeAsync(DocumentType documentType, CancellationToken cancellationToken = default);
 
     Task<Language> AddLanguageAsync(Language language, CancellationToken cancellationToken = default);
     Task<Language?> GetLanguageAsync(Guid id, CancellationToken cancellationToken = default);
+    Task<Language?> GetLanguageWithRelationsAsync(Guid id, CancellationToken cancellationToken = default);
     Task UpdateLanguageAsync(Language language, CancellationToken cancellationToken = default);
     Task DeleteLanguageAsync(Language language, CancellationToken cancellationToken = default);
 
     Task<DocumentSource> AddDocumentSourceAsync(DocumentSource source, CancellationToken cancellationToken = default);
     Task<DocumentSource?> GetDocumentSourceAsync(Guid id, CancellationToken cancellationToken = default);
+    Task<DocumentSource?> GetDocumentSourceWithRelationsAsync(Guid id, CancellationToken cancellationToken = default);
     Task UpdateDocumentSourceAsync(DocumentSource source, CancellationToken cancellationToken = default);
     Task DeleteDocumentSourceAsync(DocumentSource source, CancellationToken cancellationToken = default);
 
     Task<AcademicTerm> AddAcademicTermAsync(AcademicTerm term, CancellationToken cancellationToken = default);
     Task<AcademicTerm?> GetAcademicTermAsync(Guid id, CancellationToken cancellationToken = default);
+    Task<AcademicTerm?> GetAcademicTermWithRelationsAsync(Guid id, CancellationToken cancellationToken = default);
     Task UpdateAcademicTermAsync(AcademicTerm term, CancellationToken cancellationToken = default);
     Task DeleteAcademicTermAsync(AcademicTerm term, CancellationToken cancellationToken = default);
     Task<List<Document>> GetAdminDocumentsAsync(string? query, Guid? subjectId, int page, int pageSize, CancellationToken cancellationToken = default);

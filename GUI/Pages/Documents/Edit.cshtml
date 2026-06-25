@@ -166,10 +166,10 @@
                             <div class="col-md-6">
                                 <label asp-for="EditModelData.DocumentTypeId"
                                        class="form-label font-mono-xs text-muted-foreground mb-1"
-                                       style="font-size: 9px; letter-spacing: 0.08em;">LOẠI HỌC LIỆU</label>
+                                       style="font-size: 9px; letter-spacing: 0.08em;">LOẠI HỌC LIỆU (TUỲ CHỌN)</label>
                                 <select asp-for="EditModelData.DocumentTypeId" class="form-select form-glass-select"
                                         asp-items="@(new SelectList(Model.DocumentTypes, "Id", "Name"))">
-                                    <option value="">Chọn Loại Học Liệu --</option>
+                                    <option value="">Không Chọn</option>
                                 </select>
                                 <span asp-validation-for="EditModelData.DocumentTypeId" class="text-danger small"></span>
                             </div>
@@ -178,9 +178,9 @@
                                 <label asp-for="EditModelData.AcademicTermId"
                                        class="form-label font-mono-xs text-muted-foreground mb-1"
                                        style="font-size: 9px; letter-spacing: 0.08em;">HỌC KỲ</label>
-                                <select asp-for="EditModelData.AcademicTermId" class="form-select form-glass-select"
+                                <select asp-for="EditModelData.AcademicTermId" id="AcademicTermId" class="form-select form-glass-select" disabled
                                         asp-items="@(new SelectList(Model.AcademicTerms, "Id", "Name"))">
-                                    <option value="">Chọn Học Kỳ</option>
+                                    <option value="">Chưa Có Kỳ</option>
                                 </select>
                                 <span asp-validation-for="EditModelData.AcademicTermId" class="text-danger small"></span>
                             </div>
@@ -188,10 +188,10 @@
                             <div class="col-md-6">
                                 <label asp-for="EditModelData.LanguageId"
                                        class="form-label font-mono-xs text-muted-foreground mb-1"
-                                       style="font-size: 9px; letter-spacing: 0.08em;">NGÔN NGỮ</label>
+                                       style="font-size: 9px; letter-spacing: 0.08em;">NGÔN NGỮ (TUỲ CHỌN)</label>
                                 <select asp-for="EditModelData.LanguageId" class="form-select form-glass-select"
                                         asp-items="@(new SelectList(Model.Languages, "Id", "Name"))">
-                                    <option value="">Chọn Ngôn Ngữ</option>
+                                    <option value="">Không Chọn</option>
                                 </select>
                                 <span asp-validation-for="EditModelData.LanguageId" class="text-danger small"></span>
                             </div>
@@ -199,10 +199,10 @@
                             <div class="col-md-6">
                                 <label asp-for="EditModelData.DocumentSourceId"
                                        class="form-label font-mono-xs text-muted-foreground mb-1"
-                                       style="font-size: 9px; letter-spacing: 0.08em;">NGUỒN TÀI LIỆU</label>
+                                       style="font-size: 9px; letter-spacing: 0.08em;">NGUỒN TÀI LIỆU (TUỲ CHỌN)</label>
                                 <select asp-for="EditModelData.DocumentSourceId" class="form-select form-glass-select"
                                         asp-items="@(new SelectList(Model.DocumentSources, "Id", "Name"))">
-                                    <option value="">Chọn Nguồn (Tuỳ Chọn)</option>
+                                    <option value="">Không Chọn</option>
                                 </select>
                                 <span asp-validation-for="EditModelData.DocumentSourceId" class="text-danger small"></span>
                             </div>
@@ -311,25 +311,24 @@
                         }
 
                         // Dynamic binding between Subject and Academic Term
-                        const subjectTermMap = @Html.Raw(Model.SubjectTermMapJson);
+                        window.subjectTermMap = @Html.Raw(Model.SubjectTermMapJson);
                         const subjectSelect = document.getElementById('EditModelData_SubjectId');
                         const termSelect = document.getElementById('EditModelData_AcademicTermId');
+                        let originalSubjectOptions = [];
 
                         if (subjectSelect && termSelect) {
-                            const originalSubjectOptions = Array.from(subjectSelect.options).map(opt => ({
+                            originalSubjectOptions = Array.from(subjectSelect.options).map(opt => ({
                                 value: opt.value,
                                 text: opt.text,
-                                termId: opt.value ? subjectTermMap[opt.value] : null
+                                termId: opt.value ? window.subjectTermMap[opt.value] : null
                             }));
 
-                            const updateSubjectDropdown = () => {
+                            window.updateSubjectDropdown = () => {
                                 const currentSubjectValue = subjectSelect.value;
                                 const selectedTerm = termSelect.value;
 
-                                // Clear existing options
                                 subjectSelect.innerHTML = '';
 
-                                // Re-populate options based on term
                                 originalSubjectOptions.forEach(opt => {
                                     if (!opt.value || !selectedTerm || opt.termId === selectedTerm) {
                                         const newOption = new Option(opt.text, opt.value);
@@ -337,8 +336,7 @@
                                     }
                                 });
 
-                                // Restore selected value if it's still valid
-                                if (currentSubjectValue && (!selectedTerm || subjectTermMap[currentSubjectValue] === selectedTerm)) {
+                                if (currentSubjectValue && (!selectedTerm || window.subjectTermMap[currentSubjectValue] === selectedTerm)) {
                                     subjectSelect.value = currentSubjectValue;
                                 } else {
                                     subjectSelect.value = '';
@@ -347,14 +345,84 @@
 
                             subjectSelect.addEventListener('change', function () {
                                 const selectedSubject = this.value;
-                                if (selectedSubject && subjectTermMap[selectedSubject]) {
-                                    termSelect.value = subjectTermMap[selectedSubject];
-                                    updateSubjectDropdown();
+                                if (selectedSubject && window.subjectTermMap[selectedSubject]) {
+                                    termSelect.value = window.subjectTermMap[selectedSubject];
+                                    window.updateSubjectDropdown();
+                                } else if (selectedSubject && !window.subjectTermMap[selectedSubject]) {
+                                    termSelect.value = '';
+                                    window.updateSubjectDropdown();
                                 }
                             });
 
-                            termSelect.addEventListener('change', updateSubjectDropdown);
+                            termSelect.addEventListener('change', window.updateSubjectDropdown);
                         }
+
+                        window.updateSubjectsDropdowns = function(newSubjects, newTerms, newMap, newDocTypes, newLanguages, newDocSources) {
+                            window.subjectTermMap = newMap;
+                            if (subjectSelect) {
+                                originalSubjectOptions = [{ value: '', text: 'Chọn Môn Học', termId: null }];
+                                newSubjects.forEach(s => {
+                                    originalSubjectOptions.push({ value: s.id, text: s.code + ' - ' + s.name, termId: s.termId });
+                                });
+                                window.updateSubjectDropdown();
+                            }
+
+                            function updateSelect(id, items, defaultText) {
+                                const select = document.getElementById(id);
+                                if (!select) return;
+                                const currentVal = select.value;
+                                select.innerHTML = '';
+                                select.appendChild(new Option(defaultText, ''));
+                                items.forEach(i => select.appendChild(new Option(i.name, i.id)));
+                                if (Array.from(select.options).some(o => o.value === currentVal)) select.value = currentVal;
+                                else select.value = '';
+                            }
+
+                            updateSelect('EditModelData_DocumentTypeId', newDocTypes, 'Chọn Loại Học Liệu (Tuỳ Chọn)');
+                            updateSelect('EditModelData_LanguageId', newLanguages, 'Chọn Ngôn Ngữ (Tuỳ Chọn)');
+                            updateSelect('EditModelData_DocumentSourceId', newDocSources, 'Chọn Nguồn (Tuỳ Chọn)');
+                        };
                     })();
+                </script>
+
+                <script>
+                    document.addEventListener("DOMContentLoaded", function () {
+                        function setupSignalRUpload() {
+                            const connection = window.signalrConnection;
+                            if (!connection) {
+                                setTimeout(setupSignalRUpload, 100);
+                                return;
+                            }
+                            connection.on("ReceiveSubjectsAssignedUpdated", function () {
+                                console.log("ReceiveSubjectsAssignedUpdated: Fetching updated subjects and other lookups...");
+                                fetchLookups();
+                            });
+
+                            connection.on("ReceiveMetadataUpdated", function (data) {
+                                console.log("ReceiveMetadataUpdated: Fetching updated lookups...", data);
+                                fetchLookups();
+                            });
+
+                            function fetchLookups() {
+                                const docId = '@Model.EditModelData.Id';
+                                fetch(`/Documents/Edit/${docId}?handler=RefreshSubjects`)
+                                    .then(response => {
+                                        if (!response.ok) throw new Error('Failed to fetch subjects');
+                                        return response.json();
+                                    })
+                                    .then(data => {
+                                        if (window.updateSubjectsDropdowns) {
+                                            window.updateSubjectsDropdowns(data.subjects, data.academicTerms, data.subjectTermMap, data.documentTypes, data.languages, data.documentSources);
+                                            showPremiumToast("Danh mục hệ thống đã được tự động làm mới từ máy chủ theo thời gian thực!", "info");
+                                        }
+                                    })
+                                    .catch(err => {
+                                        console.error("Error updating lookups: ", err);
+                                        showPremiumToast("Có lỗi xảy ra khi tự động cập nhật danh mục.", "danger");
+                                    });
+                            }
+                        }
+                        setupSignalRUpload();
+                    });
                 </script>
             }
