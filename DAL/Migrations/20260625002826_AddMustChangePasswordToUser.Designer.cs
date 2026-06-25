@@ -13,7 +13,7 @@ using Pgvector;
 namespace DAL.Migrations
 {
     [DbContext(typeof(DBContext))]
-    [Migration("20260624231828_AddMustChangePasswordToUser")]
+    [Migration("20260625002826_AddMustChangePasswordToUser")]
     partial class AddMustChangePasswordToUser
     {
         /// <inheritdoc />
@@ -688,31 +688,31 @@ namespace DAL.Migrations
                         new
                         {
                             Id = new Guid("aaaaaaaa-aaaa-aaaa-aaaa-111111111111"),
-                            CreatedAt = new DateTime(2026, 6, 24, 23, 18, 28, 425, DateTimeKind.Utc).AddTicks(6588),
+                            CreatedAt = new DateTime(2026, 6, 25, 0, 28, 26, 179, DateTimeKind.Utc).AddTicks(4445),
                             Name = "Giáo trình"
                         },
                         new
                         {
                             Id = new Guid("aaaaaaaa-aaaa-aaaa-aaaa-222222222222"),
-                            CreatedAt = new DateTime(2026, 6, 24, 23, 18, 28, 425, DateTimeKind.Utc).AddTicks(6591),
+                            CreatedAt = new DateTime(2026, 6, 25, 0, 28, 26, 179, DateTimeKind.Utc).AddTicks(4447),
                             Name = "Slide bài giảng"
                         },
                         new
                         {
                             Id = new Guid("aaaaaaaa-aaaa-aaaa-aaaa-333333333333"),
-                            CreatedAt = new DateTime(2026, 6, 24, 23, 18, 28, 425, DateTimeKind.Utc).AddTicks(6593),
+                            CreatedAt = new DateTime(2026, 6, 25, 0, 28, 26, 179, DateTimeKind.Utc).AddTicks(4449),
                             Name = "Đề thi mẫu"
                         },
                         new
                         {
                             Id = new Guid("aaaaaaaa-aaaa-aaaa-aaaa-444444444444"),
-                            CreatedAt = new DateTime(2026, 6, 24, 23, 18, 28, 425, DateTimeKind.Utc).AddTicks(6594),
+                            CreatedAt = new DateTime(2026, 6, 25, 0, 28, 26, 179, DateTimeKind.Utc).AddTicks(4451),
                             Name = "Tài liệu tham khảo"
                         },
                         new
                         {
                             Id = new Guid("aaaaaaaa-aaaa-aaaa-aaaa-555555555555"),
-                            CreatedAt = new DateTime(2026, 6, 24, 23, 18, 28, 425, DateTimeKind.Utc).AddTicks(6596),
+                            CreatedAt = new DateTime(2026, 6, 25, 0, 28, 26, 179, DateTimeKind.Utc).AddTicks(4452),
                             Name = "Hướng dẫn thực hành"
                         });
                 });
@@ -756,21 +756,21 @@ namespace DAL.Migrations
                         {
                             Id = new Guid("bbbbbbbb-bbbb-bbbb-bbbb-111111111111"),
                             Code = "vi",
-                            CreatedAt = new DateTime(2026, 6, 24, 23, 18, 28, 425, DateTimeKind.Utc).AddTicks(6662),
+                            CreatedAt = new DateTime(2026, 6, 25, 0, 28, 26, 179, DateTimeKind.Utc).AddTicks(4478),
                             Name = "Tiếng Việt"
                         },
                         new
                         {
                             Id = new Guid("bbbbbbbb-bbbb-bbbb-bbbb-222222222222"),
                             Code = "en",
-                            CreatedAt = new DateTime(2026, 6, 24, 23, 18, 28, 425, DateTimeKind.Utc).AddTicks(6665),
+                            CreatedAt = new DateTime(2026, 6, 25, 0, 28, 26, 179, DateTimeKind.Utc).AddTicks(4480),
                             Name = "Tiếng Anh"
                         },
                         new
                         {
                             Id = new Guid("bbbbbbbb-bbbb-bbbb-bbbb-333333333333"),
                             Code = "ja",
-                            CreatedAt = new DateTime(2026, 6, 24, 23, 18, 28, 425, DateTimeKind.Utc).AddTicks(6667),
+                            CreatedAt = new DateTime(2026, 6, 25, 0, 28, 26, 179, DateTimeKind.Utc).AddTicks(4481),
                             Name = "Tiếng Nhật"
                         });
                 });
@@ -860,28 +860,28 @@ namespace DAL.Migrations
                         {
                             Id = new Guid("55555555-5555-5555-5555-555555555555"),
                             Code = "PRN222",
-                            CreatedAt = new DateTime(2026, 6, 24, 23, 18, 28, 425, DateTimeKind.Utc).AddTicks(3117),
+                            CreatedAt = new DateTime(2026, 6, 25, 0, 28, 26, 179, DateTimeKind.Utc).AddTicks(1862),
                             Name = "Phát triển ứng dụng với .NET"
                         },
                         new
                         {
                             Id = new Guid("66666666-6666-6666-6666-666666666666"),
                             Code = "SWD392",
-                            CreatedAt = new DateTime(2026, 6, 24, 23, 18, 28, 425, DateTimeKind.Utc).AddTicks(3122),
+                            CreatedAt = new DateTime(2026, 6, 25, 0, 28, 26, 179, DateTimeKind.Utc).AddTicks(1868),
                             Name = "Kỹ nghệ phần mềm"
                         },
                         new
                         {
                             Id = new Guid("77777777-7777-7777-7777-777777777777"),
                             Code = "DBI202",
-                            CreatedAt = new DateTime(2026, 6, 24, 23, 18, 28, 425, DateTimeKind.Utc).AddTicks(3123),
+                            CreatedAt = new DateTime(2026, 6, 25, 0, 28, 26, 179, DateTimeKind.Utc).AddTicks(1869),
                             Name = "Cơ sở dữ liệu"
                         },
                         new
                         {
                             Id = new Guid("88888888-8888-8888-8888-888888888888"),
                             Code = "PRN231",
-                            CreatedAt = new DateTime(2026, 6, 24, 23, 18, 28, 425, DateTimeKind.Utc).AddTicks(3125),
+                            CreatedAt = new DateTime(2026, 6, 25, 0, 28, 26, 179, DateTimeKind.Utc).AddTicks(1872),
                             Name = "Lập trình ứng dụng phân tán"
                         });
                 });
@@ -1053,10 +1053,14 @@ namespace DAL.Migrations
                         .HasColumnName("is_blocked");
 
                     b.Property<bool>("MustChangePassword")
-                        .HasColumnType("boolean");
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("boolean")
+                        .HasDefaultValue(false)
+                        .HasColumnName("must_change_password");
 
                     b.Property<DateTime?>("PasswordChangedAt")
-                        .HasColumnType("timestamp with time zone");
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("password_changed_at");
 
                     b.Property<string>("PasswordHash")
                         .HasMaxLength(255)

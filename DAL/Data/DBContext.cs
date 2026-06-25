@@ -504,6 +504,11 @@ public partial class DBContext : DbContext
             entity.Property(e => e.DisplayUsername)
                 .HasMaxLength(255)
                 .HasColumnName("displayUsername");
+            entity.Property(e => e.MustChangePassword)
+                .HasDefaultValue(false)
+                .HasColumnName("must_change_password");
+            entity.Property(e => e.PasswordChangedAt)
+                .HasColumnName("password_changed_at");
 
             entity.HasOne(d => d.Role).WithMany(p => p.Users)
                 .HasForeignKey(d => d.RoleId)
