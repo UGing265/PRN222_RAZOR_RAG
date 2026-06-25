@@ -196,6 +196,15 @@ h1, h2, h3, h4, h5, h6, .hero-title, .font-display { font-family: 'Product Sans'
     box-shadow: 0 15px 30px rgba(74, 31, 22, 0.25);
 }
 
+.btn-premium-primary:disabled,
+.btn-premium-primary.disabled {
+    background: var(--brown) !important;
+    opacity: 0.5 !important;
+    cursor: not-allowed !important;
+    box-shadow: none !important;
+    transform: none !important;
+}
+
 .btn-premium-danger {
     background: #dc3545;
     color: #fff !important;

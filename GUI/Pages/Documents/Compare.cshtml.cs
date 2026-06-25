@@ -41,41 +41,29 @@ public class CompareModel : PageModel
 
     public string? ExportKey { get; set; }
 
-    public async Task OnGetAsync()
+    public List<DocumentListItemDto> CompareDocuments { get; set; } = new();
+
+    public async Task OnGetAsync(CancellationToken cancellationToken)
     {
         Subjects = await _documentService.GetSubjectsAsync();
-    }
-
-    public async Task<IActionResult> OnGetSearchAsync(string? query, Guid? subjectId)
-    {
-        var userIdString = User.FindFirstValue(ClaimTypes.NameIdentifier);
-        if (!Guid.TryParse(userIdString, out var userId))
+        
+        var idClaim = User.FindFirstValue(ClaimTypes.NameIdentifier);
+        if (Guid.TryParse(idClaim, out var userId))
         {
-            return Unauthorized();
+            var result = await _documentService.GetAllDocumentsAsync(
+                query: null,
+                subjectId: null,
+                page: 1,
+                pageSize: 100,
+                requesterUserId: userId,
+                cancellationToken: cancellationToken);
+
+            CompareDocuments = result.Documents
+                .Where(d => d.Status == "approved" || d.Status == "done" || d.Status == "completed")
+                .ToList();
         }
-
-        // Search both owned and public documents
-        var searchResult = await _documentService.GetAllDocumentsAsync(
-            query: query,
-            subjectId: subjectId,
-            page: 1,
-            pageSize: 10,
-            requesterUserId: userId,
-            sortBy: "date_desc"
-        );
-
-        var documents = searchResult.Documents.Select(d => new
-        {
-            id = d.Id,
-            title = d.Title,
-            subjectId = d.SubjectId,
-            subjectName = d.SubjectName ?? "Không có môn học",
-            visibility = d.Visibility,
-            ownerEmail = d.OwnerEmail
-        });
-
-        return new JsonResult(documents);
     }
+
 
     public async Task<IActionResult> OnGetExportPdfAsync(string key)
     {

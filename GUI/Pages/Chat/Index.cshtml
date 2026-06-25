@@ -1,1021 +1,1275 @@
 @page
 @model GUI.Pages.Chat.IndexModel
 @{
-    ViewData["Title"] = "Chat";
+  ViewData["Title"] = "Chat";
 }
 
 @using System.Text.Json
 
 <script src="https://cdn.tailwindcss.com"></script>
 <style>
-  .chat-root, #modal, #confirmDeleteModal {
-    --bg: #f6e8de;
-    --card: #fdf6f1;
-    --card-2: #ffffff;
-    --fg: #2a1f1a;
-    --muted: #8a7a72;
-    --border: #ead9cd;
-    --accent: #f0dccd;
-    --primary: #e08a6a;
-    --primary-hover: #d4795a;
-    --primary-fg: #ffffff;
-    --dark: #3a3a3a;
+  .chat-root,
+  #modal,
+  #confirmDeleteModal {
+  --bg: #f6e8de;
+  --card: #fdf6f1;
+  --card-2: #ffffff;
+  --fg: #2a1f1a;
+  --muted: #8a7a72;
+  --border: #ead9cd;
+  --accent: #f0dccd;
+  --primary: #e08a6a;
+  --primary-hover: #d4795a;
+  --primary-fg: #ffffff;
+  --dark: #3a3a3a;
   }
 </style>
 <script>
-    tailwind.config = {
-        corePlugins: {
-            preflight: false, // Don't conflict with Bootstrap
-        },
-        theme: {
-            extend: {
-                colors: {
-                    background: 'var(--bg)',
-                    foreground: 'var(--fg)',
-                    card: { DEFAULT: 'var(--card)', secondary: 'var(--card-2)' },
-                    border: 'var(--border)',
-                    muted: { foreground: 'var(--muted)' },
-                    accent: { DEFAULT: 'var(--accent)', foreground: 'var(--fg)' },
-                    primary: { DEFAULT: 'var(--primary)', hover: 'var(--primary-hover)', foreground: 'var(--primary-fg)' },
-                    dark: 'var(--dark)'
-                }
-            }
-        }
-    }
+  tailwind.config = {
+  corePlugins: {
+  preflight: false, // Don't conflict with Bootstrap
+  },
+  theme: {
+  extend: {
+  colors: {
+  background: 'var(--bg)',
+  foreground: 'var(--fg)',
+  card: { DEFAULT: 'var(--card)', secondary: 'var(--card-2)' },
+  border: 'var(--border)',
+  muted: { foreground: 'var(--muted)' },
+  accent: { DEFAULT: 'var(--accent)', foreground: 'var(--fg)' },
+  primary: { DEFAULT: 'var(--primary)', hover: 'var(--primary-hover)', foreground: 'var(--primary-fg)' },
+  dark: 'var(--dark)'
+  }
+  }
+  }
+  }
 </script>
 <link rel="stylesheet" href="https://unpkg.com/lucide-static@latest/font/lucide.css">
 
 <style>
-    /* ===== BOOTSTRAP OVERRIDES for Chat Page ===== */
-    .chat-root, #modal, #confirmDeleteModal {
-        --background: oklch(0.97 0.025 50);
-        --foreground: oklch(0.28 0.05 35);
-        --card: oklch(0.985 0.018 55);
-        --primary: oklch(0.72 0.16 40);
-        --primary-foreground: oklch(0.99 0.005 60);
-        --muted-foreground: oklch(0.5 0.04 40);
-        --accent: oklch(0.9 0.05 45);
-        --border: oklch(0.89 0.03 50);
-        --chip: oklch(0.32 0.04 40);
-        --chip-foreground: oklch(0.97 0.02 60);
+  /* ===== BOOTSTRAP OVERRIDES for Chat Page ===== */
+  .chat-root,
+  #modal,
+  #confirmDeleteModal {
+  --background: oklch(0.97 0.025 50);
+  --foreground: oklch(0.28 0.05 35);
+  --card: oklch(0.985 0.018 55);
+  --primary: oklch(0.72 0.16 40);
+  --primary-foreground: oklch(0.99 0.005 60);
+  --muted-foreground: oklch(0.5 0.04 40);
+  --accent: oklch(0.9 0.05 45);
+  --border: oklch(0.89 0.03 50);
+  --chip: oklch(0.32 0.04 40);
+  --chip-foreground: oklch(0.97 0.02 60);
 
-    }
-    
-    .chat-root { background: var(--background) !important; color: var(--foreground) !important; font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif !important; }
-    .chat-root * { box-sizing: border-box; }
-    .chat-root button { font-family: inherit; }
-    .chat-root input, .chat-root select { font-family: inherit; }
-    .chat-root h1, .chat-root h2, .chat-root h3, .chat-root h6 { font-family: inherit; color: var(--foreground); margin-bottom: 0; }
-    .chat-root ul { list-style: none; padding-left: 0; margin-bottom: 0; }
-    .chat-root p { margin-bottom: 0; }
-    .chat-root form { margin: 0; }
+  }
 
-    /* Fix Tailwind CSS conflicting with Bootstrap's .collapse class */
-    .collapse.show {
-        visibility: visible !important;
-    }
+  .chat-root {
+  background: var(--background) !important;
+  color: var(--foreground) !important;
+  font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif !important;
+  }
 
-    /* ===== Scrollbars ===== */
-    .chat-scroll::-webkit-scrollbar { width: 6px; height: 6px; }
-    .chat-scroll::-webkit-scrollbar-track { background: transparent; }
-    .chat-scroll::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+  .chat-root * {
+  box-sizing: border-box;
+  }
 
-    /* ===== Markdown ===== */
-    .markdown-body p { margin: 0 0 0.5em; }
-    .markdown-body p:last-child { margin-bottom: 0; }
-    .markdown-body ul, .markdown-body ol { margin: 0.25em 0; padding-left: 1.3em; list-style-type: disc; }
-    .markdown-body strong { font-weight: 700; }
-    .markdown-body code { background: rgba(82,39,27,0.06); padding: 2px 6px; border-radius: 6px; font-size: 0.85em; font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace; }
-    .markdown-body pre { background: #f8f9fa; border: 1px solid var(--border); border-radius: 12px; padding: 12px 16px; overflow-x: auto; margin: 0.8em 0; position: relative; }
-    .markdown-body pre code { background: none; padding: 0; font-size: 0.88em; }
-    .markdown-body table { width: 100%; border-collapse: collapse; margin: 1rem 0; font-size: 0.88rem; background: #fff; border-radius: 8px; overflow: hidden; border: 1px solid var(--border); }
-    .markdown-body th { background-color: #f8f9fa; font-weight: 600; border-bottom: 2px solid var(--border); padding: 10px 14px; text-align: left; }
-    .markdown-body td { padding: 10px 14px; border-bottom: 1px solid var(--border); }
+  .chat-root button {
+  font-family: inherit;
+  }
 
-    /* ===== Typing indicator ===== */
-    .typing-indicator { display: inline-flex; align-items: center; gap: 4px; padding: 4px 0; }
-    .typing-indicator span { width: 7px; height: 7px; background: var(--primary); border-radius: 50%; animation: typingBounce 1.2s infinite; opacity: 0.6; }
-    .typing-indicator span:nth-child(2) { animation-delay: 0.15s; }
-    .typing-indicator span:nth-child(3) { animation-delay: 0.3s; }
-    @@keyframes typingBounce { 0%,60%,100% { transform: translateY(0); opacity: 0.6; } 30% { transform: translateY(-6px); opacity: 1; } }
-    @@keyframes msgFadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
-    .chat-anim { animation: msgFadeIn 0.3s cubic-bezier(0.16,1,0.3,1); }
+  .chat-root input,
+  .chat-root select {
+  font-family: inherit;
+  }
 
-    /* Xóa bỏ khoảng trắng bao quanh layout chính cho trang Chat */
-    .main-stage {
-        padding: 0 !important;
-        height: 100vh;
-        display: flex;
-        flex-direction: column;
-    }
-    .main-stage > .d-lg-none {
-        padding: 16px;
-        margin-bottom: 0 !important;
-    }
+  .chat-root h1,
+  .chat-root h2,
+  .chat-root h3,
+  .chat-root h6 {
+  font-family: inherit;
+  color: var(--foreground);
+  margin-bottom: 0;
+  }
+
+  .chat-root ul {
+  list-style: none;
+  padding-left: 0;
+  margin-bottom: 0;
+  }
+
+  .chat-root p {
+  margin-bottom: 0;
+  }
+
+  .chat-root form {
+  margin: 0;
+  }
+
+  /* Fix Tailwind CSS conflicting with Bootstrap's .collapse class */
+  .collapse.show {
+  visibility: visible !important;
+  }
+
+  /* ===== Scrollbars ===== */
+  .chat-scroll::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+  }
+
+  .chat-scroll::-webkit-scrollbar-track {
+  background: transparent;
+  }
+
+  .chat-scroll::-webkit-scrollbar-thumb {
+  background: var(--border);
+  border-radius: 3px;
+  }
+
+  /* ===== Markdown ===== */
+  .markdown-body p {
+  margin: 0 0 0.5em;
+  }
+
+  .markdown-body p:last-child {
+  margin-bottom: 0;
+  }
+
+  .markdown-body ul,
+  .markdown-body ol {
+  margin: 0.25em 0;
+  padding-left: 1.3em;
+  list-style-type: disc;
+  }
+
+  .markdown-body strong {
+  font-weight: 700;
+  }
+
+  .markdown-body code {
+  background: rgba(82, 39, 27, 0.06);
+  padding: 2px 6px;
+  border-radius: 6px;
+  font-size: 0.85em;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  }
+
+  .markdown-body pre {
+  background: #f8f9fa;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 12px 16px;
+  overflow-x: auto;
+  margin: 0.8em 0;
+  position: relative;
+  }
+
+  .markdown-body pre code {
+  background: none;
+  padding: 0;
+  font-size: 0.88em;
+  }
+
+  .markdown-body table {
+  width: 100%;
+  border-collapse: collapse;
+  margin: 1rem 0;
+  font-size: 0.88rem;
+  background: #fff;
+  border-radius: 8px;
+  overflow: hidden;
+  border: 1px solid var(--border);
+  }
+
+  .markdown-body th {
+  background-color: #f8f9fa;
+  font-weight: 600;
+  border-bottom: 2px solid var(--border);
+  padding: 10px 14px;
+  text-align: left;
+  }
+
+  .markdown-body td {
+  padding: 10px 14px;
+  border-bottom: 1px solid var(--border);
+  }
+
+  /* ===== Typing indicator ===== */
+  .typing-indicator {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 4px 0;
+  }
+
+  .typing-indicator span {
+  width: 7px;
+  height: 7px;
+  background: var(--primary);
+  border-radius: 50%;
+  animation: typingBounce 1.2s infinite;
+  opacity: 0.6;
+  }
+
+  .typing-indicator span:nth-child(2) {
+  animation-delay: 0.15s;
+  }
+
+  .typing-indicator span:nth-child(3) {
+  animation-delay: 0.3s;
+  }
+
+  @@keyframes typingBounce {
+
+  0%,
+  60%,
+  100% {
+  transform: translateY(0);
+  opacity: 0.6;
+  }
+
+  30% {
+  transform: translateY(-6px);
+  opacity: 1;
+  }
+  }
+
+  @@keyframes msgFadeIn {
+  from {
+  opacity: 0;
+  transform: translateY(10px);
+  }
+
+  to {
+  opacity: 1;
+  transform: translateY(0);
+  }
+  }
+
+  .chat-anim {
+  animation: msgFadeIn 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+  }
+
+  /* Xóa bỏ khoảng trắng bao quanh layout chính cho trang Chat */
+  .main-stage {
+  padding: 0 !important;
+  height: 100vh;
+  display: flex;
+  flex-direction: column;
+  }
+
+  .main-stage>.d-lg-none {
+  padding: 16px;
+  margin-bottom: 0 !important;
+  }
+
+  /* Tuỳ chỉnh Modal Filter Dropdown cho đẹp & đồng bộ */
+  #modal .custom-glass-dropdown-btn {
+  background: var(--card) !important;
+  border: 1px solid var(--border) !important;
+  border-radius: 12px !important;
+  min-height: 44px !important;
+  padding: 0 16px !important;
+  color: var(--foreground) !important;
+  backdrop-filter: none !important;
+  }
+
+  #modal .custom-glass-dropdown-list {
+  background: var(--card) !important;
+  border: 1px solid var(--border) !important;
+  backdrop-filter: none !important;
+  }
+
+  #modal .custom-glass-dropdown-item {
+  color: var(--foreground) !important;
+  }
+
+  #modal .custom-glass-dropdown-item:hover {
+  background: var(--accent) !important;
+  color: var(--foreground) !important;
+  }
 </style>
 
 <div class="chat-root" style="flex: 1; overflow: hidden; display: flex; flex-direction: column; min-height: 0;">
   <!-- CHAT + SIDEBAR -->
   <div style="display: flex; flex: 1; min-height: 0; width: 100%;">
-    
+
     <!-- LEFT SIDEBAR -->
-    <aside style="width: 288px; flex-shrink: 0; display: flex; flex-direction: column; overflow: hidden;">
-      <div id="sidebarHeaderNormal" style="display: flex; align-items: center; justify-content: space-between; padding: 16px; padding-bottom: 8px; flex-shrink: 0;">
-        <h2 style="font-size: 0.75rem; font-weight: 600; letter-spacing: 0.05em; color: var(--muted-foreground); text-transform: uppercase;">LỊCH SỬ PHIÊN</h2>
-        <div style="display: flex; align-items: center; gap: 8px;">
-          <button id="newSessionBtn" style="display: flex; align-items: center; gap: 4px; border-radius: 9999px; background: var(--primary); color: var(--primary-foreground); padding: 6px 12px; font-size: 0.75rem; font-weight: 500; border: none; cursor: pointer;">
-            <svg style="width: 14px; height: 14px; stroke: currentColor; fill: none; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round;" viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
-            Phiên mới
-          </button>
-          <div style="position: relative;">
-            <button id="sessionMenuBtn" type="button" onclick="document.getElementById('sessionMenuDropdown').style.display = document.getElementById('sessionMenuDropdown').style.display === 'none' ? 'block' : 'none'" style="display: flex; align-items: center; justify-content: center; width: 28px; height: 28px; border-radius: 50%; background: none; border: none; cursor: pointer; color: var(--muted-foreground);" onmouseover="this.style.background='var(--border)'" onmouseout="this.style.background='none'">
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="1"/><circle cx="12" cy="5" r="1"/><circle cx="12" cy="19" r="1"/></svg>
+    <aside
+      style="width: 288px; flex-shrink: 0; display: flex; flex-direction: column; overflow: hidden; border-right: 1px solid var(--border);">
+      <div id="sidebarHeaderNormal"
+           style="display: flex; align-items: center; justify-content: space-between; padding: 16px; padding-bottom: 8px; flex-shrink: 0;">
+        <h2
+          style="font-size: 0.75rem; font-weight: 600; letter-spacing: 0.05em; color: var(--muted-foreground); text-transform: uppercase;">
+          LỊCH SỬ PHIÊN</h2>
+          <div style="display: flex; align-items: center; gap: 8px;">
+            <button id="newSessionBtn"
+                    style="display: flex; align-items: center; gap: 4px; border-radius: 9999px; background: var(--primary); color: var(--primary-foreground); padding: 6px 12px; font-size: 0.75rem; font-weight: 500; border: none; cursor: pointer;">
+              <svg
+                style="width: 14px; height: 14px; stroke: currentColor; fill: none; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round;"
+                viewBox="0 0 24 24">
+                <line x1="12" y1="5" x2="12" y2="19" />
+                <line x1="5" y1="12" x2="19" y2="12" />
+              </svg>
+              Phiên mới
             </button>
-            <div id="sessionMenuDropdown" style="display: none; position: absolute; right: 0; top: 100%; margin-top: 4px; width: 140px; background: var(--card); border: 1px solid var(--border); border-radius: 8px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); z-index: 50;">
-              <button type="button" onclick="window.toggleBulkSelectMode(true)" style="width: 100%; text-align: left; padding: 8px 12px; font-size: 0.875rem; background: none; border: none; cursor: pointer; color: var(--foreground);" onmouseover="this.style.background='var(--accent)'" onmouseout="this.style.background='none'">
-                Chọn nhiều
+            <div style="position: relative;">
+              <button id="sessionMenuBtn" type="button"
+                      onclick="document.getElementById('sessionMenuDropdown').style.display = document.getElementById('sessionMenuDropdown').style.display === 'none' ? 'block' : 'none'"
+                      style="display: flex; align-items: center; justify-content: center; width: 28px; height: 28px; border-radius: 50%; background: none; border: none; cursor: pointer; color: var(--muted-foreground);"
+                      onmouseover="this.style.background='var(--border)'" onmouseout="this.style.background='none'">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                     stroke-linecap="round" stroke-linejoin="round">
+                  <circle cx="12" cy="12" r="1" />
+                  <circle cx="12" cy="5" r="1" />
+                  <circle cx="12" cy="19" r="1" />
+                </svg>
               </button>
-              <button type="button" onclick="window.selectAllSessions()" style="width: 100%; text-align: left; padding: 8px 12px; font-size: 0.875rem; background: none; border: none; cursor: pointer; color: var(--foreground);" onmouseover="this.style.background='var(--accent)'" onmouseout="this.style.background='none'">
-                Chọn tất cả
-              </button>
-            </div>
-          </div>
-        </div>
-      </div>
-      <div id="sidebarHeaderBulk" style="display: none; align-items: center; justify-content: space-between; padding: 16px; padding-bottom: 8px; flex-shrink: 0;">
-        <h2 id="bulkCountText" style="font-size: 0.75rem; font-weight: 600; letter-spacing: 0.05em; color: var(--muted-foreground); text-transform: uppercase;">Đã chọn 0</h2>
-        <div style="display: flex; align-items: center; gap: 8px;">
-          <button type="button" onclick="window.toggleBulkSelectMode(false)" style="border-radius: 9999px; background: var(--card); color: var(--foreground); padding: 6px 12px; font-size: 0.75rem; font-weight: 500; border: 1px solid var(--border); cursor: pointer;">Hủy</button>
-          <button type="button" onclick="window.deleteBulkSessions()" style="border-radius: 9999px; background: #ef4444; color: #ffffff; padding: 6px 12px; font-size: 0.75rem; font-weight: 500; border: none; cursor: pointer;">Xóa</button>
-        </div>
-      </div>
-      <ul id="sessionsPanel" class="chat-scroll" style="flex: 1; overflow-y: auto; display: flex; flex-direction: column; gap: 8px; padding: 8px 16px 16px 16px; margin: 0; list-style: none;">
-        <div style="font-size: 0.85rem; color: var(--muted-foreground);">Chưa có phiên chat nào.</div>
-      </ul>
-    </aside>
-
-    <!-- MAIN CHAT AREA -->
-    <main style="position: relative; flex: 1; display: flex; flex-direction: column; min-width: 0; overflow: hidden;">
-      <div style="pointer-events: none; position: absolute; inset: 0; background: radial-gradient(ellipse 55% 45% at 50% 50%, color-mix(in oklab, var(--primary) 35%, transparent) 0%, transparent 70%); z-index: 0;"></div>
-      
-      <div style="position: relative; display: flex; flex-direction: column; flex: 1; min-height: 0; z-index: 1;">
-        <!-- Header -->
-        <header style="display: flex; align-items: center; justify-content: space-between; padding: 20px 32px;">
-          <div style="display: flex; align-items: center; gap: 12px;">
-            <h1 style="font-size: 1.5rem; font-weight: 600;">StudyMate AI</h1>
-            <span id="statusBadge" style="border-radius: 9999px; background: var(--chip); color: var(--chip-foreground); padding: 4px 12px; font-size: 0.75rem; font-weight: 500;">Sẵn sàng</span>
-          </div>
-          <div style="display: flex; align-items: center; gap: 12px;">
-            <span style="border-radius: 9999px; background: var(--chip); color: var(--chip-foreground); padding: 4px 12px; font-size: 0.75rem; font-weight: 500;"><span id="docCount">0</span> tài liệu</span>
-            <button type="button" onclick="window.openSearch()" aria-label="Tìm tài liệu" style="width: 36px; height: 36px; border-radius: 9999px; display: flex; align-items: center; justify-content: center; background: none; border: none; cursor: pointer; color: var(--foreground); transition: background 0.15s;" onmouseover="this.style.background='var(--accent)'" onmouseout="this.style.background='none'">
-              <svg style="width: 16px; height: 16px; stroke: currentColor; fill: none; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round;" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
-            </button>
-          </div>
-        </header>
-
-        <!-- Messages -->
-        <div id="chatMessages" class="chat-scroll" style="flex: 1; overflow-y: auto; padding: 32px 32px 60px 32px; display: flex; flex-direction: column; gap: 16px; -webkit-mask-image: linear-gradient(to bottom, transparent 0%, black 24px, black calc(100% - 60px), transparent 100%); mask-image: linear-gradient(to bottom, transparent 0%, black 24px, black calc(100% - 60px), transparent 100%);">
-          <div style="width: 100%; max-width: 48rem; margin: 0 auto;">
-            <div style="font-size: 0.75rem; font-weight: 600; tracking-wider: 0.05em; color: var(--primary); margin-bottom: 8px; text-transform: uppercase;">ASSISTANT</div>
-            <div style="font-size: 0.875rem; line-height: 1.625;">
-              Xin chào! 👋 Tôi là trợ lý tài liệu AI. Bấm vào icon kính lúp ở góc trên bên phải để tìm và gắn tài liệu — tôi sẽ sẵn sàng trả lời câu hỏi của bạn.
-            </div>
-          </div>
-        </div>
-
-        <!-- Composer -->
-        <div style="padding: 0 32px 24px 32px;">
-          <div style="max-width: 48rem; margin: 0 auto; display: flex; flex-direction: column;">
-            <form id="chatForm" style="display: flex; align-items: center; gap: 8px; border-radius: 9999px; background: var(--card); padding: 8px 8px 8px 20px; border: 1px solid var(--border);">
-              <input id="chatInput" type="text" placeholder="Hỏi điều gì đó về tài liệu môn học..."
-                style="flex: 1; background: transparent; font-size: 0.875rem; padding: 8px 0; border: none; outline: none; color: var(--foreground); box-shadow: none;" />
-              <button id="sendBtn" type="submit" style="display: flex; align-items: center; gap: 8px; border-radius: 9999px; background: var(--primary); color: var(--primary-foreground); padding: 8px 20px; font-size: 0.875rem; font-weight: 500; border: none; cursor: pointer; transition: opacity 0.15s;" onmouseover="this.style.opacity='0.9'" onmouseout="this.style.opacity='1'">
-                <svg style="width: 16px; height: 16px; stroke: currentColor; fill: none; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round;" viewBox="0 0 24 24"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
-                Gửi
-              </button>
-            </form>
-
-            <div style="margin-top: 16px;">
-              <div style="font-size: 0.75rem; font-weight: 600; letter-spacing: 0.05em; color: var(--muted-foreground); margin-bottom: 4px; display: flex; justify-content: space-between;">
-                <span>NGUỒN TÀI LIỆU</span>
-                <button type="button" id="clearDocsBtn" style="display: none; font-size: 0.75rem; color: #ef4444; background: none; border: none; cursor: pointer; padding: 0;">Xóa tất cả</button>
-              </div>
-              <div id="attached-list">
-                <p style="font-size: 0.875rem; font-style: italic; color: var(--muted-foreground);">Chưa có tài liệu nào được chọn. Bấm 🔍 để tìm và gắn.</p>
+              <div id="sessionMenuDropdown"
+                   style="display: none; position: absolute; right: 0; top: 100%; margin-top: 8px; width: 160px; background: var(--card); border: 1px solid var(--border); border-radius: 12px; box-shadow: 0 10px 25px -5px rgba(0,0,0,0.1), 0 8px 10px -6px rgba(0,0,0,0.1); z-index: 50; padding: 6px; backdrop-filter: blur(8px);">
+                <button type="button" onclick="window.toggleBulkSelectMode(true)"
+                        style="display: flex; align-items: center; gap: 8px; width: 100%; text-align: left; padding: 8px 12px; font-size: 0.85rem; background: none; border: none; border-radius: 6px; cursor: pointer; color: var(--foreground); transition: background 0.15s;"
+                        onmouseover="this.style.background='var(--accent)'" onmouseout="this.style.background='none'">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                       stroke-linecap="round" stroke-linejoin="round" style="color: var(--muted-foreground);">
+                    <polyline points="9 11 12 14 22 4"></polyline>
+                    <path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"></path>
+                  </svg>
+                  Chọn Nhiều
+                </button>
+                <button type="button" onclick="window.selectAllSessions()"
+                        style="display: flex; align-items: center; gap: 8px; width: 100%; text-align: left; padding: 8px 12px; font-size: 0.85rem; background: none; border: none; border-radius: 6px; cursor: pointer; color: var(--foreground); transition: background 0.15s;"
+                        onmouseover="this.style.background='var(--accent)'" onmouseout="this.style.background='none'">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                       stroke-linecap="round" stroke-linejoin="round" style="color: var(--muted-foreground);">
+                    <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path>
+                  </svg>
+                  Chọn Tất Cả
+                </button>
               </div>
             </div>
-
-            <div id="aiCitationsContainer" style="display: none; padding-top: 12px; margin-top: 12px; border-top: 1px solid var(--border);">
-              <h6 style="font-size: 0.75rem; font-weight: 700; margin-bottom: 8px; color: var(--primary);">Trích dẫn từ AI:</h6>
-              <div id="sourcesPanel" style="display: flex; flex-direction: column; gap: 8px;"></div>
-            </div>
           </div>
         </div>
-      </div>
-    </main>
+        <div id="sidebarHeaderBulk"
+             style="display: none; align-items: center; justify-content: space-between; padding: 16px; padding-bottom: 8px; flex-shrink: 0;">
+          <h2 id="bulkCountText"
+              style="font-size: 0.75rem; font-weight: 600; letter-spacing: 0.05em; color: var(--muted-foreground); text-transform: uppercase;">
+            Đã chọn 0</h2>
+            <div style="display: flex; align-items: center; gap: 8px;">
+              <button type="button" onclick="window.toggleBulkSelectMode(false)"
+                      style="border-radius: 9999px; background: var(--card); color: var(--foreground); padding: 6px 12px; font-size: 0.75rem; font-weight: 500; border: 1px solid var(--border); cursor: pointer;">Hủy</button>
+              <button type="button" onclick="window.deleteBulkSessions()"
+                      style="border-radius: 9999px; background: #ef4444; color: #ffffff; padding: 6px 12px; font-size: 0.75rem; font-weight: 500; border: none; cursor: pointer;">Xóa</button>
+            </div>
+          </div>
+          <ul id="sessionsPanel" class="chat-scroll"
+              style="flex: 1; overflow-y: auto; display: flex; flex-direction: column; gap: 8px; padding: 8px 16px 16px 16px; margin: 0; list-style: none;">
+            <div style="font-size: 0.85rem; color: var(--muted-foreground);">Chưa có phiên chat nào.</div>
+          </ul>
+        </aside>
 
-  </div>
-</div>
+        <!-- MAIN CHAT AREA -->
+        <main style="position: relative; flex: 1; display: flex; flex-direction: column; min-width: 0; overflow: hidden;">
+          <div
+            style="pointer-events: none; position: absolute; inset: 0; background: radial-gradient(ellipse 55% 45% at 50% 50%, color-mix(in oklab, var(--primary) 35%, transparent) 0%, transparent 70%); z-index: 0;">
+          </div>
 
-<!-- Search Modal -->
-<div id="modal" style="display: none; position: fixed; inset: 0; z-index: 1060; align-items: center; justify-content: center; padding: 16px;">
-  <div style="position: absolute; inset: 0; background: rgba(0,0,0,.5);"></div>
-  <div style="position: relative; width: 100%; max-width: 64rem; max-height: 85vh; border-radius: 24px; display: flex; flex-direction: column; overflow: hidden; background: var(--background, #fff); border: 1px solid var(--border); padding: 32px; z-index: 1061;">
-    <button type="button" onclick="window.closeSearch()" style="position: absolute; right: 20px; top: 20px; color: var(--muted-foreground); background: none; border: none; cursor: pointer; font-size: 1.25rem;">✕</button>
-    <h3 style="font-size: 1.25rem; font-weight: 600; margin-bottom: 16px;">Tìm & gắn tài liệu</h3>
+          <div style="position: relative; display: flex; flex-direction: column; flex: 1; min-height: 0; z-index: 1;">
+            <!-- Header -->
+            <header style="display: flex; align-items: center; justify-content: space-between; padding: 20px 32px;">
+              <div style="display: flex; align-items: center; gap: 12px;">
+                <h1 style="font-size: 1.5rem; font-weight: 600;">StudyMate AI</h1>
+              </div>
+              <div style="display: flex; align-items: center; gap: 12px;">
+                <button type="button" onclick="window.openSearch()" aria-label="Tìm tài liệu"
+                        style="width: 36px; height: 36px; border-radius: 9999px; display: flex; align-items: center; justify-content: center; background: none; border: none; cursor: pointer; color: var(--foreground); transition: background 0.15s;"
+                        onmouseover="this.style.background='var(--accent)'" onmouseout="this.style.background='none'">
+                  <svg
+                    style="width: 16px; height: 16px; stroke: currentColor; fill: none; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round;"
+                    viewBox="0 0 24 24">
+                    <circle cx="11" cy="11" r="8" />
+                    <line x1="21" y1="21" x2="16.65" y2="16.65" />
+                  </svg>
+                </button>
+              </div>
+            </header>
 
-    <div style="display: grid; grid-template-columns: 2fr 1fr 1.5fr 1.2fr; gap: 16px; margin-bottom: 24px;">
-      <input id="nameQ" placeholder="Tên tài liệu..." style="height: 48px; border-radius: 14px; background: rgba(255, 255, 255, 0.65); padding: 0 16px; font-size: 0.92rem; border: 1px solid rgba(82, 39, 27, 0.08); outline: none;" />
-      <select id="semesterFilter" class="form-glass-select w-100">
-        <option value="">-- Tất cả học kỳ --</option>
-      </select>
-      <select id="subjectFilter" class="form-glass-select w-100">
-        <option value="">-- Chọn kỳ trước --</option>
-      </select>
-      <select id="materialFilter" class="form-glass-select w-100">
-        <option value="">-- Tất cả loại --</option>
-      </select>
-    </div>
+            <!-- Messages -->
+            <div id="chatMessages" class="chat-scroll"
+                 style="flex: 1; overflow-y: auto; padding: 32px 32px 60px 32px; display: flex; flex-direction: column; gap: 16px; -webkit-mask-image: linear-gradient(to bottom, transparent 0%, black 24px, black calc(100% - 60px), transparent 100%); mask-image: linear-gradient(to bottom, transparent 0%, black 24px, black calc(100% - 60px), transparent 100%);">
+              <div style="width: 100%; max-width: 48rem; margin: 0 auto;">
+                <div
+                  style="font-size: 0.75rem; font-weight: 600; tracking-wider: 0.05em; color: var(--primary); margin-bottom: 8px; text-transform: uppercase;">
+                  ASSISTANT</div>
+                  <div style="font-size: 0.875rem; line-height: 1.625;">
+                    Xin chào! 👋 Tôi là trợ lý tài liệu AI. Bấm vào icon kính lúp ở góc trên bên phải để tìm và gắn tài liệu —
+                    tôi sẽ sẵn sàng trả lời câu hỏi của bạn.
+                  </div>
+                </div>
+              </div>
 
-    <div id="modal-body" class="chat-scroll" style="flex: 1; overflow-y: auto; display: flex; flex-direction: column; gap: 20px;">
-      <!-- Search results will be injected here -->
-    </div>
+              <!-- Composer -->
+              <div style="padding: 0 32px 24px 32px;">
+                <div style="max-width: 48rem; margin: 0 auto; display: flex; flex-direction: column;">
+                  <form id="chatForm"
+                        style="display: flex; align-items: center; gap: 8px; border-radius: 9999px; background: var(--card); padding: 8px 8px 8px 20px; border: 1px solid var(--border);">
+                    <input id="chatInput" type="text" placeholder="Hỏi điều gì đó về tài liệu môn học..."
+                           style="flex: 1; background: transparent; font-size: 0.875rem; padding: 8px 0; border: none; outline: none; color: var(--foreground); box-shadow: none;" />
+                    <button id="sendBtn" type="submit"
+                            style="display: flex; align-items: center; gap: 8px; border-radius: 9999px; background: var(--primary); color: var(--primary-foreground); padding: 8px 20px; font-size: 0.875rem; font-weight: 500; border: none; cursor: pointer; transition: opacity 0.15s;"
+                            onmouseover="this.style.opacity='0.9'" onmouseout="this.style.opacity='1'">
+                      <svg
+                        style="width: 16px; height: 16px; stroke: currentColor; fill: none; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round;"
+                        viewBox="0 0 24 24">
+                        <line x1="22" y1="2" x2="11" y2="13" />
+                        <polygon points="22 2 15 22 11 13 2 9 22 2" />
+                      </svg>
+                      Gửi
+                    </button>
+                  </form>
 
-    <div style="display: flex; justify-content: flex-end; margin-top: 24px;">
-      <button type="button" onclick="window.closeSearch()" style="border-radius: 9999px; background: var(--primary); color: var(--primary-foreground); padding: 8px 24px; font-size: 0.875rem; font-weight: 500; border: none; cursor: pointer; transition: opacity 0.15s;" onmouseover="this.style.opacity='0.9'" onmouseout="this.style.opacity='1'">Xong</button>
-    </div>
-  </div>
-</div>
+                  <div style="margin-top: 12px; display: flex; align-items: flex-start; justify-content: space-between;">
+                    <div id="attached-list" style="flex: 1;">
+                      <span style="font-size: 0.8rem; font-style: italic; color: var(--muted-foreground);">Chưa có tài liệu
+                        đính kèm.</span>
+                      </div>
+                      <button type="button" id="clearDocsBtn"
+                              style="display: none; font-size: 0.75rem; color: #ef4444; background: none; border: none; cursor: pointer; padding: 0 0 0 12px; flex-shrink: 0;">Xóa
+                        tất cả</button>
+                      </div>
 
-<!-- Confirm Delete Modal -->
-<div id="confirmDeleteModal" style="display: none; position: fixed; inset: 0; z-index: 1100; align-items: center; justify-content: center; padding: 16px;">
-  <div style="position: absolute; inset: 0; background: rgba(0,0,0,.4);" onclick="window.closeConfirmDelete()"></div>
-  <div style="position: relative; width: 100%; max-width: 24rem; border-radius: 20px; display: flex; flex-direction: column; background: var(--background); border: 1px solid var(--border); padding: 24px; z-index: 1101; box-shadow: 0 10px 25px rgba(0,0,0,0.1);">
-    <h3 style="font-size: 1.125rem; font-weight: 600; margin-bottom: 12px; color: var(--foreground);">Xóa phiên chat</h3>
-    <p style="font-size: 0.875rem; color: var(--muted-foreground); margin-bottom: 24px; line-height: 1.5;">Bạn có chắc chắn muốn xóa vĩnh viễn lịch sử phiên chat này không? Hành động này không thể hoàn tác.</p>
-    <div style="display: flex; justify-content: flex-end; gap: 12px;">
-      <button type="button" onclick="window.closeConfirmDelete()" style="border-radius: 9999px; background: var(--card); color: var(--foreground); padding: 8px 16px; font-size: 0.875rem; font-weight: 500; border: 1px solid var(--border); cursor: pointer; transition: background 0.15s;" onmouseover="this.style.background='var(--border)'" onmouseout="this.style.background='var(--card)'">Hủy</button>
-      <button type="button" id="confirmDeleteBtn" style="border-radius: 9999px; background: #ef4444; color: #ffffff; padding: 8px 16px; font-size: 0.875rem; font-weight: 500; border: none; cursor: pointer; transition: opacity 0.15s;" onmouseover="this.style.opacity='0.9'" onmouseout="this.style.opacity='1'">Xóa</button>
-    </div>
-  </div>
-</div>
+                      <div id="aiCitationsContainer"
+                           style="display: none; padding-top: 12px; margin-top: 12px; border-top: 1px solid var(--border);">
+                        <h6 style="font-size: 0.75rem; font-weight: 700; margin-bottom: 8px; color: var(--primary);">Trích dẫn từ
+                          AI:</h6>
+                          <div id="sourcesPanel" style="display: flex; flex-direction: column; gap: 8px;"></div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </main>
 
-@section Scripts {
-<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/highlight.js@11.9.0/styles/github.min.css">
-<script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/highlight.js@11.9.0/highlight.min.js"></script>
-<script>
-document.addEventListener('DOMContentLoaded', function () {
-    // ── Backend Docs Data ──
-    const DOCS = @Html.Raw(JsonSerializer.Serialize(Model.ChatDocuments.Select(d => new {
-        id = d.Id,
-        name = d.Title,
-        semester = d.AcademicTermName ?? "Chưa xác định",
-        subject = d.SubjectCode ?? d.SubjectName ?? "Chưa xác định",
-        material = d.DocumentTypeName ?? "Chưa xác định"
-    })));
+              </div>
+            </div>
 
-    // Extract unique filter options
-    const SEMESTERS = [...new Set(DOCS.map(d => d.semester))].filter(Boolean).sort();
-    const MATERIAL_TYPES = [...new Set(DOCS.map(d => d.material))].filter(Boolean).sort();
-    const SUBJECTS_BY_SEMESTER = {};
-    DOCS.forEach(d => {
-        if (!SUBJECTS_BY_SEMESTER[d.semester]) SUBJECTS_BY_SEMESTER[d.semester] = new Set();
-        SUBJECTS_BY_SEMESTER[d.semester].add(d.subject);
-    });
-    Object.keys(SUBJECTS_BY_SEMESTER).forEach(k => {
-        SUBJECTS_BY_SEMESTER[k] = [...SUBJECTS_BY_SEMESTER[k]].sort();
-    });
+            <!-- Search Modal -->
+            <div id="modal"
+                 style="display: none; position: fixed; inset: 0; z-index: 1060; align-items: center; justify-content: center; padding: 16px;">
+              <div style="position: absolute; inset: 0; background: rgba(0,0,0,.5);"></div>
+              <div
+                style="position: relative; width: 100%; max-width: 64rem; max-height: 85vh; border-radius: 24px; display: flex; flex-direction: column; overflow: hidden; background: var(--background, #fff); border: 1px solid var(--border); padding: 32px; z-index: 1061;">
+                <button type="button" onclick="window.closeSearch()"
+                        style="position: absolute; right: 20px; top: 20px; color: var(--muted-foreground); background: none; border: none; cursor: pointer; font-size: 1.25rem;">✕</button>
+                <h3 style="font-size: 1.25rem; font-weight: 600; margin-bottom: 16px;">Tìm & gắn tài liệu</h3>
 
-    // ── Filter State ──
-    let selectedDocs = []; // Array of { id, title, semester, subject }
+                <div style="display: grid; grid-template-columns: 2fr 1.2fr 1.2fr 1.2fr; gap: 12px; margin-bottom: 24px;">
+                  <input id="nameQ" placeholder="Tên tài liệu..."
+                         style="height: 44px; border-radius: 12px; background: var(--card); padding: 0 16px; font-size: 0.92rem; border: 1px solid var(--border); outline: none; color: var(--foreground);" />
+                  <select id="semesterFilter" class="form-glass-select w-100">
+                    <option value="">Tất cả học kỳ</option>
+                  </select>
+                  <select id="subjectFilter" class="form-glass-select w-100">
+                    <option value="">Chọn kỳ trước</option>
+                  </select>
+                  <select id="materialFilter" class="form-glass-select w-100">
+                    <option value="">Tất cả loại</option>
+                  </select>
+                </div>
 
-    // ── DOM refs ──
-    const $ = (id) => document.getElementById(id);
-    const nameQ = $("nameQ");
-    const semesterFilter = $("semesterFilter");
-    const subjectFilter = $("subjectFilter");
-    const materialFilter = $("materialFilter");
-    const modalBody = $("modal-body");
-    
-    const chatMessages = $('chatMessages');
-    const chatForm = $('chatForm');
-    const chatInput = $('chatInput');
-    const sendBtn = $('sendBtn');
-    
-    const clearDocsBtn = $('clearDocsBtn');
-    const docCount = $('docCount');
-    
-    const aiCitationsContainer = $('aiCitationsContainer');
-    const sourcesPanel = $('sourcesPanel');
-    const sessionsPanel = $('sessionsPanel');
-    const statusBadge = $('statusBadge');
-    const newSessionBtn = $('newSessionBtn');
+                <div id="modal-body" class="chat-scroll"
+                     style="flex: 1; overflow-y: auto; display: flex; flex-direction: column; gap: 24px; padding-bottom: 12px; padding-right: 8px;">
+                  <!-- Search results will be injected here -->
+                </div>
 
-    let currentSessionId = null;
-    let isStreaming = false;
+                <div
+                  style="display: flex; justify-content: flex-end; margin-top: 16px; padding-top: 16px; border-top: 1px solid var(--border);">
+                  <button type="button" onclick="window.closeSearch()"
+                          style="border-radius: 12px; background: var(--primary); color: var(--primary-foreground); padding: 10px 32px; font-size: 0.9rem; font-weight: 500; border: none; cursor: pointer; transition: opacity 0.15s;"
+                          onmouseover="this.style.opacity='0.9'" onmouseout="this.style.opacity='1'">Xong</button>
+                </div>
+              </div>
+            </div>
 
-    // ── Setup Filters for Modal ──
-    function initFilters() {
-        SEMESTERS.forEach(s => semesterFilter.insertAdjacentHTML("beforeend", `<option value="${escapeHtml(s)}">${escapeHtml(s)}</option>`));
-        MATERIAL_TYPES.forEach(x => materialFilter.insertAdjacentHTML("beforeend", `<option value="${escapeHtml(x)}">${escapeHtml(x)}</option>`));
-        
-        if (window.reinitGlassDropdown) {
-            window.reinitGlassDropdown('semesterFilter');
-            window.reinitGlassDropdown('materialFilter');
-        }
-    }
-    
-    semesterFilter.addEventListener('change', function() {
-        const sem = this.value;
-        subjectFilter.innerHTML = `<option value="">-- Chọn kỳ trước --</option>`;
-        if (sem) {
-            (SUBJECTS_BY_SEMESTER[sem] || []).forEach(s => {
-                subjectFilter.insertAdjacentHTML("beforeend", `<option value="${escapeHtml(s)}">${escapeHtml(s)}</option>`);
-            });
-        }
-        if (window.reinitGlassDropdown) {
-            window.reinitGlassDropdown('subjectFilter');
-        }
-        renderModal();
-    });
-    
-    subjectFilter.addEventListener('change', renderModal);
-    materialFilter.addEventListener('change', renderModal);
-    nameQ.addEventListener('input', renderModal);
+            <!-- Confirm Delete Modal -->
+            <div id="confirmDeleteModal"
+                 style="display: none; position: fixed; inset: 0; z-index: 1100; align-items: center; justify-content: center; padding: 16px;">
+              <div style="position: absolute; inset: 0; background: rgba(0,0,0,.4);" onclick="window.closeConfirmDelete()"></div>
+              <div
+                style="position: relative; width: 100%; max-width: 24rem; border-radius: 20px; display: flex; flex-direction: column; background: var(--background); border: 1px solid var(--border); padding: 24px; z-index: 1101; box-shadow: 0 10px 25px rgba(0,0,0,0.1);">
+                <h3 style="font-size: 1.125rem; font-weight: 600; margin-bottom: 12px; color: var(--foreground);">Xóa phiên chat
+                </h3>
+                <p style="font-size: 0.875rem; color: var(--muted-foreground); margin-bottom: 24px; line-height: 1.5;">Bạn có chắc
+                  chắn muốn xóa vĩnh viễn lịch sử phiên chat này không? Hành động này không thể hoàn tác.</p>
+                  <div style="display: flex; justify-content: flex-end; gap: 12px;">
+                    <button type="button" onclick="window.closeConfirmDelete()"
+                            style="border-radius: 9999px; background: var(--card); color: var(--foreground); padding: 8px 16px; font-size: 0.875rem; font-weight: 500; border: 1px solid var(--border); cursor: pointer; transition: background 0.15s;"
+                            onmouseover="this.style.background='var(--border)'"
+                            onmouseout="this.style.background='var(--card)'">Hủy</button>
+                    <button type="button" id="confirmDeleteBtn"
+                            style="border-radius: 9999px; background: #ef4444; color: #ffffff; padding: 8px 16px; font-size: 0.875rem; font-weight: 500; border: none; cursor: pointer; transition: opacity 0.15s;"
+                            onmouseover="this.style.opacity='0.9'" onmouseout="this.style.opacity='1'">Xóa</button>
+                  </div>
+                </div>
+              </div>
 
-    let viewMode = 'list';
+              @section Scripts {
+                <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/highlight.js@11.9.0/styles/github.min.css">
+                <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+                <script src="https://cdn.jsdelivr.net/npm/highlight.js@11.9.0/highlight.min.js"></script>
+                <script>
+                  document.addEventListener('DOMContentLoaded', function () {
+                  // ── Backend Docs Data ──
+                  const DOCS = @Html.Raw(JsonSerializer.Serialize(Model.ChatDocuments.Select(d => new
+                  {
+                    id = d.Id,
+                    name = d.Title,
+                    semester = d.AcademicTermName ?? "Chưa xác định",
+                    subject = d.SubjectCode ?? d.SubjectName ?? "Chưa xác định",
+                    material = d.DocumentTypeName ?? "Chưa xác định"
+                  })));
 
-    window.toggleViewMode = function(mode) {
-        viewMode = mode;
-        renderModal();
-    };
+                  // Extract unique filter options
+                  const SEMESTERS = [...new Set(DOCS.map(d => d.semester))].filter(Boolean).sort();
+                  const MATERIAL_TYPES = [...new Set(DOCS.map(d => d.material))].filter(Boolean).sort();
+                  const SUBJECTS_BY_SEMESTER = {};
+                  DOCS.forEach(d => {
+                  if (!SUBJECTS_BY_SEMESTER[d.semester]) SUBJECTS_BY_SEMESTER[d.semester] = new Set();
+                  SUBJECTS_BY_SEMESTER[d.semester].add(d.subject);
+                  });
+                  Object.keys(SUBJECTS_BY_SEMESTER).forEach(k => {
+                  SUBJECTS_BY_SEMESTER[k] = [...SUBJECTS_BY_SEMESTER[k]].sort();
+                  });
 
-    function renderModal() {
-        const q = nameQ.value.trim().toLowerCase();
-        const semId = semesterFilter.value;
-        const subId = subjectFilter.value;
-        const type = materialFilter.value;
-        
-        const results = DOCS.filter(d => 
-            (!q || d.name.toLowerCase().includes(q)) &&
-            (!semId || d.semester === semId) &&
-            (!subId || d.subject === subId) &&
-            (!type || d.material === type)
-        );
+                  // ── Filter State ──
+                  let selectedDocs = []; // Array of { id, title, semester, subject }
 
-        const semsToRender = semId ? [semId] : SEMESTERS;
-        const semsHtml = semsToRender.map(sem => {
-            const subs = SUBJECTS_BY_SEMESTER[sem] || [];
-            if (!subs.length) return "";
-            return `<div style="margin-bottom: 20px;">
-              <h3 style="font-size: 0.75rem; font-weight: 600; letter-spacing: 0.05em; color: var(--muted-foreground); margin-bottom: 8px; text-transform: uppercase;">${escapeHtml(sem)}</h3>
-              <div style="display: flex; flex-wrap: wrap; gap: 8px;">
-                ${subs.map(s => `<button type="button" onclick="window.pickSubject('${escapeHtml(sem)}','${escapeHtml(s)}')"
-                  style="border-radius: 9999px; background: var(--card); padding: 6px 16px; border: 1px solid var(--border); text-align: center; cursor: pointer; transition: background 0.15s; ${subId===s ? 'box-shadow: 0 0 0 2px var(--primary); background: var(--accent);' : ''}"
+                  // ── DOM refs ──
+                  const $ = (id) => document.getElementById(id);
+                  const nameQ = $("nameQ");
+                  const semesterFilter = $("semesterFilter");
+                  const subjectFilter = $("subjectFilter");
+                  const materialFilter = $("materialFilter");
+                  const modalBody = $("modal-body");
+
+                  const chatMessages = $('chatMessages');
+                  const chatForm = $('chatForm');
+                  const chatInput = $('chatInput');
+                  const sendBtn = $('sendBtn');
+
+                  const clearDocsBtn = $('clearDocsBtn');
+                  const docCount = $('docCount');
+
+                  const aiCitationsContainer = $('aiCitationsContainer');
+                  const sourcesPanel = $('sourcesPanel');
+                  const sessionsPanel = $('sessionsPanel');
+                  const statusBadge = $('statusBadge');
+                  const newSessionBtn = $('newSessionBtn');
+
+                  let currentSessionId = null;
+                  let isStreaming = false;
+
+                  // ── Setup Filters for Modal ──
+                  function initFilters() {
+                  SEMESTERS.forEach(s => semesterFilter.insertAdjacentHTML("beforeend", `<option value="${escapeHtml(s)}">${escapeHtml(s)}</option>`));
+                  MATERIAL_TYPES.forEach(x => materialFilter.insertAdjacentHTML("beforeend", `<option value="${escapeHtml(x)}">${escapeHtml(x)}</option>`));
+
+                  if (window.reinitGlassDropdown) {
+                  window.reinitGlassDropdown('semesterFilter');
+                  window.reinitGlassDropdown('materialFilter');
+                  }
+                  }
+
+                  semesterFilter.addEventListener('change', function () {
+                  const sem = this.value;
+                  subjectFilter.innerHTML = `<option value="">-- Chọn kỳ trước --</option>`;
+                  if (sem) {
+                  (SUBJECTS_BY_SEMESTER[sem] || []).forEach(s => {
+                  subjectFilter.insertAdjacentHTML("beforeend", `<option value="${escapeHtml(s)}">${escapeHtml(s)}</option>`);
+                  });
+                  }
+                  if (window.reinitGlassDropdown) {
+                  window.reinitGlassDropdown('subjectFilter');
+                  }
+                  renderModal();
+                  });
+
+                  subjectFilter.addEventListener('change', renderModal);
+                  materialFilter.addEventListener('change', renderModal);
+                  nameQ.addEventListener('input', renderModal);
+
+                  let viewMode = 'list';
+
+                  window.toggleViewMode = function (mode) {
+                  viewMode = mode;
+                  renderModal();
+                  };
+
+                  function renderModal() {
+                  const q = nameQ.value.trim().toLowerCase();
+                  const semId = semesterFilter.value;
+                  const subId = subjectFilter.value;
+                  const type = materialFilter.value;
+
+                  const results = DOCS.filter(d =>
+                  (!q || d.name.toLowerCase().includes(q)) &&
+                  (!semId || d.semester === semId) &&
+                  (!subId || d.subject === subId) &&
+                  (!type || d.material === type)
+                  );
+
+                  const semsToRender = semId ? [semId] : SEMESTERS;
+                  const semsHtml = semsToRender.map(sem => {
+                  const subs = SUBJECTS_BY_SEMESTER[sem] || [];
+                  if (!subs.length) return "";
+                  return `<div style="margin-bottom: 20px;">
+                  <h3 style="font-size: 0.75rem; font-weight: 600; letter-spacing: 0.05em; color: var(--muted-foreground); margin-bottom: 8px; text-transform: uppercase;">${escapeHtml(sem)}</h3>
+                  <div style="display: flex; flex-wrap: wrap; gap: 8px;">
+                  ${subs.map(s => `<button type="button" onclick="window.pickSubject('${escapeHtml(sem)}','${escapeHtml(s)}')"
+                  style="border-radius: 8px; padding: 6px 12px; border: 1px solid ${subId === s ? 'var(--primary)' : 'var(--border)'}; background: ${subId === s ? 'rgba(224, 138, 106, 0.1)' : 'var(--card)'}; color: ${subId === s ? 'var(--primary)' : 'var(--foreground)'}; text-align: center; cursor: pointer; transition: 0.15s;"
                   onmouseover="if('${subId}'!=='${s}')this.style.background='color-mix(in oklab, var(--accent) 50%, transparent)'" onmouseout="if('${subId}'!=='${s}')this.style.background='var(--card)'">
-                  <div style="font-weight: 500; font-size: 0.875rem;">${escapeHtml(s)}</div>
-                </button>`).join("")}
-              </div>
-            </div>`;
-        }).join("");
-        
-        const resHtml = `<div style="margin-top: 24px;">
-            <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px;">
-              <h3 style="font-size: 0.75rem; font-weight: 600; letter-spacing: 0.05em; color: var(--muted-foreground); text-transform: uppercase; margin: 0;">KẾT QUẢ (${results.length})</h3>
-              <div style="display: flex; gap: 4px; background: rgba(0,0,0,0.05); padding: 4px; border-radius: 8px;">
-                <button type="button" onclick="window.toggleViewMode('list')" style="padding: 4px 12px; border-radius: 4px; border: none; cursor: pointer; font-size: 0.75rem; font-weight: 500; color: var(--foreground); transition: 0.15s; background: ${viewMode === 'list' ? 'var(--card)' : 'transparent'}; box-shadow: ${viewMode === 'list' ? '0 1px 3px rgba(0,0,0,0.1)' : 'none'};">Dòng</button>
-                <button type="button" onclick="window.toggleViewMode('grid')" style="padding: 4px 12px; border-radius: 4px; border: none; cursor: pointer; font-size: 0.75rem; font-weight: 500; color: var(--foreground); transition: 0.15s; background: ${viewMode === 'grid' ? 'var(--card)' : 'transparent'}; box-shadow: ${viewMode === 'grid' ? '0 1px 3px rgba(0,0,0,0.1)' : 'none'};">Ô</button>
-              </div>
-            </div>
-            ${results.length === 0 ? `<p style="font-size: 0.875rem; color: var(--muted-foreground);">Không tìm thấy tài liệu nào.</p>` :
-              `<div style="${viewMode === 'list' ? 'display: flex; flex-direction: column; gap: 8px;' : 'display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: 12px;'}">${results.map(d => {
+                  <div style="font-weight: ${subId === s ? '600' : '500'}; font-size: 0.85rem;">${escapeHtml(s)}</div>
+                  </button>`).join("")}
+                  </div>
+                  </div>`;
+                  }).join("");
+
+                  const resHtml = `<div style="margin-top: 24px;">
+                  <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px;">
+                  <h3 style="font-size: 0.75rem; font-weight: 600; letter-spacing: 0.05em; color: var(--muted-foreground); text-transform: uppercase; margin: 0;">KẾT QUẢ (${results.length})</h3>
+                  <div style="display: flex; gap: 4px; background: rgba(0,0,0,0.05); padding: 4px; border-radius: 8px;">
+                  <button type="button" onclick="window.toggleViewMode('list')" style="padding: 6px; border-radius: 6px; border: none; cursor: pointer; color: var(--foreground); transition: 0.15s; background: ${viewMode === 'list' ? 'var(--card)' : 'transparent'}; box-shadow: ${viewMode === 'list' ? '0 1px 3px rgba(0,0,0,0.1)' : 'none'}; display: flex; align-items: center; justify-content: center;" title="Dạng danh sách">
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="8" y1="6" x2="21" y2="6"></line><line x1="8" y1="12" x2="21" y2="12"></line><line x1="8" y1="18" x2="21" y2="18"></line><line x1="3" y1="6" x2="3.01" y2="6"></line><line x1="3" y1="12" x2="3.01" y2="12"></line><line x1="3" y1="18" x2="3.01" y2="18"></line></svg>
+                  </button>
+                  <button type="button" onclick="window.toggleViewMode('grid')" style="padding: 6px; border-radius: 6px; border: none; cursor: pointer; color: var(--foreground); transition: 0.15s; background: ${viewMode === 'grid' ? 'var(--card)' : 'transparent'}; box-shadow: ${viewMode === 'grid' ? '0 1px 3px rgba(0,0,0,0.1)' : 'none'}; display: flex; align-items: center; justify-content: center;" title="Dạng lưới">
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7"></rect><rect x="14" y="3" width="7" height="7"></rect><rect x="14" y="14" width="7" height="7"></rect><rect x="3" y="14" width="7" height="7"></rect></svg>
+                  </button>
+                  </div>
+                  </div>
+                  ${results.length === 0 ? `<p style="font-size: 0.875rem; color: var(--muted-foreground);">Không tìm thấy tài liệu nào.</p>` :
+                  `<div style="${viewMode === 'list' ? 'display: flex; flex-direction: column; gap: 8px;' : 'display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: 12px;'}">${results.map(d => {
                   const is = selectedDocs.some(x => x.id === d.id);
                   if (viewMode === 'list') {
-                      return `<div style="display: flex; align-items: center; justify-content: space-between; border-radius: 16px; background: var(--card); padding: 12px 16px; border: 1px solid var(--border);">
-                        <div>
-                          <div style="font-weight: 500; font-size: 0.875rem;">${escapeHtml(d.name)}</div>
-                          <div style="font-size: 0.75rem; color: var(--muted-foreground);">${escapeHtml(d.material)} · ${escapeHtml(d.subject)}</div>
-                        </div>
-                        <button type="button" onclick="window.toggleAttach('${d.id}')"
-                          style="flex-shrink: 0; margin-left: 12px; border-radius: 9999px; padding: 6px 20px; font-size: 0.875rem; font-weight: 500; cursor: pointer; border: none; transition: 0.15s; ${is ? 'background: var(--accent); color: var(--foreground);' : 'background: var(--primary); color: var(--primary-foreground);'}">
-                          ${is ? 'Đã gắn' : 'Gắn'}
-                        </button>
-                      </div>`;
+                  return `<div style="display: flex; align-items: center; justify-content: space-between; border-radius: 16px; background: var(--card); padding: 12px 16px; border: 1px solid var(--border);">
+                  <div>
+                  <div style="font-weight: 500; font-size: 0.875rem;">${escapeHtml(d.name)}</div>
+                  <div style="font-size: 0.75rem; color: var(--muted-foreground);">${escapeHtml(d.material)} · ${escapeHtml(d.subject)}</div>
+                  </div>
+                  <button type="button" onclick="window.toggleAttach('${d.id}')"
+                  style="flex-shrink: 0; margin-left: 12px; border-radius: 8px; padding: 6px 16px; font-size: 0.8rem; font-weight: 600; cursor: pointer; border: none; transition: 0.15s; ${is ? 'background: var(--accent); color: var(--foreground);' : 'background: rgba(224, 138, 106, 0.1); color: var(--primary);'}">
+                  ${is ? 'Đã gắn' : 'Gắn'}
+                  </button>
+                  </div>`;
                   } else {
-                      return `<div style="display: flex; flex-direction: column; justify-content: space-between; border-radius: 16px; background: var(--card); padding: 16px; border: 1px solid var(--border); height: 100%;">
-                        <div style="margin-bottom: 16px;">
-                          <div style="font-weight: 500; font-size: 0.875rem; margin-bottom: 4px; line-height: 1.4;">${escapeHtml(d.name)}</div>
-                          <div style="font-size: 0.75rem; color: var(--muted-foreground);">${escapeHtml(d.material)} · ${escapeHtml(d.subject)}</div>
-                        </div>
-                        <button type="button" onclick="window.toggleAttach('${d.id}')"
-                          style="width: 100%; border-radius: 9999px; padding: 6px; font-size: 0.875rem; font-weight: 500; cursor: pointer; border: none; transition: 0.15s; ${is ? 'background: var(--accent); color: var(--foreground);' : 'background: var(--primary); color: var(--primary-foreground);'}">
-                          ${is ? 'Đã gắn' : 'Gắn'}
-                        </button>
-                      </div>`;
+                  return `<div style="display: flex; flex-direction: column; justify-content: space-between; border-radius: 16px; background: var(--card); padding: 16px; border: 1px solid var(--border); height: 100%;">
+                  <div style="margin-bottom: 16px;">
+                  <div style="font-weight: 500; font-size: 0.875rem; margin-bottom: 4px; line-height: 1.4;">${escapeHtml(d.name)}</div>
+                  <div style="font-size: 0.75rem; color: var(--muted-foreground);">${escapeHtml(d.material)} · ${escapeHtml(d.subject)}</div>
+                  </div>
+                  <button type="button" onclick="window.toggleAttach('${d.id}')"
+                  style="width: 100%; border-radius: 8px; padding: 8px; font-size: 0.8rem; font-weight: 600; cursor: pointer; border: none; transition: 0.15s; ${is ? 'background: var(--accent); color: var(--foreground);' : 'background: rgba(224, 138, 106, 0.1); color: var(--primary);'}">
+                  ${is ? 'Đã gắn' : 'Gắn'}
+                  </button>
+                  </div>`;
                   }
-              }).join("")}</div>`
-            }
-        </div>`;
-        
-        modalBody.innerHTML = semsHtml + resHtml;
-    }
+                  }).join("")}</div>`
+                  }
+                  </div>`;
 
-    window.pickSubject = function(sem, sub) {
-        semesterFilter.value = sem;
-        semesterFilter.dispatchEvent(new Event('change'));
-        subjectFilter.value = sub;
-        renderModal();
-    };
+                  modalBody.innerHTML = semsHtml + resHtml;
+                  }
 
-    
-    window.toggleAttach = function(id) {
-        const isSelected = selectedDocs.some(x => x.id === id);
-        if (isSelected) {
-            window.removeDoc(id);
-        } else {
-            window.addDoc(id);
-        }
-        renderModal();
-    };
+                  window.pickSubject = function (sem, sub) {
+                  semesterFilter.value = sem;
+                  semesterFilter.dispatchEvent(new Event('change'));
+                  subjectFilter.value = sub;
+                  renderModal();
+                  };
 
-    window.addDoc = function(id) {
-        const d = DOCS.find(x => x.id === id);
-        if (d && !selectedDocs.some(x => x.id === id)) { 
-            selectedDocs.push({ id: d.id, title: d.name, semester: d.semester, subject: d.subject }); 
-            renderSelectedDocs(); 
-        }
-    };
-    
-    window.removeDoc = function(id) { 
-        selectedDocs = selectedDocs.filter(d => d.id !== id); 
-        renderSelectedDocs(); 
-        if (!document.getElementById("modal").classList.contains("hidden")) {
-            renderModal();
-        }
-    };
 
-    clearDocsBtn.addEventListener('click', function() {
-        selectedDocs = [];
-        renderSelectedDocs();
-        if (!document.getElementById("modal").classList.contains("hidden")) {
-            renderModal();
-        }
-    });
+                  window.toggleAttach = function (id) {
+                  const isSelected = selectedDocs.some(x => x.id === id);
+                  if (isSelected) {
+                  window.removeDoc(id);
+                  } else {
+                  window.addDoc(id);
+                  }
+                  renderModal();
+                  };
 
-    function renderSelectedDocs() {
-        docCount.textContent = `${selectedDocs.length} tài liệu`;
-        const el = document.getElementById("attached-list");
-        if (selectedDocs.length === 0) {
-            el.innerHTML = `<p style="font-size:0.875rem; font-style:italic; color:var(--muted);">Chưa có tài liệu nào được chọn. Bấm 🔍 để tìm và gắn.</p>`;
-            clearDocsBtn.style.display = 'none';
-        } else {
-            clearDocsBtn.style.display = 'inline-block';
-            el.innerHTML = `<div style="display:flex; flex-wrap:wrap; gap:10px;">${selectedDocs.map(d => `
-              <span style="display:inline-flex; align-items:center; gap:8px; border-radius:12px; padding:6px 14px; font-size:0.875rem; font-weight:500; background:var(--card); border:1px solid var(--border); box-shadow:0 2px 4px rgba(0,0,0,0.02);">
-                <svg style="width:16px; height:16px; color:var(--primary);" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline></svg>
-                ${escapeHtml(d.title)}
-                <button type="button" onclick="window.removeDoc('${d.id}')" aria-label="Gỡ" style="background:none; border:none; padding:4px; margin-left:4px; margin-right:-6px; color:var(--muted-foreground); cursor:pointer; display:flex; align-items:center; justify-content:center; border-radius:9999px; transition:all 0.15s;" onmouseover="this.style.background='var(--accent)'; this.style.color='var(--foreground)'" onmouseout="this.style.background='none'; this.style.color='var(--muted-foreground)'">
+                  window.addDoc = function (id) {
+                  const d = DOCS.find(x => x.id === id);
+                  if (d && !selectedDocs.some(x => x.id === id)) {
+                  selectedDocs.push({ id: d.id, title: d.name, semester: d.semester, subject: d.subject });
+                  renderSelectedDocs();
+                  }
+                  };
+
+                  window.removeDoc = function (id) {
+                  selectedDocs = selectedDocs.filter(d => d.id !== id);
+                  renderSelectedDocs();
+                  if (!document.getElementById("modal").classList.contains("hidden")) {
+                  renderModal();
+                  }
+                  };
+
+                  clearDocsBtn.addEventListener('click', function () {
+                  selectedDocs = [];
+                  renderSelectedDocs();
+                  if (!document.getElementById("modal").classList.contains("hidden")) {
+                  renderModal();
+                  }
+                  });
+
+                  function renderSelectedDocs() {
+                  const el = document.getElementById("attached-list");
+                  if (selectedDocs.length === 0) {
+                  el.innerHTML = `<span style="font-size: 0.8rem; font-style: italic; color: var(--muted-foreground);">Chưa có tài liệu đính kèm.</span>`;
+                  clearDocsBtn.style.display = 'none';
+                  } else {
+                  clearDocsBtn.style.display = 'inline-block';
+                  el.innerHTML = `<div style="display:flex; flex-wrap:wrap; gap:10px;">${selectedDocs.map(d => `
+                  <span style="display:inline-flex; align-items:center; gap:8px; border-radius:12px; padding:6px 14px; font-size:0.875rem; font-weight:500; background:var(--card); border:1px solid var(--border); box-shadow:0 2px 4px rgba(0,0,0,0.02);">
+                  <svg style="width:16px; height:16px; color:var(--primary);" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline></svg>
+                  ${escapeHtml(d.title)}
+                  <button type="button" onclick="window.removeDoc('${d.id}')" aria-label="Gỡ" style="background:none; border:none; padding:4px; margin-left:4px; margin-right:-6px; color:var(--muted-foreground); cursor:pointer; display:flex; align-items:center; justify-content:center; border-radius:9999px; transition:all 0.15s;" onmouseover="this.style.background='var(--accent)'; this.style.color='var(--foreground)'" onmouseout="this.style.background='none'; this.style.color='var(--muted-foreground)'">
                   <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
-                </button>
-              </span>`).join("")}</div>`;
-        }
-    }
-    
-    window.openSearch = function() {
-        const modal = document.getElementById("modal");
-        modal.style.display = "flex";
-        renderModal();
-    };
-    
-    window.closeSearch = function() {
-        const modal = document.getElementById("modal");
-        modal.style.display = "none";
-    };
+                  </button>
+                  </span>`).join("")}</div>`;
+                  }
+                  }
 
-    // ── Init ──
-    initFilters();
-    renderModal();
-    loadSessions();
+                  window.openSearch = function () {
+                  const modal = document.getElementById("modal");
+                  modal.style.display = "flex";
+                  renderModal();
+                  };
 
-    let globalSessions = [];
+                  window.closeSearch = function () {
+                  const modal = document.getElementById("modal");
+                  modal.style.display = "none";
+                  };
 
-    // ── Load sessions ──
-    async function loadSessions(autoBindNewest = false) {
-        try {
-            const res = await fetch('/api/chat/sessions');
-            if (!res.ok) return;
-            const sessions = await res.json();
-            globalSessions = sessions;
-            
-            if (autoBindNewest && !currentSessionId && sessions && sessions.length > 0) {
-                const newest = sessions.reduce((prev, current) => (new Date(prev.createdAt) > new Date(current.createdAt)) ? prev : current);
-                currentSessionId = newest.id;
-            }
-            
-            renderSessions(sessions);
-        } catch (e) {
-            console.error('Failed to load sessions:', e);
-        }
-    }
+                  // ── Init ──
+                  initFilters();
+                  renderModal();
+                  loadSessions();
 
-    function renderSessions(sessions) {
-        if (!sessions || sessions.length === 0) {
-            sessionsPanel.innerHTML = '<div style="font-size: 0.85rem; color: var(--muted-foreground);">Chưa có phiên chat nào.</div>';
-            return;
-        }
-        sessionsPanel.innerHTML = sessions.map(s => {
-            if (isBulkSelectMode) {
-                const isChecked = selectedSessionIds.has(s.id);
-                return `
-                    <li style="display: flex; gap: 8px; align-items: center; border-radius: 16px; padding: 10px 12px; cursor: pointer; background: ${isChecked ? 'var(--accent)' : 'transparent'};" onclick="window.toggleSessionSelect('${s.id}')">
-                      <input type="checkbox" ${isChecked ? 'checked' : ''} style="accent-color: var(--primary); width: 16px; height: 16px; cursor: pointer;" onclick="event.stopPropagation(); window.toggleSessionSelect('${s.id}')" />
-                      <div style="flex: 1; min-width: 0;">
-                        <div style="font-size: 0.875rem; font-weight: 500; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">${escapeHtml(s.title)}</div>
-                        <div style="font-size: 0.75rem; color: var(--muted-foreground); margin-top: 2px;">${formatDate(s.createdAt)}</div>
-                      </div>
-                    </li>
-                `;
-            } else {
-                return `
-                    <li style="display: flex; gap: 4px; align-items: center; position: relative;" onmouseover="this.querySelector('.session-actions').style.opacity='1'" onmouseout="this.querySelector('.session-actions').style.opacity='0'">
-                      <button type="button" onclick="window.loadSession('${s.id}')" style="flex: 1; text-align: left; min-width: 0; border-radius: 16px; padding: 10px 12px; transition: background 0.15s; border: none; cursor: pointer; background: ${s.id === currentSessionId ? 'var(--accent)' : 'transparent'};" onmouseover="if('${s.id}'!=='${currentSessionId}')this.style.background='color-mix(in oklab, var(--accent) 50%, transparent)'" onmouseout="if('${s.id}'!=='${currentSessionId}')this.style.background='transparent'">
-                        <div style="font-size: 0.875rem; font-weight: 500; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">${escapeHtml(s.title)}</div>
-                        <div style="font-size: 0.75rem; color: var(--muted-foreground); margin-top: 2px;">${formatDate(s.createdAt)}</div>
-                      </button>
-                      <div class="session-actions" style="opacity: 0; transition: opacity 0.2s; display: flex; align-items: center; position: absolute; right: 8px; background: ${s.id === currentSessionId ? 'var(--accent)' : 'var(--background)'}; padding-left: 4px; border-radius: 8px;">
-                        <div style="position: relative;">
-                          <button type="button" onclick="event.stopPropagation(); window.toggleSessionItemMenu('${s.id}')" title="Tùy chọn" style="display: flex; align-items: center; justify-content: center; width: 28px; height: 28px; border-radius: 50%; background: none; border: none; cursor: pointer; color: var(--muted-foreground); transition: 0.15s;" onmouseover="this.style.background='var(--border)';" onmouseout="this.style.background='none';">
-                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="1"/><circle cx="12" cy="5" r="1"/><circle cx="12" cy="19" r="1"/></svg>
-                          </button>
-                          <div id="sessionItemMenu-${s.id}" style="display: none; position: absolute; right: 0; top: 100%; margin-top: 4px; width: 100px; background: var(--card); border: 1px solid var(--border); border-radius: 8px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); z-index: 50;">
-                            <button type="button" onclick="event.stopPropagation(); window.toggleSessionItemMenu('${s.id}'); window.deleteSession('${s.id}')" style="width: 100%; text-align: left; padding: 8px 12px; font-size: 0.875rem; background: none; border: none; cursor: pointer; color: #ef4444;" onmouseover="this.style.background='rgba(239, 68, 68, 0.1)'" onmouseout="this.style.background='none'">
-                              Xóa
-                            </button>
-                          </div>
-                        </div>
-                      </div>
-                    </li>
-                `;
-            }
-        }).join('');
-    }
+                  let globalSessions = [];
 
-    let sessionIdToDelete = null;
-    let isBulkSelectMode = false;
-    let selectedSessionIds = new Set();
+                  // ── Load sessions ──
+                  async function loadSessions(autoBindNewest = false) {
+                  try {
+                  const res = await fetch('/api/chat/sessions');
+                  if (!res.ok) return;
+                  const sessions = await res.json();
+                  globalSessions = sessions;
 
-    document.addEventListener('click', function(e) {
-        const btn = document.getElementById('sessionMenuBtn');
-        const dropdown = document.getElementById('sessionMenuDropdown');
-        if (dropdown && btn && !btn.contains(e.target) && !dropdown.contains(e.target)) {
-            dropdown.style.display = 'none';
-        }
+                  if (autoBindNewest && !currentSessionId && sessions && sessions.length > 0) {
+                  const newest = sessions.reduce((prev, current) => (new Date(prev.createdAt) > new Date(current.createdAt)) ? prev : current);
+                  currentSessionId = newest.id;
+                  }
 
-        // Close item menus
-        document.querySelectorAll('[id^="sessionItemMenu-"]').forEach(menu => {
-            menu.style.display = 'none';
-        });
-    });
+                  renderSessions(sessions);
+                  } catch (e) {
+                  console.error('Failed to load sessions:', e);
+                  }
+                  }
 
-    window.toggleSessionItemMenu = function(sessionId) {
-        // Close other item menus first
-        document.querySelectorAll('[id^="sessionItemMenu-"]').forEach(menu => {
-            if (menu.id !== `sessionItemMenu-${sessionId}`) {
-                menu.style.display = 'none';
-            }
-        });
-        
-        const menu = document.getElementById(`sessionItemMenu-${sessionId}`);
-        if (menu) {
-            menu.style.display = menu.style.display === 'none' ? 'block' : 'none';
-        }
-    };
+                  function renderSessions(sessions) {
+                  if (!sessions || sessions.length === 0) {
+                  sessionsPanel.innerHTML = '<div style="font-size: 0.85rem; color: var(--muted-foreground);">Chưa có phiên chat nào.</div>';
+                  return;
+                  }
+                  sessionsPanel.innerHTML = sessions.map(s => {
+                  if (isBulkSelectMode) {
+                  const isChecked = selectedSessionIds.has(s.id);
+                  return `
+                  <li style="display: flex; gap: 12px; align-items: center; border-radius: 12px; padding: 10px 12px; cursor: pointer; transition: background 0.15s; background: ${isChecked ? 'var(--accent)' : 'transparent'};" onclick="window.toggleSessionSelect('${s.id}')" onmouseover="if(!${isChecked})this.style.background='color-mix(in oklab, var(--accent) 50%, transparent)'" onmouseout="if(!${isChecked})this.style.background='transparent'">
+                  <div style="width: 18px; height: 18px; border-radius: 6px; border: 2px solid ${isChecked ? 'var(--primary)' : 'var(--border)'}; background: ${isChecked ? 'var(--primary)' : 'transparent'}; display: flex; align-items: center; justify-content: center; transition: 0.15s; flex-shrink: 0;" onclick="event.stopPropagation(); window.toggleSessionSelect('${s.id}')">
+                  ${isChecked ? '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="var(--primary-foreground)" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>' : ''}
+                  </div>
+                  <div style="flex: 1; min-width: 0;">
+                  <div style="font-size: 0.875rem; font-weight: 500; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: ${isChecked ? 'var(--primary)' : 'var(--foreground)'}; transition: color 0.15s;">${escapeHtml(s.title)}</div>
+                  <div style="font-size: 0.75rem; color: var(--muted-foreground); margin-top: 2px;">${formatDate(s.createdAt)}</div>
+                  </div>
+                  </li>
+                  `;
+                  } else {
+                  return `
+                  <li style="display: flex; gap: 4px; align-items: center; position: relative;" onmouseover="this.querySelector('.session-actions').style.opacity='1'" onmouseout="this.querySelector('.session-actions').style.opacity='0'">
+                  <button type="button" onclick="window.loadSession('${s.id}')" style="flex: 1; text-align: left; min-width: 0; border-radius: 16px; padding: 10px 48px 10px 12px; transition: background 0.15s; border: none; cursor: pointer; background: ${s.id === currentSessionId ? 'var(--accent)' : 'transparent'};" onmouseover="if('${s.id}'!=='${currentSessionId}')this.style.background='color-mix(in oklab, var(--accent) 50%, transparent)'" onmouseout="if('${s.id}'!=='${currentSessionId}')this.style.background='transparent'">
+                  <div style="font-size: 0.875rem; font-weight: 500; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">${escapeHtml(s.title)}</div>
+                  <div style="font-size: 0.75rem; color: var(--muted-foreground); margin-top: 2px;">${formatDate(s.createdAt)}</div>
+                  </button>
+                  <div class="session-actions" style="opacity: 0; transition: opacity 0.2s; display: flex; align-items: center; position: absolute; right: 8px; padding-left: 4px;">
+                  <button type="button" onclick="event.stopPropagation(); window.deleteSession('${s.id}')" title="Xóa phiên" style="display: flex; align-items: center; justify-content: center; width: 28px; height: 28px; border-radius: 50%; background: none; border: none; outline: none; cursor: pointer; color: #ef4444; transition: 0.15s;" onmouseover="this.style.background='rgba(239, 68, 68, 0.1)';" onmouseout="this.style.background='none';">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18"></path><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"></path><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"></path></svg>
+                  </button>
+                  </div>
+                  </li>
+                  `;
+                  }
+                  }).join('');
+                  }
 
-    window.selectAllSessions = function() {
-        window.toggleBulkSelectMode(true);
-        if (globalSessions) {
-            globalSessions.forEach(s => selectedSessionIds.add(s.id));
-            document.getElementById('bulkCountText').textContent = `Đã chọn ${selectedSessionIds.size}`;
-            renderSessions(globalSessions);
-        }
-    };
+                  let sessionIdToDelete = null;
+                  let isBulkSelectMode = false;
+                  let selectedSessionIds = new Set();
 
-    window.toggleBulkSelectMode = function(enable) {
-        isBulkSelectMode = enable;
-        selectedSessionIds.clear();
-        
-        const dropdown = document.getElementById('sessionMenuDropdown');
-        if (dropdown) dropdown.style.display = 'none';
-        
-        if (enable) {
-            document.getElementById('sidebarHeaderNormal').style.display = 'none';
-            document.getElementById('sidebarHeaderBulk').style.display = 'flex';
-            document.getElementById('bulkCountText').textContent = 'Đã chọn 0';
-        } else {
-            document.getElementById('sidebarHeaderNormal').style.display = 'flex';
-            document.getElementById('sidebarHeaderBulk').style.display = 'none';
-        }
-        
-        renderSessions(globalSessions);
-    };
+                  document.addEventListener('click', function (e) {
+                  const btn = document.getElementById('sessionMenuBtn');
+                  const dropdown = document.getElementById('sessionMenuDropdown');
+                  if (dropdown && btn && !btn.contains(e.target) && !dropdown.contains(e.target)) {
+                  dropdown.style.display = 'none';
+                  }
 
-    window.toggleSessionSelect = function(sessionId) {
-        if (selectedSessionIds.has(sessionId)) {
-            selectedSessionIds.delete(sessionId);
-        } else {
-            selectedSessionIds.add(sessionId);
-        }
-        document.getElementById('bulkCountText').textContent = `Đã chọn ${selectedSessionIds.size}`;
-        renderSessions(globalSessions);
-    };
+                  // Close item menus
+                  document.querySelectorAll('[id^="sessionItemMenu-"]').forEach(menu => {
+                  menu.style.display = 'none';
+                  });
+                  });
 
-    window.deleteBulkSessions = function() {
-        if (selectedSessionIds.size === 0) return;
-        
-        sessionIdToDelete = Array.from(selectedSessionIds);
-        const text = `Bạn có chắc chắn muốn xóa vĩnh viễn ${selectedSessionIds.size} phiên chat đã chọn không? Hành động này không thể hoàn tác.`;
-        document.querySelector('#confirmDeleteModal p').textContent = text;
-        document.getElementById('confirmDeleteModal').style.display = 'flex';
-    };
+                  window.toggleSessionItemMenu = function (sessionId) {
+                  // Close other item menus first
+                  document.querySelectorAll('[id^="sessionItemMenu-"]').forEach(menu => {
+                  if (menu.id !== `sessionItemMenu-${sessionId}`) {
+                  menu.style.display = 'none';
+                  }
+                  });
 
-    window.deleteSession = function(sessionId) {
-        sessionIdToDelete = sessionId;
-        document.querySelector('#confirmDeleteModal p').textContent = "Bạn có chắc chắn muốn xóa vĩnh viễn lịch sử phiên chat này không? Hành động này không thể hoàn tác.";
-        document.getElementById('confirmDeleteModal').style.display = 'flex';
-    };
+                  const menu = document.getElementById(`sessionItemMenu-${sessionId}`);
+                  if (menu) {
+                  menu.style.display = menu.style.display === 'none' ? 'block' : 'none';
+                  }
+                  };
 
-    window.closeConfirmDelete = function() {
-        document.getElementById('confirmDeleteModal').style.display = 'none';
-        sessionIdToDelete = null;
-    };
+                  window.selectAllSessions = function () {
+                  window.toggleBulkSelectMode(true);
+                  if (globalSessions) {
+                  globalSessions.forEach(s => selectedSessionIds.add(s.id));
+                  document.getElementById('bulkCountText').textContent = `Đã chọn ${selectedSessionIds.size}`;
+                  renderSessions(globalSessions);
+                  }
+                  };
 
-    document.getElementById('confirmDeleteBtn').addEventListener('click', async function() {
-        if (!sessionIdToDelete) return;
-        
-        const idsToDelete = sessionIdToDelete;
-        window.closeConfirmDelete();
+                  window.toggleBulkSelectMode = function (enable) {
+                  isBulkSelectMode = enable;
+                  selectedSessionIds.clear();
 
-        if (Array.isArray(idsToDelete)) {
-            // Bulk delete
-            try {
-                const res = await fetch(`/api/chat/sessions/bulk-delete`, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify(idsToDelete)
-                });
-                
-                if (res.ok) {
-                    window.toggleBulkSelectMode(false);
-                    if (idsToDelete.includes(currentSessionId)) {
-                        newSessionBtn.click();
-                    } else {
-                        await loadSessions();
-                    }
-                } else {
-                    alert("Đã có lỗi xảy ra khi xóa hàng loạt.");
-                }
-            } catch(e) {
-                console.error(e);
-            }
-        } else {
-            // Single delete
-            const sessionId = idsToDelete;
-            try {
-                const res = await fetch(`/api/chat/sessions/${sessionId}`, {
-                    method: 'DELETE'
-                });
+                  const dropdown = document.getElementById('sessionMenuDropdown');
+                  if (dropdown) dropdown.style.display = 'none';
 
-                if (res.ok) {
-                    if (currentSessionId === sessionId) {
-                        newSessionBtn.click(); // Reset to new session
-                    } else {
-                        await loadSessions(); // Refresh list
-                    }
-                } else {
-                    alert("Đã có lỗi xảy ra khi xóa phiên chat.");
-                }
-            } catch (e) {
-                console.error(e);
-                alert("Đã có lỗi xảy ra khi xóa phiên chat.");
-            }
-        }
-    });
+                  if (enable) {
+                  document.getElementById('sidebarHeaderNormal').style.display = 'none';
+                  document.getElementById('sidebarHeaderBulk').style.display = 'flex';
+                  document.getElementById('bulkCountText').textContent = 'Đã chọn 0';
+                  } else {
+                  document.getElementById('sidebarHeaderNormal').style.display = 'flex';
+                  document.getElementById('sidebarHeaderBulk').style.display = 'none';
+                  }
 
-    // ── Load a specific session's messages ──
-    window.loadSession = async function(sessionId) {
-        currentSessionId = sessionId;
-        setStatus('Đang tải...', true);
-        
-        // Restore selected documents for this session
-        const session = globalSessions.find(s => s.id === sessionId);
-        if (session && session.documentIds && session.documentIds.length > 0) {
-            selectedDocs = [];
-            session.documentIds.forEach(id => {
-                const d = DOCS.find(doc => String(doc.id) === String(id));
-                if (d && !selectedDocs.some(x => x.id === d.id)) {
-                    selectedDocs.push({ id: d.id, title: d.name, semester: d.semester, subject: d.subject });
-                }
-            });
-            renderSelectedDocs();
-        } else {
-            selectedDocs = [];
-            renderSelectedDocs();
-        }
+                  renderSessions(globalSessions);
+                  };
 
-        try {
-            const res = await fetch(`/api/chat/sessions/${sessionId}/messages`);
-            if (!res.ok) throw new Error('Failed to load messages');
-            const messages = await res.json();
+                  window.toggleSessionSelect = function (sessionId) {
+                  if (selectedSessionIds.has(sessionId)) {
+                  selectedSessionIds.delete(sessionId);
+                  } else {
+                  selectedSessionIds.add(sessionId);
+                  }
+                  document.getElementById('bulkCountText').textContent = `Đã chọn ${selectedSessionIds.size}`;
+                  renderSessions(globalSessions);
+                  };
 
-            chatMessages.innerHTML = '';
-            messages.forEach(m => {
-                appendMessage(m.role === 'user' ? 'user' : 'assistant', m.content);
-            });
-            scrollToBottom();
+                  window.deleteBulkSessions = function () {
+                  if (selectedSessionIds.size === 0) return;
 
-            aiCitationsContainer.style.display = 'none';
-            sourcesPanel.innerHTML = '';
+                  sessionIdToDelete = Array.from(selectedSessionIds);
+                  const text = `Bạn có chắc chắn muốn xóa vĩnh viễn ${selectedSessionIds.size} phiên chat đã chọn không? Hành động này không thể hoàn tác.`;
+                  document.querySelector('#confirmDeleteModal p').textContent = text;
+                  document.getElementById('confirmDeleteModal').style.display = 'flex';
+                  };
 
-            // Update active session highlight
-            loadSessions(); // re-render to update classes
+                  window.deleteSession = function (sessionId) {
+                  sessionIdToDelete = sessionId;
+                  document.querySelector('#confirmDeleteModal p').textContent = "Bạn có chắc chắn muốn xóa vĩnh viễn lịch sử phiên chat này không? Hành động này không thể hoàn tác.";
+                  document.getElementById('confirmDeleteModal').style.display = 'flex';
+                  };
 
-            setStatus('Sẵn sàng', false);
-        } catch (e) {
-            console.error('Failed to load session:', e);
-            setStatus('Lỗi tải phiên', false);
-        }
-    }
+                  window.closeConfirmDelete = function () {
+                  document.getElementById('confirmDeleteModal').style.display = 'none';
+                  sessionIdToDelete = null;
+                  };
 
-    // ── New session ──
-    newSessionBtn.addEventListener('click', () => {
-        currentSessionId = null;
-        chatMessages.innerHTML = `
-          <div style="width: 100%; max-width: 48rem; margin: 0 auto;">
-            <div style="font-size: 0.75rem; font-weight: 600; tracking-wider: 0.05em; color: var(--primary); margin-bottom: 8px; text-transform: uppercase;">ASSISTANT</div>
-            <div style="font-size: 0.875rem; line-height: 1.625;">
-              Xin chào! 👋 Tôi là trợ lý tài liệu AI. Bấm vào icon kính lúp ở góc trên bên phải để tìm và gắn tài liệu — tôi sẽ sẵn sàng trả lời câu hỏi của bạn.
-            </div>
-          </div>`;
-        
-        aiCitationsContainer.style.display = 'none';
-        sourcesPanel.innerHTML = '';
-        
-        loadSessions(); // removes active state
-        chatInput.focus();
-    });
+                  document.getElementById('confirmDeleteBtn').addEventListener('click', async function () {
+                  if (!sessionIdToDelete) return;
 
-    // ── Send message ──
-    chatForm.addEventListener('submit', async function (e) {
-        e.preventDefault();
-        const message = chatInput.value.trim();
-        if (!message || isStreaming) return;
+                  const idsToDelete = sessionIdToDelete;
+                  window.closeConfirmDelete();
 
-        const docIds = selectedDocs.map(d => d.id);
-        
-        if (!currentSessionId && docIds.length === 0) {
-            appendMessage('assistant', '⚠️ Vui lòng chọn ít nhất một tài liệu ở khung trên trước khi bắt đầu chat.');
-            scrollToBottom();
-            return;
-        }
+                  if (Array.isArray(idsToDelete)) {
+                  // Bulk delete
+                  try {
+                  const res = await fetch(`/api/chat/sessions/bulk-delete`, {
+                  method: 'POST',
+                  headers: { 'Content-Type': 'application/json' },
+                  body: JSON.stringify(idsToDelete)
+                  });
 
-        appendMessage('user', message);
-        chatInput.value = '';
-        scrollToBottom();
+                  if (res.ok) {
+                  window.toggleBulkSelectMode(false);
+                  if (idsToDelete.includes(currentSessionId)) {
+                  newSessionBtn.click();
+                  } else {
+                  await loadSessions();
+                  }
+                  } else {
+                  alert("Đã có lỗi xảy ra khi xóa hàng loạt.");
+                  }
+                  } catch (e) {
+                  console.error(e);
+                  }
+                  } else {
+                  // Single delete
+                  const sessionId = idsToDelete;
+                  try {
+                  const res = await fetch(`/api/chat/sessions/${sessionId}`, {
+                  method: 'DELETE'
+                  });
 
-        const body = {
-            message: message,
-            sessionId: currentSessionId,
-            documentIds: docIds
-        };
+                  if (res.ok) {
+                  if (currentSessionId === sessionId) {
+                  newSessionBtn.click(); // Reset to new session
+                  } else {
+                  await loadSessions(); // Refresh list
+                  }
+                  } else {
+                  alert("Đã có lỗi xảy ra khi xóa phiên chat.");
+                  }
+                  } catch (e) {
+                  console.error(e);
+                  alert("Đã có lỗi xảy ra khi xóa phiên chat.");
+                  }
+                  }
+                  });
 
-        isStreaming = true;
-        setStatus('Đang trả lời...', true);
-        setSendLoading(true);
+                  // ── Load a specific session's messages ──
+                  window.loadSession = async function (sessionId) {
+                  currentSessionId = sessionId;
+                  setStatus('Đang tải...', true);
 
-        aiCitationsContainer.style.display = 'none';
-        sourcesPanel.innerHTML = '';
+                  // Restore selected documents for this session
+                  const session = globalSessions.find(s => s.id === sessionId);
+                  if (session && session.documentIds && session.documentIds.length > 0) {
+                  selectedDocs = [];
+                  session.documentIds.forEach(id => {
+                  const d = DOCS.find(doc => String(doc.id) === String(id));
+                  if (d && !selectedDocs.some(x => x.id === d.id)) {
+                  selectedDocs.push({ id: d.id, title: d.name, semester: d.semester, subject: d.subject });
+                  }
+                  });
+                  renderSelectedDocs();
+                  } else {
+                  selectedDocs = [];
+                  renderSelectedDocs();
+                  }
 
-        const assistantDiv = createAssistantPlaceholder();
-        chatMessages.appendChild(assistantDiv);
-        scrollToBottom();
+                  try {
+                  const res = await fetch(`/api/chat/sessions/${sessionId}/messages`);
+                  if (!res.ok) throw new Error('Failed to load messages');
+                  const messages = await res.json();
 
-        const contentEl = assistantDiv.querySelector('.markdown-body');
+                  chatMessages.innerHTML = '';
+                  messages.forEach(m => {
+                  appendMessage(m.role === 'user' ? 'user' : 'assistant', m.content);
+                  });
+                  scrollToBottom();
 
-        try {
-            const res = await fetch('/api/chat/messages/stream', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(body)
-            });
+                  aiCitationsContainer.style.display = 'none';
+                  sourcesPanel.innerHTML = '';
 
-            if (res.redirected || !res.ok) {
-                const statusCode = res.status;
-                if (statusCode === 401 || statusCode === 403 || res.redirected) {
-                    contentEl.innerHTML = '<span style="color: #ef4444;">⚠️ Phiên đăng nhập đã hết hạn. Vui lòng tải lại trang và đăng nhập lại.</span>';
-                } else {
-                    contentEl.innerHTML = `<span style="color: #ef4444;">⚠️ Lỗi từ máy chủ (HTTP ${statusCode}). Vui lòng thử lại.</span>`;
-                }
-                return;
-            }
+                  // Update active session highlight
+                  loadSessions(); // re-render to update classes
 
-            const reader = res.body.getReader();
-            const decoder = new TextDecoder();
-            let fullText = '';
-            let buffer = '';
+                  setStatus('Sẵn sàng', false);
+                  } catch (e) {
+                  console.error('Failed to load session:', e);
+                  setStatus('Lỗi tải phiên', false);
+                  }
+                  }
 
-            while (true) {
-                const { done, value } = await reader.read();
-                if (done) break;
+                  // ── New session ──
+                  newSessionBtn.addEventListener('click', () => {
+                  currentSessionId = null;
+                  chatMessages.innerHTML = `
+                  <div style="width: 100%; max-width: 48rem; margin: 0 auto;">
+                  <div style="font-size: 0.75rem; font-weight: 600; tracking-wider: 0.05em; color: var(--primary); margin-bottom: 8px; text-transform: uppercase;">ASSISTANT</div>
+                  <div style="font-size: 0.875rem; line-height: 1.625;">
+                  Xin chào! 👋 Tôi là trợ lý tài liệu AI. Bấm vào icon kính lúp ở góc trên bên phải để tìm và gắn tài liệu — tôi sẽ sẵn sàng trả lời câu hỏi của bạn.
+                  </div>
+                  </div>`;
 
-                buffer += decoder.decode(value, { stream: true });
-                const lines = buffer.split('\n');
-                buffer = lines.pop();
+                  aiCitationsContainer.style.display = 'none';
+                  sourcesPanel.innerHTML = '';
 
-                for (const line of lines) {
-                    if (!line.startsWith('data: ')) continue;
-                    const data = line.substring(6);
+                  loadSessions(); // removes active state
+                  chatInput.focus();
+                  });
 
-                    if (data === '[DONE]') continue;
-                    if (data.startsWith('[ERROR]')) {
-                        fullText += '\n⚠️ ' + data.substring(7).trim();
-                        contentEl.innerHTML = renderMarkdown(fullText);
-                        continue;
-                    }
+                  // ── Send message ──
+                  chatForm.addEventListener('submit', async function (e) {
+                  e.preventDefault();
+                  const message = chatInput.value.trim();
+                  if (!message || isStreaming) return;
 
-                    fullText += data.replace(/\\n/g, '\n');
-                    contentEl.innerHTML = renderMarkdown(fullText);
-                    scrollToBottom();
-                }
-            }
+                  const docIds = selectedDocs.map(d => d.id);
 
-            highlightCodeBlocks(assistantDiv);
+                  if (!currentSessionId && docIds.length === 0) {
+                  appendMessage('assistant', '⚠️ Vui lòng chọn ít nhất một tài liệu ở khung trên trước khi bắt đầu chat.');
+                  scrollToBottom();
+                  return;
+                  }
 
-            if (!fullText) {
-                const fallbackRes = await fetch('/api/chat/messages', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify(body)
-                });
-                if (fallbackRes.ok) {
-                    const data = await fallbackRes.json();
-                    fullText = data.reply;
-                    contentEl.innerHTML = renderMarkdown(fullText);
-                    highlightCodeBlocks(assistantDiv);
-                    if (data.sessionId) currentSessionId = data.sessionId;
-                    if (data.sources && data.sources.length > 0) {
-                        renderSources(data.sources);
-                    }
-                }
-            }
+                  appendMessage('user', message);
+                  chatInput.value = '';
+                  scrollToBottom();
 
-            await loadSessions(true);
+                  const body = {
+                  message: message,
+                  sessionId: currentSessionId,
+                  documentIds: docIds
+                  };
 
-        } catch (err) {
-            console.error('Stream error:', err);
-            contentEl.innerHTML = '<span style="color: #ef4444;">⚠️ Đã xảy ra lỗi khi kết nối. Vui lòng thử lại.</span>';
-        } finally {
-            isStreaming = false;
-            setStatus('Sẵn sàng', false);
-            setSendLoading(false);
-            scrollToBottom();
-        }
-    });
+                  isStreaming = true;
+                  setStatus('Đang trả lời...', true);
+                  setSendLoading(true);
 
-    function appendMessage(role, content) {
-        const isUser = role === 'user';
-        const div = document.createElement('div');
-        div.className = 'chat-anim';
-        
-        if (isUser) {
-            div.innerHTML = `
-                <div style="width: 100%; max-width: 48rem; margin: 0 auto; display: flex; flex-direction: column; align-items: flex-end;">
+                  aiCitationsContainer.style.display = 'none';
+                  sourcesPanel.innerHTML = '';
+
+                  const assistantDiv = createAssistantPlaceholder();
+                  chatMessages.appendChild(assistantDiv);
+                  scrollToBottom();
+
+                  const contentEl = assistantDiv.querySelector('.markdown-body');
+
+                  try {
+                  const res = await fetch('/api/chat/messages/stream', {
+                  method: 'POST',
+                  headers: { 'Content-Type': 'application/json' },
+                  body: JSON.stringify(body)
+                  });
+
+                  if (res.redirected || !res.ok) {
+                  const statusCode = res.status;
+                  if (statusCode === 401 || statusCode === 403 || res.redirected) {
+                  contentEl.innerHTML = '<span style="color: #ef4444;">⚠️ Phiên đăng nhập đã hết hạn. Vui lòng tải lại trang và đăng nhập lại.</span>';
+                  } else {
+                  contentEl.innerHTML = `<span style="color: #ef4444;">⚠️ Lỗi từ máy chủ (HTTP ${statusCode}). Vui lòng thử lại.</span>`;
+                  }
+                  return;
+                  }
+
+                  const reader = res.body.getReader();
+                  const decoder = new TextDecoder();
+                  let fullText = '';
+                  let buffer = '';
+
+                  while (true) {
+                  const { done, value } = await reader.read();
+                  if (done) break;
+
+                  buffer += decoder.decode(value, { stream: true });
+                  const lines = buffer.split('\n');
+                  buffer = lines.pop();
+
+                  for (const line of lines) {
+                  if (!line.startsWith('data: ')) continue;
+                  const data = line.substring(6);
+
+                  if (data === '[DONE]') continue;
+                  if (data.startsWith('[ERROR]')) {
+                  fullText += '\n⚠️ ' + data.substring(7).trim();
+                  contentEl.innerHTML = renderMarkdown(fullText);
+                  continue;
+                  }
+
+                  fullText += data.replace(/\\n/g, '\n');
+                  contentEl.innerHTML = renderMarkdown(fullText);
+                  scrollToBottom();
+                  }
+                  }
+
+                  highlightCodeBlocks(assistantDiv);
+
+                  if (!fullText) {
+                  const fallbackRes = await fetch('/api/chat/messages', {
+                  method: 'POST',
+                  headers: { 'Content-Type': 'application/json' },
+                  body: JSON.stringify(body)
+                  });
+                  if (fallbackRes.ok) {
+                  const data = await fallbackRes.json();
+                  fullText = data.reply;
+                  contentEl.innerHTML = renderMarkdown(fullText);
+                  highlightCodeBlocks(assistantDiv);
+                  if (data.sessionId) currentSessionId = data.sessionId;
+                  if (data.sources && data.sources.length > 0) {
+                  renderSources(data.sources);
+                  }
+                  }
+                  }
+
+                  await loadSessions(true);
+
+                  } catch (err) {
+                  console.error('Stream error:', err);
+                  contentEl.innerHTML = '<span style="color: #ef4444;">⚠️ Đã xảy ra lỗi khi kết nối. Vui lòng thử lại.</span>';
+                  } finally {
+                  isStreaming = false;
+                  setStatus('Sẵn sàng', false);
+                  setSendLoading(false);
+                  scrollToBottom();
+                  }
+                  });
+
+                  function appendMessage(role, content) {
+                  const isUser = role === 'user';
+                  const div = document.createElement('div');
+                  div.className = 'chat-anim';
+
+                  if (isUser) {
+                  div.innerHTML = `
+                  <div style="width: 100%; max-width: 48rem; margin: 0 auto; display: flex; flex-direction: column; align-items: flex-end;">
                   <div style="font-size: 0.75rem; font-weight: 600; letter-spacing: 0.05em; color: var(--foreground); margin-bottom: 8px; text-transform: uppercase;">Bạn</div>
                   <div class="msg-bubble" style="background: var(--primary); color: var(--primary-foreground); padding: 12px 20px; border-radius: 24px; font-size: 0.875rem; line-height: 1.625; max-width: 80%;">
-                    ${escapeHtml(content)}
+                  ${escapeHtml(content)}
                   </div>
-                </div>
-            `;
-        } else {
-            div.innerHTML = `
-                <div style="width: 100%; max-width: 48rem; margin: 0 auto;">
+                  </div>
+                  `;
+                  } else {
+                  div.innerHTML = `
+                  <div style="width: 100%; max-width: 48rem; margin: 0 auto;">
                   <div style="font-size: 0.75rem; font-weight: 600; letter-spacing: 0.05em; color: var(--primary); margin-bottom: 8px; text-transform: uppercase;">Assistant</div>
                   <div class="markdown-body msg-bubble" style="font-size: 0.875rem; line-height: 1.625; color: var(--foreground);">
-                    ${renderMarkdown(content)}
+                  ${renderMarkdown(content)}
                   </div>
-                </div>
-            `;
-        }
-        
-        chatMessages.appendChild(div);
-        if (!isUser) {
-            highlightCodeBlocks(div);
-        }
-    }
+                  </div>
+                  `;
+                  }
 
-    function createAssistantPlaceholder() {
-        const div = document.createElement('div');
-        div.className = 'chat-anim';
-        div.innerHTML = `
-            <div style="width: 100%; max-width: 48rem; margin: 0 auto;">
-              <div style="font-size: 0.75rem; font-weight: 600; letter-spacing: 0.05em; color: var(--primary); margin-bottom: 8px; text-transform: uppercase;">Assistant</div>
-              <div class="markdown-body msg-bubble" style="font-size: 0.875rem; line-height: 1.625; color: var(--foreground);">
-                <div class="typing-indicator"><span></span><span></span><span></span></div>
-              </div>
-            </div>
-        `;
-        return div;
-    }
+                  chatMessages.appendChild(div);
+                  if (!isUser) {
+                  highlightCodeBlocks(div);
+                  }
+                  }
 
-    function renderSources(sources) {
-        if (!sources || sources.length === 0) {
-            aiCitationsContainer.style.display = 'none';
-            return;
-        }
-        
-        aiCitationsContainer.style.display = 'block';
-        sourcesPanel.innerHTML = sources.map((s, i) => `
-            <div style="display: flex; align-items: center; justify-content: space-between; border-radius: 16px; background: var(--card); padding: 12px 16px; border: 1px solid var(--border);">
-              <div style="display: flex; gap: 12px; align-items: center; min-width: 0; flex: 1;">
-                <span style="display: flex; width: 24px; height: 24px; flex-shrink: 0; align-items: center; justify-content: center; border-radius: 9999px; background: var(--accent); font-size: 0.75rem; font-weight: 600; color: var(--foreground);">${i + 1}</span>
-                <div style="min-width: 0; flex: 1;">
-                    <div style="font-weight: 500; font-size: 0.875rem; color: var(--foreground);">${escapeHtml(s.documentTitle)}</div>
-                    ${s.chapterTitle ? `<div style="margin-top: 2px; font-size: 0.75rem; color: var(--muted-foreground);">📖 ${escapeHtml(s.chapterTitle)}</div>` : ''}
-                    ${s.pageNumber ? `<div style="margin-top: 2px; font-size: 0.75rem; color: var(--muted-foreground);">Trang ${s.pageNumber}</div>` : ''}
-                </div>
-              </div>
-            </div>
-        `).join('');
-    }
+                  function createAssistantPlaceholder() {
+                  const div = document.createElement('div');
+                  div.className = 'chat-anim';
+                  div.innerHTML = `
+                  <div style="width: 100%; max-width: 48rem; margin: 0 auto;">
+                  <div style="font-size: 0.75rem; font-weight: 600; letter-spacing: 0.05em; color: var(--primary); margin-bottom: 8px; text-transform: uppercase;">Assistant</div>
+                  <div class="markdown-body msg-bubble" style="font-size: 0.875rem; line-height: 1.625; color: var(--foreground);">
+                  <div class="typing-indicator"><span></span><span></span><span></span></div>
+                  </div>
+                  </div>
+                  `;
+                  return div;
+                  }
 
-    function setStatus(text, loading) {
-        statusBadge.innerHTML = text;
-        statusBadge.style.background = loading ? 'var(--accent)' : 'var(--chip)';
-        statusBadge.style.color = loading ? 'var(--foreground)' : 'var(--chip-foreground)';
-    }
+                  function renderSources(sources) {
+                  if (!sources || sources.length === 0) {
+                  aiCitationsContainer.style.display = 'none';
+                  return;
+                  }
 
-    function setSendLoading(loading) {
-        sendBtn.disabled = loading;
-        chatInput.disabled = loading;
-        if (loading) {
-            sendBtn.innerHTML = 'Đang gửi...';
-        } else {
-            sendBtn.innerHTML = '<svg style="width: 16px; height: 16px; stroke: currentColor; fill: none; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round;" viewBox="0 0 24 24"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg> Gửi';
-        }
-    }
+                  aiCitationsContainer.style.display = 'block';
+                  sourcesPanel.innerHTML = sources.map((s, i) => `
+                  <div style="display: flex; align-items: center; justify-content: space-between; border-radius: 16px; background: var(--card); padding: 12px 16px; border: 1px solid var(--border);">
+                  <div style="display: flex; gap: 12px; align-items: center; min-width: 0; flex: 1;">
+                  <span style="display: flex; width: 24px; height: 24px; flex-shrink: 0; align-items: center; justify-content: center; border-radius: 9999px; background: var(--accent); font-size: 0.75rem; font-weight: 600; color: var(--foreground);">${i + 1}</span>
+                  <div style="min-width: 0; flex: 1;">
+                  <div style="font-weight: 500; font-size: 0.875rem; color: var(--foreground);">${escapeHtml(s.documentTitle)}</div>
+                  ${s.chapterTitle ? `<div style="margin-top: 2px; font-size: 0.75rem; color: var(--muted-foreground);">📖 ${escapeHtml(s.chapterTitle)}</div>` : ''}
+                  ${s.pageNumber ? `<div style="margin-top: 2px; font-size: 0.75rem; color: var(--muted-foreground);">Trang ${s.pageNumber}</div>` : ''}
+                  </div>
+                  </div>
+                  </div>
+                  `).join('');
+                  }
 
-    function scrollToBottom() {
-        requestAnimationFrame(() => {
-            chatMessages.scrollTop = chatMessages.scrollHeight;
-        });
-    }
+                  function setStatus(text, loading) {
+                  const statusBadge = document.getElementById('statusBadge');
+                  if (!statusBadge) return;
+                  statusBadge.innerHTML = text;
+                  statusBadge.style.background = loading ? 'var(--accent)' : 'var(--chip)';
+                  statusBadge.style.color = loading ? 'var(--foreground)' : 'var(--chip-foreground)';
+                  }
 
-    function renderMarkdown(text) {
-        if (!text) return '';
-        marked.setOptions({ breaks: true, gfm: true });
-        return marked.parse(text);
-    }
+                  function setSendLoading(loading) {
+                  sendBtn.disabled = loading;
+                  chatInput.disabled = loading;
+                  if (loading) {
+                  sendBtn.innerHTML = 'Đang gửi...';
+                  } else {
+                  sendBtn.innerHTML = '<svg style="width: 16px; height: 16px; stroke: currentColor; fill: none; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round;" viewBox="0 0 24 24"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg> Gửi';
+                  }
+                  }
 
-    function highlightCodeBlocks(container) {
-        if (typeof hljs !== 'undefined') {
-            container.querySelectorAll('pre code').forEach((el) => {
-                if (!el.dataset.highlighted) {
-                    hljs.highlightElement(el);
-                    el.dataset.highlighted = 'true';
-                }
-            });
-        }
-    }
+                  function scrollToBottom() {
+                  requestAnimationFrame(() => {
+                  chatMessages.scrollTop = chatMessages.scrollHeight;
+                  });
+                  }
 
-    function escapeHtml(str) {
-        if (!str) return '';
-        return String(str).replace(/[&<>"']/g, c => ({
-            "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;"
-        }[c]));
-    }
+                  function renderMarkdown(text) {
+                  if (!text) return '';
+                  marked.setOptions({ breaks: true, gfm: true });
+                  return marked.parse(text);
+                  }
 
-    function formatDate(dateStr) {
-        const d = new Date(dateStr);
-        const now = new Date();
-        const diffMs = now - d;
-        const diffMin = Math.floor(diffMs / 60000);
-        if (diffMin < 1) return 'Vừa xong';
-        if (diffMin < 60) return `${diffMin} phút trước`;
-        const diffHr = Math.floor(diffMin / 60);
-        if (diffHr < 24) return `${diffHr} giờ trước`;
-        const diffDay = Math.floor(diffHr / 24);
-        if (diffDay < 7) return `${diffDay} ngày trước`;
-        return d.toLocaleDateString('vi-VN');
-    }
+                  function highlightCodeBlocks(container) {
+                  if (typeof hljs !== 'undefined') {
+                  container.querySelectorAll('pre code').forEach((el) => {
+                  if (!el.dataset.highlighted) {
+                  hljs.highlightElement(el);
+                  el.dataset.highlighted = 'true';
+                  }
+                  });
+                  }
+                  }
 
-    chatInput.addEventListener('keydown', function (e) {
-        if (e.key === 'Enter' && !e.shiftKey) {
-            e.preventDefault();
-            chatForm.dispatchEvent(new Event('submit'));
-        }
-    });
-});
-</script>
-}
+                  function escapeHtml(str) {
+                  if (!str) return '';
+                  return String(str).replace(/[&<>"']/g, c => ({
+                  "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;"
+                  }[c]));
+                  }
+
+                  function formatDate(dateStr) {
+                  const d = new Date(dateStr);
+                  const now = new Date();
+                  const diffMs = now - d;
+                  const diffMin = Math.floor(diffMs / 60000);
+                  if (diffMin < 1) return 'Vừa xong';
+                  if (diffMin < 60) return `${diffMin} phút trước`;
+                  const diffHr = Math.floor(diffMin / 60);
+                  if (diffHr < 24) return `${diffHr} giờ trước`;
+                  const diffDay = Math.floor(diffHr / 24);
+                  if (diffDay < 7) return `${diffDay} ngày trước`;
+                  return d.toLocaleDateString('vi-VN');
+                  }
+
+                  chatInput.addEventListener('keydown', function (e) {
+                  if (e.key === 'Enter' && !e.shiftKey) {
+                  e.preventDefault();
+                  chatForm.dispatchEvent(new Event('submit'));
+                  }
+                  });
+                  });
+                </script>
+              }
 
 
