@@ -6,6 +6,7 @@ using BLL.Interfaces.Documents;
 using BLL.Services.Auth;
 using BLL.Services.Chat;
 using BLL.Services.Documents;
+using BLL.Services.Email;
 using DAL.Data;
 using DAL.Interfaces.Auth;
 using DAL.Interfaces.Chat;
@@ -35,7 +36,11 @@ public static class ServiceCollectionExtensions
                 .ConfigureWarnings(w => w.Ignore(RelationalEventId.MultipleCollectionIncludeWarning)));
 
         services.AddDataProtection();
-        services.AddScoped<IEmailService, SmtpEmailService>();
+        services.AddSingleton<IEmailService, SmtpEmailService>();
+        services.Configure<EmailQueueOptions>(
+            configuration.GetSection(EmailQueueOptions.SectionName));
+        services.AddSingleton<IEmailQueue, EmailQueue>();
+        services.AddHostedService<EmailQueueHostedService>();
         services.AddScoped<IAuthRepository, AuthRepository>();
         services.AddScoped<IDocumentRepository, DocumentRepository>();
         services.AddScoped<IUploadJobRepository, UploadJobRepository>();

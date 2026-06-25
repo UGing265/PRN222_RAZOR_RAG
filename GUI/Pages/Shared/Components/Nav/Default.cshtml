@@ -233,9 +233,9 @@
 
                                 <div class="mb-3">
                                     <label for="inputRole" class="form-label small fw-semibold text-muted-foreground">Vai Trò / Đối Tượng</label>
-                                    <select class="form-select pill-input px-3" id="inputRole" style="border-color: rgba(82, 39, 27, 0.12);" disabled>
-                                        <option selected>@Model.RoleLabel</option>
-                                    </select>
+                                    <div class="form-control pill-input px-3 d-flex align-items-center" style="border-color: rgba(82, 39, 27, 0.12); background: rgba(82,39,27,0.03); cursor: not-allowed; color: var(--muted-foreground); pointer-events: none; user-select: none;">
+                                        @Model.RoleLabel
+                                    </div>
                                     <div class="form-text text-muted-foreground" style="font-size: 0.75rem;">Vai trò được cấp bởi hệ thống quản trị.</div>
                                 </div>
 
@@ -530,6 +530,14 @@
     left: 80px !important;
     bottom: 12px !important;
 }
+
+.shell.collapsed .sidebar .collapse {
+    display: none !important;
+}
+
+.shell.collapsed .sidebar [data-bs-toggle="collapse"] {
+    pointer-events: none;
+}
 </style>
 
 <script>
@@ -549,6 +557,21 @@ document.addEventListener("DOMContentLoaded", function() {
                 if (willCollapse) {
                     shell.classList.add('collapsed');
                     localStorage.setItem('sidebar_collapsed', 'true');
+                    
+                    // Force close all open submenus via Bootstrap API
+                    document.querySelectorAll('.sidebar .collapse.show').forEach(el => {
+                        const bsCollapse = bootstrap.Collapse.getInstance(el);
+                        if (bsCollapse) {
+                            bsCollapse.hide();
+                        } else {
+                            el.classList.remove('show');
+                        }
+                    });
+                    
+                    document.querySelectorAll('.sidebar [data-bs-toggle="collapse"]').forEach(el => {
+                        el.setAttribute('aria-expanded', 'false');
+                        el.classList.add('collapsed');
+                    });
                 } else {
                     shell.classList.remove('collapsed');
                     localStorage.setItem('sidebar_collapsed', 'false');
@@ -561,8 +584,9 @@ document.addEventListener("DOMContentLoaded", function() {
     collapses.forEach(c => {
         const id = c.id;
         const state = localStorage.getItem('sidebar_menu_' + id);
+        const isShellCollapsed = shell && shell.classList.contains('collapsed');
         
-        if (state === 'true' && !c.classList.contains('show')) {
+        if (state === 'true' && !c.classList.contains('show') && !isShellCollapsed) {
             c.classList.add('show');
             const btn = document.querySelector(`[aria-controls="${id}"]`);
             if (btn) btn.setAttribute('aria-expanded', 'true');

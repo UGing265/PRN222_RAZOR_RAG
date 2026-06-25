@@ -6,7 +6,7 @@ using System.Security.Claims;
 
 namespace GUI.Pages.Documents;
 
-[Authorize(Roles = "Lecturer,Student")]
+[Authorize(Roles = "Admin,Lecturer,Student")]
 public class DetailsModel : PageModel
 {
     private readonly IDocumentService _documentService;

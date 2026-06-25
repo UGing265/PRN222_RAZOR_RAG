@@ -15,6 +15,9 @@ services:
       # Map file Database.sql vào thư mục init của postgres
       # File này sẽ được tự động chạy khi database khởi tạo lần đầu
       - ./Database/Database.sql:/docker-entrypoint-initdb.d/init.sql
+      # Migration script for admin user verification feature (2026-06-25).
+      # Auto-runs on container init. Idempotent (IF NOT EXISTS) so safe to re-run.
+      - ./Database/migrate_must_change_password.sql:/docker-entrypoint-initdb.d/migrate_must_change_password.sql
     restart: unless-stopped
 
 volumes:

@@ -70,6 +70,11 @@
     .chat-root p { margin-bottom: 0; }
     .chat-root form { margin: 0; }
 
+    /* Fix Tailwind CSS conflicting with Bootstrap's .collapse class */
+    .collapse.show {
+        visibility: visible !important;
+    }
+
     /* ===== Scrollbars ===== */
     .chat-scroll::-webkit-scrollbar { width: 6px; height: 6px; }
     .chat-scroll::-webkit-scrollbar-track { background: transparent; }

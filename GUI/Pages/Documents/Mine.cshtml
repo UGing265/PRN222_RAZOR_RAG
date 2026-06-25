@@ -578,6 +578,99 @@
             input.form.submit();
         }
 
+        // Smooth-animate the upload-job progress bars to their data-target.
+        // - Initial page load: pass no snapshot → every bar slides from 0% up to its target.
+        // - SignalR refresh: refreshJobs() captures the previously-displayed widths and
+        //   passes them as `snapshot`, so each bar continues smoothly from where it was
+        //   (e.g. 16% → 25%) instead of snapping back to 0%.
+        // Browsers do not execute <script> tags injected via innerHTML, so this function
+        // must live in the parent page (not the partial) to run after every refresh.
+        function animateUploadJobBars(snapshot) {
+            const bars = document.querySelectorAll('.job-progress-bar[data-target]');
+            const isRefresh = !!snapshot;
+            bars.forEach(function (bar, i) {
+                const card = bar.closest('.file-card');
+                const fileName = card ? card.dataset.fileName : '';
+                const prev = snapshot && fileName ? snapshot[fileName] : null;
+                const from = prev ? prev.width : 0;
+                const fromLabel = prev ? prev.label : 0;
+                const target = parseFloat(bar.dataset.target) || 0;
+                const label = card?.querySelector('.job-percent-label');
+                const delay = 40 + i * 60; // small stagger per card
+
+                // Suppress the card fade-in / shimmer-restart on refresh — those
+                // re-run on every newly-created DOM node and cause a visible jolt
+                // before the bar can animate to its new target.
+                if (isRefresh && card) {
+                    card.classList.add('no-entry-anim');
+                }
+
+                // SEED: temporarily disable transition so the bar appears at `from`
+                // instantly (no 0.9s fade from 0%). For initial load, from=0 which is
+                // already the CSS default, so the seed is effectively a no-op.
+                bar.style.transition = 'none';
+                bar.style.setProperty('width', from + '%');
+                if (label) label.textContent = Math.round(fromLabel) + '%';
+
+                // Force a reflow so the seed width is committed before we re-enable
+                // the transition. Without this, the browser may batch both width
+                // changes and skip animating from `from` to `target`.
+                void bar.offsetWidth;
+
+                // Re-enable CSS transition (empty string = fall back to stylesheet rule).
+                bar.style.transition = '';
+
+                // ANIMATE: one rAF is enough (transition runs purely via CSS); double-rAF
+                // was causing an extra frame of jitter on slow devices.
+                setTimeout(function () {
+                    requestAnimationFrame(function () {
+                        bar.style.setProperty('width', target + '%');
+                        bar.setAttribute('aria-valuenow', target);
+
+                        if (label) {
+                            const duration = 900;
+                            let startTime = null;
+                            function tick(now) {
+                                if (startTime === null) startTime = now;
+                                const elapsed = now - startTime;
+                                const progress = Math.min(elapsed / duration, 1);
+                                // ease-out cubic
+                                const eased = 1 - Math.pow(1 - progress, 3);
+                                const value = fromLabel + (target - fromLabel) * eased;
+                                label.textContent = Math.round(value) + '%';
+                                if (progress < 1) requestAnimationFrame(tick);
+                            }
+                            requestAnimationFrame(tick);
+                        }
+                    });
+                }, delay);
+            });
+        }
+
+        // Snapshot the currently-displayed bar widths + label values, keyed by file name.
+        // Called from refreshJobs() BEFORE the innerHTML swap so the new bars can
+        // continue from where the old ones were.
+        function snapshotUploadJobBars() {
+            const snap = {};
+            document.querySelectorAll('.upload-job-card[data-file-name]').forEach(function (card) {
+                const bar = card.querySelector('.job-progress-bar[data-target]');
+                const label = card.querySelector('.job-percent-label');
+                if (!bar) return;
+                // Read the live computed width as a percent of the parent .progress container
+                const progressEl = bar.parentElement;
+                const barPx = bar.getBoundingClientRect().width;
+                const progPx = progressEl ? progressEl.getBoundingClientRect().width : 0;
+                const widthPct = progPx > 0 ? (barPx / progPx) * 100 : parseFloat(bar.style.width) || 0;
+                let labelVal = 0;
+                if (label) {
+                    const m = (label.textContent || '').match(/(\d+)/);
+                    if (m) labelVal = parseInt(m[1], 10);
+                }
+                snap[card.dataset.fileName] = { width: widthPct, label: labelVal };
+            });
+            return snap;
+        }
+
         document.addEventListener("DOMContentLoaded", function() {
             const form = document.getElementById('filterForm');
             const container = document.getElementById('resultsContainer');
@@ -742,12 +835,20 @@
 
             const refreshJobs = async () => {
                 try {
+                    // Capture the current bar widths BEFORE we swap the HTML so the new
+                    // bars can continue smoothly from where the old ones were (16% → 25%
+                    // instead of restarting from 0%).
+                    const snapshot = typeof snapshotUploadJobBars === 'function'
+                        ? snapshotUploadJobBars()
+                        : null;
+
                     const response = await fetch('/documents/mine', { headers: { 'X-Requested-With': 'XMLHttpRequest' } });
                     if (!response.ok) return;
                     const html = await response.text();
                     list.innerHTML = html;
                     const items = list.querySelectorAll('[data-upload-job]');
                     count.textContent = `${items.length} TIẾN TRÌNH`;
+                    if (typeof animateUploadJobBars === 'function') animateUploadJobBars(snapshot);
                 } catch (_) {
                 }
             };
@@ -826,6 +927,11 @@
             }
 
             setupSignalRListeners();
+        });
+
+        // Kick off the smooth progress animation on initial page load
+        document.addEventListener("DOMContentLoaded", function () {
+            if (typeof animateUploadJobBars === 'function') animateUploadJobBars();
         });
     </script>
 }

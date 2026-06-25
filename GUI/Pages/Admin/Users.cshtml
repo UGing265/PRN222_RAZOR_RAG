@@ -12,13 +12,18 @@
 
 <div class="page-shell grain">
     <main class="container-fluid px-4 px-md-5 py-5" style="max-width: 1300px;">
+        <!-- Hidden div for AJAX messages -->
+        <div id="ajax-messages" style="display:none;" 
+             data-success="@TempData["SuccessMessage"]" 
+             data-error="@TempData["ErrorMessage"]"></div>
+
         <!-- Top Heading Area -->
         <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center mb-5 gap-4">
             <div>
                 <span class="font-mono-xs text-coral-deep" style="font-weight: 700; letter-spacing: 0.15em;">QUẢN TRỊ VIÊN</span>
                 <h1 class="hero-title mt-2 mb-3" style="font-size: clamp(2.5rem, 5vw, 3.5rem); color: var(--brown); line-height: 1.1;">Quản Lý Thành Viên</h1>
                 <p class="text-muted-foreground mb-3" style="font-size: 15px; font-weight: 400;">Quản lý và cấp quyền tài khoản giảng viên, học sinh trên hệ thống.</p>
-                <div class="d-flex gap-2">
+                <div class="d-flex gap-2" id="admin-user-header-badges">
                     <span class="badge px-3.5 py-2 border-0 rounded-pill text-white" style="background-color: #2b5c43 !important; font-size: 13px; font-weight: 500; font-family: inherit; text-transform: none; letter-spacing: normal;">
                         @activeUsers.Count Đang Hoạt Động
                     </span>
@@ -59,22 +64,22 @@
             <ul class="nav nav-tabs border-0 d-flex gap-2" id="adminTabs" role="tablist" style="font-family: inherit;">
                 <li class="nav-item" role="presentation">
                     <button class="nav-link active pill-button px-4 py-2 text-decoration-none border-0" id="lecturers-tab" data-bs-toggle="tab" data-bs-target="#lecturers" type="button" role="tab" aria-controls="lecturers" aria-selected="true" style="border-radius: 100px;">
-                        Giảng Viên (@activeLecturers.Count)
+                        Giảng Viên (<span id="tab-lecturers-count">@activeLecturers.Count</span>)
                     </button>
                 </li>
                 <li class="nav-item" role="presentation">
                     <button class="nav-link pill-button px-4 py-2 text-decoration-none border-0" id="students-tab" data-bs-toggle="tab" data-bs-target="#students" type="button" role="tab" aria-controls="students" aria-selected="false" style="border-radius: 100px;">
-                        Sinh Viên (@activeStudents.Count)
+                        Sinh Viên (<span id="tab-students-count">@activeStudents.Count</span>)
                     </button>
                 </li>
                 <li class="nav-item" role="presentation">
                     <button class="nav-link pill-button px-4 py-2 text-decoration-none border-0" id="admins-tab" data-bs-toggle="tab" data-bs-target="#admins" type="button" role="tab" aria-controls="admins" aria-selected="false" style="border-radius: 100px;">
-                        Quản Trị (@activeAdmins.Count)
+                        Quản Trị (<span id="tab-admins-count">@activeAdmins.Count</span>)
                     </button>
                 </li>
                 <li class="nav-item" role="presentation">
                     <button class="nav-link pill-button px-4 py-2 text-decoration-none border-0" id="blocked-tab" data-bs-toggle="tab" data-bs-target="#blocked" type="button" role="tab" aria-controls="blocked" aria-selected="false" style="border-radius: 100px;">
-                        Đã Khóa (@blockedUsers.Count)
+                        Đã Khóa (<span id="tab-blocked-count">@blockedUsers.Count</span>)
                     </button>
                 </li>
             </ul>
@@ -89,6 +94,7 @@
             <!-- Lecturers Tab -->
             <div class="tab-pane fade show active" id="lecturers" role="tabpanel" aria-labelledby="lecturers-tab">
                 <div class="soft-panel editorial-shadow p-4 p-md-5" style="background: rgba(255,255,255,.72); border-radius: 24px;">
+                    <div id="admin-lecturers-table-container">
                     @if (!activeLecturers.Any())
                     {
                         <div class="text-center py-5">
@@ -143,12 +149,14 @@
                             </table>
                         </div>
                     }
+                    </div>
                 </div>
             </div>
 
             <!-- Students Tab -->
             <div class="tab-pane fade" id="students" role="tabpanel" aria-labelledby="students-tab">
                 <div class="soft-panel editorial-shadow p-4 p-md-5" style="background: rgba(255,255,255,.72); border-radius: 24px;">
+                    <div id="admin-students-table-container">
                     @if (!activeStudents.Any())
                     {
                         <div class="text-center py-5">
@@ -179,7 +187,25 @@
                                                     <span style="font-size: 15px;">@user.FullName</span>
                                                 </div>
                                             </td>
-                                            <td class="py-3 border-0 text-muted-foreground" style="font-size: 14px;">@user.Email.ToLower()</td>
+                                            <td class="py-3 border-0" style="font-size: 14px;">
+                                                <div class="d-flex flex-column gap-1">
+                                                    <span class="text-muted-foreground">@user.Email.ToLower()</span>
+                                                    @if (user.EmailVerified)
+                                                    {
+                                                        <span class="d-flex align-items-center gap-1" style="color: #2b5c43; font-size: 12px; font-weight: 500;">
+                                                            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
+                                                            Đã xác thực
+                                                        </span>
+                                                    }
+                                                    else
+                                                    {
+                                                        <span class="d-flex align-items-center gap-1" style="color: #d86a58; font-size: 12px; font-weight: 500;">
+                                                            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+                                                            Chưa xác thực
+                                                        </span>
+                                                    }
+                                                </div>
+                                            </td>
                                             <td class="py-3 border-0">
                                                 <span class="badge px-3 py-2 rounded-pill" style="background: rgba(43, 92, 67, 0.08); color: #2b5c43; border: 1px solid rgba(43, 92, 67, 0.15); font-size: 12px; font-weight: 500; text-transform: none; letter-spacing: normal;">Sinh Viên</span>
                                             </td>
@@ -200,12 +226,14 @@
                             </table>
                         </div>
                     }
+                    </div>
                 </div>
             </div>
 
             <!-- Admins Tab -->
             <div class="tab-pane fade" id="admins" role="tabpanel" aria-labelledby="admins-tab">
                 <div class="soft-panel editorial-shadow p-4 p-md-5" style="background: rgba(255,255,255,.72); border-radius: 24px;">
+                    <div id="admin-admins-table-container">
                     @if (!activeAdmins.Any())
                     {
                         <div class="text-center py-5">
@@ -251,12 +279,14 @@
                             </table>
                         </div>
                     }
+                    </div>
                 </div>
             </div>
 
             <!-- Blocked Users Tab -->
             <div class="tab-pane fade" id="blocked" role="tabpanel" aria-labelledby="blocked-tab">
                 <div class="soft-panel editorial-shadow p-4 p-md-5" style="background: rgba(255,255,255,.72); border-radius: 24px;">
+                    <div id="admin-blocked-table-container">
                     @if (!blockedUsers.Any())
                     {
                         <div class="text-center py-5">
@@ -319,6 +349,7 @@
                             </table>
                         </div>
                     }
+                    </div>
                 </div>
             </div>
         </div>
@@ -333,7 +364,7 @@
                 <h5 class="modal-title fw-bold text-foreground" id="createUserModalLabel" style="font-size: 1.25rem;">Tạo Tài Khoản Mới</h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
-            <form asp-page-handler="CreateUser" method="post">
+            <form asp-page-handler="CreateUser" method="post" id="createUserForm">
                 @Html.AntiForgeryToken()
                 <div class="modal-body p-4">
                     <div class="mb-3">
@@ -344,9 +375,8 @@
                         <label for="email" class="form-label font-mono-xs text-muted-foreground" style="font-size: 12px; font-weight: 600; letter-spacing: 0.05em;">EMAIL</label>
                         <input type="email" id="email" name="email" class="form-control pill-input" placeholder="name@example.com" required />
                     </div>
-                    <div class="mb-3">
-                        <label for="password" class="form-label font-mono-xs text-muted-foreground" style="font-size: 12px; font-weight: 600; letter-spacing: 0.05em;">MẬT KHẨU</label>
-                        <input type="password" id="password" name="password" class="form-control pill-input" placeholder="Tối thiểu 6 ký tự" minlength="6" required />
+                    <div class="alert alert-info small mb-3">
+                        Hệ thống sẽ tự động sinh mật khẩu tạm và gửi email xác nhận cho người dùng.
                     </div>
                     <div class="mb-3">
                         <label for="roleId" class="form-label font-mono-xs text-muted-foreground" style="font-size: 12px; font-weight: 600; letter-spacing: 0.05em;">VAI TRÒ</label>
@@ -374,7 +404,7 @@
                 <h5 class="modal-title fw-bold text-foreground" id="importExcelModalLabel" style="font-size: 1.25rem;">Nhập dữ liệu từ Excel</h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
-            <form asp-page-handler="ImportExcel" method="post" enctype="multipart/form-data">
+            <form asp-page-handler="ImportExcel" method="post" enctype="multipart/form-data" id="importExcelForm">
                 @Html.AntiForgeryToken()
                 <div class="modal-body p-4">
                     <div class="mb-3">
@@ -423,6 +453,13 @@
 
     document.addEventListener("DOMContentLoaded", function () {
         const searchInput = document.getElementById('userSearchInput');
+        
+        function reapplySearch() {
+            if (searchInput && searchInput.value.trim() !== '') {
+                searchInput.dispatchEvent(new Event('input'));
+            }
+        }
+
         if (searchInput) {
             let debounceTimer;
             searchInput.addEventListener('input', function () {
@@ -433,7 +470,6 @@
                     const rows = document.querySelectorAll('.tab-content .glass-row');
                     
                     rows.forEach(row => {
-                        // Check text in the row (which includes Name and Email)
                         const text = removeVietnameseTones(row.textContent.toLowerCase());
                         if (text.includes(query)) {
                             row.style.display = '';
@@ -446,12 +482,222 @@
                                 if (row.style.opacity === '0') {
                                     row.style.display = 'none';
                                 }
-                            }, 200); // Wait for transition
+                            }, 200);
                         }
                     });
-                }, 150); // Small debounce for smoother typing feel
+                }, 150);
             });
         }
+
+        function updateContainersFromDoc(doc) {
+            // 1. Swap lecturers container
+            const newLecturers = doc.getElementById('admin-lecturers-table-container');
+            const oldLecturers = document.getElementById('admin-lecturers-table-container');
+            if (newLecturers && oldLecturers) {
+                oldLecturers.style.transition = 'opacity 0.2s ease';
+                oldLecturers.style.opacity = '0';
+                setTimeout(() => {
+                    oldLecturers.innerHTML = newLecturers.innerHTML;
+                    oldLecturers.style.opacity = '1';
+                    reapplySearch();
+                }, 200);
+            }
+            
+            // 2. Swap students container
+            const newStudents = doc.getElementById('admin-students-table-container');
+            const oldStudents = document.getElementById('admin-students-table-container');
+            if (newStudents && oldStudents) {
+                oldStudents.style.transition = 'opacity 0.2s ease';
+                oldStudents.style.opacity = '0';
+                setTimeout(() => {
+                    oldStudents.innerHTML = newStudents.innerHTML;
+                    oldStudents.style.opacity = '1';
+                    reapplySearch();
+                }, 200);
+            }
+
+            // 3. Swap admins container
+            const newAdmins = doc.getElementById('admin-admins-table-container');
+            const oldAdmins = document.getElementById('admin-admins-table-container');
+            if (newAdmins && oldAdmins) {
+                oldAdmins.style.transition = 'opacity 0.2s ease';
+                oldAdmins.style.opacity = '0';
+                setTimeout(() => {
+                    oldAdmins.innerHTML = newAdmins.innerHTML;
+                    oldAdmins.style.opacity = '1';
+                    reapplySearch();
+                }, 200);
+            }
+
+            // 4. Swap blocked container
+            const newBlocked = doc.getElementById('admin-blocked-table-container');
+            const oldBlocked = document.getElementById('admin-blocked-table-container');
+            if (newBlocked && oldBlocked) {
+                oldBlocked.style.transition = 'opacity 0.2s ease';
+                oldBlocked.style.opacity = '0';
+                setTimeout(() => {
+                    oldBlocked.innerHTML = newBlocked.innerHTML;
+                    oldBlocked.style.opacity = '1';
+                    reapplySearch();
+                }, 200);
+            }
+            
+            // 5. Swap header badges
+            const newBadges = doc.getElementById('admin-user-header-badges');
+            const oldBadges = document.getElementById('admin-user-header-badges');
+            if (newBadges && oldBadges) {
+                oldBadges.innerHTML = newBadges.innerHTML;
+            }
+            
+            // 6. Swap tab counts
+            const countIds = ['tab-lecturers-count', 'tab-students-count', 'tab-admins-count', 'tab-blocked-count'];
+            countIds.forEach(id => {
+                const newEl = doc.getElementById(id);
+                const oldEl = document.getElementById(id);
+                if (newEl && oldEl) {
+                    oldEl.textContent = newEl.textContent;
+                }
+            });
+        }
+
+        function fetchAndUpdateUI(url) {
+            return fetch(url, {
+                headers: { 'X-Requested-With': 'XMLHttpRequest' }
+            })
+            .then(res => {
+                if (!res.ok) throw new Error("Fetch failed");
+                return res.text();
+            })
+            .then(html => {
+                const parser = new DOMParser();
+                const doc = parser.parseFromString(html, 'text/html');
+                updateContainersFromDoc(doc);
+            })
+            .catch(err => console.error("AJAX error:", err));
+        }
+
+        function handleFormSubmitAjax(form, successCallback) {
+            const formData = new FormData(form);
+            const action = form.action || window.location.href;
+            
+            const submitBtn = form.querySelector('button[type="submit"]');
+            const originalBtnHtml = submitBtn ? submitBtn.innerHTML : null;
+            if (submitBtn) {
+                submitBtn.disabled = true;
+                submitBtn.innerHTML = '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>';
+            }
+            
+            fetch(action, {
+                method: 'POST',
+                body: formData,
+                headers: {
+                    'X-Requested-With': 'XMLHttpRequest'
+                }
+            })
+            .then(res => {
+                if (!res.ok) throw new Error("Network response was not ok");
+                return res.text();
+            })
+            .then(html => {
+                const parser = new DOMParser();
+                const doc = parser.parseFromString(html, 'text/html');
+                updateContainersFromDoc(doc);
+                if (successCallback) successCallback(doc);
+            })
+            .catch(err => {
+                console.error("AJAX form submission error:", err);
+                showPremiumToast("Có lỗi xảy ra khi thực hiện thao tác.", "danger");
+            })
+            .finally(() => {
+                if (submitBtn) {
+                    submitBtn.disabled = false;
+                    submitBtn.innerHTML = originalBtnHtml;
+                }
+            });
+        }
+
+        // Event delegation for Form Submissions
+        document.addEventListener('submit', function(e) {
+            const form = e.target;
+            if (!form || form.method.toLowerCase() !== 'post') return;
+            
+            // Allow native submission for Excel upload to ensure file is sent correctly and TempData survives
+            if (form.id === 'importExcelForm') {
+                const submitBtn = form.querySelector('button[type="submit"]');
+                if (submitBtn) {
+                    submitBtn.disabled = true;
+                    submitBtn.innerHTML = '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Đang xử lý...';
+                }
+                return;
+            }
+            
+            e.preventDefault();
+            
+            let successMsg = "Đã thực hiện thao tác thành công.";
+            let isModalForm = false;
+            let modalId = "";
+            
+            const actionAttrLower = (form.getAttribute('action') || '').toLowerCase();
+            const actionPropLower = (form.action || '').toLowerCase();
+            
+            if (actionAttrLower.includes('handler=rejectorblock') || actionPropLower.includes('handler=rejectorblock')) {
+                successMsg = "Đã thực hiện thao tác thành công.";
+            } else if (actionAttrLower.includes('handler=unblock') || actionPropLower.includes('handler=unblock')) {
+                successMsg = "Đã mở khóa tài khoản thành công.";
+            } else if (form.id === 'createUserForm' || actionAttrLower.includes('handler=createuser') || actionPropLower.includes('handler=createuser')) {
+                successMsg = "Đã tạo tài khoản mới thành công.";
+                isModalForm = true;
+                modalId = 'createUserModal';
+            } else if (form.id === 'importExcelForm' || actionAttrLower.includes('handler=importexcel') || actionPropLower.includes('handler=importexcel')) {
+                successMsg = "Đã import dữ liệu Excel thành công.";
+                isModalForm = true;
+                modalId = 'importExcelModal';
+            }
+            
+            handleFormSubmitAjax(form, function(doc) {
+                if (isModalForm) {
+                    const modalEl = document.getElementById(modalId);
+                    if (modalEl) {
+                        const modal = bootstrap.Modal.getInstance(modalEl);
+                        if (modal) modal.hide();
+                    }
+                    form.reset();
+                }
+                
+                const newMsgs = doc.getElementById('ajax-messages');
+                let toastShown = false;
+                if (newMsgs) {
+                    const succ = newMsgs.getAttribute('data-success');
+                    const err = newMsgs.getAttribute('data-error');
+                    if (err) {
+                        showPremiumToast(err, "danger");
+                        toastShown = true;
+                    } else if (succ) {
+                        showPremiumToast(succ, "success");
+                        toastShown = true;
+                    }
+                }
+                
+                if (!toastShown && successMsg) {
+                    showPremiumToast(successMsg, "success");
+                }
+            });
+        });
+
+        // SignalR Real-time Updates
+        function setupSignalRAdmin() {
+            const connection = window.signalrConnection;
+            if (!connection) {
+                setTimeout(setupSignalRAdmin, 100);
+                return;
+            }
+            
+            connection.on("ReceiveAuditLogCreated", function () {
+                console.log("ReceiveAuditLogCreated: Refreshing admin users list...");
+                fetchAndUpdateUI(window.location.href);
+            });
+        }
+        setupSignalRAdmin();
     });
 </script>
 

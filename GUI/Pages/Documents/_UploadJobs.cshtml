@@ -1,22 +1,109 @@
 @model List<GUI.Pages.Documents.UploadJobViewModel>
 
+<style>
+    @@keyframes shimmer {
+        0% { background-position: -200% center; }
+        100% { background-position: 200% center; }
+    }
+
+    @@keyframes jobFadeIn {
+        from { opacity: 0; transform: translateY(10px); }
+        to   { opacity: 1; transform: translateY(0); }
+    }
+
+    @@keyframes pulse-dot {
+        0%, 100% { opacity: 1; transform: scale(1); }
+        50%       { opacity: 0.5; transform: scale(0.8); }
+    }
+
+    .upload-job-card {
+        animation: jobFadeIn 0.35s cubic-bezier(0.16, 1, 0.3, 1) both;
+    }
+
+    .upload-job-card:nth-child(1) { animation-delay: 0ms; }
+    .upload-job-card:nth-child(2) { animation-delay: 60ms; }
+    .upload-job-card:nth-child(3) { animation-delay: 120ms; }
+    .upload-job-card:nth-child(4) { animation-delay: 180ms; }
+
+    /* When the partial is replaced via SignalR refresh, suppress the entry animations
+       so the cards don't fade-in / shimmer-restart and cause a visible jolt every
+       time the bar continues to a new target. Applied by Mine.cshtml on refresh. */
+    .upload-job-card.no-entry-anim {
+        animation: none;
+    }
+    .upload-job-card.no-entry-anim .job-progress-bar {
+        animation: none;
+    }
+
+    .job-progress-bar {
+        /* Start at 0; animateUploadJobBars() in Mine.cshtml slides to data-target on load + SignalR refresh */
+        width: 0%;
+        transition: width 0.9s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+        background: linear-gradient(
+            90deg,
+            #d86a58 0%,
+            #4a1f16 45%,
+            #d86a58 55%,
+            #4a1f16 100%
+        );
+        background-size: 200% auto;
+        animation: shimmer 2.2s linear infinite;
+    }
+
+    .job-progress-bar.done {
+        animation: none;
+        background: linear-gradient(90deg, #2b5c43, #3a7a5b);
+    }
+
+    .job-progress-bar.failed {
+        animation: none;
+        background: linear-gradient(90deg, #dc3545, #9b1c2a);
+    }
+
+    .job-status-dot {
+        width: 8px; height: 8px;
+        border-radius: 50%;
+        display: inline-block;
+        margin-right: 5px;
+        animation: pulse-dot 1.4s ease-in-out infinite;
+    }
+    .job-status-dot.done   { background: #2b5c43; animation: none; }
+    .job-status-dot.failed { background: #dc3545; animation: none; }
+    .job-status-dot.active { background: #d86a58; }
+</style>
+
 @if (Model.Any())
 {
     foreach (var job in Model.OrderByDescending(x => x.UpdatedAt))
     {
-        var barWidth = Math.Clamp(job.ProgressPercent, 0, 100);
-        <div class="file-card" data-upload-job="true">
-            <div class="d-flex justify-content-between gap-3 mb-2">
-                <div class="fw-semibold text-truncate">@job.FileName</div>
-                <span class="font-mono-xs text-muted-foreground">@barWidth%</span>
+        var barWidth   = Math.Clamp(job.ProgressPercent, 0, 100);
+        var statusLow  = (job.Status ?? "").ToLower();
+        var isDone     = statusLow is "completed" or "success" or "done";
+        var isFailed   = statusLow is "failed" or "error";
+        var barClass   = isDone ? "done" : isFailed ? "failed" : "";
+        var dotClass   = isDone ? "done" : isFailed ? "failed" : "active";
+
+        <div class="file-card upload-job-card" data-upload-job="true" data-file-name="@job.FileName">
+            <div class="d-flex justify-content-between gap-3 mb-2 align-items-center">
+                <div class="fw-semibold text-truncate" style="font-size: 0.92rem;">@job.FileName</div>
+                <span class="font-mono-xs text-muted-foreground flex-shrink-0 job-percent-label" style="font-size: 0.78rem;" data-target="@barWidth">0%</span>
             </div>
-            <div class="progress mb-2" style="height: 8px; border-radius: 9999px; background: rgba(82,39,27,.08);">
-                <div class="progress-bar" role="progressbar"
-                     style="width: @barWidth%; background: linear-gradient(90deg, #d86a58, #4a1f16);"></div>
+            <div class="progress mb-2" style="height: 7px; border-radius: 9999px; background: rgba(82,39,27,.08); overflow: hidden;">
+                <div class="progress-bar job-progress-bar @barClass"
+                     role="progressbar"
+                     data-target="@barWidth"
+                     style="width: 0%;"
+                     aria-valuenow="0"
+                     aria-valuemin="0"
+                     aria-valuemax="100">
+                </div>
             </div>
-            <div class="d-flex justify-content-between gap-3 small text-muted-foreground">
-                <span>@(string.IsNullOrWhiteSpace(job.Message) ? "Đang xử lý" : job.Message)</span>
-                <span>@job.Status</span>
+            <div class="d-flex justify-content-between gap-3 small text-muted-foreground align-items-center">
+                <span class="d-flex align-items-center">
+                    <span class="job-status-dot @dotClass"></span>
+                    @(string.IsNullOrWhiteSpace(job.Message) ? "Đang xử lý" : job.Message)
+                </span>
+                <span class="font-mono-xs" style="font-size: 0.72rem; letter-spacing: 0.04em; text-transform: uppercase;">@job.Status</span>
             </div>
         </div>
     }

@@ -210,6 +210,8 @@ CREATE TABLE public.users (
     avatar_url text,
     is_active boolean DEFAULT true NOT NULL,
     is_blocked boolean DEFAULT false NOT NULL,
+    must_change_password boolean DEFAULT false NOT NULL,
+    password_changed_at timestamp with time zone,
     created_at timestamp with time zone DEFAULT now() NOT NULL,
     updated_at timestamp with time zone DEFAULT now() NOT NULL
 );
