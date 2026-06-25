@@ -66,12 +66,10 @@ public class DocumentCreateViewModel
     [Required(ErrorMessage = "Vui lòng chọn môn học.")]
     public Guid? SubjectId { get; set; }
 
-    [Required(ErrorMessage = "Vui lòng chọn loại học liệu.")]
     public Guid? DocumentTypeId { get; set; }
 
     public Guid? AcademicTermId { get; set; }
 
-    [Required(ErrorMessage = "Vui lòng chọn ngôn ngữ.")]
     public Guid? LanguageId { get; set; }
 
     [Required(ErrorMessage = "Vui lòng chọn quyền hiển thị.")]
@@ -134,12 +132,10 @@ public class DocumentEditViewModel
     [Required(ErrorMessage = "Vui lòng chọn môn học.")]
     public Guid? SubjectId { get; set; }
 
-    [Required(ErrorMessage = "Vui lòng chọn loại học liệu.")]
     public Guid? DocumentTypeId { get; set; }
 
     public Guid? AcademicTermId { get; set; }
 
-    [Required(ErrorMessage = "Vui lòng chọn ngôn ngữ.")]
     public Guid? LanguageId { get; set; }
 
     [Required(ErrorMessage = "Vui lòng chọn quyền hiển thị.")]

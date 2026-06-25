@@ -49,11 +49,13 @@
                             {
                                 var isChecked = Model.AssignedSubjectIds.Contains(subject.Id);
                                 var isAssignedToOther = Model.SubjectLecturerMap.TryGetValue(subject.Id, out var lecturerInfo) && lecturerInfo.UserId != Model.Lecturer?.Id;
+                                var hasNoTerm = !subject.AcademicTermId.HasValue;
+                                var isDisabled = isAssignedToOther || hasNoTerm;
                                 
-                                <tr class="subject-row" style="transition: background 0.2s; @(isAssignedToOther ? "opacity: 0.65;" : "")">
+                                <tr class="subject-row" style="transition: background 0.2s; @(isDisabled ? "opacity: 0.65;" : "")">
                                     <td class="ps-3 py-3 border-0">
                                         <div class="form-check">
-                                            @if (isAssignedToOther)
+                                            @if (isDisabled)
                                             {
                                                 <input class="form-check-input" type="checkbox" disabled="disabled" style="width: 18px; height: 18px; cursor: not-allowed;" />
                                             }
@@ -64,7 +66,7 @@
                                         </div>
                                     </td>
                                     <td class="py-3 border-0 fw-medium" style="font-size: 14px;">
-                                        @if (isAssignedToOther)
+                                        @if (isDisabled)
                                         {
                                             <span>@subject.Code</span>
                                         }
@@ -74,12 +76,21 @@
                                         }
                                     </td>
                                     <td class="py-3 border-0 text-muted-foreground" style="font-size: 14px;">
-                                        @if (isAssignedToOther)
+                                        @if (isDisabled)
                                         {
                                             <span>@subject.Name</span>
-                                            <span class="badge rounded-pill ms-2 px-2.5 py-1" style="background: rgba(139, 0, 0, 0.08); color: #8b0000; font-size: 11px; font-weight: 500; border: 1px solid rgba(139, 0, 0, 0.12); text-transform: none; letter-spacing: normal;">
-                                                Đã phân công cho: @lecturerInfo.FullName
-                                            </span>
+                                            @if (hasNoTerm)
+                                            {
+                                                <span class="badge rounded-pill ms-2 px-2.5 py-1" style="background: rgba(108, 117, 125, 0.08); color: #6c757d; font-size: 11px; font-weight: 500; border: 1px solid rgba(108, 117, 125, 0.2); text-transform: none; letter-spacing: normal;">
+                                                    Chưa có kỳ
+                                                </span>
+                                            }
+                                            else if (isAssignedToOther)
+                                            {
+                                                <span class="badge rounded-pill ms-2 px-2.5 py-1" style="background: rgba(139, 0, 0, 0.08); color: #8b0000; font-size: 11px; font-weight: 500; border: 1px solid rgba(139, 0, 0, 0.12); text-transform: none; letter-spacing: normal;">
+                                                    Đã phân công cho: @lecturerInfo.FullName
+                                                </span>
+                                            }
                                         }
                                         else
                                         {

@@ -228,9 +228,9 @@
                                 <input type="text" class="form-control pill-input" id="subName" name="name" placeholder="Ví dụ: C# and .NET Programming" required style="background: rgba(255,255,255,0.5); border: 1px solid rgba(82, 39, 27, 0.08); border-radius: 12px; padding: 12px 16px; font-size: 14px;" />
                             </div>
                             <div class="mb-4">
-                                <label for="subTermId" class="form-label text-muted-foreground" style="font-size: 13px; font-weight: 600;">Học Kỳ</label>
-                                <select class="form-select pill-input" id="subTermId" name="academicTermId" required style="background: rgba(255,255,255,0.5); border: 1px solid rgba(82, 39, 27, 0.08); border-radius: 12px; padding: 12px 16px; font-size: 14px;">
-                                    <option value="">Chọn Học Kỳ</option>
+                                <label for="subTermId" class="form-label text-muted-foreground" style="font-size: 13px; font-weight: 600;">Học Kỳ (Tuỳ Chọn)</label>
+                                <select class="form-select pill-input" id="subTermId" name="academicTermId" style="background: rgba(255,255,255,0.5); border: 1px solid rgba(82, 39, 27, 0.08); border-radius: 12px; padding: 12px 16px; font-size: 14px;">
+                                    <option value="">Không Chọn</option>
                                     @foreach (var term in Model.AcademicTerms)
                                     {
                                         <option value="@term.Id">@term.Name</option>
@@ -263,9 +263,9 @@
                                     <input type="text" class="form-control pill-input" id="editSubjectName" name="name" required style="border-radius: 12px; padding: 10px 16px; font-size: 14px;" />
                                 </div>
                                 <div class="mb-3">
-                                    <label class="form-label text-muted-foreground" style="font-size: 13px; font-weight: 600;">Học Kỳ</label>
-                                    <select class="form-select pill-input" id="editSubjectTermId" name="academicTermId" required style="border-radius: 12px; padding: 10px 16px; font-size: 14px;">
-                                        <option value="">Chọn Học Kỳ</option>
+                                    <label class="form-label text-muted-foreground" style="font-size: 13px; font-weight: 600;">Học Kỳ (Tuỳ Chọn)</label>
+                                    <select class="form-select pill-input" id="editSubjectTermId" name="academicTermId" style="border-radius: 12px; padding: 10px 16px; font-size: 14px;">
+                                        <option value="">Không Chọn</option>
                                         @foreach (var term in Model.AcademicTerms)
                                         {
                                             <option value="@term.Id">@term.Name</option>

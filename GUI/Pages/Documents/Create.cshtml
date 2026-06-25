@@ -219,10 +219,10 @@
 
                             <div class="col-md-6">
                                 <label asp-for="Input.DocumentTypeId" class="form-label font-mono-xs text-muted-foreground mb-1"
-                                       style="font-size: 9px; letter-spacing: 0.08em;">LOẠI HỌC LIỆU</label>
+                                       style="font-size: 9px; letter-spacing: 0.08em;">LOẠI HỌC LIỆU (TUỲ CHỌN)</label>
                                 <select asp-for="Input.DocumentTypeId" id="DocumentTypeId" class="form-select form-glass-select"
                                         asp-items="@(new SelectList(Model.DocumentTypes, "Id", "Name"))">
-                                    <option value="">Chọn Loại Học Liệu</option>
+                                    <option value="">Không Chọn</option>
                                 </select>
                                 <span asp-validation-for="Input.DocumentTypeId" class="text-danger small"></span>
                             </div>
@@ -230,28 +230,28 @@
                                 <label asp-for="Input.AcademicTermId" class="form-label font-mono-xs text-muted-foreground mb-1"
                                        style="font-size: 9px; letter-spacing: 0.08em;">HỌC KỲ</label>
                                 <select asp-for="Input.AcademicTermId" id="AcademicTermId" class="form-select form-glass-select"
-                                        asp-items="@(new SelectList(Model.AcademicTerms, "Id", "Name"))">
-                                    <option value="">Chọn Học Kỳ</option>
+                                        disabled asp-items="@(new SelectList(Model.AcademicTerms, "Id", "Name"))">
+                                    <option value="">Chưa Có Kỳ</option>
                                 </select>
                                 <span asp-validation-for="Input.AcademicTermId" class="text-danger small"></span>
                             </div>
                             <div class="col-md-6">
                                 <label asp-for="Input.LanguageId" class="form-label font-mono-xs text-muted-foreground mb-1"
-                                       style="font-size: 9px; letter-spacing: 0.08em;">NGÔN NGỮ</label>
+                                       style="font-size: 9px; letter-spacing: 0.08em;">NGÔN NGỮ (TUỲ CHỌN)</label>
                                 <select asp-for="Input.LanguageId" id="LanguageId" class="form-select form-glass-select"
                                         asp-items="@(new SelectList(Model.Languages, "Id", "Name"))">
-                                    <option value="">Chọn Ngôn Ngữ</option>
+                                    <option value="">Không Chọn</option>
                                 </select>
                                 <span asp-validation-for="Input.LanguageId" class="text-danger small"></span>
                             </div>
                             <div class="col-md-6">
                                 <label asp-for="Input.DocumentSourceId"
                                        class="form-label font-mono-xs text-muted-foreground mb-1"
-                                       style="font-size: 9px; letter-spacing: 0.08em;">NGUỒN TÀI LIỆU</label>
+                                       style="font-size: 9px; letter-spacing: 0.08em;">NGUỒN TÀI LIỆU (TUỲ CHỌN)</label>
                                 <select asp-for="Input.DocumentSourceId" id="DocumentSourceId"
                                         class="form-select form-glass-select"
                                         asp-items="@(new SelectList(Model.DocumentSources, "Id", "Name"))">
-                                    <option value="">Chọn Nguồn (Tuỳ Chọn)</option>
+                                    <option value="">Không Chọn</option>
                                 </select>
                                 <span asp-validation-for="Input.DocumentSourceId" class="text-danger small"></span>
                             </div>
@@ -596,12 +596,12 @@
                                     errorAlert.className = 'alert alert-danger alert-dismissible fade show mt-3 alert-dynamic-upload';
                                     errorAlert.role = 'alert';
                                     errorAlert.innerHTML = `
-                                                            <strong>Lỗi tải lên:</strong>
-                                                            <ul class="mb-0 mt-1">
-                                                                ${data.errors.map(err => `<li>${err}</li>`).join('')}
-                                                            </ul>
-                                                            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-                                                        `;
+                                                                            <strong>Lỗi tải lên:</strong>
+                                                                            <ul class="mb-0 mt-1">
+                                                                                ${data.errors.map(err => `<li>${err}</li>`).join('')}
+                                                                            </ul>
+                                                                            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                                                                        `;
                                     form.insertBefore(errorAlert, form.firstChild);
                                     return;
                                 }
@@ -620,9 +620,9 @@
                                 errorAlert.className = 'alert alert-danger alert-dismissible fade show mt-3 alert-dynamic-upload';
                                 errorAlert.role = 'alert';
                                 errorAlert.innerHTML = `
-                                                        <strong>Lỗi hệ thống:</strong> ${error.message || 'Có lỗi xảy ra trong quá trình upload.'}
-                                                        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-                                                    `;
+                                                                        <strong>Lỗi hệ thống:</strong> ${error.message || 'Có lỗi xảy ra trong quá trình upload.'}
+                                                                        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                                                                    `;
                                 form.insertBefore(errorAlert, form.firstChild);
                             }
                         });
@@ -673,6 +673,11 @@
                                         break;
                                     }
                                 }
+                            } else if (subVal && !subjectToTerm[subVal]) {
+                                termEl.selectedIndex = 0;
+                                isProgrammaticTermChange = true;
+                                termEl.dispatchEvent(new Event('change'));
+                                isProgrammaticTermChange = false;
                             }
                         });
 
@@ -842,7 +847,7 @@
                                 }
                                 var defaultSourceOpt = document.createElement('option');
                                 defaultSourceOpt.value = '';
-                                defaultSourceOpt.textContent = 'Chọn Nguồn (Tuỳ Chọn)';
+                                defaultSourceOpt.textContent = 'Chọn Nguồn';
                                 docSourceEl.add(defaultSourceOpt);
 
                                 newDocSources.forEach(function (ds) {

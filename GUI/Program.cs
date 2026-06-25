@@ -80,19 +80,6 @@ builder.Services.AddAuthorization();
 
 var app = builder.Build();
 
-// Seed initial data
-using (var scope = app.Services.CreateScope())
-{
-    var documentService = scope.ServiceProvider.GetRequiredService<BLL.Interfaces.Documents.IDocumentService>();
-    try
-    {
-        await documentService.SeedInitialDataAsync();
-    }
-    catch (Exception ex)
-    {
-        Console.WriteLine($"Database initialization failed: {ex.Message}");
-    }
-}
 
 // Configure the HTTP request pipeline.
 if (!app.Environment.IsDevelopment())
