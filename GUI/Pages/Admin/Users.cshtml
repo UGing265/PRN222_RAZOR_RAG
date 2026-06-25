@@ -12,6 +12,11 @@
 
 <div class="page-shell grain">
     <main class="container-fluid px-4 px-md-5 py-5" style="max-width: 1300px;">
+        <!-- Hidden div for AJAX messages -->
+        <div id="ajax-messages" style="display:none;" 
+             data-success="@TempData["SuccessMessage"]" 
+             data-error="@TempData["ErrorMessage"]"></div>
+
         <!-- Top Heading Area -->
         <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center mb-5 gap-4">
             <div>
@@ -182,7 +187,25 @@
                                                     <span style="font-size: 15px;">@user.FullName</span>
                                                 </div>
                                             </td>
-                                            <td class="py-3 border-0 text-muted-foreground" style="font-size: 14px;">@user.Email.ToLower()</td>
+                                            <td class="py-3 border-0" style="font-size: 14px;">
+                                                <div class="d-flex flex-column gap-1">
+                                                    <span class="text-muted-foreground">@user.Email.ToLower()</span>
+                                                    @if (user.EmailVerified)
+                                                    {
+                                                        <span class="d-flex align-items-center gap-1" style="color: #2b5c43; font-size: 12px; font-weight: 500;">
+                                                            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
+                                                            Đã xác thực
+                                                        </span>
+                                                    }
+                                                    else
+                                                    {
+                                                        <span class="d-flex align-items-center gap-1" style="color: #d86a58; font-size: 12px; font-weight: 500;">
+                                                            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+                                                            Chưa xác thực
+                                                        </span>
+                                                    }
+                                                </div>
+                                            </td>
                                             <td class="py-3 border-0">
                                                 <span class="badge px-3 py-2 rounded-pill" style="background: rgba(43, 92, 67, 0.08); color: #2b5c43; border: 1px solid rgba(43, 92, 67, 0.15); font-size: 12px; font-weight: 500; text-transform: none; letter-spacing: normal;">Sinh Viên</span>
                                             </td>
@@ -598,6 +621,16 @@
             const form = e.target;
             if (!form || form.method.toLowerCase() !== 'post') return;
             
+            // Allow native submission for Excel upload to ensure file is sent correctly and TempData survives
+            if (form.id === 'importExcelForm') {
+                const submitBtn = form.querySelector('button[type="submit"]');
+                if (submitBtn) {
+                    submitBtn.disabled = true;
+                    submitBtn.innerHTML = '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Đang xử lý...';
+                }
+                return;
+            }
+            
             e.preventDefault();
             
             let successMsg = "Đã thực hiện thao tác thành công.";
@@ -621,7 +654,7 @@
                 modalId = 'importExcelModal';
             }
             
-            handleFormSubmitAjax(form, function() {
+            handleFormSubmitAjax(form, function(doc) {
                 if (isModalForm) {
                     const modalEl = document.getElementById(modalId);
                     if (modalEl) {
@@ -630,7 +663,24 @@
                     }
                     form.reset();
                 }
-                showPremiumToast(successMsg, "success");
+                
+                const newMsgs = doc.getElementById('ajax-messages');
+                let toastShown = false;
+                if (newMsgs) {
+                    const succ = newMsgs.getAttribute('data-success');
+                    const err = newMsgs.getAttribute('data-error');
+                    if (err) {
+                        showPremiumToast(err, "danger");
+                        toastShown = true;
+                    } else if (succ) {
+                        showPremiumToast(succ, "success");
+                        toastShown = true;
+                    }
+                }
+                
+                if (!toastShown && successMsg) {
+                    showPremiumToast(successMsg, "success");
+                }
             });
         });
 

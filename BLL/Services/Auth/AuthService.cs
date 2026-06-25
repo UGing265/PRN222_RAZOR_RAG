@@ -63,7 +63,7 @@ public class AuthService : IAuthService
             Email = normalizedEmail,
             PasswordHash = passwordHash,
             RoleId = roleId,
-            IsActive = false,
+            IsActive = true,
             IsBlocked = false,
             EmailVerified = false,
             MustChangePassword = true,
@@ -77,7 +77,13 @@ public class AuthService : IAuthService
         var verificationUrl = $"{_appBaseUrl.TrimEnd('/')}/Auth/VerifyEmail?token={Uri.EscapeDataString(verificationToken)}";
 
         var subject = "[FPT RAG] Bạn đã được cấp quyền truy cập hệ thống";
-        var roleName = created.Role?.Name ?? roleId.ToString();
+        var roleName = created.Role?.Name ?? roleId switch
+        {
+            1 => "Admin",
+            2 => "Giảng viên",
+            3 => "Sinh viên",
+            _ => $"ID: {roleId}"
+        };
         var body = BuildWelcomeEmailBody(created.FullName, roleName, normalizedEmail, tempPassword, verificationUrl);
 
         _emailQueue.Enqueue(new EmailJob(normalizedEmail, subject, body));
@@ -191,7 +197,7 @@ public class AuthService : IAuthService
                 throw new InvalidOperationException("Tài khoản của bạn đã bị khóa.");
             }
 
-            if (!user.IsActive)
+            if (!user.EmailVerified || !user.IsActive)
             {
                 user.IsActive = true;
                 user.EmailVerified = true;
@@ -425,6 +431,19 @@ public class AuthService : IAuthService
                 try
                 {
                     await _authRepository.AddUserAsync(user, cancellationToken);
+                    
+                    try
+                    {
+                        var token = await _tokenService.GenerateEmailVerificationTokenAsync(user.Id, cancellationToken);
+                        await _emailService.SendEmailVerificationAsync(user.Email, user.FullName, password, token, cancellationToken);
+                    }
+                    catch (Exception emailEx)
+                    {
+                        _logger.LogWarning(emailEx, "User created but failed to send email to {Email}", user.Email);
+                        // We still count it as a success since the account was created, but log a warning.
+                        errors.Add($"Dòng {i + 1}: Tạo tài khoản thành công nhưng không thể gửi email.");
+                    }
+                    
                     successCount++;
                 }
                 catch (Exception ex)
@@ -482,17 +501,50 @@ public class AuthService : IAuthService
     private static string BuildWelcomeEmailBody(
         string fullName, string roleName, string email, string tempPassword, string verificationUrl)
     {
-        return $@"<p>Xin ch&agrave;o <strong>{System.Net.WebUtility.HtmlEncode(fullName)}</strong>,</p>
-<p>B&#7841;n v&#7915;a &#273;&#432;&#7907;c Admin c&#7845;p t&agrave;i kho&#7843;n truy c&#7853;p <strong>FPT RAG System</strong> v&#7899;i vai tr&ograve; <strong>{System.Net.WebUtility.HtmlEncode(roleName)}</strong>.</p>
-<p><strong>Th&ocirc;ng tin &#273;&#259;ng nh&#7853;p t&#7841;m:</strong><br>
-Email: <code>{System.Net.WebUtility.HtmlEncode(email)}</code><br>
-M&#7853;t kh&#7849;u t&#7841;m: <code>{System.Net.WebUtility.HtmlEncode(tempPassword)}</code>
-</p>
-<p><strong>B&#432;&#7899;c 1:</strong> Click link x&aacute;c nh&#7853;n trong v&ograve;ng 15 ph&uacute;t:<br>
-<a href=""{verificationUrl}"">{verificationUrl}</a>
-</p>
-<p><strong>B&#432;&#7899;c 2:</strong> &#272;&#259;ng nh&#7853;p b&#7851;ng m&#7853;t kh&#7849;u t&#7841;m &#7903; tr&ecirc;n.</p>
-<p><strong>B&#432;&#7899;c 3:</strong> H&#7879; th&#7889;ng s&#7869; y&ecirc;u c&#7847;u b&#7841;n &#273;&#7893;i m&#7853;t kh&#7849;u tr&#432;&#7899;c khi s&#7917; d&#7909;ng.</p>";
+        var encodedName = System.Net.WebUtility.HtmlEncode(fullName);
+        var encodedRole = System.Net.WebUtility.HtmlEncode(roleName);
+        var encodedEmail = System.Net.WebUtility.HtmlEncode(email);
+        var encodedPass = System.Net.WebUtility.HtmlEncode(tempPassword);
+
+        return $@"
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset=""utf-8"">
+</head>
+<body style=""font-family: 'Inter', Helvetica, Arial, sans-serif; background-color: #FAF9F6; padding: 30px 10px; color: #27272A; margin: 0;"">
+    <div style=""max-width: 550px; margin: 0 auto; background-color: #ffffff; border-radius: 12px; border: 1px solid #E4E4E7; overflow: hidden; box-shadow: 0 4px 20px rgba(0,0,0,0.03);"">
+        <div style=""background-color: #18181B; padding: 25px; text-align: center;"">
+            <h2 style=""color: #ffffff; margin: 0; font-family: 'Source Serif 4', Georgia, serif; font-weight: 500; font-size: 24px; letter-spacing: -0.02em;"">FPT RAG System</h2>
+        </div>
+        <div style=""padding: 35px;"">
+            <p style=""font-size: 16px; margin-top: 0; margin-bottom: 20px;"">Xin chào <strong>{encodedName}</strong>,</p>
+            <p style=""font-size: 15px; color: #52525B; line-height: 1.6;"">Bạn vừa được cấp tài khoản truy cập vào hệ thống <strong>FPT RAG System</strong> với vai trò là <strong>{encodedRole}</strong>.</p>
+            
+            <div style=""background-color: #F4F4F5; border-radius: 8px; padding: 20px; margin: 25px 0; border: 1px solid #E4E4E7;"">
+                <p style=""margin: 0 0 10px 0; font-size: 12px; text-transform: uppercase; letter-spacing: 1px; color: #71717A; font-weight: 600;"">Thông tin đăng nhập tạm thời</p>
+                <p style=""margin: 5px 0; font-size: 15px;"">Email: <strong style=""color: #09090B;"">{encodedEmail}</strong></p>
+                <p style=""margin: 5px 0; font-size: 15px;"">Mật khẩu: <strong style=""color: #09090B;"">{encodedPass}</strong></p>
+            </div>
+
+            <p style=""font-size: 15px; color: #52525B; margin-bottom: 12px;"">Vui lòng thực hiện các bước sau để kích hoạt:</p>
+            <ol style=""font-size: 15px; color: #52525B; padding-left: 20px; line-height: 1.7; margin-top: 0;"">
+                <li>Click vào nút xác nhận bên dưới (có hiệu lực trong 15 phút).</li>
+                <li>Đăng nhập bằng mật khẩu tạm thời.</li>
+                <li>Hệ thống sẽ yêu cầu bạn cập nhật mật khẩu mới.</li>
+            </ol>
+
+            <div style=""text-align: center; margin: 35px 0 20px 0;"">
+                <a href=""{verificationUrl}"" style=""background-color: #18181B; color: #ffffff; text-decoration: none; padding: 14px 28px; border-radius: 6px; font-weight: 500; display: inline-block; font-size: 15px;"">Xác Nhận Tài Khoản</a>
+            </div>
+
+            <hr style=""border: none; border-top: 1px solid #E4E4E7; margin: 30px 0;"">
+            <p style=""font-size: 12px; color: #A1A1AA; text-align: center; margin: 0;"">Nếu nút bấm không hoạt động, vui lòng copy đường dẫn sau:</p>
+            <p style=""font-size: 12px; color: #A1A1AA; text-align: center; margin: 8px 0; word-break: break-all;""><a href=""{verificationUrl}"" style=""color: #71717A;"">{verificationUrl}</a></p>
+        </div>
+    </div>
+</body>
+</html>";
     }
 
     private static string GetCellValueSafe(NPOI.SS.UserModel.ICell cell)
