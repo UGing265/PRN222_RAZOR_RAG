@@ -34,12 +34,12 @@ public class DocumentService : IDocumentService
     private readonly INotificationService _notificationService;
 
     public DocumentService(
-        IDocumentRepository documentRepository, 
-        IConfiguration configuration, 
-        IFileParserService fileParserService, 
-        IEmbeddingService embeddingService, 
-        IChapterSegmentationService chapterSegmentationService, 
-        IS3StorageService s3StorageService, 
+        IDocumentRepository documentRepository,
+        IConfiguration configuration,
+        IFileParserService fileParserService,
+        IEmbeddingService embeddingService,
+        IChapterSegmentationService chapterSegmentationService,
+        IS3StorageService s3StorageService,
         IUploadJobRepository uploadJobRepository,
         INotificationService notificationService)
     {
@@ -115,7 +115,7 @@ public class DocumentService : IDocumentService
 
             SubjectId = input.SubjectId,
             DocumentTypeId = input.DocumentTypeId,
-            AcademicTermId = input.AcademicTermId,
+            AcademicTermId = null, // Will be set below
             LanguageId = input.LanguageId,
             Visibility = input.Visibility ?? "school_wide",
             DocumentSourceId = input.DocumentSourceId,
@@ -130,8 +130,18 @@ public class DocumentService : IDocumentService
             ApprovedAt = null
         };
 
+        if (document.SubjectId.HasValue)
+        {
+            var subject = await _documentRepository.GetSubjectWithRelationsAsync(document.SubjectId.Value, cancellationToken);
+            if (subject != null && !subject.AcademicTermId.HasValue)
+            {
+                throw new InvalidOperationException("Môn học này chưa được phân vào Học kỳ nào. Không thể tải lên tài liệu.");
+            }
+            document.AcademicTermId = subject?.AcademicTermId;
+        }
+
         var saved = await _documentRepository.AddDocumentAsync(document, cancellationToken);
-        
+
         var auditLog = new DAL.Entities.AuditLog
         {
             UserId = input.OwnerUserId,
@@ -143,7 +153,7 @@ public class DocumentService : IDocumentService
         };
         await _documentRepository.AddAuditLogAsync(auditLog, cancellationToken);
         await _notificationService.SendAuditLogCreatedAsync(cancellationToken);
-        
+
         return new DocumentCreateResultDto { Id = saved.Id, Slug = saved.Slug ?? string.Empty };
     }
 
@@ -489,8 +499,8 @@ public class DocumentService : IDocumentService
 
         var documentIds = documents.Select(x => x.Id).ToList();
         var previewTexts = await _documentRepository.GetPreviewTextsAsync(documentIds, cancellationToken);
-        
-        var bookmarkedIds = requesterUserId.HasValue 
+
+        var bookmarkedIds = requesterUserId.HasValue
             ? await _documentRepository.GetBookmarkedDocumentIdsAsync(requesterUserId.Value, documentIds, cancellationToken)
             : new List<Guid>();
 
@@ -723,7 +733,21 @@ public class DocumentService : IDocumentService
 
         document.SubjectId = input.SubjectId;
         document.DocumentTypeId = input.DocumentTypeId;
-        document.AcademicTermId = input.AcademicTermId;
+        
+        if (document.SubjectId.HasValue)
+        {
+            var subject = await _documentRepository.GetSubjectWithRelationsAsync(document.SubjectId.Value, cancellationToken);
+            if (subject != null && !subject.AcademicTermId.HasValue)
+            {
+                throw new InvalidOperationException("Môn học này chưa được phân vào Học kỳ nào. Không thể gắn tài liệu vào môn học này.");
+            }
+            document.AcademicTermId = subject?.AcademicTermId;
+        }
+        else
+        {
+            document.AcademicTermId = null;
+        }
+
         document.LanguageId = input.LanguageId;
         document.Visibility = input.Visibility;
         document.DocumentSourceId = input.DocumentSourceId;
@@ -770,13 +794,13 @@ public class DocumentService : IDocumentService
             cancellationToken
         );
 
-        return subjects.Select(s => new SubjectDto 
-        { 
-            Id = s.Id, 
-            Code = s.Code, 
-            Name = s.Name, 
+        return subjects.Select(s => new SubjectDto
+        {
+            Id = s.Id,
+            Code = s.Code,
+            Name = s.Name,
             AcademicTermId = s.AcademicTermId,
-            CreatedAt = s.CreatedAt 
+            CreatedAt = s.CreatedAt
         }).ToList();
     }
 
@@ -849,7 +873,7 @@ public class DocumentService : IDocumentService
         subject.Code = normalizedCode;
         subject.Name = trimmedName;
         subject.AcademicTermId = academicTermId;
-        
+
         await _documentRepository.UpdateSubjectAsync(subject, cancellationToken);
         await _documentRepository.SaveChangesAsync(cancellationToken);
         return new SubjectDto { Id = subject.Id, Code = subject.Code, Name = subject.Name, AcademicTermId = subject.AcademicTermId, CreatedAt = subject.CreatedAt };
@@ -857,8 +881,13 @@ public class DocumentService : IDocumentService
 
     public async Task<bool> DeleteSubjectAsync(Guid id, CancellationToken cancellationToken = default)
     {
-        var subject = await _documentRepository.GetSubjectAsync(id, cancellationToken);
+        var subject = await _documentRepository.GetSubjectWithRelationsAsync(id, cancellationToken);
         if (subject == null) return false;
+
+        if (subject.Documents.Any())
+        {
+            throw new InvalidOperationException("Không thể xoá môn học này vì đã có tài liệu liên kết.");
+        }
 
         await _documentRepository.DeleteSubjectAsync(subject, cancellationToken);
         await _documentRepository.SaveChangesAsync(cancellationToken);
@@ -905,17 +934,22 @@ public class DocumentService : IDocumentService
 
         docType.Name = trimmedName;
         docType.Description = description?.Trim();
-        
+
         await _documentRepository.UpdateDocumentTypeAsync(docType, cancellationToken);
         await _documentRepository.SaveChangesAsync(cancellationToken);
-        
+
         return new DocumentTypeDto { Id = docType.Id, Name = docType.Name, Description = docType.Description, CreatedAt = docType.CreatedAt };
     }
 
     public async Task<bool> DeleteDocumentTypeAsync(Guid id, CancellationToken cancellationToken = default)
     {
-        var docType = await _documentRepository.GetDocumentTypeAsync(id, cancellationToken);
+        var docType = await _documentRepository.GetDocumentTypeWithRelationsAsync(id, cancellationToken);
         if (docType == null) return false;
+
+        if (docType.Documents.Any())
+        {
+            throw new InvalidOperationException("Không thể xoá loại học liệu này vì đã có tài liệu liên kết.");
+        }
 
         await _documentRepository.DeleteDocumentTypeAsync(docType, cancellationToken);
         await _documentRepository.SaveChangesAsync(cancellationToken);
@@ -983,8 +1017,13 @@ public class DocumentService : IDocumentService
 
     public async Task<bool> DeleteLanguageAsync(Guid id, CancellationToken cancellationToken = default)
     {
-        var language = await _documentRepository.GetLanguageAsync(id, cancellationToken);
+        var language = await _documentRepository.GetLanguageWithRelationsAsync(id, cancellationToken);
         if (language == null) return false;
+
+        if (language.Documents.Any())
+        {
+            throw new InvalidOperationException("Không thể xoá ngôn ngữ này vì đã có tài liệu liên kết.");
+        }
 
         await _documentRepository.DeleteLanguageAsync(language, cancellationToken);
         await _documentRepository.SaveChangesAsync(cancellationToken);
@@ -1038,8 +1077,13 @@ public class DocumentService : IDocumentService
 
     public async Task<bool> DeleteDocumentSourceAsync(Guid id, CancellationToken cancellationToken = default)
     {
-        var source = await _documentRepository.GetDocumentSourceAsync(id, cancellationToken);
+        var source = await _documentRepository.GetDocumentSourceWithRelationsAsync(id, cancellationToken);
         if (source == null) return false;
+
+        if (source.Documents.Any())
+        {
+            throw new InvalidOperationException("Không thể xoá nguồn tài liệu này vì đã có tài liệu liên kết.");
+        }
 
         await _documentRepository.DeleteDocumentSourceAsync(source, cancellationToken);
         await _documentRepository.SaveChangesAsync(cancellationToken);
@@ -1097,8 +1141,13 @@ public class DocumentService : IDocumentService
 
     public async Task<bool> DeleteAcademicTermAsync(Guid id, CancellationToken cancellationToken = default)
     {
-        var term = await _documentRepository.GetAcademicTermAsync(id, cancellationToken);
+        var term = await _documentRepository.GetAcademicTermWithRelationsAsync(id, cancellationToken);
         if (term == null) return false;
+
+        if (term.Subjects.Any() || term.Documents.Any())
+        {
+            throw new InvalidOperationException("Không thể xoá kì học này vì đã có môn học hoặc tài liệu liên kết.");
+        }
 
         await _documentRepository.DeleteAcademicTermAsync(term, cancellationToken);
         await _documentRepository.SaveChangesAsync(cancellationToken);
@@ -1218,7 +1267,7 @@ public class DocumentService : IDocumentService
     {
         pageSize = Math.Clamp(pageSize, 5, 100);
         page = Math.Max(page, 1);
-        
+
         var totalDocuments = await _documentRepository.CountAdminDocumentsAsync(query, subjectId, cancellationToken);
         var totalPages = Math.Max(1, (int)Math.Ceiling(totalDocuments / (double)pageSize));
         page = Math.Clamp(page, 1, totalPages);
@@ -1263,63 +1312,18 @@ public class DocumentService : IDocumentService
         };
     }
 
-    public async Task SeedInitialDataAsync(CancellationToken cancellationToken = default)
-    {
-        var dbContext = (_documentRepository as DAL.Repositories.Documents.DocumentRepository)?.GetDbContext();
-        if (dbContext == null) return;
 
-        string ddlSql = @"
-            CREATE EXTENSION IF NOT EXISTS ""uuid-ossp"";
-
-            ALTER TABLE public.users ADD COLUMN IF NOT EXISTS is_blocked boolean DEFAULT false NOT NULL;
-
-            CREATE TABLE IF NOT EXISTS public.document_sources (
-                id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-                name VARCHAR(200) NOT NULL UNIQUE,
-                created_at TIMESTAMP WITH TIME ZONE DEFAULT now() NOT NULL
-            );
-
-            CREATE TABLE IF NOT EXISTS public.academic_terms (
-                id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-                name VARCHAR(200) NOT NULL UNIQUE,
-                term_order INT NOT NULL DEFAULT 0,
-                created_at TIMESTAMP WITH TIME ZONE DEFAULT now() NOT NULL
-            );
-
-            INSERT INTO public.document_sources (name) VALUES 
-            ('Tự soạn'),
-            ('Giáo trình'),
-            ('Sưu tầm'),
-            ('Tham khảo'),
-            ('Đề thi gốc')
-            ON CONFLICT (name) DO NOTHING;
-
-            INSERT INTO public.academic_terms (name, term_order) VALUES 
-            ('Tiếng Anh Chuẩn Bị', 0),
-            ('Kỳ 1', 1),
-            ('Kỳ 2', 2),
-            ('Kỳ 3', 3),
-            ('Kỳ 4', 4),
-            ('Kỳ 5', 5),
-            ('Kỳ 6', 6),
-            ('Kỳ 7', 7),
-            ('Kỳ 8', 8),
-            ('Kỳ 9', 9)
-            ON CONFLICT (name) DO NOTHING;
-        ";
-        await Microsoft.EntityFrameworkCore.RelationalDatabaseFacadeExtensions.ExecuteSqlRawAsync(dbContext.Database, ddlSql, cancellationToken);
-    }
 
     public async Task<List<SubjectDto>> GetSubjectsAssignedToLecturerAsync(Guid userId, CancellationToken cancellationToken = default)
     {
         var subjects = await _documentRepository.GetSubjectsAssignedToLecturerAsync(userId, cancellationToken);
-        return subjects.Select(s => new SubjectDto 
-        { 
-            Id = s.Id, 
-            Code = s.Code, 
-            Name = s.Name, 
-            AcademicTermId = s.AcademicTermId, 
-            CreatedAt = s.CreatedAt 
+        return subjects.Select(s => new SubjectDto
+        {
+            Id = s.Id,
+            Code = s.Code,
+            Name = s.Name,
+            AcademicTermId = s.AcademicTermId,
+            CreatedAt = s.CreatedAt
         }).ToList();
     }
 

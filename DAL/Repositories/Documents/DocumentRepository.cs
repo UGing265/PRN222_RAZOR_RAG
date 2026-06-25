@@ -483,6 +483,11 @@ public class DocumentRepository : IDocumentRepository
     public Task<Subject?> GetSubjectAsync(Guid id, CancellationToken cancellationToken = default)
         => _dbContext.Subjects.FirstOrDefaultAsync(x => x.Id == id, cancellationToken);
 
+    public Task<Subject?> GetSubjectWithRelationsAsync(Guid id, CancellationToken cancellationToken = default)
+        => _dbContext.Subjects
+            .Include(x => x.Documents)
+            .FirstOrDefaultAsync(x => x.Id == id, cancellationToken);
+
     public Task UpdateSubjectAsync(Subject subject, CancellationToken cancellationToken = default)
     {
         _dbContext.Subjects.Update(subject);
@@ -503,6 +508,11 @@ public class DocumentRepository : IDocumentRepository
 
     public Task<DocumentType?> GetDocumentTypeAsync(Guid id, CancellationToken cancellationToken = default)
         => _dbContext.DocumentTypes.FirstOrDefaultAsync(x => x.Id == id, cancellationToken);
+
+    public Task<DocumentType?> GetDocumentTypeWithRelationsAsync(Guid id, CancellationToken cancellationToken = default)
+        => _dbContext.DocumentTypes
+            .Include(x => x.Documents)
+            .FirstOrDefaultAsync(x => x.Id == id, cancellationToken);
 
     public Task UpdateDocumentTypeAsync(DocumentType documentType, CancellationToken cancellationToken = default)
     {
@@ -525,6 +535,11 @@ public class DocumentRepository : IDocumentRepository
     public Task<Language?> GetLanguageAsync(Guid id, CancellationToken cancellationToken = default)
         => _dbContext.Languages.FirstOrDefaultAsync(x => x.Id == id, cancellationToken);
 
+    public Task<Language?> GetLanguageWithRelationsAsync(Guid id, CancellationToken cancellationToken = default)
+        => _dbContext.Languages
+            .Include(x => x.Documents)
+            .FirstOrDefaultAsync(x => x.Id == id, cancellationToken);
+
     public Task UpdateLanguageAsync(Language language, CancellationToken cancellationToken = default)
     {
         _dbContext.Languages.Update(language);
@@ -546,6 +561,11 @@ public class DocumentRepository : IDocumentRepository
     public Task<DocumentSource?> GetDocumentSourceAsync(Guid id, CancellationToken cancellationToken = default)
         => _dbContext.DocumentSources.FirstOrDefaultAsync(x => x.Id == id, cancellationToken);
 
+    public Task<DocumentSource?> GetDocumentSourceWithRelationsAsync(Guid id, CancellationToken cancellationToken = default)
+        => _dbContext.DocumentSources
+            .Include(x => x.Documents)
+            .FirstOrDefaultAsync(x => x.Id == id, cancellationToken);
+
     public Task UpdateDocumentSourceAsync(DocumentSource source, CancellationToken cancellationToken = default)
     {
         _dbContext.DocumentSources.Update(source);
@@ -566,6 +586,12 @@ public class DocumentRepository : IDocumentRepository
 
     public Task<AcademicTerm?> GetAcademicTermAsync(Guid id, CancellationToken cancellationToken = default)
         => _dbContext.AcademicTerms.FirstOrDefaultAsync(x => x.Id == id, cancellationToken);
+
+    public Task<AcademicTerm?> GetAcademicTermWithRelationsAsync(Guid id, CancellationToken cancellationToken = default)
+        => _dbContext.AcademicTerms
+            .Include(x => x.Subjects)
+            .Include(x => x.Documents)
+            .FirstOrDefaultAsync(x => x.Id == id, cancellationToken);
 
     public Task UpdateAcademicTermAsync(AcademicTerm term, CancellationToken cancellationToken = default)
     {

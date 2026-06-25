@@ -38,19 +38,20 @@ public class CreateModel : PageModel
     {
         if (userId.HasValue && User.IsInRole("Lecturer"))
         {
-            Subjects = await _documentService.GetSubjectsAssignedToLecturerAsync(userId.Value, cancellationToken);
+            var assigned = await _documentService.GetSubjectsAssignedToLecturerAsync(userId.Value, cancellationToken);
+            Subjects = assigned.Where(s => s.AcademicTermId.HasValue).ToList();
         }
         else
         {
-            Subjects = await _documentService.GetSubjectsAsync(cancellationToken);
+            var all = await _documentService.GetSubjectsAsync(cancellationToken);
+            Subjects = all.Where(s => s.AcademicTermId.HasValue).ToList();
         }
 
         DocumentTypes = await _documentService.GetDocumentTypesAsync(cancellationToken);
         Languages = await _documentService.GetLanguagesAsync(cancellationToken);
         DocumentSources = await _documentService.GetDocumentSourcesAsync(cancellationToken);
         var terms = await _documentService.GetAcademicTermsAsync(cancellationToken);
-        var subjectTermIds = Subjects.Where(s => s.AcademicTermId.HasValue).Select(s => s.AcademicTermId.Value).ToHashSet();
-        AcademicTerms = terms.Where(t => subjectTermIds.Contains(t.Id)).ToList();
+        AcademicTerms = terms.ToList();
         SubjectTermMapJson = System.Text.Json.JsonSerializer.Serialize(
             Subjects.Where(s => s.AcademicTermId.HasValue)
                     .ToDictionary(s => s.Id.ToString().ToLowerInvariant(), s => s.AcademicTermId.Value.ToString().ToLowerInvariant())
@@ -77,14 +78,14 @@ public class CreateModel : PageModel
             return Unauthorized();
         }
 
-        var subjects = await _documentService.GetSubjectsAssignedToLecturerAsync(userId, cancellationToken);
+        var allAssigned = await _documentService.GetSubjectsAssignedToLecturerAsync(userId, cancellationToken);
+        var subjects = allAssigned.Where(s => s.AcademicTermId.HasValue).ToList();
         var documentTypes = await _documentService.GetDocumentTypesAsync(cancellationToken);
         var languages = await _documentService.GetLanguagesAsync(cancellationToken);
         var documentSources = await _documentService.GetDocumentSourcesAsync(cancellationToken);
         
         var terms = await _documentService.GetAcademicTermsAsync(cancellationToken);
-        var subjectTermIds = subjects.Where(s => s.AcademicTermId.HasValue).Select(s => s.AcademicTermId.Value).ToHashSet();
-        var academicTerms = terms.Where(t => subjectTermIds.Contains(t.Id)).ToList();
+        var academicTerms = terms.ToList();
 
         var subjectTermMap = subjects.Where(s => s.AcademicTermId.HasValue)
             .ToDictionary(s => s.Id.ToString().ToLowerInvariant(), s => s.AcademicTermId.Value.ToString().ToLowerInvariant());
