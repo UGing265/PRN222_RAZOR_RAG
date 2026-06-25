@@ -530,6 +530,14 @@
     left: 80px !important;
     bottom: 12px !important;
 }
+
+.shell.collapsed .sidebar .collapse {
+    display: none !important;
+}
+
+.shell.collapsed .sidebar [data-bs-toggle="collapse"] {
+    pointer-events: none;
+}
 </style>
 
 <script>
@@ -549,6 +557,21 @@ document.addEventListener("DOMContentLoaded", function() {
                 if (willCollapse) {
                     shell.classList.add('collapsed');
                     localStorage.setItem('sidebar_collapsed', 'true');
+                    
+                    // Force close all open submenus via Bootstrap API
+                    document.querySelectorAll('.sidebar .collapse.show').forEach(el => {
+                        const bsCollapse = bootstrap.Collapse.getInstance(el);
+                        if (bsCollapse) {
+                            bsCollapse.hide();
+                        } else {
+                            el.classList.remove('show');
+                        }
+                    });
+                    
+                    document.querySelectorAll('.sidebar [data-bs-toggle="collapse"]').forEach(el => {
+                        el.setAttribute('aria-expanded', 'false');
+                        el.classList.add('collapsed');
+                    });
                 } else {
                     shell.classList.remove('collapsed');
                     localStorage.setItem('sidebar_collapsed', 'false');
@@ -561,8 +584,9 @@ document.addEventListener("DOMContentLoaded", function() {
     collapses.forEach(c => {
         const id = c.id;
         const state = localStorage.getItem('sidebar_menu_' + id);
+        const isShellCollapsed = shell && shell.classList.contains('collapsed');
         
-        if (state === 'true' && !c.classList.contains('show')) {
+        if (state === 'true' && !c.classList.contains('show') && !isShellCollapsed) {
             c.classList.add('show');
             const btn = document.querySelector(`[aria-controls="${id}"]`);
             if (btn) btn.setAttribute('aria-expanded', 'true');

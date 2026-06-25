@@ -434,14 +434,25 @@ public class AuthService : IAuthService
                     
                     try
                     {
-                        var token = await _tokenService.GenerateEmailVerificationTokenAsync(user.Id, cancellationToken);
-                        await _emailService.SendEmailVerificationAsync(user.Email, user.FullName, password, token, cancellationToken);
+                        var verificationToken = GenerateEmailVerificationToken(normalizedEmail);
+                        var verificationUrl = $"{_appBaseUrl.TrimEnd('/')}/Auth/VerifyEmail?token={Uri.EscapeDataString(verificationToken)}";
+
+                        var subject = "[FPT RAG] Bạn đã được cấp quyền truy cập hệ thống";
+                        var roleName = roleId switch
+                        {
+                            1 => "Admin",
+                            2 => "Giảng viên",
+                            3 => "Sinh viên",
+                            _ => $"ID: {roleId}"
+                        };
+                        var body = BuildWelcomeEmailBody(user.FullName, roleName, normalizedEmail, password, verificationUrl);
+
+                        _emailQueue.Enqueue(new EmailJob(normalizedEmail, subject, body));
                     }
                     catch (Exception emailEx)
                     {
-                        _logger.LogWarning(emailEx, "User created but failed to send email to {Email}", user.Email);
                         // We still count it as a success since the account was created, but log a warning.
-                        errors.Add($"Dòng {i + 1}: Tạo tài khoản thành công nhưng không thể gửi email.");
+                        errors.Add($"Dòng {i + 1}: Tạo tài khoản thành công nhưng không thể thêm email vào hàng đợi. Lỗi: {emailEx.Message}");
                     }
                     
                     successCount++;
