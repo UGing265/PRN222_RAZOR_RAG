@@ -12,7 +12,7 @@ public class AdminMetadataViewModel
     public List<DocumentTypeDto> DocumentTypes { get; set; } = new();
     public List<LanguageDto> Languages { get; set; } = new();
     public List<DocumentSourceDto> DocumentSources { get; set; } = new();
-    public List<AcademicTermDto> AcademicTerms { get; set; } = new();
+
 }
 
 public class AllDocumentsViewModel
@@ -68,7 +68,7 @@ public class DocumentCreateViewModel
 
     public Guid? DocumentTypeId { get; set; }
 
-    public Guid? AcademicTermId { get; set; }
+
 
     public Guid? LanguageId { get; set; }
 
@@ -97,7 +97,7 @@ public class DocumentDetailsViewModel
     public string? MajorCode { get; set; }
     public Guid? DocumentTypeId { get; set; }
     public string? DocumentTypeName { get; set; }
-    public string? AcademicTermName { get; set; }
+
     public string? Visibility { get; set; }
     public Guid? LanguageId { get; set; }
     public string? LanguageCode { get; set; }
@@ -134,7 +134,7 @@ public class DocumentEditViewModel
 
     public Guid? DocumentTypeId { get; set; }
 
-    public Guid? AcademicTermId { get; set; }
+
 
     public Guid? LanguageId { get; set; }
 
@@ -168,7 +168,7 @@ public class DocumentListItemViewModel
     public string? MajorName { get; set; }
     public Guid? DocumentTypeId { get; set; }
     public string? DocumentTypeName { get; set; }
-    public string? AcademicTermName { get; set; }
+
     public string Status { get; set; } = string.Empty;
     public int FileCount { get; set; }
     public int ChunkCount { get; set; }

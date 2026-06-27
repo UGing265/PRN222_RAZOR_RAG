@@ -234,11 +234,8 @@
 
         <div style="display: grid; grid-template-columns: 2fr 1.2fr 1.2fr 1.2fr; gap: 12px; margin-bottom: 24px;">
             <input id="nameQ" placeholder="Tên tài liệu..." style="height: 44px; border-radius: 12px; background: var(--bg); padding: 0 16px; font-size: 0.92rem; border: 1px solid var(--border); outline: none; color: var(--foreground);" />
-            <select id="semesterFilter" class="form-select" style="height: 44px; border-radius: 12px; background: var(--bg); border: 1px solid var(--border); color: var(--foreground);">
-                <option value="">Tất cả học kỳ</option>
-            </select>
             <select id="subjectFilter" class="form-select" style="height: 44px; border-radius: 12px; background: var(--bg); border: 1px solid var(--border); color: var(--foreground);">
-                <option value="">Chọn kỳ trước</option>
+                <option value="">Tất cả môn học</option>
             </select>
             <select id="materialFilter" class="form-select" style="height: 44px; border-radius: 12px; background: var(--bg); border: 1px solid var(--border); color: var(--foreground);">
                 <option value="">Tất cả loại</option>
@@ -262,25 +259,15 @@
             {
                 id = d.Id,
                 title = d.Title,
-                semester = d.AcademicTermName ?? "Chưa xác định",
                 subject = d.SubjectCode ?? d.SubjectName ?? "Chưa xác định",
                 material = d.DocumentTypeName ?? "Chưa xác định"
             })));
 
-            const SEMESTERS = [...new Set(DOCS.map(d => d.semester))].filter(Boolean).sort();
+            const SUBJECTS = [...new Set(DOCS.map(d => d.subject))].filter(Boolean).sort();
             const MATERIAL_TYPES = [...new Set(DOCS.map(d => d.material))].filter(Boolean).sort();
-            const SUBJECTS_BY_SEMESTER = {};
-            DOCS.forEach(d => {
-                if (!SUBJECTS_BY_SEMESTER[d.semester]) SUBJECTS_BY_SEMESTER[d.semester] = new Set();
-                SUBJECTS_BY_SEMESTER[d.semester].add(d.subject);
-            });
-            Object.keys(SUBJECTS_BY_SEMESTER).forEach(k => {
-                SUBJECTS_BY_SEMESTER[k] = [...SUBJECTS_BY_SEMESTER[k]].sort();
-            });
 
             // ── DOM refs ──
             const nameQ = document.getElementById("nameQ");
-            const semesterFilter = document.getElementById("semesterFilter");
             const subjectFilter = document.getElementById("subjectFilter");
             const materialFilter = document.getElementById("materialFilter");
             const modalBody = document.getElementById("modal-body");
@@ -327,11 +314,11 @@
 
             // ── Setup Filters for Modal ──
             function initFilters() {
-                SEMESTERS.forEach(s => semesterFilter.insertAdjacentHTML("beforeend", `<option value="${escapeHtml(s)}">${escapeHtml(s)}</option>`));
+                SUBJECTS.forEach(s => subjectFilter.insertAdjacentHTML("beforeend", `<option value="${escapeHtml(s)}">${escapeHtml(s)}</option>`));
                 MATERIAL_TYPES.forEach(x => materialFilter.insertAdjacentHTML("beforeend", `<option value="${escapeHtml(x)}">${escapeHtml(x)}</option>`));
 
                 if (window.reinitGlassDropdown) {
-                    window.reinitGlassDropdown('semesterFilter');
+                    window.reinitGlassDropdown('subjectFilter');
                     window.reinitGlassDropdown('materialFilter');
                 }
             }
@@ -342,22 +329,6 @@
                     '&': '&amp;', '<': '&lt;', '>': '&gt;', "'": '&#39;', '"': '&quot;'
                 }[tag]));
             }
-
-            semesterFilter.addEventListener('change', function () {
-                const sem = this.value;
-                subjectFilter.innerHTML = `<option value="">-- Chọn kỳ trước --</option>`;
-                if (sem) {
-                    (SUBJECTS_BY_SEMESTER[sem] || []).forEach(s => {
-                        subjectFilter.insertAdjacentHTML("beforeend", `<option value="${escapeHtml(s)}">${escapeHtml(s)}</option>`);
-                    });
-                }
-
-                if (window.reinitGlassDropdown) {
-                    window.reinitGlassDropdown('subjectFilter');
-                }
-
-                renderModal();
-            });
 
             subjectFilter.addEventListener('change', renderModal);
             materialFilter.addEventListener('change', renderModal);
@@ -374,16 +345,14 @@
 
             function renderModal() {
                 const q = nameQ.value.toLowerCase();
-                const sem = semesterFilter.value;
                 const sub = subjectFilter.value;
                 const mat = materialFilter.value;
 
                 const filtered = DOCS.filter(d => {
                     const matchQ = d.title.toLowerCase().includes(q) || d.subject.toLowerCase().includes(q);
-                    const matchSem = !sem || d.semester === sem;
                     const matchSub = !sub || d.subject === sub;
                     const matchMat = !mat || d.material === mat;
-                    return matchQ && matchSem && matchSub && matchMat;
+                    return matchQ && matchSub && matchMat;
                 }).slice(0, 50);
 
                 let html = `<div style="font-size: 0.75rem; font-weight: 600; letter-spacing: 0.05em; color: var(--muted-foreground);">KẾT QUẢ (${filtered.length})</div>`;

@@ -26,27 +26,20 @@ public abstract class MetadataPageModelBase : PageModel
         Logger = logger;
     }
 
-    /// <summary>Shared lookups required by the Subjects create form (and similar).</summary>
-    public List<AcademicTermDto> AcademicTerms { get; set; } = new();
+
 
     public int SubjectsCount { get; set; }
     public int DocumentTypesCount { get; set; }
     public int LanguagesCount { get; set; }
     public int DocumentSourcesCount { get; set; }
-    public int AcademicTermsCount { get; set; }
 
     public virtual async Task<IActionResult> OnGetAsync(CancellationToken cancellationToken)
     {
         var subjects = await DocumentService.GetSubjectsAsync(cancellationToken);
-        var terms = await DocumentService.GetAcademicTermsAsync(cancellationToken);
         var langs = await DocumentService.GetLanguagesAsync(cancellationToken);
         var types = await DocumentService.GetDocumentTypesAsync(cancellationToken);
         var sources = await DocumentService.GetDocumentSourcesAsync(cancellationToken);
-
-        AcademicTerms = terms;
-        
         SubjectsCount = subjects.Count;
-        AcademicTermsCount = terms.Count;
         LanguagesCount = langs.Count;
         DocumentTypesCount = types.Count;
         DocumentSourcesCount = sources.Count;

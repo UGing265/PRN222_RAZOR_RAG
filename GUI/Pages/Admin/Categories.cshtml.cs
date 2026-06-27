@@ -25,12 +25,12 @@ public class CategoriesModel : PageModel
     public List<DocumentTypeDto> DocumentTypes { get; set; } = new();
     public List<LanguageDto> Languages { get; set; } = new();
     public List<DocumentSourceDto> DocumentSources { get; set; } = new();
-    public List<AcademicTermDto> AcademicTerms { get; set; } = new();
+
 
     public async Task<IActionResult> OnGetAsync(CancellationToken cancellationToken)
     {
         Subjects = await _documentService.GetSubjectsAsync(cancellationToken);
-        AcademicTerms = await _documentService.GetAcademicTermsAsync(cancellationToken);
+
         Languages = await _documentService.GetLanguagesAsync(cancellationToken);
         DocumentTypes = await _documentService.GetDocumentTypesAsync(cancellationToken);
         DocumentSources = await _documentService.GetDocumentSourcesAsync(cancellationToken);
@@ -56,7 +56,7 @@ public class CategoriesModel : PageModel
     }
 
     // SUBJECTS
-    public Task<IActionResult> OnPostCreateSubjectAsync(string code, string name, Guid? academicTermId, CancellationToken ct)
+    public Task<IActionResult> OnPostCreateSubjectAsync(string code, string name, CancellationToken ct)
     {
         if (string.IsNullOrWhiteSpace(code) || string.IsNullOrWhiteSpace(name))
         {
@@ -64,12 +64,12 @@ public class CategoriesModel : PageModel
             return Task.FromResult<IActionResult>(RedirectToPage("/Admin/Categories"));
         }
         return ExecuteActionAsync(
-            () => _documentService.CreateSubjectAsync(code, name, academicTermId, ct),
+            () => _documentService.CreateSubjectAsync(code, name, ct),
             $"Đã tạo mới môn học '{code.ToUpper()}' thành công."
         );
     }
 
-    public Task<IActionResult> OnPostUpdateSubjectAsync(Guid id, string code, string name, Guid? academicTermId, CancellationToken ct)
+    public Task<IActionResult> OnPostUpdateSubjectAsync(Guid id, string code, string name, CancellationToken ct)
     {
         if (string.IsNullOrWhiteSpace(code) || string.IsNullOrWhiteSpace(name))
         {
@@ -78,7 +78,7 @@ public class CategoriesModel : PageModel
         }
         return ExecuteActionAsync(
             async () => {
-                var res = await _documentService.UpdateSubjectAsync(id, code, name, academicTermId, ct);
+                var res = await _documentService.UpdateSubjectAsync(id, code, name, ct);
                 if (res == null) throw new InvalidOperationException("Không tìm thấy môn học.");
             },
             $"Đã cập nhật môn học '{code.ToUpper()}' thành công."
@@ -227,46 +227,5 @@ public class CategoriesModel : PageModel
         );
     }
 
-    // ACADEMIC TERMS
-    public Task<IActionResult> OnPostCreateAcademicTermAsync(string name, int order, CancellationToken ct)
-    {
-        if (string.IsNullOrWhiteSpace(name))
-        {
-            SetError("Tên học kỳ không được để trống.");
-            return Task.FromResult<IActionResult>(RedirectToPage("/Admin/Categories"));
-        }
-        return ExecuteActionAsync(
-            () => _documentService.CreateAcademicTermAsync(name, order, ct),
-            $"Đã tạo mới học kỳ '{name}' thành công."
-        );
-    }
 
-    public Task<IActionResult> OnPostUpdateAcademicTermAsync(Guid id, string name, int order, CancellationToken ct)
-    {
-        if (string.IsNullOrWhiteSpace(name))
-        {
-            SetError("Tên học kỳ không được để trống.");
-            return Task.FromResult<IActionResult>(RedirectToPage("/Admin/Categories"));
-        }
-        return ExecuteActionAsync(
-            async () => {
-                var res = await _documentService.UpdateAcademicTermAsync(id, name, order, ct);
-                if (res == null) throw new InvalidOperationException("Không tìm thấy học kỳ.");
-            },
-            $"Đã cập nhật học kỳ '{name}' thành công."
-        );
-    }
-
-    public Task<IActionResult> OnPostDeleteAcademicTermAsync(Guid id, CancellationToken ct)
-    {
-        return ExecuteActionAsync(
-            async () => {
-                var ok = await _documentService.DeleteAcademicTermAsync(id, ct);
-                if (!ok) throw new InvalidOperationException("Không tìm thấy hoặc không thể xóa học kỳ (đang bị ràng buộc dữ liệu).");
-            },
-            "Đã xóa học kỳ thành công.",
-            "Delete",
-            new { entityId = id, entityType = "AcademicTerm" }
-        );
-    }
 }

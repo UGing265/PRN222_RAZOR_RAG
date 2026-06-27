@@ -466,11 +466,8 @@
                 <div style="display: grid; grid-template-columns: 2fr 1.2fr 1.2fr 1.2fr; gap: 12px; margin-bottom: 24px;">
                   <input id="nameQ" placeholder="Tên tài liệu..."
                          style="height: 44px; border-radius: 12px; background: var(--card); padding: 0 16px; font-size: 0.92rem; border: 1px solid var(--border); outline: none; color: var(--foreground);" />
-                  <select id="semesterFilter" class="form-glass-select w-100">
-                    <option value="">Tất cả học kỳ</option>
-                  </select>
                   <select id="subjectFilter" class="form-glass-select w-100">
-                    <option value="">Chọn kỳ trước</option>
+                    <option value="">Tất cả môn học</option>
                   </select>
                   <select id="materialFilter" class="form-glass-select w-100">
                     <option value="">Tất cả loại</option>
@@ -524,22 +521,13 @@
                   {
                     id = d.Id,
                     name = d.Title,
-                    semester = d.AcademicTermName ?? "Chưa xác định",
                     subject = d.SubjectCode ?? d.SubjectName ?? "Chưa xác định",
                     material = d.DocumentTypeName ?? "Chưa xác định"
                   })));
 
                   // Extract unique filter options
-                  const SEMESTERS = [...new Set(DOCS.map(d => d.semester))].filter(Boolean).sort();
+                  const SUBJECTS = [...new Set(DOCS.map(d => d.subject))].filter(Boolean).sort();
                   const MATERIAL_TYPES = [...new Set(DOCS.map(d => d.material))].filter(Boolean).sort();
-                  const SUBJECTS_BY_SEMESTER = {};
-                  DOCS.forEach(d => {
-                  if (!SUBJECTS_BY_SEMESTER[d.semester]) SUBJECTS_BY_SEMESTER[d.semester] = new Set();
-                  SUBJECTS_BY_SEMESTER[d.semester].add(d.subject);
-                  });
-                  Object.keys(SUBJECTS_BY_SEMESTER).forEach(k => {
-                  SUBJECTS_BY_SEMESTER[k] = [...SUBJECTS_BY_SEMESTER[k]].sort();
-                  });
 
                   // ── Filter State ──
                   let selectedDocs = []; // Array of { id, title, semester, subject }
@@ -547,7 +535,7 @@
                   // ── DOM refs ──
                   const $ = (id) => document.getElementById(id);
                   const nameQ = $("nameQ");
-                  const semesterFilter = $("semesterFilter");
+                  const subjectFilter = $("subjectFilter");
                   const subjectFilter = $("subjectFilter");
                   const materialFilter = $("materialFilter");
                   const modalBody = $("modal-body");
@@ -571,28 +559,14 @@
 
                   // ── Setup Filters for Modal ──
                   function initFilters() {
-                  SEMESTERS.forEach(s => semesterFilter.insertAdjacentHTML("beforeend", `<option value="${escapeHtml(s)}">${escapeHtml(s)}</option>`));
+                  SUBJECTS.forEach(s => subjectFilter.insertAdjacentHTML("beforeend", `<option value="${escapeHtml(s)}">${escapeHtml(s)}</option>`));
                   MATERIAL_TYPES.forEach(x => materialFilter.insertAdjacentHTML("beforeend", `<option value="${escapeHtml(x)}">${escapeHtml(x)}</option>`));
 
                   if (window.reinitGlassDropdown) {
-                  window.reinitGlassDropdown('semesterFilter');
+                  window.reinitGlassDropdown('subjectFilter');
                   window.reinitGlassDropdown('materialFilter');
                   }
                   }
-
-                  semesterFilter.addEventListener('change', function () {
-                  const sem = this.value;
-                  subjectFilter.innerHTML = `<option value="">-- Chọn kỳ trước --</option>`;
-                  if (sem) {
-                  (SUBJECTS_BY_SEMESTER[sem] || []).forEach(s => {
-                  subjectFilter.insertAdjacentHTML("beforeend", `<option value="${escapeHtml(s)}">${escapeHtml(s)}</option>`);
-                  });
-                  }
-                  if (window.reinitGlassDropdown) {
-                  window.reinitGlassDropdown('subjectFilter');
-                  }
-                  renderModal();
-                  });
 
                   subjectFilter.addEventListener('change', renderModal);
                   materialFilter.addEventListener('change', renderModal);
@@ -607,32 +581,21 @@
 
                   function renderModal() {
                   const q = nameQ.value.trim().toLowerCase();
-                  const semId = semesterFilter.value;
                   const subId = subjectFilter.value;
                   const type = materialFilter.value;
 
                   const results = DOCS.filter(d =>
                   (!q || d.name.toLowerCase().includes(q)) &&
-                  (!semId || d.semester === semId) &&
                   (!subId || d.subject === subId) &&
                   (!type || d.material === type)
                   );
 
-                  const semsToRender = semId ? [semId] : SEMESTERS;
-                  const semsHtml = semsToRender.map(sem => {
-                  const subs = SUBJECTS_BY_SEMESTER[sem] || [];
-                  if (!subs.length) return "";
-                  return `<div style="margin-bottom: 20px;">
-                  <h3 style="font-size: 0.75rem; font-weight: 600; letter-spacing: 0.05em; color: var(--muted-foreground); margin-bottom: 8px; text-transform: uppercase;">${escapeHtml(sem)}</h3>
+                  const semsHtml = `<div style="margin-bottom: 20px;">
+                  <h3 style="font-size: 0.75rem; font-weight: 600; letter-spacing: 0.05em; color: var(--muted-foreground); margin-bottom: 8px; text-transform: uppercase;">DANH SÁCH MÔN HỌC</h3>
                   <div style="display: flex; flex-wrap: wrap; gap: 8px;">
-                  ${subs.map(s => `<button type="button" onclick="window.pickSubject('${escapeHtml(sem)}','${escapeHtml(s)}')"
-                  style="border-radius: 8px; padding: 6px 12px; border: 1px solid ${subId === s ? 'var(--primary)' : 'var(--border)'}; background: ${subId === s ? 'rgba(224, 138, 106, 0.1)' : 'var(--card)'}; color: ${subId === s ? 'var(--primary)' : 'var(--foreground)'}; text-align: center; cursor: pointer; transition: 0.15s;"
-                  onmouseover="if('${subId}'!=='${s}')this.style.background='color-mix(in oklab, var(--accent) 50%, transparent)'" onmouseout="if('${subId}'!=='${s}')this.style.background='var(--card)'">
-                  <div style="font-weight: ${subId === s ? '600' : '500'}; font-size: 0.85rem;">${escapeHtml(s)}</div>
-                  </button>`).join("")}
+                  ${SUBJECTS.map(s => `<button type="button" onclick="window.pickSubject('${escapeHtml(s)}')"\n                  style="border-radius: 8px; padding: 6px 12px; border: 1px solid ${subId === s ? 'var(--primary)' : 'var(--border)'}; background: ${subId === s ? 'rgba(224, 138, 106, 0.1)' : 'var(--card)'}; color: ${subId === s ? 'var(--primary)' : 'var(--foreground)'}; text-align: center; cursor: pointer; transition: 0.15s;"\n                  onmouseover="if('${subId}'!=='${s}')this.style.background='color-mix(in oklab, var(--accent) 50%, transparent)'" onmouseout="if('${subId}'!=='${s}')this.style.background='var(--card)'">\n                  <div style="font-weight: ${subId === s ? '600' : '500'}; font-size: 0.85rem;">${escapeHtml(s)}</div>\n                  </button>`).join("")}
                   </div>
                   </div>`;
-                  }).join("");
 
                   const resHtml = `<div style="margin-top: 24px;">
                   <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px;">
@@ -679,9 +642,7 @@
                   modalBody.innerHTML = semsHtml + resHtml;
                   }
 
-                  window.pickSubject = function (sem, sub) {
-                  semesterFilter.value = sem;
-                  semesterFilter.dispatchEvent(new Event('change'));
+                  window.pickSubject = function (sub) {
                   subjectFilter.value = sub;
                   renderModal();
                   };

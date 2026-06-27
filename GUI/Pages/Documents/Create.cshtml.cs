@@ -31,31 +31,23 @@ public class CreateModel : PageModel
     public List<DocumentTypeDto> DocumentTypes { get; set; } = new();
     public List<LanguageDto> Languages { get; set; } = new();
     public List<DocumentSourceDto> DocumentSources { get; set; } = new();
-    public List<AcademicTermDto> AcademicTerms { get; set; } = new();
-    public string SubjectTermMapJson { get; set; } = "{}";
 
     private async Task PopulateLookupsAsync(CancellationToken cancellationToken, Guid? userId = null)
     {
         if (userId.HasValue && User.IsInRole("Lecturer"))
         {
             var assigned = await _documentService.GetSubjectsAssignedToLecturerAsync(userId.Value, cancellationToken);
-            Subjects = assigned.Where(s => s.AcademicTermId.HasValue).ToList();
+            Subjects = assigned.ToList();
         }
         else
         {
             var all = await _documentService.GetSubjectsAsync(cancellationToken);
-            Subjects = all.Where(s => s.AcademicTermId.HasValue).ToList();
+            Subjects = all.ToList();
         }
 
         DocumentTypes = await _documentService.GetDocumentTypesAsync(cancellationToken);
         Languages = await _documentService.GetLanguagesAsync(cancellationToken);
         DocumentSources = await _documentService.GetDocumentSourcesAsync(cancellationToken);
-        var terms = await _documentService.GetAcademicTermsAsync(cancellationToken);
-        AcademicTerms = terms.ToList();
-        SubjectTermMapJson = System.Text.Json.JsonSerializer.Serialize(
-            Subjects.Where(s => s.AcademicTermId.HasValue)
-                    .ToDictionary(s => s.Id.ToString().ToLowerInvariant(), s => s.AcademicTermId.Value.ToString().ToLowerInvariant())
-        );
     }
 
     public async Task<IActionResult> OnGetAsync(CancellationToken cancellationToken)
@@ -79,25 +71,17 @@ public class CreateModel : PageModel
         }
 
         var allAssigned = await _documentService.GetSubjectsAssignedToLecturerAsync(userId, cancellationToken);
-        var subjects = allAssigned.Where(s => s.AcademicTermId.HasValue).ToList();
+        var subjects = allAssigned.ToList();
         var documentTypes = await _documentService.GetDocumentTypesAsync(cancellationToken);
         var languages = await _documentService.GetLanguagesAsync(cancellationToken);
         var documentSources = await _documentService.GetDocumentSourcesAsync(cancellationToken);
         
-        var terms = await _documentService.GetAcademicTermsAsync(cancellationToken);
-        var academicTerms = terms.ToList();
-
-        var subjectTermMap = subjects.Where(s => s.AcademicTermId.HasValue)
-            .ToDictionary(s => s.Id.ToString().ToLowerInvariant(), s => s.AcademicTermId.Value.ToString().ToLowerInvariant());
-
         return new JsonResult(new
         {
-            subjects = subjects.Select(s => new { id = s.Id.ToString().ToLowerInvariant(), code = s.Code, termId = s.AcademicTermId?.ToString().ToLowerInvariant() }),
-            academicTerms = academicTerms.Select(t => new { id = t.Id.ToString().ToLowerInvariant(), name = t.Name }),
+            subjects = subjects.Select(s => new { id = s.Id.ToString().ToLowerInvariant(), code = s.Code }),
             documentTypes = documentTypes.Select(dt => new { id = dt.Id.ToString().ToLowerInvariant(), name = dt.Name }),
             languages = languages.Select(l => new { id = l.Id.ToString().ToLowerInvariant(), name = l.Name }),
-            documentSources = documentSources.Select(ds => new { id = ds.Id.ToString().ToLowerInvariant(), name = ds.Name }),
-            subjectTermMap = subjectTermMap
+            documentSources = documentSources.Select(ds => new { id = ds.Id.ToString().ToLowerInvariant(), name = ds.Name })
         });
     }
 
@@ -167,7 +151,7 @@ public class CreateModel : PageModel
                 Description = Input.Description,
                 SubjectId = Input.SubjectId,
                 DocumentTypeId = Input.DocumentTypeId,
-                AcademicTermId = Input.AcademicTermId,
+
                 LanguageId = Input.LanguageId,
                 Visibility = Input.Visibility,
                 DocumentSourceId = Input.DocumentSourceId,

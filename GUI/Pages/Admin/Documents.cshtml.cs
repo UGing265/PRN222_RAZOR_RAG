@@ -57,7 +57,6 @@ namespace GUI.Pages.Admin
                     SubjectName = x.SubjectName,
                     DocumentTypeId = x.DocumentTypeId,
                     DocumentTypeName = x.DocumentTypeName,
-                    AcademicTermName = x.AcademicTermName,
                     Status = x.Status,
                     Visibility = x.Visibility,
                     CreatedAt = x.CreatedAt,

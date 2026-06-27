@@ -24,13 +24,6 @@ CREATE SEQUENCE public.roles_id_seq
 -- ==========================================
 -- 3. TABLES (Tạo bảng)
 -- ==========================================
-CREATE TABLE public.academic_terms (
-    id uuid DEFAULT public.uuid_generate_v4() NOT NULL,
-    name character varying(200) NOT NULL,
-    term_order integer DEFAULT 0 NOT NULL,
-    created_at timestamp with time zone DEFAULT now() NOT NULL
-);
-
 CREATE TABLE public.audit_logs (
     id uuid DEFAULT public.uuid_generate_v4() NOT NULL,
     user_id uuid NOT NULL,
@@ -137,7 +130,6 @@ CREATE TABLE public.documents (
     document_type_id uuid,
     language_id uuid,
     md5_hash character varying(32),
-    academic_term_id uuid,
     document_source_id uuid
 );
 
@@ -159,8 +151,7 @@ CREATE TABLE public.subjects (
     id uuid DEFAULT public.uuid_generate_v4() NOT NULL,
     code character varying(50) NOT NULL,
     name character varying(200) NOT NULL,
-    created_at timestamp with time zone DEFAULT now() NOT NULL,
-    academic_term_id uuid
+    created_at timestamp with time zone DEFAULT now() NOT NULL
 );
 
 CREATE TABLE public.tags (
@@ -224,8 +215,6 @@ ALTER TABLE ONLY public.roles ALTER COLUMN id SET DEFAULT nextval('public.roles_
 -- ==========================================
 -- 5. PRIMARY KEYS & UNIQUE CONSTRAINTS
 -- ==========================================
-ALTER TABLE ONLY public.academic_terms ADD CONSTRAINT academic_terms_name_key UNIQUE (name);
-ALTER TABLE ONLY public.academic_terms ADD CONSTRAINT academic_terms_pkey PRIMARY KEY (id);
 ALTER TABLE ONLY public.audit_logs ADD CONSTRAINT audit_logs_pkey PRIMARY KEY (id);
 ALTER TABLE ONLY public.document_chapters ADD CONSTRAINT document_chapters_pkey PRIMARY KEY (id);
 ALTER TABLE ONLY public.document_chunks ADD CONSTRAINT document_chunks_pkey PRIMARY KEY (id);
@@ -297,10 +286,8 @@ ALTER TABLE ONLY public.document_tags ADD CONSTRAINT document_tags_document_id_f
 ALTER TABLE ONLY public.document_tags ADD CONSTRAINT document_tags_tag_id_fkey FOREIGN KEY (tag_id) REFERENCES public.tags(id) ON DELETE CASCADE;
 ALTER TABLE ONLY public.documents ADD CONSTRAINT documents_owner_user_id_fkey FOREIGN KEY (owner_user_id) REFERENCES public.users(id) ON DELETE CASCADE;
 ALTER TABLE ONLY public.documents ADD CONSTRAINT documents_subject_id_fkey FOREIGN KEY (subject_id) REFERENCES public.subjects(id) ON DELETE SET NULL;
-ALTER TABLE ONLY public.documents ADD CONSTRAINT fk_documents_academic_term FOREIGN KEY (academic_term_id) REFERENCES public.academic_terms(id) ON DELETE SET NULL;
 ALTER TABLE ONLY public.documents ADD CONSTRAINT fk_documents_document_type FOREIGN KEY (document_type_id) REFERENCES public.document_types(id) ON DELETE SET NULL;
 ALTER TABLE ONLY public.documents ADD CONSTRAINT fk_documents_language FOREIGN KEY (language_id) REFERENCES public.languages(id) ON DELETE SET NULL;
-ALTER TABLE ONLY public.subjects ADD CONSTRAINT subjects_academic_term_id_fkey FOREIGN KEY (academic_term_id) REFERENCES public.academic_terms(id) ON DELETE SET NULL;
 ALTER TABLE ONLY public.upload_jobs ADD CONSTRAINT upload_jobs_document_id_fkey FOREIGN KEY (document_id) REFERENCES public.documents(id) ON DELETE SET NULL;
 ALTER TABLE ONLY public.upload_jobs ADD CONSTRAINT upload_jobs_owner_user_id_fkey FOREIGN KEY (owner_user_id) REFERENCES public.users(id) ON DELETE CASCADE;
 ALTER TABLE ONLY public.user_bookmarks ADD CONSTRAINT user_bookmarks_document_id_fkey FOREIGN KEY (document_id) REFERENCES public.documents(id) ON DELETE CASCADE;
@@ -321,23 +308,12 @@ ON CONFLICT (id) DO NOTHING;
 -- Reset lại Sequence cho bảng roles để sau này nếu thêm Role mới sẽ tự tăng từ số 4
 SELECT pg_catalog.setval('public.roles_id_seq', 3, true);
 
--- Seed Academic Terms
-INSERT INTO public.academic_terms (id, name, term_order) VALUES
-('86b25d0a-24da-4400-b936-18dcae65541a', 'Kỳ 3', 3),
-('55c187f6-45f3-47e7-bada-97deada6d679', 'Kỳ 4', 4),
-('2b1a8d05-4f32-4d1a-be19-9cf3bfa61cda', 'Kỳ 5', 5),
-('cd8f16b2-601e-4df9-8bfa-10a3decd49a2', 'Kỳ 6', 6),
-('ef3d5e21-bc72-469b-983b-fde35b1e9c22', 'Kỳ 7', 7),
-('108ce3a8-a3cb-4baf-8a4b-8d3ef8af93a8', 'Kỳ 8', 8),
-('7a3b4e2f-d890-4e31-89bc-fcd8ea23e41b', 'Kỳ 9', 9)
-ON CONFLICT (name) DO NOTHING;
-
 -- Seed Subjects
-INSERT INTO public.subjects (id, code, name, academic_term_id) VALUES
-('79f438d9-cee5-4402-bf1b-6e317953a7a5', 'SWD392', 'Software Architecture And Design', 'ef3d5e21-bc72-469b-983b-fde35b1e9c22'),
-('be07db58-2977-4b72-b883-7e4cbcdce489', 'PRN222', 'Advanced Cross-Platform Application Programming', 'ef3d5e21-bc72-469b-983b-fde35b1e9c22'),
-('ce07db58-2977-4b72-b883-7e4cbcdce490', 'EXE101', 'Experiential Entrepreneurship 1', 'ef3d5e21-bc72-469b-983b-fde35b1e9c22'),
-('de07db58-2977-4b72-b883-7e4cbcdce491', 'MLN111', 'Triết học Mac-Lenin', '108ce3a8-a3cb-4baf-8a4b-8d3ef8af93a8')
+INSERT INTO public.subjects (id, code, name) VALUES
+('79f438d9-cee5-4402-bf1b-6e317953a7a5', 'SWD392', 'Software Architecture And Design'),
+('be07db58-2977-4b72-b883-7e4cbcdce489', 'PRN222', 'Advanced Cross-Platform Application Programming'),
+('ce07db58-2977-4b72-b883-7e4cbcdce490', 'EXE101', 'Experiential Entrepreneurship 1'),
+('de07db58-2977-4b72-b883-7e4cbcdce491', 'MLN111', 'Triết học Mac-Lenin')
 ON CONFLICT (code) DO NOTHING;
 
 -- Seed Users

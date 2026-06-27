@@ -77,7 +77,6 @@ public class DetailsModel : PageModel
                 SubjectCode = documentDetails.SubjectCode,
                 DocumentTypeId = documentDetails.DocumentTypeId,
                 DocumentTypeName = documentDetails.DocumentTypeName,
-                AcademicTermName = documentDetails.AcademicTermName,
                 Visibility = documentDetails.Visibility,
                 LanguageId = documentDetails.LanguageId,
                 LanguageCode = documentDetails.LanguageCode,

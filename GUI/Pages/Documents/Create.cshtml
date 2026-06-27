@@ -226,15 +226,7 @@
                                 </select>
                                 <span asp-validation-for="Input.DocumentTypeId" class="text-danger small"></span>
                             </div>
-                            <div class="col-md-6">
-                                <label asp-for="Input.AcademicTermId" class="form-label font-mono-xs text-muted-foreground mb-1"
-                                       style="font-size: 9px; letter-spacing: 0.08em;">HỌC KỲ</label>
-                                <select asp-for="Input.AcademicTermId" id="AcademicTermId" class="form-select form-glass-select"
-                                        disabled asp-items="@(new SelectList(Model.AcademicTerms, "Id", "Name"))">
-                                    <option value="">Chưa Có Kỳ</option>
-                                </select>
-                                <span asp-validation-for="Input.AcademicTermId" class="text-danger small"></span>
-                            </div>
+
                             <div class="col-md-6">
                                 <label asp-for="Input.LanguageId" class="form-label font-mono-xs text-muted-foreground mb-1"
                                        style="font-size: 9px; letter-spacing: 0.08em;">NGÔN NGỮ (TUỲ CHỌN)</label>
@@ -629,83 +621,37 @@
                     })();
                 </script>
 
+
+
                 <script>
-                    // Subject-Term dynamic binding
                     (function () {
-                        var rawMap = @Html.Raw(Model.SubjectTermMapJson);
-                        var subjectToTerm = {};
-                        for (var k in rawMap) {
-                            if (rawMap.hasOwnProperty(k)) {
-                                subjectToTerm[k.toLowerCase()] = rawMap[k].toLowerCase();
-                            }
-                        }
+                        // Global refresh function to update without full page reload
+                        window.updateSubjectsDropdowns = function (newSubjects, newDocTypes, newLanguages, newDocSources) {
+                            var subjectEl = document.getElementById('SubjectId');
+                            var docTypeEl = document.getElementById('DocumentTypeId');
+                            var langEl = document.getElementById('LanguageId');
+                            var docSourceEl = document.getElementById('DocumentSourceId');
 
-                        var subjectEl = document.getElementById('SubjectId');
-                        var termEl = document.getElementById('AcademicTermId');
-
-                        if (!subjectEl || !termEl) return;
-
-                        // Snapshot all original subject <option> elements
-                        var allSubjectOptions = [];
-                        for (var i = 0; i < subjectEl.options.length; i++) {
-                            var o = subjectEl.options[i];
-                            allSubjectOptions.push({
-                                val: o.value,
-                                text: o.text,
-                                termId: o.value ? (subjectToTerm[o.value.toLowerCase()] || null) : null
-                            });
-                        }
-
-                        // Flag to prevent circular event firing
-                        var isProgrammaticTermChange = false;
-
-                        // When SUBJECT changes → auto-select the matching Term
-                        subjectEl.addEventListener('change', function () {
-                            var subVal = this.value ? this.value.toLowerCase() : '';
-                            if (subVal && subjectToTerm[subVal]) {
-                                var targetTermLower = subjectToTerm[subVal];
-                                for (var i = 0; i < termEl.options.length; i++) {
-                                    if (termEl.options[i].value && termEl.options[i].value.toLowerCase() === targetTermLower) {
-                                        termEl.selectedIndex = i;
-                                        isProgrammaticTermChange = true;
-                                        termEl.dispatchEvent(new Event('change'));
-                                        isProgrammaticTermChange = false;
-                                        break;
-                                    }
-                                }
-                            } else if (subVal && !subjectToTerm[subVal]) {
-                                termEl.selectedIndex = 0;
-                                isProgrammaticTermChange = true;
-                                termEl.dispatchEvent(new Event('change'));
-                                isProgrammaticTermChange = false;
-                            }
-                        });
-
-                        // When TERM changes → filter subjects to only those belonging to that term
-                        termEl.addEventListener('change', function () {
-                            if (isProgrammaticTermChange) return;
-
-                            var termVal = this.value ? this.value.toLowerCase() : '';
-                            var prevSubjectVal = subjectEl.value ? subjectEl.value.toLowerCase() : '';
-
-                            // Remove all options, then re-add only matching ones
+                            // 2. Re-populate allSubjectOptions
+                            var prevSubjectVal = subjectEl.value;
                             while (subjectEl.options.length > 0) {
                                 subjectEl.remove(0);
                             }
-                            for (var i = 0; i < allSubjectOptions.length; i++) {
-                                var opt = allSubjectOptions[i];
-                                if (!opt.val || !termVal || opt.termId === termVal) {
-                                    var newOpt = document.createElement('option');
-                                    newOpt.value = opt.val;
-                                    newOpt.textContent = opt.text;
-                                    subjectEl.add(newOpt);
-                                }
-                            }
+                            var defaultSubjectOpt = document.createElement('option');
+                            defaultSubjectOpt.value = '';
+                            defaultSubjectOpt.textContent = 'Chọn Môn Học';
+                            subjectEl.add(defaultSubjectOpt);
 
-                            // Restore previously selected subject if still valid
+                            newSubjects.forEach(function (s) {
+                                var opt = document.createElement('option');
+                                opt.value = s.id;
+                                opt.textContent = s.code;
+                                subjectEl.add(opt);
+                            });
+                            
                             var restored = false;
                             for (var j = 0; j < subjectEl.options.length; j++) {
-                                if (subjectEl.options[j].value && subjectEl.options[j].value.toLowerCase() === prevSubjectVal) {
+                                if (subjectEl.options[j].value === prevSubjectVal) {
                                     subjectEl.selectedIndex = j;
                                     restored = true;
                                     break;
@@ -715,67 +661,6 @@
                                 subjectEl.selectedIndex = 0;
                             }
 
-                            // Re-initialize the custom glass-dropdown UI if applicable
-                            if (window.reinitGlassDropdown) {
-                                window.reinitGlassDropdown('SubjectId');
-                            }
-                        });
-
-                        // Global refresh function to update without full page reload
-                        window.updateSubjectsDropdowns = function (newSubjects, newTerms, newSubjectTermMap, newDocTypes, newLanguages, newDocSources) {
-                            var docTypeEl = document.getElementById('DocumentTypeId');
-                            var langEl = document.getElementById('LanguageId');
-                            var docSourceEl = document.getElementById('DocumentSourceId');
-
-                            // 1. Update the mapping
-                            subjectToTerm = {};
-                            for (var k in newSubjectTermMap) {
-                                if (newSubjectTermMap.hasOwnProperty(k)) {
-                                    subjectToTerm[k.toLowerCase()] = newSubjectTermMap[k].toLowerCase();
-                                }
-                            }
-
-                            // 2. Re-populate allSubjectOptions
-                            allSubjectOptions = [{ val: '', text: 'Chọn Môn Học', termId: null }];
-                            newSubjects.forEach(function (s) {
-                                allSubjectOptions.push({
-                                    val: s.id,
-                                    text: s.code,
-                                    termId: s.termId ? s.termId.toLowerCase() : null
-                                });
-                            });
-
-                            // 3. Update AcademicTermId options
-                            var prevTermVal = termEl.value;
-                            while (termEl.options.length > 0) {
-                                termEl.remove(0);
-                            }
-
-                            // Add default option
-                            var defaultTermOpt = document.createElement('option');
-                            defaultTermOpt.value = '';
-                            defaultTermOpt.textContent = 'Chọn Học Kỳ';
-                            termEl.add(defaultTermOpt);
-
-                            newTerms.forEach(function (t) {
-                                var termOpt = document.createElement('option');
-                                termOpt.value = t.id;
-                                termOpt.textContent = t.name;
-                                termEl.add(termOpt);
-                            });
-
-                            // Restore previous term value if valid
-                            var termRestored = false;
-                            for (var i = 0; i < termEl.options.length; i++) {
-                                if (termEl.options[i].value === prevTermVal) {
-                                    termEl.selectedIndex = i;
-                                    termRestored = true;
-                                    break;
-                                }
-                            }
-                            if (!termRestored) {
-                                termEl.selectedIndex = 0;
-                            }
 
                             // 4. Update DocumentTypeId options
                             if (docTypeEl && newDocTypes) {
@@ -870,13 +755,9 @@
                                 }
                             }
 
-                            // 7. Trigger TERM change to filter and update SUBJECT select
-                            termEl.dispatchEvent(new Event('change'));
 
-                            // 8. Re-initialize the custom glass-dropdown UI
                             if (window.reinitGlassDropdown) {
                                 window.reinitGlassDropdown('SubjectId');
-                                window.reinitGlassDropdown('AcademicTermId');
                                 window.reinitGlassDropdown('DocumentTypeId');
                                 window.reinitGlassDropdown('LanguageId');
                                 window.reinitGlassDropdown('DocumentSourceId');
@@ -911,7 +792,7 @@
                                     })
                                     .then(data => {
                                         if (window.updateSubjectsDropdowns) {
-                                            window.updateSubjectsDropdowns(data.subjects, data.academicTerms, data.subjectTermMap, data.documentTypes, data.languages, data.documentSources);
+                                            window.updateSubjectsDropdowns(data.subjects, data.documentTypes, data.languages, data.documentSources);
                                             showPremiumToast("Danh mục hệ thống đã được tự động làm mới từ máy chủ theo thời gian thực!", "info");
                                         }
                                     })

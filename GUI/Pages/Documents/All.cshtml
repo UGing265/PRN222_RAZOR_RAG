@@ -4,12 +4,9 @@
     ViewData["Title"] = "Khám Phá Tài Liệu";
     var query = Model.Q ?? "";
     var selectedSubjectId = Model.SubjectId;
-    var selectedTermId = Model.TermId;
     
-    var allTerms = Model.AcademicTerms;
     var allSubjects = Model.Subjects;
     
-    var selectedTerm = allTerms.FirstOrDefault(t => t.Id == selectedTermId);
     var selectedSubject = allSubjects.FirstOrDefault(s => s.Id == selectedSubjectId);
     
     var selectedTypeId = Model.DocumentTypeId;

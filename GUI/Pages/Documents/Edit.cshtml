@@ -174,16 +174,7 @@
                                 <span asp-validation-for="EditModelData.DocumentTypeId" class="text-danger small"></span>
                             </div>
 
-                            <div class="col-md-6">
-                                <label asp-for="EditModelData.AcademicTermId"
-                                       class="form-label font-mono-xs text-muted-foreground mb-1"
-                                       style="font-size: 9px; letter-spacing: 0.08em;">HỌC KỲ</label>
-                                <select asp-for="EditModelData.AcademicTermId" id="AcademicTermId" class="form-select form-glass-select" disabled
-                                        asp-items="@(new SelectList(Model.AcademicTerms, "Id", "Name"))">
-                                    <option value="">Chưa Có Kỳ</option>
-                                </select>
-                                <span asp-validation-for="EditModelData.AcademicTermId" class="text-danger small"></span>
-                            </div>
+
 
                             <div class="col-md-6">
                                 <label asp-for="EditModelData.LanguageId"
@@ -310,61 +301,18 @@
                             });
                         }
 
-                        // Dynamic binding between Subject and Academic Term
-                        window.subjectTermMap = @Html.Raw(Model.SubjectTermMapJson);
                         const subjectSelect = document.getElementById('EditModelData_SubjectId');
-                        const termSelect = document.getElementById('EditModelData_AcademicTermId');
-                        let originalSubjectOptions = [];
 
-                        if (subjectSelect && termSelect) {
-                            originalSubjectOptions = Array.from(subjectSelect.options).map(opt => ({
-                                value: opt.value,
-                                text: opt.text,
-                                termId: opt.value ? window.subjectTermMap[opt.value] : null
-                            }));
-
-                            window.updateSubjectDropdown = () => {
-                                const currentSubjectValue = subjectSelect.value;
-                                const selectedTerm = termSelect.value;
-
-                                subjectSelect.innerHTML = '';
-
-                                originalSubjectOptions.forEach(opt => {
-                                    if (!opt.value || !selectedTerm || opt.termId === selectedTerm) {
-                                        const newOption = new Option(opt.text, opt.value);
-                                        subjectSelect.appendChild(newOption);
-                                    }
-                                });
-
-                                if (currentSubjectValue && (!selectedTerm || window.subjectTermMap[currentSubjectValue] === selectedTerm)) {
-                                    subjectSelect.value = currentSubjectValue;
-                                } else {
-                                    subjectSelect.value = '';
-                                }
-                            };
-
-                            subjectSelect.addEventListener('change', function () {
-                                const selectedSubject = this.value;
-                                if (selectedSubject && window.subjectTermMap[selectedSubject]) {
-                                    termSelect.value = window.subjectTermMap[selectedSubject];
-                                    window.updateSubjectDropdown();
-                                } else if (selectedSubject && !window.subjectTermMap[selectedSubject]) {
-                                    termSelect.value = '';
-                                    window.updateSubjectDropdown();
-                                }
-                            });
-
-                            termSelect.addEventListener('change', window.updateSubjectDropdown);
-                        }
-
-                        window.updateSubjectsDropdowns = function(newSubjects, newTerms, newMap, newDocTypes, newLanguages, newDocSources) {
-                            window.subjectTermMap = newMap;
+                        window.updateSubjectsDropdowns = function(newSubjects, newDocTypes, newLanguages, newDocSources) {
                             if (subjectSelect) {
-                                originalSubjectOptions = [{ value: '', text: 'Chọn Môn Học', termId: null }];
+                                const currentVal = subjectSelect.value;
+                                subjectSelect.innerHTML = '';
+                                subjectSelect.appendChild(new Option('Chọn Môn Học', ''));
                                 newSubjects.forEach(s => {
-                                    originalSubjectOptions.push({ value: s.id, text: s.code + ' - ' + s.name, termId: s.termId });
+                                    subjectSelect.appendChild(new Option(s.code + ' - ' + s.name, s.id));
                                 });
-                                window.updateSubjectDropdown();
+                                if (Array.from(subjectSelect.options).some(o => o.value === currentVal)) subjectSelect.value = currentVal;
+                                else subjectSelect.value = '';
                             }
 
                             function updateSelect(id, items, defaultText) {
@@ -412,7 +360,7 @@
                                     })
                                     .then(data => {
                                         if (window.updateSubjectsDropdowns) {
-                                            window.updateSubjectsDropdowns(data.subjects, data.academicTerms, data.subjectTermMap, data.documentTypes, data.languages, data.documentSources);
+                                            window.updateSubjectsDropdowns(data.subjects, data.documentTypes, data.languages, data.documentSources);
                                             showPremiumToast("Danh mục hệ thống đã được tự động làm mới từ máy chủ theo thời gian thực!", "info");
                                         }
                                     })

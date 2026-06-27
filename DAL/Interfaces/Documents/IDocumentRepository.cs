@@ -16,8 +16,8 @@ public interface IDocumentRepository
     Task<List<DocumentFile>> GetDocumentFilesAsync(Guid documentId, CancellationToken cancellationToken = default);
     Task<List<DocumentChunk>> GetDocumentChunksAsync(Guid documentId, CancellationToken cancellationToken = default);
     Task<List<DocumentChapter>> GetDocumentChaptersAsync(Guid documentId, CancellationToken cancellationToken = default);
-    Task<List<Document>> GetDocumentsByOwnerAsync(Guid ownerUserId, string? query, Guid? subjectId, Guid? termId, string? sortBy, Guid? documentTypeId, Guid? languageId, Guid? documentSourceId, int page, int pageSize, CancellationToken cancellationToken = default);
-    Task<int> CountDocumentsByOwnerAsync(Guid ownerUserId, string? query, Guid? subjectId, Guid? termId, Guid? documentTypeId, Guid? languageId, Guid? documentSourceId, CancellationToken cancellationToken = default);
+    Task<List<Document>> GetDocumentsByOwnerAsync(Guid ownerUserId, string? query, Guid? subjectId, string? sortBy, Guid? documentTypeId, Guid? languageId, Guid? documentSourceId, int page, int pageSize, CancellationToken cancellationToken = default);
+    Task<int> CountDocumentsByOwnerAsync(Guid ownerUserId, string? query, Guid? subjectId, Guid? documentTypeId, Guid? languageId, Guid? documentSourceId, CancellationToken cancellationToken = default);
     Task<List<Document>> GetDocumentsAsync(string? query, Guid? subjectId, int page, int pageSize, Guid? requesterUserId = null, string? sortBy = null, Guid? documentTypeId = null, Guid? languageId = null, Guid? documentSourceId = null, bool? bookmarkedOnly = null, CancellationToken cancellationToken = default);
     Task<int> CountDocumentsAsync(string? query, Guid? subjectId, Guid? requesterUserId = null, Guid? documentTypeId = null, Guid? languageId = null, Guid? documentSourceId = null, bool? bookmarkedOnly = null, CancellationToken cancellationToken = default);
     Task<int> CountDocumentsByStatusAsync(Guid ownerUserId, string status, CancellationToken cancellationToken = default);
@@ -41,7 +41,7 @@ public interface IDocumentRepository
     Task<List<DocumentType>> GetDocumentTypesAsync(CancellationToken cancellationToken = default);
     Task<List<Language>> GetLanguagesAsync(CancellationToken cancellationToken = default);
     Task<List<DocumentSource>> GetDocumentSourcesAsync(CancellationToken cancellationToken = default);
-    Task<List<AcademicTerm>> GetAcademicTermsAsync(CancellationToken cancellationToken = default);
+
     Task<Subject> AddSubjectAsync(Subject subject, CancellationToken cancellationToken = default);
     Task<Subject?> GetSubjectAsync(Guid id, CancellationToken cancellationToken = default);
     Task UpdateSubjectAsync(Subject subject, CancellationToken cancellationToken = default);
@@ -65,11 +65,7 @@ public interface IDocumentRepository
     Task UpdateDocumentSourceAsync(DocumentSource source, CancellationToken cancellationToken = default);
     Task DeleteDocumentSourceAsync(DocumentSource source, CancellationToken cancellationToken = default);
 
-    Task<AcademicTerm> AddAcademicTermAsync(AcademicTerm term, CancellationToken cancellationToken = default);
-    Task<AcademicTerm?> GetAcademicTermAsync(Guid id, CancellationToken cancellationToken = default);
-    Task<AcademicTerm?> GetAcademicTermWithRelationsAsync(Guid id, CancellationToken cancellationToken = default);
-    Task UpdateAcademicTermAsync(AcademicTerm term, CancellationToken cancellationToken = default);
-    Task DeleteAcademicTermAsync(AcademicTerm term, CancellationToken cancellationToken = default);
+
     Task<List<Document>> GetAdminDocumentsAsync(string? query, Guid? subjectId, int page, int pageSize, CancellationToken cancellationToken = default);
     Task<int> CountAdminDocumentsAsync(string? query, Guid? subjectId, CancellationToken cancellationToken = default);
     Task<DocumentReport> AddDocumentReportAsync(DocumentReport report, CancellationToken cancellationToken = default);

@@ -17,7 +17,7 @@ public interface IDocumentService
     Task<DocumentDetailsDto?> GetDocumentDetailsAsync(Guid documentId, int chunkPage = 1, int chunkPageSize = 10, bool incrementViewCount = true, Guid? requesterUserId = null, CancellationToken cancellationToken = default);
     Task<DocumentDetailsDto?> GetDocumentDetailsBySlugAsync(string slug, Guid? requesterUserId = null, int chunkPage = 1, int chunkPageSize = 10, bool incrementViewCount = true, bool isAdmin = false, CancellationToken cancellationToken = default);
     Task<DocumentDetailsDto?> GetOwnedDocumentDetailsBySlugAsync(string slug, Guid ownerUserId, CancellationToken cancellationToken = default);
-    Task<MyDocumentsDto> GetMyDocumentsAsync(Guid ownerUserId, string? query, Guid? subjectId, Guid? termId, string? sortBy, Guid? documentTypeId, Guid? languageId, Guid? documentSourceId, int page = 1, int pageSize = 6, CancellationToken cancellationToken = default);
+    Task<MyDocumentsDto> GetMyDocumentsAsync(Guid ownerUserId, string? query, Guid? subjectId, string? sortBy, Guid? documentTypeId, Guid? languageId, Guid? documentSourceId, int page = 1, int pageSize = 6, CancellationToken cancellationToken = default);
     Task<MyDocumentsDto> GetAllDocumentsAsync(string? query, Guid? subjectId, int page = 1, int pageSize = 6, Guid? requesterUserId = null, string? sortBy = null, Guid? documentTypeId = null, Guid? languageId = null, Guid? documentSourceId = null, bool? bookmarkedOnly = null, CancellationToken cancellationToken = default);
     Task<List<UploadJobSummaryDto>> GetActiveUploadJobsAsync(Guid ownerUserId, CancellationToken cancellationToken = default);
     Task<DeleteDocumentViewData?> GetDeleteDocumentViewDataBySlugAsync(string slug, Guid ownerUserId, CancellationToken cancellationToken = default);
@@ -34,9 +34,8 @@ public interface IDocumentService
     Task<List<DocumentTypeDto>> GetDocumentTypesAsync(CancellationToken cancellationToken = default);
     Task<List<LanguageDto>> GetLanguagesAsync(CancellationToken cancellationToken = default);
     Task<List<DocumentSourceDto>> GetDocumentSourcesAsync(CancellationToken cancellationToken = default);
-    Task<List<AcademicTermDto>> GetAcademicTermsAsync(CancellationToken cancellationToken = default);
-    Task<SubjectDto> CreateSubjectAsync(string code, string name, Guid? academicTermId = null, CancellationToken cancellationToken = default);
-    Task<SubjectDto?> UpdateSubjectAsync(Guid id, string code, string name, Guid? academicTermId = null, CancellationToken cancellationToken = default);
+    Task<SubjectDto> CreateSubjectAsync(string code, string name, CancellationToken cancellationToken = default);
+    Task<SubjectDto?> UpdateSubjectAsync(Guid id, string code, string name, CancellationToken cancellationToken = default);
     Task<bool> DeleteSubjectAsync(Guid id, CancellationToken cancellationToken = default);
     Task<DocumentTypeDto> CreateDocumentTypeAsync(string name, string? description, CancellationToken cancellationToken = default);
     Task<DocumentTypeDto?> UpdateDocumentTypeAsync(Guid id, string name, string? description, CancellationToken cancellationToken = default);
@@ -50,9 +49,6 @@ public interface IDocumentService
     Task<DocumentSourceDto?> UpdateDocumentSourceAsync(Guid id, string name, CancellationToken cancellationToken = default);
     Task<bool> DeleteDocumentSourceAsync(Guid id, CancellationToken cancellationToken = default);
 
-    Task<AcademicTermDto> CreateAcademicTermAsync(string name, int order, CancellationToken cancellationToken = default);
-    Task<AcademicTermDto?> UpdateAcademicTermAsync(Guid id, string name, int order, CancellationToken cancellationToken = default);
-    Task<bool> DeleteAcademicTermAsync(Guid id, CancellationToken cancellationToken = default);
     Task<DocumentReportDto> ReportDocumentAsync(Guid documentId, Guid reporterUserId, string reason, CancellationToken cancellationToken = default);
     Task<List<DocumentReportDto>> GetPendingReportsAsync(CancellationToken cancellationToken = default);
     Task ResolveReportAsync(Guid adminUserId, Guid reportId, string action, CancellationToken cancellationToken = default);
