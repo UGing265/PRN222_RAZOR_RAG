@@ -521,3 +521,17 @@ h1, h2, h3, h4, h5, h6, .hero-title, .font-display { font-family: 'Product Sans'
     background: rgba(220, 53, 69, 0.4);
 }
 
+/* Custom Scrollbar for Glass Dropdowns */
+.custom-glass-dropdown-list::-webkit-scrollbar {
+    width: 6px;
+}
+.custom-glass-dropdown-list::-webkit-scrollbar-track {
+    background: transparent;
+}
+.custom-glass-dropdown-list::-webkit-scrollbar-thumb {
+    background-color: rgba(0, 0, 0, 0.2);
+    border-radius: 10px;
+}
+.custom-glass-dropdown-list::-webkit-scrollbar-thumb:hover {
+    background-color: rgba(0, 0, 0, 0.3);
+}
