@@ -403,8 +403,7 @@
                   style="font-size: 0.75rem; font-weight: 600; tracking-wider: 0.05em; color: var(--primary); margin-bottom: 8px; text-transform: uppercase;">
                   ASSISTANT</div>
                   <div style="font-size: 0.875rem; line-height: 1.625;">
-                    Xin chào! 👋 Tôi là trợ lý tài liệu AI. Bấm vào icon kính lúp ở góc trên bên phải để tìm và gắn tài liệu —
-                    tôi sẽ sẵn sàng trả lời câu hỏi của bạn.
+                    Xin chào! 👋 Tôi là trợ lý tài liệu AI. Bấm vào icon dấu cộng (+) bên trái ô nhập liệu để tìm và gắn tài liệu — tôi sẽ sẵn sàng trả lời câu hỏi của bạn.
                   </div>
                 </div>
               </div>
@@ -413,7 +412,12 @@
               <div style="padding: 0 32px 24px 32px;">
                 <div style="max-width: 48rem; margin: 0 auto; display: flex; flex-direction: column;">
                   <form id="chatForm"
-                        style="display: flex; align-items: center; gap: 8px; border-radius: 9999px; background: var(--card); padding: 8px 8px 8px 20px; border: 1px solid var(--border);">
+                        style="display: flex; align-items: center; gap: 8px; border-radius: 9999px; background: var(--card); padding: 8px; border: 1px solid var(--border);">
+                    <button type="button" onclick="window.openSearch()" title="Thêm tài liệu"
+                            style="display: flex; align-items: center; justify-content: center; width: 36px; height: 36px; border-radius: 50%; background: rgba(224, 138, 106, 0.1); color: var(--primary); border: none; cursor: pointer; transition: all 0.2s; flex-shrink: 0;"
+                            onmouseover="this.style.background='rgba(224, 138, 106, 0.2)'" onmouseout="this.style.background='rgba(224, 138, 106, 0.1)'">
+                      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
+                    </button>
                     <input id="chatInput" type="text" placeholder="Hỏi điều gì đó về tài liệu môn học..."
                            style="flex: 1; background: transparent; font-size: 0.875rem; padding: 8px 0; border: none; outline: none; color: var(--foreground); box-shadow: none;" />
                     <button id="sendBtn" type="submit"
@@ -458,7 +462,7 @@
                  style="display: none; position: fixed; inset: 0; z-index: 1060; align-items: center; justify-content: center; padding: 16px;">
               <div style="position: absolute; inset: 0; background: rgba(0,0,0,.5);"></div>
               <div
-                style="position: relative; width: 100%; max-width: 64rem; max-height: 85vh; border-radius: 24px; display: flex; flex-direction: column; overflow: hidden; background: var(--background, #fff); border: 1px solid var(--border); padding: 32px; z-index: 1061;">
+                style="position: relative; width: 100%; max-width: 64rem; height: 85vh; max-height: 85vh; border-radius: 24px; display: flex; flex-direction: column; overflow: hidden; background: var(--background, #fff); border: 1px solid var(--border); padding: 32px; z-index: 1061;">
                 <button type="button" onclick="window.closeSearch()"
                         style="position: absolute; right: 20px; top: 20px; color: var(--muted-foreground); background: none; border: none; cursor: pointer; font-size: 1.25rem;">✕</button>
                 <h3 style="font-size: 1.25rem; font-weight: 600; margin-bottom: 16px;">Tìm & gắn tài liệu</h3>
@@ -466,11 +470,8 @@
                 <div style="display: grid; grid-template-columns: 2fr 1.2fr 1.2fr 1.2fr; gap: 12px; margin-bottom: 24px;">
                   <input id="nameQ" placeholder="Tên tài liệu..."
                          style="height: 44px; border-radius: 12px; background: var(--card); padding: 0 16px; font-size: 0.92rem; border: 1px solid var(--border); outline: none; color: var(--foreground);" />
-                  <select id="semesterFilter" class="form-glass-select w-100">
-                    <option value="">Tất cả học kỳ</option>
-                  </select>
                   <select id="subjectFilter" class="form-glass-select w-100">
-                    <option value="">Chọn kỳ trước</option>
+                    <option value="">Tất cả môn học</option>
                   </select>
                   <select id="materialFilter" class="form-glass-select w-100">
                     <option value="">Tất cả loại</option>
@@ -524,22 +525,15 @@
                   {
                     id = d.Id,
                     name = d.Title,
-                    semester = d.AcademicTermName ?? "Chưa xác định",
                     subject = d.SubjectCode ?? d.SubjectName ?? "Chưa xác định",
                     material = d.DocumentTypeName ?? "Chưa xác định"
                   })));
 
                   // Extract unique filter options
-                  const SEMESTERS = [...new Set(DOCS.map(d => d.semester))].filter(Boolean).sort();
+                  const SYSTEM_SUBJECTS = @Html.Raw(JsonSerializer.Serialize(Model.AllSubjects.Select(s => !string.IsNullOrEmpty(s.Code) ? s.Code : (s.Name ?? "Chưa xác định")).Distinct().OrderBy(s => s)));
+                  const DOC_SUBJECTS = [...new Set(DOCS.map(d => d.subject))].filter(Boolean);
+                  const SUBJECTS = [...new Set([...SYSTEM_SUBJECTS, ...DOC_SUBJECTS])].sort();
                   const MATERIAL_TYPES = [...new Set(DOCS.map(d => d.material))].filter(Boolean).sort();
-                  const SUBJECTS_BY_SEMESTER = {};
-                  DOCS.forEach(d => {
-                  if (!SUBJECTS_BY_SEMESTER[d.semester]) SUBJECTS_BY_SEMESTER[d.semester] = new Set();
-                  SUBJECTS_BY_SEMESTER[d.semester].add(d.subject);
-                  });
-                  Object.keys(SUBJECTS_BY_SEMESTER).forEach(k => {
-                  SUBJECTS_BY_SEMESTER[k] = [...SUBJECTS_BY_SEMESTER[k]].sort();
-                  });
 
                   // ── Filter State ──
                   let selectedDocs = []; // Array of { id, title, semester, subject }
@@ -547,7 +541,6 @@
                   // ── DOM refs ──
                   const $ = (id) => document.getElementById(id);
                   const nameQ = $("nameQ");
-                  const semesterFilter = $("semesterFilter");
                   const subjectFilter = $("subjectFilter");
                   const materialFilter = $("materialFilter");
                   const modalBody = $("modal-body");
@@ -571,28 +564,17 @@
 
                   // ── Setup Filters for Modal ──
                   function initFilters() {
-                  SEMESTERS.forEach(s => semesterFilter.insertAdjacentHTML("beforeend", `<option value="${escapeHtml(s)}">${escapeHtml(s)}</option>`));
+                  SUBJECTS.forEach(s => {
+                    const count = DOCS.filter(d => d.subject === s).length;
+                    subjectFilter.insertAdjacentHTML("beforeend", `<option value="${escapeHtml(s)}" data-count="${count}">${escapeHtml(s)}</option>`);
+                  });
                   MATERIAL_TYPES.forEach(x => materialFilter.insertAdjacentHTML("beforeend", `<option value="${escapeHtml(x)}">${escapeHtml(x)}</option>`));
 
                   if (window.reinitGlassDropdown) {
-                  window.reinitGlassDropdown('semesterFilter');
+                  window.reinitGlassDropdown('subjectFilter');
                   window.reinitGlassDropdown('materialFilter');
                   }
                   }
-
-                  semesterFilter.addEventListener('change', function () {
-                  const sem = this.value;
-                  subjectFilter.innerHTML = `<option value="">-- Chọn kỳ trước --</option>`;
-                  if (sem) {
-                  (SUBJECTS_BY_SEMESTER[sem] || []).forEach(s => {
-                  subjectFilter.insertAdjacentHTML("beforeend", `<option value="${escapeHtml(s)}">${escapeHtml(s)}</option>`);
-                  });
-                  }
-                  if (window.reinitGlassDropdown) {
-                  window.reinitGlassDropdown('subjectFilter');
-                  }
-                  renderModal();
-                  });
 
                   subjectFilter.addEventListener('change', renderModal);
                   materialFilter.addEventListener('change', renderModal);
@@ -607,32 +589,15 @@
 
                   function renderModal() {
                   const q = nameQ.value.trim().toLowerCase();
-                  const semId = semesterFilter.value;
                   const subId = subjectFilter.value;
                   const type = materialFilter.value;
 
                   const results = DOCS.filter(d =>
                   (!q || d.name.toLowerCase().includes(q)) &&
-                  (!semId || d.semester === semId) &&
                   (!subId || d.subject === subId) &&
                   (!type || d.material === type)
                   );
 
-                  const semsToRender = semId ? [semId] : SEMESTERS;
-                  const semsHtml = semsToRender.map(sem => {
-                  const subs = SUBJECTS_BY_SEMESTER[sem] || [];
-                  if (!subs.length) return "";
-                  return `<div style="margin-bottom: 20px;">
-                  <h3 style="font-size: 0.75rem; font-weight: 600; letter-spacing: 0.05em; color: var(--muted-foreground); margin-bottom: 8px; text-transform: uppercase;">${escapeHtml(sem)}</h3>
-                  <div style="display: flex; flex-wrap: wrap; gap: 8px;">
-                  ${subs.map(s => `<button type="button" onclick="window.pickSubject('${escapeHtml(sem)}','${escapeHtml(s)}')"
-                  style="border-radius: 8px; padding: 6px 12px; border: 1px solid ${subId === s ? 'var(--primary)' : 'var(--border)'}; background: ${subId === s ? 'rgba(224, 138, 106, 0.1)' : 'var(--card)'}; color: ${subId === s ? 'var(--primary)' : 'var(--foreground)'}; text-align: center; cursor: pointer; transition: 0.15s;"
-                  onmouseover="if('${subId}'!=='${s}')this.style.background='color-mix(in oklab, var(--accent) 50%, transparent)'" onmouseout="if('${subId}'!=='${s}')this.style.background='var(--card)'">
-                  <div style="font-weight: ${subId === s ? '600' : '500'}; font-size: 0.85rem;">${escapeHtml(s)}</div>
-                  </button>`).join("")}
-                  </div>
-                  </div>`;
-                  }).join("");
 
                   const resHtml = `<div style="margin-top: 24px;">
                   <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px;">
@@ -676,12 +641,10 @@
                   }
                   </div>`;
 
-                  modalBody.innerHTML = semsHtml + resHtml;
+                  modalBody.innerHTML = resHtml;
                   }
 
-                  window.pickSubject = function (sem, sub) {
-                  semesterFilter.value = sem;
-                  semesterFilter.dispatchEvent(new Event('change'));
+                  window.pickSubject = function (sub) {
                   subjectFilter.value = sub;
                   renderModal();
                   };
@@ -1006,7 +969,7 @@
                   <div style="width: 100%; max-width: 48rem; margin: 0 auto;">
                   <div style="font-size: 0.75rem; font-weight: 600; tracking-wider: 0.05em; color: var(--primary); margin-bottom: 8px; text-transform: uppercase;">ASSISTANT</div>
                   <div style="font-size: 0.875rem; line-height: 1.625;">
-                  Xin chào! 👋 Tôi là trợ lý tài liệu AI. Bấm vào icon kính lúp ở góc trên bên phải để tìm và gắn tài liệu — tôi sẽ sẵn sàng trả lời câu hỏi của bạn.
+                  Xin chào! 👋 Tôi là trợ lý tài liệu AI. Bấm vào icon dấu cộng (+) bên trái ô nhập liệu để tìm và gắn tài liệu — tôi sẽ sẵn sàng trả lời câu hỏi của bạn.
                   </div>
                   </div>`;
 

@@ -5,9 +5,6 @@
 
     var query = Model.Q ?? "";
     var selectedSubjectId = Model.SubjectId;
-    var selectedTermId = Model.TermId;
-    
-    var allTerms = Model.AcademicTerms;
     var allSubjects = Model.Subjects;
     
     var selectedTypeId = Model.DocumentTypeId;
@@ -297,7 +294,7 @@
 
         <!-- Search & Filter Form -->
         <form method="get" asp-page="/Documents/Mine" class="mb-5" id="filterForm">
-            <input type="hidden" name="termId" value="@selectedTermId" />
+
             <div class="search-glass-container p-3 d-flex flex-column gap-3">
                 
                 <!-- ROW 1: Search Input & Search Button -->
@@ -311,7 +308,7 @@
                     <button type="submit" class="btn btn-premium-primary pill-button px-5 py-2.5 font-mono-xs text-white flex-shrink-0" style="min-width: 120px; font-size: 0.85rem;">
                         TÌM KIẾM
                     </button>
-                    @if (!string.IsNullOrWhiteSpace(query) || selectedSubjectId != null || selectedTermId != null || selectedTypeId != null || selectedLangId != null || selectedSourceId != null)
+                    @if (!string.IsNullOrWhiteSpace(query) || selectedSubjectId != null || selectedTypeId != null || selectedLangId != null || selectedSourceId != null)
                     {
                         <a asp-page="/Documents/Mine" class="btn btn-link text-muted px-2 text-decoration-none small hover-text-dark" style="font-size: 0.88rem;">Xoá Lọc</a>
                     }
@@ -529,21 +526,21 @@
             <nav class="d-flex justify-content-center mt-5">
                 <ul class="pagination gap-2 border-0">
                     <li class="page-item @(Model.ViewModel.Page == 1 ? "disabled" : "")">
-                        <a class="page-link pill-button px-3 py-2 border-0" href="?q=@(query)&termId=@(selectedTermId)&subjectId=@(selectedSubjectId)&documentTypeId=@(selectedTypeId)&languageId=@(selectedLangId)&documentSourceId=@(selectedSourceId)&sortBy=@(Model.SortBy)&page=@(Model.ViewModel.Page - 1)" style="border-radius: 12px; color: var(--brown); background: rgba(255,255,255,0.4); font-size: 0.85rem;">
+                        <a class="page-link pill-button px-3 py-2 border-0" href="?q=@(query)&subjectId=@(selectedSubjectId)&documentTypeId=@(selectedTypeId)&languageId=@(selectedLangId)&documentSourceId=@(selectedSourceId)&sortBy=@(Model.SortBy)&page=@(Model.ViewModel.Page - 1)" style="border-radius: 12px; color: var(--brown); background: rgba(255,255,255,0.4); font-size: 0.85rem;">
                              Trước
                         </a>
                     </li>
                     @for (int i = 1; i <= Model.ViewModel.TotalPages; i++)
                     {
                         <li class="page-item @(Model.ViewModel.Page == i ? "active" : "")">
-                            <a class="page-link pill-button px-3.5 py-2 border-0" href="?q=@(query)&termId=@(selectedTermId)&subjectId=@(selectedSubjectId)&documentTypeId=@(selectedTypeId)&languageId=@(selectedLangId)&documentSourceId=@(selectedSourceId)&sortBy=@(Model.SortBy)&page=@i" 
+                            <a class="page-link pill-button px-3.5 py-2 border-0" href="?q=@(query)&subjectId=@(selectedSubjectId)&documentTypeId=@(selectedTypeId)&languageId=@(selectedLangId)&documentSourceId=@(selectedSourceId)&sortBy=@(Model.SortBy)&page=@i" 
                                style="border-radius: 12px; font-size: 0.85rem; font-weight: 600; @(Model.ViewModel.Page == i ? "background: var(--brown) !important; color: #fff !important;" : "color: var(--brown); background: rgba(255,255,255,0.4);")">
                                 @i
                             </a>
                         </li>
                     }
                     <li class="page-item @(Model.ViewModel.Page == Model.ViewModel.TotalPages ? "disabled" : "")">
-                        <a class="page-link pill-button px-3 py-2 border-0" href="?q=@(query)&termId=@(selectedTermId)&subjectId=@(selectedSubjectId)&documentTypeId=@(selectedTypeId)&languageId=@(selectedLangId)&documentSourceId=@(selectedSourceId)&sortBy=@(Model.SortBy)&page=@(Model.ViewModel.Page + 1)" style="border-radius: 12px; color: var(--brown); background: rgba(255,255,255,0.4); font-size: 0.85rem;">
+                        <a class="page-link pill-button px-3 py-2 border-0" href="?q=@(query)&subjectId=@(selectedSubjectId)&documentTypeId=@(selectedTypeId)&languageId=@(selectedLangId)&documentSourceId=@(selectedSourceId)&sortBy=@(Model.SortBy)&page=@(Model.ViewModel.Page + 1)" style="border-radius: 12px; color: var(--brown); background: rgba(255,255,255,0.4); font-size: 0.85rem;">
                             Sau
                         </a>
                     </li>

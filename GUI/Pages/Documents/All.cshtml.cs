@@ -25,8 +25,6 @@ public class AllModel : PageModel
     [BindProperty(Name = "subjectId", SupportsGet = true)]
     public Guid? SubjectId { get; set; }
 
-    [BindProperty(Name = "termId", SupportsGet = true)]
-    public Guid? TermId { get; set; }
 
     [BindProperty(Name = "sortBy", SupportsGet = true)]
     public string? SortBy { get; set; }
@@ -49,7 +47,7 @@ public class AllModel : PageModel
     public AllDocumentsViewModel ViewModel { get; set; } = new();
 
     public List<SubjectDto> Subjects { get; set; } = new();
-    public List<AcademicTermDto> AcademicTerms { get; set; } = new();
+
     public List<DocumentTypeDto> DocumentTypes { get; set; } = new();
     public List<LanguageDto> Languages { get; set; } = new();
     public List<DocumentSourceDto> DocumentSources { get; set; } = new();
@@ -74,7 +72,7 @@ public class AllModel : PageModel
                     SubjectName = x.SubjectName,
                     DocumentTypeId = x.DocumentTypeId,
                     DocumentTypeName = x.DocumentTypeName,
-                    AcademicTermName = x.AcademicTermName,
+
                     Status = x.Status,
                     Visibility = x.Visibility,
                     CreatedAt = x.CreatedAt,
@@ -97,8 +95,6 @@ public class AllModel : PageModel
             var allSubjects = await _documentService.GetSubjectsAsync(cancellationToken);
             Subjects = allSubjects;
 
-            var allTerms = await _documentService.GetAcademicTermsAsync(cancellationToken);
-            AcademicTerms = allTerms.ToList();
 
             DocumentTypes = await _documentService.GetDocumentTypesAsync(cancellationToken);
             Languages = await _documentService.GetLanguagesAsync(cancellationToken);

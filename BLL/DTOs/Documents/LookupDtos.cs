@@ -5,7 +5,6 @@ public sealed class SubjectDto
     public Guid Id { get; init; }
     public string Code { get; init; } = string.Empty;
     public string Name { get; init; } = string.Empty;
-    public Guid? AcademicTermId { get; init; }
     public DateTime CreatedAt { get; init; }
 }
 
@@ -36,14 +35,6 @@ public sealed class DocumentSourceDto
 {
     public Guid Id { get; init; }
     public string Name { get; init; } = string.Empty;
-    public DateTime CreatedAt { get; init; }
-}
-
-public sealed class AcademicTermDto
-{
-    public Guid Id { get; init; }
-    public string Name { get; init; } = string.Empty;
-    public int Order { get; init; }
     public DateTime CreatedAt { get; init; }
 }
 

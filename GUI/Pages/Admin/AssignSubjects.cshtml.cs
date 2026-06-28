@@ -56,15 +56,6 @@ namespace GUI.Pages.Admin
 
             if (subjectIds != null && subjectIds.Any())
             {
-                var allSubjects = await _documentService.GetSubjectsAsync(cancellationToken);
-                var validSubjectIds = allSubjects.Where(s => s.AcademicTermId.HasValue).Select(s => s.Id).ToHashSet();
-                
-                if (subjectIds.Any(id => !validSubjectIds.Contains(id)))
-                {
-                    TempData["ErrorMessage"] = "Không thể phân công: Một hoặc nhiều môn học chưa được phân vào Học kỳ nào.";
-                    return RedirectToPage("/Admin/Users");
-                }
-
                 var lecturerMap = await _documentService.GetSubjectLecturerMapAsync(cancellationToken);
                 foreach (var subId in subjectIds)
                 {

@@ -18,6 +18,7 @@ public class IndexModel : PageModel
     }
 
     public List<DocumentListItemDto> ChatDocuments { get; set; } = new();
+    public List<SubjectDto> AllSubjects { get; set; } = new();
 
     public async Task OnGetAsync(CancellationToken cancellationToken)
     {
@@ -36,5 +37,7 @@ public class IndexModel : PageModel
                 .Where(d => d.Status == "approved" || d.Status == "done" || d.Status == "completed")
                 .ToList();
         }
+
+        AllSubjects = await _documentService.GetSubjectsAsync(cancellationToken);
     }
 }

@@ -115,7 +115,6 @@ public class DocumentService : IDocumentService
 
             SubjectId = input.SubjectId,
             DocumentTypeId = input.DocumentTypeId,
-            AcademicTermId = null, // Will be set below
             LanguageId = input.LanguageId,
             Visibility = input.Visibility ?? "school_wide",
             DocumentSourceId = input.DocumentSourceId,
@@ -129,16 +128,6 @@ public class DocumentService : IDocumentService
             UpdatedAt = DateTime.UtcNow,
             ApprovedAt = null
         };
-
-        if (document.SubjectId.HasValue)
-        {
-            var subject = await _documentRepository.GetSubjectWithRelationsAsync(document.SubjectId.Value, cancellationToken);
-            if (subject != null && !subject.AcademicTermId.HasValue)
-            {
-                throw new InvalidOperationException("Môn học này chưa được phân vào Học kỳ nào. Không thể tải lên tài liệu.");
-            }
-            document.AcademicTermId = subject?.AcademicTermId;
-        }
 
         var saved = await _documentRepository.AddDocumentAsync(document, cancellationToken);
 
@@ -343,8 +332,6 @@ public class DocumentService : IDocumentService
             SubjectCode = document.Subject?.Code,
             DocumentTypeId = document.DocumentTypeId,
             DocumentTypeName = document.DocumentType?.Name,
-            AcademicTermName = document.AcademicTerm?.Name,
-            AcademicTermId = document.AcademicTermId,
             DocumentSourceId = document.DocumentSourceId,
             DocumentSourceName = document.DocumentSource?.Name,
             Visibility = document.Visibility,
@@ -423,15 +410,15 @@ public class DocumentService : IDocumentService
 
 
 
-    public async Task<MyDocumentsDto> GetMyDocumentsAsync(Guid ownerUserId, string? query, Guid? subjectId, Guid? termId, string? sortBy, Guid? documentTypeId, Guid? languageId, Guid? documentSourceId, int page = 1, int pageSize = 6, CancellationToken cancellationToken = default)
+    public async Task<MyDocumentsDto> GetMyDocumentsAsync(Guid ownerUserId, string? query, Guid? subjectId, string? sortBy, Guid? documentTypeId, Guid? languageId, Guid? documentSourceId, int page = 1, int pageSize = 6, CancellationToken cancellationToken = default)
     {
         pageSize = Math.Clamp(pageSize, 6, 12);
         page = Math.Max(page, 1);
-        var totalDocuments = await _documentRepository.CountDocumentsByOwnerAsync(ownerUserId, query, subjectId, termId, documentTypeId, languageId, documentSourceId, cancellationToken);
+        var totalDocuments = await _documentRepository.CountDocumentsByOwnerAsync(ownerUserId, query, subjectId, documentTypeId, languageId, documentSourceId, cancellationToken);
         var totalPages = Math.Max(1, (int)Math.Ceiling(totalDocuments / (double)pageSize));
         page = Math.Clamp(page, 1, totalPages);
 
-        var documents = await _documentRepository.GetDocumentsByOwnerAsync(ownerUserId, query, subjectId, termId, sortBy, documentTypeId, languageId, documentSourceId, page, pageSize, cancellationToken);
+        var documents = await _documentRepository.GetDocumentsByOwnerAsync(ownerUserId, query, subjectId, sortBy, documentTypeId, languageId, documentSourceId, page, pageSize, cancellationToken);
         var activeUploadJobs = await _documentRepository.GetActiveUploadJobsByOwnerAsync(ownerUserId, cancellationToken);
 
         var documentIds = documents.Select(x => x.Id).ToList();
@@ -452,7 +439,6 @@ public class DocumentService : IDocumentService
                 SubjectCode = x.Subject?.Code,
                 DocumentTypeId = x.DocumentTypeId,
                 DocumentTypeName = x.DocumentType?.Name,
-                AcademicTermName = x.AcademicTerm?.Name,
                 Status = x.Status,
                 Visibility = x.Visibility,
                 CreatedAt = x.CreatedAt,
@@ -518,7 +504,6 @@ public class DocumentService : IDocumentService
                 SubjectCode = x.Subject?.Code,
                 DocumentTypeId = x.DocumentTypeId,
                 DocumentTypeName = x.DocumentType?.Name,
-                AcademicTermName = x.AcademicTerm?.Name,
                 Status = x.Status,
                 Visibility = x.Visibility,
                 CreatedAt = x.CreatedAt,
@@ -684,13 +669,13 @@ public class DocumentService : IDocumentService
 
     public async Task<DashboardSummaryDto> GetDashboardSummaryAsync(Guid ownerUserId, CancellationToken cancellationToken = default)
     {
-        var documents = await _documentRepository.GetDocumentsByOwnerAsync(ownerUserId, null, null, null, null, null, null, null, 1, 5, cancellationToken);
+        var documents = await _documentRepository.GetDocumentsByOwnerAsync(ownerUserId, null, null, null, null, null, null, 1, 5, cancellationToken);
         var activeJobs = await _documentRepository.GetActiveUploadJobsByOwnerAsync(ownerUserId, cancellationToken);
         var completed = activeJobs.FirstOrDefault(x => x.Status == "done");
 
         return new DashboardSummaryDto
         {
-            TotalDocuments = await _documentRepository.CountDocumentsByOwnerAsync(ownerUserId, null, null, null, null, null, null, cancellationToken),
+            TotalDocuments = await _documentRepository.CountDocumentsByOwnerAsync(ownerUserId, null, null, null, null, null, cancellationToken),
             TotalChunks = await _documentRepository.CountChunksByOwnerAsync(ownerUserId, cancellationToken),
             TotalFiles = await _documentRepository.CountFilesByOwnerAsync(ownerUserId, cancellationToken),
             ApprovedDocuments = await _documentRepository.CountDocumentsByStatusAsync(ownerUserId, "approved", cancellationToken),
@@ -737,15 +722,6 @@ public class DocumentService : IDocumentService
         if (document.SubjectId.HasValue)
         {
             var subject = await _documentRepository.GetSubjectWithRelationsAsync(document.SubjectId.Value, cancellationToken);
-            if (subject != null && !subject.AcademicTermId.HasValue)
-            {
-                throw new InvalidOperationException("Môn học này chưa được phân vào Học kỳ nào. Không thể gắn tài liệu vào môn học này.");
-            }
-            document.AcademicTermId = subject?.AcademicTermId;
-        }
-        else
-        {
-            document.AcademicTermId = null;
         }
 
         document.LanguageId = input.LanguageId;
@@ -778,7 +754,7 @@ public class DocumentService : IDocumentService
     public async Task<List<SubjectDto>> GetSubjectsAsync(CancellationToken cancellationToken = default)
     {
         var subjects = await _documentRepository.GetSubjectsAsync(cancellationToken);
-        return subjects.Select(s => new SubjectDto { Id = s.Id, Code = s.Code, Name = s.Name, AcademicTermId = s.AcademicTermId, CreatedAt = s.CreatedAt }).ToList();
+        return subjects.Select(s => new SubjectDto { Id = s.Id, Code = s.Code, Name = s.Name, CreatedAt = s.CreatedAt }).ToList();
     }
 
     public async Task<List<SubjectDto>> GetSubjectsByOwnerAsync(Guid ownerUserId, CancellationToken cancellationToken = default)
@@ -799,7 +775,6 @@ public class DocumentService : IDocumentService
             Id = s.Id,
             Code = s.Code,
             Name = s.Name,
-            AcademicTermId = s.AcademicTermId,
             CreatedAt = s.CreatedAt
         }).ToList();
     }
@@ -822,13 +797,9 @@ public class DocumentService : IDocumentService
         return sources.Select(s => new DocumentSourceDto { Id = s.Id, Name = s.Name, CreatedAt = s.CreatedAt }).ToList();
     }
 
-    public async Task<List<AcademicTermDto>> GetAcademicTermsAsync(CancellationToken cancellationToken = default)
-    {
-        var terms = await _documentRepository.GetAcademicTermsAsync(cancellationToken);
-        return terms.Select(t => new AcademicTermDto { Id = t.Id, Name = t.Name, Order = t.Order, CreatedAt = t.CreatedAt }).ToList();
-    }
 
-    public async Task<SubjectDto> CreateSubjectAsync(string code, string name, Guid? academicTermId = null, CancellationToken cancellationToken = default)
+
+    public async Task<SubjectDto> CreateSubjectAsync(string code, string name, CancellationToken cancellationToken = default)
     {
         if (string.IsNullOrWhiteSpace(code)) throw new InvalidOperationException("Mã môn học không được để trống.");
         if (string.IsNullOrWhiteSpace(name)) throw new InvalidOperationException("Tên môn học không được để trống.");
@@ -845,16 +816,15 @@ public class DocumentService : IDocumentService
             Id = Guid.NewGuid(),
             Code = normalizedCode,
             Name = name.Trim(),
-            AcademicTermId = academicTermId,
             CreatedAt = DateTime.UtcNow
         };
 
         await _documentRepository.AddSubjectAsync(subject, cancellationToken);
         await _documentRepository.SaveChangesAsync(cancellationToken);
-        return new SubjectDto { Id = subject.Id, Code = subject.Code, Name = subject.Name, AcademicTermId = subject.AcademicTermId, CreatedAt = subject.CreatedAt };
+        return new SubjectDto { Id = subject.Id, Code = subject.Code, Name = subject.Name, CreatedAt = subject.CreatedAt };
     }
 
-    public async Task<SubjectDto?> UpdateSubjectAsync(Guid id, string code, string name, Guid? academicTermId = null, CancellationToken cancellationToken = default)
+    public async Task<SubjectDto?> UpdateSubjectAsync(Guid id, string code, string name, CancellationToken cancellationToken = default)
     {
         var subject = await _documentRepository.GetSubjectAsync(id, cancellationToken);
         if (subject == null) return null;
@@ -872,11 +842,10 @@ public class DocumentService : IDocumentService
 
         subject.Code = normalizedCode;
         subject.Name = trimmedName;
-        subject.AcademicTermId = academicTermId;
 
         await _documentRepository.UpdateSubjectAsync(subject, cancellationToken);
         await _documentRepository.SaveChangesAsync(cancellationToken);
-        return new SubjectDto { Id = subject.Id, Code = subject.Code, Name = subject.Name, AcademicTermId = subject.AcademicTermId, CreatedAt = subject.CreatedAt };
+        return new SubjectDto { Id = subject.Id, Code = subject.Code, Name = subject.Name, CreatedAt = subject.CreatedAt };
     }
 
     public async Task<bool> DeleteSubjectAsync(Guid id, CancellationToken cancellationToken = default)
@@ -1091,73 +1060,10 @@ public class DocumentService : IDocumentService
     }
 
 
-    public async Task<AcademicTermDto> CreateAcademicTermAsync(string name, int order, CancellationToken cancellationToken = default)
-    {
-        if (string.IsNullOrWhiteSpace(name)) throw new InvalidOperationException("Tên học kỳ không được để trống.");
-        if (order < 0) throw new InvalidOperationException("Thứ tự học kỳ phải lớn hơn hoặc bằng 0.");
-
-        var trimmedName = name.Trim();
-        var terms = await _documentRepository.GetAcademicTermsAsync(cancellationToken);
-        if (terms.Any(x => x.Name.Equals(trimmedName, StringComparison.OrdinalIgnoreCase)))
-        {
-            throw new InvalidOperationException("Tên học kỳ đã tồn tại trong hệ thống.");
-        }
-
-        var term = new AcademicTerm
-        {
-            Id = Guid.NewGuid(),
-            Name = trimmedName,
-            Order = order,
-            CreatedAt = DateTime.UtcNow
-        };
-
-        await _documentRepository.AddAcademicTermAsync(term, cancellationToken);
-        await _documentRepository.SaveChangesAsync(cancellationToken);
-        return new AcademicTermDto { Id = term.Id, Name = term.Name, Order = term.Order, CreatedAt = term.CreatedAt };
-    }
-
-    public async Task<AcademicTermDto?> UpdateAcademicTermAsync(Guid id, string name, int order, CancellationToken cancellationToken = default)
-    {
-        var term = await _documentRepository.GetAcademicTermAsync(id, cancellationToken);
-        if (term == null) return null;
-
-        if (string.IsNullOrWhiteSpace(name)) throw new InvalidOperationException("Tên học kỳ không được để trống.");
-        if (order < 0) throw new InvalidOperationException("Thứ tự học kỳ phải lớn hơn hoặc bằng 0.");
-
-        var trimmedName = name.Trim();
-        var terms = await _documentRepository.GetAcademicTermsAsync(cancellationToken);
-        if (terms.Any(x => x.Id != id && x.Name.Equals(trimmedName, StringComparison.OrdinalIgnoreCase)))
-        {
-            throw new InvalidOperationException("Tên học kỳ đã tồn tại trong hệ thống.");
-        }
-
-        term.Name = trimmedName;
-        term.Order = order;
-
-        await _documentRepository.UpdateAcademicTermAsync(term, cancellationToken);
-        await _documentRepository.SaveChangesAsync(cancellationToken);
-        return new AcademicTermDto { Id = term.Id, Name = term.Name, Order = term.Order, CreatedAt = term.CreatedAt };
-    }
-
-    public async Task<bool> DeleteAcademicTermAsync(Guid id, CancellationToken cancellationToken = default)
-    {
-        var term = await _documentRepository.GetAcademicTermWithRelationsAsync(id, cancellationToken);
-        if (term == null) return false;
-
-        if (term.Subjects.Any() || term.Documents.Any())
-        {
-            throw new InvalidOperationException("Không thể xoá kì học này vì đã có môn học hoặc tài liệu liên kết.");
-        }
-
-        await _documentRepository.DeleteAcademicTermAsync(term, cancellationToken);
-        await _documentRepository.SaveChangesAsync(cancellationToken);
-        return true;
-    }
-
     private static string BuildSearchText(Document document, string extractedText)
     {
         var safeExtractedText = string.IsNullOrWhiteSpace(extractedText) ? string.Empty : (extractedText.Length > 50000 ? extractedText.Substring(0, 50000) : extractedText);
-        return string.Join(" ", new[] { document.Title, document.Description, document.Subject?.Name, document.Subject?.Code, document.DocumentType?.Name, document.Language?.Name, document.AcademicTerm?.Name, safeExtractedText }.Where(x => !string.IsNullOrWhiteSpace(x)));
+        return string.Join(" ", new[] { document.Title, document.Description, document.Subject?.Name, document.Subject?.Code, document.DocumentType?.Name, document.Language?.Name, safeExtractedText }.Where(x => !string.IsNullOrWhiteSpace(x)));
     }
 
     private static void ValidateFile(IFormFile file)
@@ -1288,7 +1194,6 @@ public class DocumentService : IDocumentService
                 SubjectCode = x.Subject?.Code,
                 DocumentTypeId = x.DocumentTypeId,
                 DocumentTypeName = x.DocumentType?.Name,
-                AcademicTermName = x.AcademicTerm?.Name,
                 Status = x.Status,
                 Visibility = x.Visibility,
                 CreatedAt = x.CreatedAt,
@@ -1322,7 +1227,6 @@ public class DocumentService : IDocumentService
             Id = s.Id,
             Code = s.Code,
             Name = s.Name,
-            AcademicTermId = s.AcademicTermId,
             CreatedAt = s.CreatedAt
         }).ToList();
     }

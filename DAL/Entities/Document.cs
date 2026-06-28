@@ -21,9 +21,6 @@ public partial class Document
     [Column("document_type_id")]
     public Guid? DocumentTypeId { get; set; }
 
-    [Column("academic_term_id")]
-    public Guid? AcademicTermId { get; set; }
-
     public string Status { get; set; } = null!;
 
     [Column("language_id")]
@@ -70,8 +67,6 @@ public partial class Document
     public virtual DocumentType? DocumentType { get; set; }
 
     public virtual Language? Language { get; set; }
-
-    public virtual AcademicTerm? AcademicTerm { get; set; }
 
     public virtual DocumentSource? DocumentSource { get; set; }
 

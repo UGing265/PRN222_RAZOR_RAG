@@ -33,7 +33,7 @@ public class DocumentRepository : IDocumentRepository
             .Include(x => x.Subject)
             .Include(x => x.DocumentType)
             .Include(x => x.Language)
-            .Include(x => x.AcademicTerm)
+            
             .FirstOrDefaultAsync(x => x.Id == documentId, cancellationToken);
 
     public Task<List<Document>> GetPendingDocumentsByOwnerAsync(Guid ownerUserId, CancellationToken cancellationToken = default)
@@ -44,7 +44,7 @@ public class DocumentRepository : IDocumentRepository
             .Include(x => x.Subject)
             .Include(x => x.DocumentType)
             .Include(x => x.Language)
-            .Include(x => x.AcademicTerm)
+            
             .Where(x => x.OwnerUserId == ownerUserId && x.Status == "pending")
             .OrderByDescending(x => x.UpdatedAt)
             .ToListAsync(cancellationToken);
@@ -55,7 +55,7 @@ public class DocumentRepository : IDocumentRepository
             .Include(x => x.Subject)
             .Include(x => x.DocumentType)
             .Include(x => x.Language)
-            .Include(x => x.AcademicTerm)
+            
             .FirstOrDefaultAsync(x => x.Slug == slug, cancellationToken);
 
     public async Task<Document?> GetDocumentBySlugAsync(string slug, Guid? requesterUserId, bool isAdmin = false, CancellationToken cancellationToken = default)
@@ -65,7 +65,7 @@ public class DocumentRepository : IDocumentRepository
             .Include(x => x.Subject)
             .Include(x => x.DocumentType)
             .Include(x => x.Language)
-            .Include(x => x.AcademicTerm)
+            
             .Where(x => x.Slug == slug);
 
         if (!isAdmin)
@@ -106,7 +106,7 @@ public class DocumentRepository : IDocumentRepository
             .Include(x => x.Subject)
             .Include(x => x.DocumentType)
             .Include(x => x.Language)
-            .Include(x => x.AcademicTerm)
+            
             .AsSplitQuery()
             .FirstOrDefaultAsync(x => x.Id == documentId, cancellationToken);
 
@@ -119,7 +119,7 @@ public class DocumentRepository : IDocumentRepository
             .Include(x => x.Subject)
             .Include(x => x.DocumentType)
             .Include(x => x.Language)
-            .Include(x => x.AcademicTerm)
+            
             .AsSplitQuery()
             .FirstOrDefaultAsync(x => x.Slug == slug, cancellationToken);
 
@@ -137,7 +137,7 @@ public class DocumentRepository : IDocumentRepository
     public Task<List<DocumentChapter>> GetDocumentChaptersAsync(Guid documentId, CancellationToken cancellationToken = default)
         => _dbContext.DocumentChapters.Where(x => x.DocumentId == documentId).ToListAsync(cancellationToken);
 
-    public Task<List<Document>> GetDocumentsByOwnerAsync(Guid ownerUserId, string? query, Guid? subjectId, Guid? termId, string? sortBy, Guid? documentTypeId, Guid? languageId, Guid? documentSourceId, int page, int pageSize, CancellationToken cancellationToken = default)
+    public Task<List<Document>> GetDocumentsByOwnerAsync(Guid ownerUserId, string? query, Guid? subjectId, string? sortBy, Guid? documentTypeId, Guid? languageId, Guid? documentSourceId, int page, int pageSize, CancellationToken cancellationToken = default)
     {
         var q = _dbContext.Documents.AsNoTracking()
             .Include(x => x.DocumentFiles)
@@ -145,7 +145,7 @@ public class DocumentRepository : IDocumentRepository
             .Include(x => x.Subject)
             .Include(x => x.DocumentType)
             .Include(x => x.Language)
-            .Include(x => x.AcademicTerm)
+            
             .Where(x => x.OwnerUserId == ownerUserId && x.Status == "completed");
 
         if (!string.IsNullOrWhiteSpace(query))
@@ -158,10 +158,7 @@ public class DocumentRepository : IDocumentRepository
             q = q.Where(x => x.SubjectId == subjectId.Value);
         }
 
-        if (termId.HasValue)
-        {
-            q = q.Where(x => x.AcademicTermId == termId.Value);
-        }
+
 
         if (documentTypeId.HasValue)
         {
@@ -194,7 +191,7 @@ public class DocumentRepository : IDocumentRepository
             .ToListAsync(cancellationToken);
     }
 
-    public Task<int> CountDocumentsByOwnerAsync(Guid ownerUserId, string? query, Guid? subjectId, Guid? termId, Guid? documentTypeId, Guid? languageId, Guid? documentSourceId, CancellationToken cancellationToken = default)
+    public Task<int> CountDocumentsByOwnerAsync(Guid ownerUserId, string? query, Guid? subjectId, Guid? documentTypeId, Guid? languageId, Guid? documentSourceId, CancellationToken cancellationToken = default)
     {
         var q = _dbContext.Documents.AsNoTracking()
 
@@ -211,10 +208,7 @@ public class DocumentRepository : IDocumentRepository
             q = q.Where(x => x.SubjectId == subjectId.Value);
         }
 
-        if (termId.HasValue)
-        {
-            q = q.Where(x => x.AcademicTermId == termId.Value);
-        }
+
 
         if (documentTypeId.HasValue)
         {
@@ -243,7 +237,7 @@ public class DocumentRepository : IDocumentRepository
             .Include(x => x.Subject)
             .Include(x => x.DocumentType)
             .Include(x => x.Language)
-            .Include(x => x.AcademicTerm)
+            
             .Where(x => x.Status == "completed" && (x.OwnerUser.RoleId == 1 || x.OwnerUser.RoleId == 2) && !x.OwnerUser.IsBlocked);
 
         var requesterRole = (short?)null;
@@ -391,14 +385,14 @@ public class DocumentRepository : IDocumentRepository
         => _dbContext.Documents
 
             .Include(x => x.Subject)
-            .Include(x => x.AcademicTerm)
+            
             .FirstOrDefaultAsync(x => x.Id == documentId && x.OwnerUserId == ownerUserId, cancellationToken);
 
     public Task<Document?> GetOwnedDocumentBySlugAsync(string slug, Guid ownerUserId, CancellationToken cancellationToken = default)
         => _dbContext.Documents
 
             .Include(x => x.Subject)
-            .Include(x => x.AcademicTerm)
+            
             .FirstOrDefaultAsync(x => x.Slug == slug && x.OwnerUserId == ownerUserId, cancellationToken);
 
     public Task<int> CountFilesByDocumentAsync(Guid documentId, CancellationToken cancellationToken = default)
@@ -460,7 +454,7 @@ public class DocumentRepository : IDocumentRepository
 
 
     public Task<List<Subject>> GetSubjectsAsync(CancellationToken cancellationToken = default)
-        => _dbContext.Subjects.AsNoTracking().Include(x => x.AcademicTerm).OrderBy(x => x.Code).ToListAsync(cancellationToken);
+        => _dbContext.Subjects.AsNoTracking().OrderBy(x => x.Code).ToListAsync(cancellationToken);
 
     public Task<List<DocumentType>> GetDocumentTypesAsync(CancellationToken cancellationToken = default)
         => _dbContext.DocumentTypes.AsNoTracking().OrderBy(x => x.Name).ToListAsync(cancellationToken);
@@ -471,8 +465,6 @@ public class DocumentRepository : IDocumentRepository
     public Task<List<DocumentSource>> GetDocumentSourcesAsync(CancellationToken cancellationToken = default)
         => _dbContext.DocumentSources.AsNoTracking().OrderBy(x => x.Name).ToListAsync(cancellationToken);
 
-    public Task<List<AcademicTerm>> GetAcademicTermsAsync(CancellationToken cancellationToken = default)
-        => _dbContext.AcademicTerms.AsNoTracking().Include(x => x.Subjects).OrderBy(x => x.Order).ToListAsync(cancellationToken);
 
     public async Task<Subject> AddSubjectAsync(Subject subject, CancellationToken cancellationToken = default)
     {
@@ -578,32 +570,7 @@ public class DocumentRepository : IDocumentRepository
         return Task.CompletedTask;
     }
 
-    public async Task<AcademicTerm> AddAcademicTermAsync(AcademicTerm term, CancellationToken cancellationToken = default)
-    {
-        await _dbContext.AcademicTerms.AddAsync(term, cancellationToken);
-        return term;
-    }
 
-    public Task<AcademicTerm?> GetAcademicTermAsync(Guid id, CancellationToken cancellationToken = default)
-        => _dbContext.AcademicTerms.FirstOrDefaultAsync(x => x.Id == id, cancellationToken);
-
-    public Task<AcademicTerm?> GetAcademicTermWithRelationsAsync(Guid id, CancellationToken cancellationToken = default)
-        => _dbContext.AcademicTerms
-            .Include(x => x.Subjects)
-            .Include(x => x.Documents)
-            .FirstOrDefaultAsync(x => x.Id == id, cancellationToken);
-
-    public Task UpdateAcademicTermAsync(AcademicTerm term, CancellationToken cancellationToken = default)
-    {
-        _dbContext.AcademicTerms.Update(term);
-        return Task.CompletedTask;
-    }
-
-    public Task DeleteAcademicTermAsync(AcademicTerm term, CancellationToken cancellationToken = default)
-    {
-        _dbContext.AcademicTerms.Remove(term);
-        return Task.CompletedTask;
-    }
 
     public Task<List<Document>> GetAdminDocumentsAsync(string? query, Guid? subjectId, int page, int pageSize, CancellationToken cancellationToken = default)
     {
@@ -732,7 +699,7 @@ public class DocumentRepository : IDocumentRepository
 
     public Task<List<Subject>> GetSubjectsAssignedToLecturerAsync(Guid userId, CancellationToken cancellationToken = default)
         => _dbContext.Subjects.AsNoTracking()
-            .Include(x => x.AcademicTerm)
+            
             .Where(x => x.UserSubjects.Any(us => us.UserId == userId))
             .OrderBy(x => x.Code)
             .ToListAsync(cancellationToken);

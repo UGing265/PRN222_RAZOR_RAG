@@ -25,8 +25,6 @@ public class MineModel : PageModel
     [BindProperty(Name = "subjectId", SupportsGet = true)]
     public Guid? SubjectId { get; set; }
 
-    [BindProperty(Name = "termId", SupportsGet = true)]
-    public Guid? TermId { get; set; }
 
     [BindProperty(Name = "sortBy", SupportsGet = true)]
     public string? SortBy { get; set; }
@@ -46,7 +44,7 @@ public class MineModel : PageModel
     public MyDocumentsViewModel ViewModel { get; set; } = new();
 
     public List<SubjectDto> Subjects { get; set; } = new();
-    public List<AcademicTermDto> AcademicTerms { get; set; } = new();
+
     public List<DocumentTypeDto> DocumentTypes { get; set; } = new();
     public List<LanguageDto> Languages { get; set; } = new();
     public List<DocumentSourceDto> DocumentSources { get; set; } = new();
@@ -62,7 +60,7 @@ public class MineModel : PageModel
         try
         {
             var result = await _documentService.GetMyDocumentsAsync(
-                userId, Q, SubjectId, TermId, SortBy, DocumentTypeId, LanguageId, DocumentSourceId, PageNum, 6, cancellationToken);
+                userId, Q, SubjectId, SortBy, DocumentTypeId, LanguageId, DocumentSourceId, PageNum, 6, cancellationToken);
 
             ViewModel = new MyDocumentsViewModel
             {
@@ -75,7 +73,7 @@ public class MineModel : PageModel
                     SubjectName = x.SubjectName,
                     DocumentTypeId = x.DocumentTypeId,
                     DocumentTypeName = x.DocumentTypeName,
-                    AcademicTermName = x.AcademicTermName,
+
                     Status = x.Status,
                     Visibility = x.Visibility,
                     CreatedAt = x.CreatedAt,
@@ -114,8 +112,6 @@ public class MineModel : PageModel
             var allSubjects = await _documentService.GetSubjectsByOwnerAsync(userId, cancellationToken);
             Subjects = allSubjects;
 
-            var allTerms = await _documentService.GetAcademicTermsAsync(cancellationToken);
-            AcademicTerms = allTerms.ToList();
 
             DocumentTypes = await _documentService.GetDocumentTypesAsync(cancellationToken);
             Languages = await _documentService.GetLanguagesAsync(cancellationToken);

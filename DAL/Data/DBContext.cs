@@ -44,8 +44,6 @@ public partial class DBContext : DbContext
 
     public virtual DbSet<DocumentSource> DocumentSources { get; set; }
 
-    public virtual DbSet<AcademicTerm> AcademicTerms { get; set; }
-
     public virtual DbSet<ChatSession> ChatSessions { get; set; }
 
     public virtual DbSet<ChatSessionDocument> ChatSessionDocuments { get; set; }
@@ -70,13 +68,7 @@ public partial class DBContext : DbContext
             entity.Property(e => e.Id).HasDefaultValueSql("uuid_generate_v4()").HasColumnName("id");
             entity.Property(e => e.Code).HasMaxLength(50).HasColumnName("code");
             entity.Property(e => e.Name).HasMaxLength(200).HasColumnName("name");
-            entity.Property(e => e.AcademicTermId).HasColumnName("academic_term_id");
             entity.Property(e => e.CreatedAt).HasDefaultValueSql("now()").HasColumnName("created_at");
-
-            entity.HasOne(d => d.AcademicTerm).WithMany(p => p.Subjects)
-                .HasForeignKey(d => d.AcademicTermId)
-                .OnDelete(DeleteBehavior.SetNull)
-                .HasConstraintName("fk_subjects_academic_term");
         });
 
         modelBuilder.Entity<UserBookmark>(entity =>
@@ -186,7 +178,6 @@ public partial class DBContext : DbContext
             entity.Property(e => e.PageCount).HasColumnName("page_count");
                     entity.Property(e => e.SubjectId).HasColumnName("subject_id");
             entity.Property(e => e.DocumentTypeId).HasColumnName("document_type_id");
-            entity.Property(e => e.AcademicTermId).HasColumnName("academic_term_id");
             entity.Property(e => e.ViewCount).HasDefaultValue(0).HasColumnName("view_count");
             entity.Property(e => e.DownloadCount).HasDefaultValue(0).HasColumnName("download_count");
             entity.Property(e => e.SearchText).HasColumnName("search_text");
@@ -234,11 +225,6 @@ public partial class DBContext : DbContext
                 .HasForeignKey(d => d.LanguageId)
                 .OnDelete(DeleteBehavior.SetNull)
                 .HasConstraintName("fk_documents_language");
-
-            entity.HasOne(d => d.AcademicTerm).WithMany(p => p.Documents)
-                .HasForeignKey(d => d.AcademicTermId)
-                .OnDelete(DeleteBehavior.SetNull)
-                .HasConstraintName("fk_documents_academic_term");
 
             entity.HasOne(d => d.DocumentSource).WithMany(p => p.Documents)
                 .HasForeignKey(d => d.DocumentSourceId)
@@ -562,18 +548,6 @@ public partial class DBContext : DbContext
             entity.HasIndex(e => e.Name, "document_sources_name_key").IsUnique();
             entity.Property(e => e.Id).HasDefaultValueSql("uuid_generate_v4()").HasColumnName("id");
             entity.Property(e => e.Name).HasMaxLength(200).HasColumnName("name");
-            entity.Property(e => e.CreatedAt).HasDefaultValueSql("now()").HasColumnName("created_at");
-        });
-
-        // Map AcademicTerm table
-        modelBuilder.Entity<AcademicTerm>(entity =>
-        {
-            entity.HasKey(e => e.Id).HasName("academic_terms_pkey");
-            entity.ToTable("academic_terms");
-            entity.HasIndex(e => e.Name, "academic_terms_name_key").IsUnique();
-            entity.Property(e => e.Id).HasDefaultValueSql("uuid_generate_v4()").HasColumnName("id");
-            entity.Property(e => e.Name).HasMaxLength(200).HasColumnName("name");
-            entity.Property(e => e.Order).HasColumnName("term_order");
             entity.Property(e => e.CreatedAt).HasDefaultValueSql("now()").HasColumnName("created_at");
         });
 

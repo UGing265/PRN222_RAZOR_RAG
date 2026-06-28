@@ -11,7 +11,6 @@ public sealed class DocumentCreateInput
 
     public Guid? SubjectId { get; init; }
     public Guid? DocumentTypeId { get; init; }
-    public Guid? AcademicTermId { get; init; }
     public Guid? LanguageId { get; init; }
     public string? Visibility { get; init; }
     public Guid? DocumentSourceId { get; init; }
@@ -27,7 +26,6 @@ public sealed class DocumentEditInput
 
     public Guid? SubjectId { get; init; }
     public Guid? DocumentTypeId { get; init; }
-    public Guid? AcademicTermId { get; init; }
     public Guid? LanguageId { get; init; }
     public string Visibility { get; init; } = "private";
     public Guid? DocumentSourceId { get; init; }
@@ -45,7 +43,6 @@ public sealed class DocumentListItemDto
     public string? SubjectCode { get; init; }
     public Guid? DocumentTypeId { get; init; }
     public string? DocumentTypeName { get; init; }
-    public string? AcademicTermName { get; init; }
     public Guid? DocumentSourceId { get; init; }
     public string? DocumentSourceName { get; init; }
     public string Status { get; init; } = string.Empty;
@@ -73,8 +70,6 @@ public sealed class DocumentDetailsDto
     public string? SubjectCode { get; init; }
     public Guid? DocumentTypeId { get; init; }
     public string? DocumentTypeName { get; init; }
-    public string? AcademicTermName { get; init; }
-    public Guid? AcademicTermId { get; init; }
     public Guid? DocumentSourceId { get; init; }
     public string? DocumentSourceName { get; init; }
     public string? Visibility { get; init; }

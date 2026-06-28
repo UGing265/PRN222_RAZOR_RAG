@@ -4,12 +4,9 @@
     ViewData["Title"] = "Khám Phá Tài Liệu";
     var query = Model.Q ?? "";
     var selectedSubjectId = Model.SubjectId;
-    var selectedTermId = Model.TermId;
     
-    var allTerms = Model.AcademicTerms;
     var allSubjects = Model.Subjects;
     
-    var selectedTerm = allTerms.FirstOrDefault(t => t.Id == selectedTermId);
     var selectedSubject = allSubjects.FirstOrDefault(s => s.Id == selectedSubjectId);
     
     var selectedTypeId = Model.DocumentTypeId;
@@ -22,8 +19,7 @@
     
     bool isSearchMode = !string.IsNullOrEmpty(query) || Model.IsBookmarked == true;
     bool isSubjectMode = selectedSubjectId.HasValue;
-    bool isTermMode = selectedTermId.HasValue && !isSubjectMode && !isSearchMode;
-    bool isRootMode = !selectedTermId.HasValue && !isSubjectMode && !isSearchMode;
+    bool isRootMode = !isSubjectMode && !isSearchMode;
 }
 
 <style>
@@ -206,6 +202,73 @@
         color: var(--coral) !important;
         font-weight: 600;
     }
+
+    /* Subject Views */
+    .view-toggle-group {
+        display: flex;
+        background: rgba(255, 255, 255, 0.5);
+        border: 1px solid rgba(82, 39, 27, 0.1);
+        border-radius: 12px;
+        padding: 4px;
+        gap: 4px;
+    }
+    .view-btn {
+        border: none;
+        background: transparent;
+        color: var(--brown);
+        padding: 6px 10px;
+        border-radius: 8px;
+        transition: all 0.2s;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+    .view-btn:hover {
+        background: rgba(82, 39, 27, 0.05);
+    }
+    .view-btn.active {
+        background: #fff;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+        color: var(--coral);
+    }
+
+    .subject-col {
+        transition: width 0.3s ease;
+    }
+
+    /* Grid View (Default) */
+    .view-grid .subject-col { width: 25%; }
+    @@media (max-width: 991px) { .view-grid .subject-col { width: 33.333333%; } }
+    @@media (max-width: 767px) { .view-grid .subject-col { width: 50%; } }
+    @@media (max-width: 575px) { .view-grid .subject-col { width: 100%; } }
+    
+    /* Compact Grid View */
+    .view-compact .subject-col { width: 16.666667%; }
+    @@media (max-width: 1199px) { .view-compact .subject-col { width: 20%; } }
+    @@media (max-width: 991px) { .view-compact .subject-col { width: 25%; } }
+    @@media (max-width: 767px) { .view-compact .subject-col { width: 33.333333%; } }
+    @@media (max-width: 575px) { .view-compact .subject-col { width: 50%; } }
+
+    .view-compact .subject-card { padding: 20px 15px; }
+    .view-compact .subject-code { font-size: 1.25rem; margin-bottom: 8px !important; }
+    .view-compact .subject-name { font-size: 0.75rem; }
+
+    /* List View */
+    .view-list .subject-col { width: 100%; }
+    .view-list .subject-card {
+        flex-direction: row;
+        align-items: center;
+        justify-content: flex-start;
+        padding: 16px 24px;
+        text-align: left;
+        gap: 24px;
+    }
+    .view-list .subject-code {
+        margin-bottom: 0 !important;
+        min-width: 100px;
+        font-size: 1.25rem;
+    }
+    .view-list .subject-name { font-size: 1rem; }
 </style>
 
 <div class="page-shell grain">
@@ -231,23 +294,9 @@
                             <li class="breadcrumb-item active text-muted">Kết quả tìm kiếm: "@query"</li>
                         }
                     }
-                    else if (selectedTerm != null || isSubjectMode || isSearchMode)
+                    else if (isSearchMode && !selectedSubjectId.HasValue)
                     {
-                        if (isSearchMode && !selectedTermId.HasValue && !selectedSubjectId.HasValue)
-                        {
-                            <li class="breadcrumb-item active text-muted">Kết quả tìm kiếm: "@query"</li>
-                        }
-                        else if (selectedTerm != null)
-                        {
-                            if (isSubjectMode)
-                            {
-                                <li class="breadcrumb-item"><a href="?termId=@selectedTerm.Id">@selectedTerm.Name</a></li>
-                            }
-                            else
-                            {
-                                <li class="breadcrumb-item active text-muted">@selectedTerm.Name</li>
-                            }
-                        }
+                        <li class="breadcrumb-item active text-muted">Kết quả tìm kiếm: "@query"</li>
                     }
                     @if (selectedSubject != null)
                     {
@@ -260,64 +309,48 @@
         @if (isRootMode)
         {
             <!-- ========================= -->
-            <!-- STATE 1: ACADEMIC TERMS   -->
+            <!-- STATE 1: ALL SUBJECTS     -->
             <!-- ========================= -->
-            <div class="row g-4">
-                @foreach (var term in allTerms.OrderBy(t => t.Order))
+            <div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-3">
+                <div class="d-flex align-items-center gap-3">
+                    <h4 class="mb-0 fw-bold" style="color: var(--brown);">Danh Sách Môn Học</h4>
+                    <span class="font-mono-xs" style="background: rgba(216, 106, 88, 0.1); color: var(--coral); padding: 6px 14px; border-radius: 100px; border: 1px solid rgba(216, 106, 88, 0.15); font-weight: 700; white-space: nowrap;">
+                        @allSubjects.Count môn học
+                    </span>
+                </div>
+                <div class="view-toggle-group">
+                    <button class="btn view-btn active" data-view="grid" title="Hiển thị lưới (Mặc định)">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"></rect><rect x="14" y="3" width="7" height="7"></rect><rect x="14" y="14" width="7" height="7"></rect><rect x="3" y="14" width="7" height="7"></rect></svg>
+                    </button>
+                    <button class="btn view-btn" data-view="compact" title="Hiển thị lưới nhỏ">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="4" height="4"></rect><rect x="10" y="3" width="4" height="4"></rect><rect x="17" y="3" width="4" height="4"></rect><rect x="3" y="10" width="4" height="4"></rect><rect x="10" y="10" width="4" height="4"></rect><rect x="17" y="10" width="4" height="4"></rect><rect x="3" y="17" width="4" height="4"></rect><rect x="10" y="17" width="4" height="4"></rect><rect x="17" y="17" width="4" height="4"></rect></svg>
+                    </button>
+                    <button class="btn view-btn" data-view="list" title="Hiển thị danh sách">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="8" y1="6" x2="21" y2="6"></line><line x1="8" y1="12" x2="21" y2="12"></line><line x1="8" y1="18" x2="21" y2="18"></line><line x1="3" y1="6" x2="3.01" y2="6"></line><line x1="3" y1="12" x2="3.01" y2="12"></line><line x1="3" y1="18" x2="3.01" y2="18"></line></svg>
+                    </button>
+                </div>
+            </div>
+
+            <div id="subjects-container" class="row g-4 view-grid">
+                @foreach (var sub in allSubjects)
                 {
-                    <div class="col-sm-6 col-md-4 col-lg-3">
-                        <a href="?termId=@term.Id" class="term-card h-100">
-                            <div class="term-icon-wrapper">
-                                <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="var(--coral)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                                    <path d="M4 19.5v-15A2.5 2.5 0 0 1 6.5 2H20v20H6.5a2.5 2.5 0 0 1 0-5H20"/>
-                                </svg>
-                            </div>
-                            <h4 class="fw-bold mb-2">@term.Name</h4>
-                            <span class="text-muted-foreground small font-mono-xs" style="opacity: 0.8;">
-                                @allSubjects.Count(s => s.AcademicTermId == term.Id) môn học
-                            </span>
+                    <div class="subject-col">
+                        <a href="?subjectId=@sub.Id" class="subject-card h-100 px-4">
+                            <h3 class="fw-bold mb-3 subject-code" style="color: var(--brown);">@sub.Code</h3>
+                            <p class="text-muted-foreground small mb-0 subject-name" style="line-height: 1.4;">@sub.Name</p>
                         </a>
                     </div>
                 }
             </div>
         }
-        else if (isTermMode)
-        {
-            <!-- ========================= -->
-            <!-- STATE 2: SUBJECTS LIST    -->
-            <!-- ========================= -->
-            var termSubjects = allSubjects.Where(s => s.AcademicTermId == selectedTermId).ToList();
-            if (!termSubjects.Any())
-            {
-                <div class="text-center py-5 rounded-4" style="background: rgba(255,255,255,0.3); border: 1px dashed rgba(82, 39, 27, 0.12);">
-                    <p class="text-muted-foreground mb-4">Học kỳ này chưa có môn học nào.</p>
-                    <a href="?" class="btn btn-dark pill-button px-4 py-2 font-mono-xs text-white" style="background: var(--brown); border: none;">Quay Lại Học Kỳ</a>
-                </div>
-            }
-            else
-            {
-                <div class="row g-4">
-                    @foreach (var sub in termSubjects)
-                    {
-                        <div class="col-sm-6 col-md-4 col-lg-3">
-                            <a href="?subjectId=@sub.Id&termId=@selectedTermId" class="subject-card h-100 px-4">
-                                <h3 class="fw-bold mb-3" style="color: var(--brown);">@sub.Code</h3>
-                                <p class="text-muted-foreground small mb-0" style="line-height: 1.4;">@sub.Name</p>
-                            </a>
-                        </div>
-                    }
-                </div>
-            }
-        }
         else
         {
             <!-- ========================= -->
-            <!-- STATE 3: DOCUMENTS & DOCS -->
+            <!-- STATE 2: DOCUMENTS & DOCS -->
             <!-- ========================= -->
             
             <!-- Search & Filter Form -->
             <form method="get" asp-page="/Documents/All" class="mb-5" id="filterForm">
-                <input type="hidden" name="termId" value="@selectedTermId" />
                 @if (Model.IsBookmarked == true)
                 {
                     <input type="hidden" name="isBookmarked" value="true" />
@@ -340,40 +373,20 @@
                     <div class="d-flex flex-wrap gap-3 align-items-center">
                         <!-- 1. Subject Select -->
                         <div style="min-width: 160px; flex: 1;">
-                            @if (selectedTermId.HasValue)
-                            {
-                                <select name="subjectId" class="form-select form-glass-select" onchange="this.form.submit()">
-                                    <option value="">Tất Cả Môn Học</option>
-                                    @foreach (var subject in allSubjects.Where(s => s.AcademicTermId == selectedTermId))
+                            <select name="subjectId" class="form-select form-glass-select" onchange="this.form.submit()">
+                                <option value="">Tất Cả Môn Học</option>
+                                @foreach (var subject in allSubjects)
+                                {
+                                    if (selectedSubjectId.HasValue && selectedSubjectId.Value == subject.Id)
                                     {
-                                        if (selectedSubjectId.HasValue && selectedSubjectId.Value == subject.Id)
-                                        {
-                                            <option value="@subject.Id" selected>@subject.Code</option>
-                                        }
-                                        else
-                                        {
-                                            <option value="@subject.Id">@subject.Code</option>
-                                        }
+                                        <option value="@subject.Id" selected>@subject.Code</option>
                                     }
-                                </select>
-                            }
-                            else
-                            {
-                                <select name="subjectId" class="form-select form-glass-select" onchange="this.form.submit()">
-                                    <option value="">Tất Cả Môn Học</option>
-                                    @foreach (var subject in allSubjects)
+                                    else
                                     {
-                                        if (selectedSubjectId.HasValue && selectedSubjectId.Value == subject.Id)
-                                        {
-                                            <option value="@subject.Id" selected>@subject.Code</option>
-                                        }
-                                        else
-                                        {
-                                            <option value="@subject.Id">@subject.Code</option>
-                                        }
+                                        <option value="@subject.Id">@subject.Code</option>
                                     }
-                                </select>
-                            }
+                                }
+                            </select>
                         </div>
                         
                         <!-- 2. Document Type Select -->
@@ -567,21 +580,21 @@
                     <nav class="d-flex justify-content-center mt-5">
                         <ul class="pagination gap-2 border-0">
                             <li class="page-item @(Model.ViewModel.Page == 1 ? "disabled" : "")">
-                                <a class="page-link pill-button px-3 py-2 border-0" href="?q=@(query)&termId=@(selectedTermId)&subjectId=@(selectedSubjectId)&documentTypeId=@(selectedTypeId)&languageId=@(selectedLangId)&documentSourceId=@(selectedSourceId)&sortBy=@(Model.SortBy)&page=@(Model.ViewModel.Page - 1)" style="border-radius: 12px; color: var(--brown); background: rgba(255,255,255,0.4); font-size: 0.85rem;">
+                                <a class="page-link pill-button px-3 py-2 border-0" href="?q=@(query)&subjectId=@(selectedSubjectId)&documentTypeId=@(selectedTypeId)&languageId=@(selectedLangId)&documentSourceId=@(selectedSourceId)&sortBy=@(Model.SortBy)&page=@(Model.ViewModel.Page - 1)" style="border-radius: 12px; color: var(--brown); background: rgba(255,255,255,0.4); font-size: 0.85rem;">
                                     Trước
                                 </a>
                             </li>
                             @for (int i = 1; i <= Model.ViewModel.TotalPages; i++)
                             {
                                 <li class="page-item @(Model.ViewModel.Page == i ? "active" : "")">
-                                    <a class="page-link pill-button px-3.5 py-2 border-0" href="?q=@(query)&termId=@(selectedTermId)&subjectId=@(selectedSubjectId)&documentTypeId=@(selectedTypeId)&languageId=@(selectedLangId)&documentSourceId=@(selectedSourceId)&sortBy=@(Model.SortBy)&page=@i" 
+                                    <a class="page-link pill-button px-3.5 py-2 border-0" href="?q=@(query)&subjectId=@(selectedSubjectId)&documentTypeId=@(selectedTypeId)&languageId=@(selectedLangId)&documentSourceId=@(selectedSourceId)&sortBy=@(Model.SortBy)&page=@i" 
                                        style="border-radius: 12px; font-size: 0.85rem; font-weight: 600; @(Model.ViewModel.Page == i ? "background: var(--brown) !important; color: #fff !important;" : "color: var(--brown); background: rgba(255,255,255,0.4);")">
                                         @i
                                     </a>
                                 </li>
                             }
                             <li class="page-item @(Model.ViewModel.Page == Model.ViewModel.TotalPages ? "disabled" : "")">
-                                <a class="page-link pill-button px-3 py-2 border-0" href="?q=@(query)&termId=@(selectedTermId)&subjectId=@(selectedSubjectId)&documentTypeId=@(selectedTypeId)&languageId=@(selectedLangId)&documentSourceId=@(selectedSourceId)&sortBy=@(Model.SortBy)&page=@(Model.ViewModel.Page + 1)" style="border-radius: 12px; color: var(--brown); background: rgba(255,255,255,0.4); font-size: 0.85rem;">
+                                <a class="page-link pill-button px-3 py-2 border-0" href="?q=@(query)&subjectId=@(selectedSubjectId)&documentTypeId=@(selectedTypeId)&languageId=@(selectedLangId)&documentSourceId=@(selectedSourceId)&sortBy=@(Model.SortBy)&page=@(Model.ViewModel.Page + 1)" style="border-radius: 12px; color: var(--brown); background: rgba(255,255,255,0.4); font-size: 0.85rem;">
                                     Sau
                                 </a>
                             </li>
@@ -618,6 +631,35 @@
         document.addEventListener("DOMContentLoaded", function() {
             const form = document.getElementById('filterForm');
             const container = document.getElementById('resultsContainer');
+            
+            // View toggle logic
+            const viewBtns = document.querySelectorAll('.view-btn');
+            const subjectsContainer = document.getElementById('subjects-container');
+            
+            if (viewBtns.length > 0 && subjectsContainer) {
+                // Restore preferred view
+                const savedView = localStorage.getItem('explore-subjects-view') || 'grid';
+                applyView(savedView);
+
+                viewBtns.forEach(btn => {
+                    btn.addEventListener('click', function() {
+                        const view = this.dataset.view;
+                        applyView(view);
+                        localStorage.setItem('explore-subjects-view', view);
+                    });
+                });
+
+                function applyView(view) {
+                    // Update buttons
+                    viewBtns.forEach(b => b.classList.remove('active'));
+                    const activeBtn = document.querySelector(`.view-btn[data-view="${view}"]`);
+                    if (activeBtn) activeBtn.classList.add('active');
+
+                    // Update container
+                    subjectsContainer.classList.remove('view-grid', 'view-compact', 'view-list');
+                    subjectsContainer.classList.add('view-' + view);
+                }
+            }
             
             if (form && container) {
                 // Remove onchange inline attributes and use event listeners
