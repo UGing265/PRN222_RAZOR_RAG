@@ -209,9 +209,18 @@ public static class DocumentChunker
             wordsSinceLastHeader += pWordCount;
         }
 
-        if (currentChunk.Count > 0 && currentWordCount >= minWords)
+        if (currentChunk.Count > 0)
         {
-            chunks.Add(string.Join("\n\n", currentChunk));
+            var remainingContent = string.Join("\n\n", currentChunk);
+            if (chunks.Count == 0 || currentWordCount >= minWords)
+            {
+                chunks.Add(remainingContent);
+            }
+            else if (chunks.Count > 0 && currentWordCount < minWords)
+            {
+                // Merge small leftover chunk into previous chunk to avoid tiny fragments
+                chunks[chunks.Count - 1] += "\n\n" + remainingContent;
+            }
         }
 
         return chunks;

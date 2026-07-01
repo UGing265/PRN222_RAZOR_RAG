@@ -191,7 +191,7 @@ public class DocumentService : IDocumentService
             var checksum = await ComputeSha256Async(checksumStream, cancellationToken);
 
             var extractedText = SanitizeForPostgres(await _fileParserService.ExtractTextAsync(tempPath, extension, cancellationToken));
-            var chunks = DocumentChunker.ChunkText(extractedText, 1, _indexingOptions.ChunkMaxWords, _indexingOptions.ChunkOverlapWords).ToList();
+            var chunks = DocumentChunker.ChunkText(extractedText, _indexingOptions.ChunkMinWords, _indexingOptions.ChunkMaxWords, _indexingOptions.ChunkOverlapWords).ToList();
             var chunkEntities = new List<DocumentChunk>();
             var totalChunks = chunks.Count;
             var chunkIndex = 0;
