@@ -1,9 +1,10 @@
 using BLL.Interfaces.Auth;
+using MailKit.Net.Smtp;
+using MailKit.Security;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
+using MimeKit;
 using System;
-using System.Net;
-using System.Net.Mail;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -47,31 +48,36 @@ public class SmtpEmailService : IEmailService
 
         try
         {
-            using var client = new SmtpClient(smtpServer, port)
-            {
-                Credentials = new NetworkCredential(senderEmail, senderPassword),
-                EnableSsl = true
-            };
+            var message = new MimeMessage();
+            message.From.Add(new MailboxAddress(senderName, senderEmail));
+            message.To.Add(MailboxAddress.Parse(toEmail));
+            message.Subject = subject;
 
-            var mailMessage = new MailMessage
+            var bodyBuilder = new BodyBuilder
             {
-                From = new MailAddress(senderEmail, senderName),
-                Subject = subject,
-                Body = body,
-                IsBodyHtml = true
+                HtmlBody = body
             };
+            message.Body = bodyBuilder.ToMessageBody();
+
+            using var client = new SmtpClient();
+            await client.ConnectAsync(smtpServer, port, SecureSocketOptions.Auto, cancellationToken);
             
-            mailMessage.To.Add(toEmail);
+            if (!string.IsNullOrEmpty(senderPassword))
+            {
+                await client.AuthenticateAsync(senderEmail, senderPassword, cancellationToken);
+            }
+            
+            await client.SendAsync(message, cancellationToken);
+            await client.DisconnectAsync(true, cancellationToken);
 
-            await client.SendMailAsync(mailMessage, cancellationToken);
-            _logger.LogInformation("Đã gửi email xác thực thành công tới {ToEmail}", toEmail);
+            _logger.LogInformation("Đã gửi email xác thực thành công tới {ToEmail} qua MailKit", toEmail);
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Lỗi xảy ra khi gửi email tới {ToEmail} qua SMTP.", toEmail);
+            _logger.LogError(ex, "Lỗi xảy ra khi gửi email tới {ToEmail} qua SMTP (MailKit).", toEmail);
             
             // Fallback in ra console để tránh làm đứt mạch kiểm thử của user
-            Console.WriteLine("\n[FALLBACK CONSOLE LOG do lỗi SMTP]:");
+            Console.WriteLine("\n[FALLBACK CONSOLE LOG do lỗi SMTP (MailKit)]:");
             Console.WriteLine($"[EMAIL GỬI TỚI]: {toEmail}");
             Console.WriteLine($"[NỘI DUNG]:\n{body}\n");
             

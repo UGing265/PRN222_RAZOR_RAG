@@ -10,7 +10,7 @@ public sealed class EmailQueue : IEmailQueue
     {
         _channel = Channel.CreateUnbounded<EmailJob>(new UnboundedChannelOptions
         {
-            SingleReader = true,
+            SingleReader = false,
             SingleWriter = false
         });
     }

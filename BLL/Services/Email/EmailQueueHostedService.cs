@@ -26,9 +26,26 @@ public sealed class EmailQueueHostedService : BackgroundService
 
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
     {
-        _logger.LogInformation("EmailQueueHostedService started. Throttle={Ms}ms, MaxRetries={N}",
-            _options.ThrottleDelayMs, _options.MaxRetries);
+        var workerCount = _options.MaxWorkers > 0 ? _options.MaxWorkers : 4;
+        _logger.LogInformation("EmailQueueHostedService started with Worker Pool. Workers={Workers}, Throttle={Ms}ms, MaxRetries={N}",
+            workerCount, _options.ThrottleDelayMs, _options.MaxRetries);
 
+        var workers = new Task[workerCount];
+        for (int i = 0; i < workerCount; i++)
+        {
+            int workerId = i + 1;
+            workers[i] = Task.Run(() => WorkerLoopAsync(workerId, stoppingToken), stoppingToken);
+        }
+
+        try
+        {
+            await Task.WhenAll(workers);
+        }
+        catch (OperationCanceledException) { }
+    }
+
+    private async Task WorkerLoopAsync(int workerId, CancellationToken stoppingToken)
+    {
         try
         {
             await foreach (var job in _queue.Reader.ReadAllAsync(stoppingToken))
@@ -39,6 +56,10 @@ public sealed class EmailQueueHostedService : BackgroundService
             }
         }
         catch (OperationCanceledException) { }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Worker {WorkerId} encountered an unexpected error and stopped.", workerId);
+        }
     }
 
     private async Task ProcessJobAsync(EmailJob job, CancellationToken ct)
