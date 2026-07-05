@@ -17,7 +17,7 @@
     var allLangs = Model.Languages;
     var allSources = Model.DocumentSources;
     
-    bool isSearchMode = !string.IsNullOrEmpty(query) || Model.IsBookmarked == true;
+    bool isSearchMode = !string.IsNullOrEmpty(query) || Model.IsBookmarked == true || selectedTypeId.HasValue || selectedLangId.HasValue || selectedSourceId.HasValue;
     bool isSubjectMode = selectedSubjectId.HasValue;
     bool isRootMode = !isSubjectMode && !isSearchMode;
 }
@@ -306,6 +306,137 @@
             </nav>
         </div>
 
+        <!-- Search & Filter Form -->
+        <form method="get" asp-page="/Documents/All" class="mb-5" id="filterForm">
+            @if (Model.IsBookmarked == true)
+            {
+                <input type="hidden" name="isBookmarked" value="true" />
+            }
+            <div class="search-glass-container p-3 d-flex flex-column gap-3">
+                
+                <!-- ROW 1: Search Input & Search Button -->
+                <div class="d-flex flex-wrap gap-3 align-items-center">
+                    <div class="flex-grow-1 premium-search-box" style="max-width: 600px;">
+                        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" class="premium-search-icon"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
+                        <input type="text" name="q" value="@query" placeholder="Tìm kiếm theo môn, tên khóa học/tài liệu hoặc mã môn..." class="premium-search-input">
+                    </div>
+                    
+                    <button type="submit" class="btn btn-premium-primary pill-button px-5 py-2.5 font-mono-xs text-white flex-shrink-0" style="min-width: 120px; font-size: 0.85rem;">
+                        TÌM KIẾM
+                    </button>
+                </div>
+                
+                <!-- ROW 2: Structured Filters (Subject, Type, Language, Source, Sort) -->
+                <div class="d-flex flex-wrap gap-3 align-items-center">
+                    <!-- 1. Subject Select -->
+                    <div style="min-width: 160px; flex: 1;">
+                        <select name="subjectId" class="form-select form-glass-select" onchange="this.form.submit()">
+                            <option value="">Tất Cả Môn Học</option>
+                            @foreach (var subject in allSubjects)
+                            {
+                                if (selectedSubjectId.HasValue && selectedSubjectId.Value == subject.Id)
+                                {
+                                    <option value="@subject.Id" selected>@subject.Code</option>
+                                }
+                                else
+                                {
+                                    <option value="@subject.Id">@subject.Code</option>
+                                }
+                            }
+                        </select>
+                    </div>
+                    
+                    <!-- 2. Document Type Select -->
+                    <div style="min-width: 160px; flex: 1;">
+                        <select name="documentTypeId" class="form-select form-glass-select" onchange="this.form.submit()">
+                            <option value="">Tất Cả Học Liệu</option>
+                            @foreach (var type in allTypes)
+                            {
+                                if (selectedTypeId.HasValue && selectedTypeId.Value == type.Id)
+                                {
+                                    <option value="@type.Id" selected>@type.Name</option>
+                                }
+                                else
+                                {
+                                    <option value="@type.Id">@type.Name</option>
+                                }
+                            }
+                        </select>
+                    </div>
+
+                    <!-- 3. Language Select -->
+                    <div style="min-width: 140px; flex: 1;">
+                        <select name="languageId" class="form-select form-glass-select" onchange="this.form.submit()">
+                            <option value="">Tất Cả Ngôn Ngữ</option>
+                            @foreach (var lang in allLangs)
+                            {
+                                if (selectedLangId.HasValue && selectedLangId.Value == lang.Id)
+                                {
+                                    <option value="@lang.Id" selected>@lang.Name</option>
+                                }
+                                else
+                                {
+                                    <option value="@lang.Id">@lang.Name</option>
+                                }
+                            }
+                        </select>
+                    </div>
+
+                    <!-- 4. Document Source Select -->
+                    <div style="min-width: 150px; flex: 1;">
+                        <select name="documentSourceId" class="form-select form-glass-select" onchange="this.form.submit()">
+                            <option value="">Tất Cả Nguồn</option>
+                            @foreach (var src in allSources)
+                            {
+                                if (selectedSourceId.HasValue && selectedSourceId.Value == src.Id)
+                                {
+                                    <option value="@src.Id" selected>@src.Name</option>
+                                }
+                                else
+                                {
+                                    <option value="@src.Id">@src.Name</option>
+                                }
+                            }
+                        </select>
+                    </div>
+
+                    <!-- 5. Sort Dropdown -->
+                    <div style="min-width: 160px; flex: 1;">
+                        <select name="sortBy" class="form-select form-glass-select" onchange="this.form.submit()">
+                            @{
+                                var sortOptions = new Dictionary<string, string>
+                                {
+                                    { "date_desc", "Ngày Đăng ↓" },
+                                    { "date_asc", "Ngày Đăng ↑" },
+                                    { "title_asc", "A - Z ↑" },
+                                    { "title_desc", "Z - A ↓" },
+                                    { "views_desc", "Lượt Xem ↓" },
+                                    { "views_asc", "Lượt Xem ↑" }
+                                };
+                                
+                                string currentSort = Model.SortBy ?? "date_desc";
+                                if (currentSort == "date") currentSort = "date_desc";
+                                if (currentSort == "title") currentSort = "title_asc";
+                                if (currentSort == "views") currentSort = "views_desc";
+
+                                foreach (var opt in sortOptions)
+                                {
+                                    if (currentSort == opt.Key)
+                                    {
+                                        <option value="@opt.Key" selected>@opt.Value</option>
+                                    }
+                                    else
+                                    {
+                                        <option value="@opt.Key">@opt.Value</option>
+                                    }
+                                }
+                            }
+                        </select>
+                    </div>
+                </div>
+            </div>
+        </form>
+
         @if (isRootMode)
         {
             <!-- ========================= -->
@@ -348,137 +479,6 @@
             <!-- ========================= -->
             <!-- STATE 2: DOCUMENTS & DOCS -->
             <!-- ========================= -->
-            
-            <!-- Search & Filter Form -->
-            <form method="get" asp-page="/Documents/All" class="mb-5" id="filterForm">
-                @if (Model.IsBookmarked == true)
-                {
-                    <input type="hidden" name="isBookmarked" value="true" />
-                }
-                <div class="search-glass-container p-3 d-flex flex-column gap-3">
-                    
-                    <!-- ROW 1: Search Input & Search Button -->
-                    <div class="d-flex flex-wrap gap-3 align-items-center">
-                        <div class="flex-grow-1 premium-search-box" style="max-width: 600px;">
-                            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" class="premium-search-icon"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
-                            <input type="text" name="q" value="@query" placeholder="Tìm Kiếm Tài Liệu..." class="premium-search-input">
-                        </div>
-                        
-                        <button type="submit" class="btn btn-premium-primary pill-button px-5 py-2.5 font-mono-xs text-white flex-shrink-0" style="min-width: 120px; font-size: 0.85rem;">
-                            TÌM KIẾM
-                        </button>
-                    </div>
-                    
-                    <!-- ROW 2: Structured Filters (Subject, Type, Language, Source, Sort) -->
-                    <div class="d-flex flex-wrap gap-3 align-items-center">
-                        <!-- 1. Subject Select -->
-                        <div style="min-width: 160px; flex: 1;">
-                            <select name="subjectId" class="form-select form-glass-select" onchange="this.form.submit()">
-                                <option value="">Tất Cả Môn Học</option>
-                                @foreach (var subject in allSubjects)
-                                {
-                                    if (selectedSubjectId.HasValue && selectedSubjectId.Value == subject.Id)
-                                    {
-                                        <option value="@subject.Id" selected>@subject.Code</option>
-                                    }
-                                    else
-                                    {
-                                        <option value="@subject.Id">@subject.Code</option>
-                                    }
-                                }
-                            </select>
-                        </div>
-                        
-                        <!-- 2. Document Type Select -->
-                        <div style="min-width: 160px; flex: 1;">
-                            <select name="documentTypeId" class="form-select form-glass-select" onchange="this.form.submit()">
-                                <option value="">Tất Cả Học Liệu</option>
-                                @foreach (var type in allTypes)
-                                {
-                                    if (selectedTypeId.HasValue && selectedTypeId.Value == type.Id)
-                                    {
-                                        <option value="@type.Id" selected>@type.Name</option>
-                                    }
-                                    else
-                                    {
-                                        <option value="@type.Id">@type.Name</option>
-                                    }
-                                }
-                            </select>
-                        </div>
-
-                        <!-- 3. Language Select -->
-                        <div style="min-width: 140px; flex: 1;">
-                            <select name="languageId" class="form-select form-glass-select" onchange="this.form.submit()">
-                                <option value="">Tất Cả Ngôn Ngữ</option>
-                                @foreach (var lang in allLangs)
-                                {
-                                    if (selectedLangId.HasValue && selectedLangId.Value == lang.Id)
-                                    {
-                                        <option value="@lang.Id" selected>@lang.Name</option>
-                                    }
-                                    else
-                                    {
-                                        <option value="@lang.Id">@lang.Name</option>
-                                    }
-                                }
-                            </select>
-                        </div>
-
-                        <!-- 4. Document Source Select -->
-                        <div style="min-width: 150px; flex: 1;">
-                            <select name="documentSourceId" class="form-select form-glass-select" onchange="this.form.submit()">
-                                <option value="">Tất Cả Nguồn</option>
-                                @foreach (var src in allSources)
-                                {
-                                    if (selectedSourceId.HasValue && selectedSourceId.Value == src.Id)
-                                    {
-                                        <option value="@src.Id" selected>@src.Name</option>
-                                    }
-                                    else
-                                    {
-                                        <option value="@src.Id">@src.Name</option>
-                                    }
-                                }
-                            </select>
-                        </div>
-
-                        <!-- 5. Sort Dropdown -->
-                        <div style="min-width: 160px; flex: 1;">
-                            <select name="sortBy" class="form-select form-glass-select" onchange="this.form.submit()">
-                                @{
-                                    var sortOptions = new Dictionary<string, string>
-                                    {
-                                        { "date_desc", "Ngày Đăng ↓" },
-                                        { "date_asc", "Ngày Đăng ↑" },
-                                        { "title_asc", "A - Z ↑" },
-                                        { "title_desc", "Z - A ↓" },
-                                        { "views_desc", "Lượt Xem ↓" },
-                                        { "views_asc", "Lượt Xem ↑" }
-                                    };
-                                    
-                                    string currentSort = Model.SortBy ?? "date_desc";
-                                    if (currentSort == "date") currentSort = "date_desc";
-                                    if (currentSort == "title") currentSort = "title_asc";
-                                    if (currentSort == "views") currentSort = "views_desc";
-
-                                    foreach (var opt in sortOptions)
-                                    {
-                                        if (currentSort == opt.Key)
-                                        {
-                                            <option value="@opt.Key" selected>@opt.Value</option>
-                                        }
-                                        else
-                                        {
-                                            <option value="@opt.Key">@opt.Value</option>
-                                        }
-                                    }
-                                }
-                            </select>
-                        </div>
-                    </div>
-                </div>
-            </form>
 
             <div id="resultsContainer" style="transition: opacity 0.3s ease;">
                 <!-- Document List Header -->

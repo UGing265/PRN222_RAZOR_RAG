@@ -150,7 +150,11 @@ public class DocumentRepository : IDocumentRepository
 
         if (!string.IsNullOrWhiteSpace(query))
         {
-            q = q.Where(x => x.Title.Contains(query) || (x.Subject != null && x.Subject.Name.Contains(query)));
+            var lowerQuery = query.Trim().ToLower();
+            q = q.Where(x => x.Title.ToLower().Contains(lowerQuery)
+                || (x.Subject != null && x.Subject.Name.ToLower().Contains(lowerQuery))
+                || (x.Subject != null && x.Subject.Code.ToLower().Contains(lowerQuery))
+                || (x.Description != null && x.Description.ToLower().Contains(lowerQuery)));
         }
 
         if (subjectId.HasValue)
@@ -200,7 +204,11 @@ public class DocumentRepository : IDocumentRepository
 
         if (!string.IsNullOrWhiteSpace(query))
         {
-            q = q.Where(x => x.Title.Contains(query) || (x.Subject != null && x.Subject.Name.Contains(query)));
+            var lowerQuery = query.Trim().ToLower();
+            q = q.Where(x => x.Title.ToLower().Contains(lowerQuery)
+                || (x.Subject != null && x.Subject.Name.ToLower().Contains(lowerQuery))
+                || (x.Subject != null && x.Subject.Code.ToLower().Contains(lowerQuery))
+                || (x.Description != null && x.Description.ToLower().Contains(lowerQuery)));
         }
 
         if (subjectId.HasValue)
@@ -265,7 +273,11 @@ public class DocumentRepository : IDocumentRepository
 
         if (!string.IsNullOrWhiteSpace(query))
         {
-            q = q.Where(x => x.Title.Contains(query) || (x.Subject != null && x.Subject.Name.Contains(query)) || (x.Description != null && x.Description.Contains(query)));
+            var lowerQuery = query.Trim().ToLower();
+            q = q.Where(x => x.Title.ToLower().Contains(lowerQuery)
+                || (x.Subject != null && x.Subject.Name.ToLower().Contains(lowerQuery))
+                || (x.Subject != null && x.Subject.Code.ToLower().Contains(lowerQuery))
+                || (x.Description != null && x.Description.ToLower().Contains(lowerQuery)));
         }
 
         if (subjectId.HasValue)
@@ -339,7 +351,11 @@ public class DocumentRepository : IDocumentRepository
 
         if (!string.IsNullOrWhiteSpace(query))
         {
-            q = q.Where(x => x.Title.Contains(query) || (x.Subject != null && x.Subject.Name.Contains(query)) || (x.Description != null && x.Description.Contains(query)));
+            var lowerQuery = query.Trim().ToLower();
+            q = q.Where(x => x.Title.ToLower().Contains(lowerQuery)
+                || (x.Subject != null && x.Subject.Name.ToLower().Contains(lowerQuery))
+                || (x.Subject != null && x.Subject.Code.ToLower().Contains(lowerQuery))
+                || (x.Description != null && x.Description.ToLower().Contains(lowerQuery)));
         }
 
         if (subjectId.HasValue)
