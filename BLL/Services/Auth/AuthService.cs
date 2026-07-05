@@ -73,8 +73,7 @@ public class AuthService : IAuthService
 
         var created = await _authRepository.AddUserAsync(user, cancellationToken);
 
-        var verificationToken = GenerateEmailVerificationToken(normalizedEmail);
-        var verificationUrl = $"{_appBaseUrl.TrimEnd('/')}/Auth/VerifyEmail?token={Uri.EscapeDataString(verificationToken)}";
+        var loginUrl = $"{_appBaseUrl.TrimEnd('/')}/Auth/Login";
 
         var subject = "[FPT RAG] Bạn đã được cấp quyền truy cập hệ thống";
         var roleName = created.Role?.Name ?? roleId switch
@@ -84,7 +83,7 @@ public class AuthService : IAuthService
             3 => "Sinh viên",
             _ => $"ID: {roleId}"
         };
-        var body = BuildWelcomeEmailBody(created.FullName, roleName, normalizedEmail, tempPassword, verificationUrl);
+        var body = BuildWelcomeEmailBody(created.FullName, roleName, normalizedEmail, tempPassword, loginUrl);
 
         _emailQueue.Enqueue(new EmailJob(normalizedEmail, subject, body));
 
@@ -122,9 +121,9 @@ public class AuthService : IAuthService
             throw new InvalidOperationException("Tài khoản của bạn chưa được kích hoạt hoặc đang chờ Admin phê duyệt.");
         }
 
-        if (!user.EmailVerified)
+        if (!user.EmailVerified && !user.MustChangePassword)
         {
-            throw new InvalidOperationException("Tài khoản của bạn chưa được xác thực email. Vui lòng kiểm tra hộp thư đến để xác thực.");
+            throw new InvalidOperationException("Tài khoản của bạn chưa hoàn tất xác thực (chưa đổi mật khẩu lần đầu).");
         }
 
         return Map(user);
@@ -238,6 +237,11 @@ public class AuthService : IAuthService
             return false;
         }
 
+        if (user.MustChangePassword || !user.EmailVerified)
+        {
+            throw new InvalidOperationException("Tài khoản chưa hoàn tất xác thực (chưa đổi mật khẩu lần đầu). Admin không thể tự ý kích hoạt.");
+        }
+
         user.IsActive = true;
         user.IsBlocked = false;
         user.UpdatedAt = DateTime.UtcNow;
@@ -306,6 +310,11 @@ public class AuthService : IAuthService
         if (user is null)
         {
             return false;
+        }
+
+        if (user.MustChangePassword || !user.EmailVerified)
+        {
+            throw new InvalidOperationException("Tài khoản chưa hoàn tất xác thực (chưa đổi mật khẩu lần đầu). Admin không thể tự ý mở khóa hoặc kích hoạt.");
         }
 
         user.IsBlocked = false;
@@ -445,8 +454,7 @@ public class AuthService : IAuthService
                     
                     try
                     {
-                        var verificationToken = GenerateEmailVerificationToken(normalizedEmail);
-                        var verificationUrl = $"{_appBaseUrl.TrimEnd('/')}/Auth/VerifyEmail?token={Uri.EscapeDataString(verificationToken)}";
+                        var loginUrl = $"{_appBaseUrl.TrimEnd('/')}/Auth/Login";
 
                         var subject = "[FPT RAG] Bạn đã được cấp quyền truy cập hệ thống";
                         var roleName = roleId switch
@@ -456,7 +464,7 @@ public class AuthService : IAuthService
                             3 => "Sinh viên",
                             _ => $"ID: {roleId}"
                         };
-                        var body = BuildWelcomeEmailBody(user.FullName, roleName, normalizedEmail, password, verificationUrl);
+                        var body = BuildWelcomeEmailBody(user.FullName, roleName, normalizedEmail, password, loginUrl);
 
                         _emailQueue.Enqueue(new EmailJob(normalizedEmail, subject, body));
                     }
@@ -512,6 +520,8 @@ public class AuthService : IAuthService
 
         user.PasswordHash = HashPassword(newPassword);
         user.MustChangePassword = false;
+        user.EmailVerified = true;
+        user.IsActive = true;
         user.PasswordChangedAt = DateTime.UtcNow;
         user.UpdatedAt = DateTime.UtcNow;
 
@@ -551,13 +561,13 @@ public class AuthService : IAuthService
 
             <p style=""font-size: 15px; color: #52525B; margin-bottom: 12px;"">Vui lòng thực hiện các bước sau để kích hoạt:</p>
             <ol style=""font-size: 15px; color: #52525B; padding-left: 20px; line-height: 1.7; margin-top: 0;"">
-                <li>Click vào nút xác nhận bên dưới (có hiệu lực trong 15 phút).</li>
-                <li>Đăng nhập bằng mật khẩu tạm thời.</li>
-                <li>Hệ thống sẽ yêu cầu bạn cập nhật mật khẩu mới.</li>
+                <li>Click vào nút Đăng Nhập bên dưới.</li>
+                <li>Đăng nhập bằng Email và Mật khẩu tạm thời ở trên.</li>
+                <li>Hệ thống sẽ yêu cầu bạn cập nhật mật khẩu mới để hoàn tất xác thực.</li>
             </ol>
 
             <div style=""text-align: center; margin: 35px 0 20px 0;"">
-                <a href=""{verificationUrl}"" style=""background-color: #18181B; color: #ffffff; text-decoration: none; padding: 14px 28px; border-radius: 6px; font-weight: 500; display: inline-block; font-size: 15px;"">Xác Nhận Tài Khoản</a>
+                <a href=""{verificationUrl}"" style=""background-color: #18181B; color: #ffffff; text-decoration: none; padding: 14px 28px; border-radius: 6px; font-weight: 500; display: inline-block; font-size: 15px;"">Đăng Nhập Ngay</a>
             </div>
 
             <hr style=""border: none; border-top: 1px solid #E4E4E7; margin: 30px 0;"">

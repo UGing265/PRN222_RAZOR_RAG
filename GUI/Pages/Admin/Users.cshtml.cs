@@ -38,6 +38,12 @@ namespace GUI.Pages.Admin
                 return RedirectToPage();
             }
 
+            if (roleId == 1)
+            {
+                TempData["ErrorMessage"] = "Không được phép tạo tài khoản Admin qua giao diện này.";
+                return RedirectToPage();
+            }
+
             try
             {
                 var created = await _authService.RegisterAsync(fullName, email, roleId, cancellationToken);
