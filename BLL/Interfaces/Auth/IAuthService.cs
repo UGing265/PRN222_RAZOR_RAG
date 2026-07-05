@@ -12,7 +12,9 @@ public interface IAuthService
     Task<AuthUserDto?> ValidateCredentialsAsync(string email, string password, CancellationToken cancellationToken = default);
     Task<AuthUserDto> LoginOrRegisterExternalAsync(string email, string fullName, CancellationToken cancellationToken = default);
     string GenerateEmailVerificationToken(string email);
+    (bool IsValid, bool IsExpired, string? Email) ValidateEmailVerificationToken(string token);
     Task<bool> VerifyEmailTokenAsync(string token, CancellationToken cancellationToken = default);
+    Task<(bool Success, string? Error)> ResendWelcomeEmailAsync(string email, CancellationToken cancellationToken = default);
     Task<List<AuthUserDto>> GetAllUsersAsync(CancellationToken cancellationToken = default);
     Task<bool> ApproveUserAsync(Guid adminUserId, Guid userId, CancellationToken cancellationToken = default);
     Task<bool> RejectOrBlockUserAsync(Guid adminUserId, Guid userId, CancellationToken cancellationToken = default);

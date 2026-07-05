@@ -1,0 +1,51 @@
+@page
+@model GUI.Pages.Auth.TokenExpiredModel
+@{
+    ViewData["Title"] = "Đường Dẫn Hết Hạn - FPT RAG System";
+}
+
+<div style="min-height: 80vh; display: flex; align-items: center; justify-content: center; background-color: #FAF9F6; padding: 20px; font-family: 'Inter', system-ui, sans-serif;">
+    <div style="max-width: 500px; width: 100%; background: rgba(255, 255, 255, 0.85); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px); border: 1px solid #E4E4E7; border-radius: 8px; padding: 35px; box-shadow: 0 4px 20px rgba(0,0,0,0.02); text-align: center;">
+        
+        <div style="width: 56px; height: 56px; background-color: rgba(254, 242, 242, 0.8); border: 1px solid rgba(254, 226, 226, 1); border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 20px auto; color: #991b1b; font-size: 24px;">
+            ⚠️
+        </div>
+
+        <h2 style="font-family: 'Source Serif 4', Georgia, serif; font-size: 24px; font-weight: 600; color: #09090B; margin: 0 0 15px 0; letter-spacing: -0.02em;">
+            Đường Dẫn Đã Hết Hạn
+        </h2>
+
+        @if (!string.IsNullOrEmpty(Model.ErrorMessage))
+        {
+            <div style="background-color: rgba(254, 242, 242, 0.8); border: 1px solid rgba(254, 226, 226, 1); color: #991b1b; padding: 12px 16px; border-radius: 6px; font-size: 14px; margin-bottom: 20px; text-align: left;">
+                @Model.ErrorMessage
+            </div>
+        }
+
+        <p style="font-size: 15px; color: #52525B; line-height: 1.6; margin: 0 0 10px 0;">
+            Xin chào <strong style="color: #09090B;">@Model.Email</strong>,
+        </p>
+        <p style="font-size: 15px; color: #52525B; line-height: 1.6; margin: 0 0 25px 0;">
+            Đường dẫn kích hoạt tài khoản của bạn đã vượt quá giới hạn 15 phút. Mật khẩu tạm thời trước đó đã được hệ thống vô hiệu hóa nhằm bảo đảm an toàn.
+        </p>
+
+        <div style="background-color: #F4F4F5; border: 1px solid #E4E4E7; border-radius: 6px; padding: 16px; margin-bottom: 25px; text-align: left;">
+            <p style="font-size: 13px; color: #27272A; margin: 0; line-height: 1.5;">
+                💡 <strong>Giải pháp:</strong> Bấm vào nút bên dưới để hệ thống tự động tạo một mật khẩu tạm thời mới và gửi lại email xác thực tới hộp thư của bạn.
+            </p>
+        </div>
+
+        <form method="post">
+            <input type="hidden" name="token" value="@Model.Token" />
+            <button type="submit" style="width: 100%; background-color: #18181B; color: #FFFFFF; font-family: 'Inter', sans-serif; font-size: 15px; font-weight: 500; padding: 14px 20px; border: none; border-radius: 6px; cursor: pointer; transition: background-color 0.2s; box-shadow: 0 1px 2px rgba(0,0,0,0.05);">
+                📧 Tạo Mật Khẩu Tạm Mới & Gửi Lại Email
+            </button>
+        </form>
+
+        <div style="margin-top: 25px; border-top: 1px solid #E4E4E7; padding-top: 20px;">
+            <a href="/Auth/Login" style="font-size: 14px; color: #71717A; text-decoration: none; font-weight: 500; transition: color 0.2s;">
+                ← Quay lại trang Đăng nhập
+            </a>
+        </div>
+    </div>
+</div>

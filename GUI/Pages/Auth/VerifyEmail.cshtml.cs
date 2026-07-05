@@ -15,7 +15,7 @@ namespace GUI.Pages.Auth
             _logger = logger;
         }
 
-        public async Task<IActionResult> OnGetAsync(string token, CancellationToken cancellationToken)
+        public IActionResult OnGet(string token)
         {
             if (string.IsNullOrEmpty(token))
             {
@@ -25,20 +25,24 @@ namespace GUI.Pages.Auth
 
             try
             {
-                var verified = await _authService.VerifyEmailTokenAsync(token, cancellationToken);
-                if (verified)
+                var (isValid, isExpired, email) = _authService.ValidateEmailVerificationToken(token);
+                if (isValid)
                 {
-                    TempData["SuccessMessage"] = "Email đã được xác nhận. Vui lòng đăng nhập bằng mật khẩu tạm đã được gửi qua email.";
+                    return RedirectToPage("/Auth/Login", new { email = email });
+                }
+                else if (isExpired)
+                {
+                    return RedirectToPage("/Auth/TokenExpired", new { token = token });
                 }
                 else
                 {
-                    TempData["ErrorMessage"] = "Link xác nhận không hợp lệ hoặc đã hết hạn. Liên hệ Admin để được cấp lại.";
+                    TempData["ErrorMessage"] = "Đường dẫn xác thực không hợp lệ.";
                 }
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Lỗi khi xác thực email với token {Token}", token);
-                TempData["ErrorMessage"] = "Đã xảy ra lỗi trong quá trình xác thực email.";
+                _logger.LogError(ex, "Lỗi khi kiểm tra token xác thực {Token}", token);
+                TempData["ErrorMessage"] = "Đã xảy ra lỗi trong quá trình xử lý.";
             }
 
             return RedirectToPage("/Auth/Login");

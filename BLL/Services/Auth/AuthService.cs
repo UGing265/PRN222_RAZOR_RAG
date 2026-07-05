@@ -14,6 +14,7 @@ public class AuthService : IAuthService
 {
     private readonly IAuthRepository _authRepository;
     private readonly ITimeLimitedDataProtector _protector;
+    private readonly IDataProtector _jsonProtector;
     private readonly INotificationService _notificationService;
     private readonly IEmailQueue _emailQueue;
     private readonly string _appBaseUrl;
@@ -27,6 +28,7 @@ public class AuthService : IAuthService
     {
         _authRepository = authRepository;
         _protector = dataProtectionProvider.CreateProtector("FptStudentEmailVerification").ToTimeLimitedDataProtector();
+        _jsonProtector = dataProtectionProvider.CreateProtector("FptStudentEmailVerificationV2");
         _notificationService = notificationService;
         _emailQueue = emailQueue;
         _appBaseUrl = configuration["App:BaseUrl"] ?? "https://localhost:7065";
@@ -73,7 +75,8 @@ public class AuthService : IAuthService
 
         var created = await _authRepository.AddUserAsync(user, cancellationToken);
 
-        var loginUrl = $"{_appBaseUrl.TrimEnd('/')}/Auth/Login";
+        var verificationToken = GenerateEmailVerificationToken(normalizedEmail);
+        var verificationUrl = $"{_appBaseUrl.TrimEnd('/')}/Auth/VerifyEmail?token={Uri.EscapeDataString(verificationToken)}";
 
         var subject = "[FPT RAG] Bạn đã được cấp quyền truy cập hệ thống";
         var roleName = created.Role?.Name ?? roleId switch
@@ -83,7 +86,7 @@ public class AuthService : IAuthService
             3 => "Sinh viên",
             _ => $"ID: {roleId}"
         };
-        var body = BuildWelcomeEmailBody(created.FullName, roleName, normalizedEmail, tempPassword, loginUrl);
+        var body = BuildWelcomeEmailBody(created.FullName, roleName, normalizedEmail, tempPassword, verificationUrl);
 
         _emailQueue.Enqueue(new EmailJob(normalizedEmail, subject, body));
 
@@ -186,15 +189,91 @@ public class AuthService : IAuthService
     public string GenerateEmailVerificationToken(string email)
     {
         var normalizedEmail = email.Trim().ToLowerInvariant();
-        return _protector.Protect(normalizedEmail, DateTimeOffset.UtcNow.AddMinutes(15));
+        var payload = System.Text.Json.JsonSerializer.Serialize(new
+        {
+            Email = normalizedEmail,
+            ExpiresAt = DateTime.UtcNow.AddMinutes(15)
+        });
+        return _jsonProtector.Protect(payload);
+    }
+
+    public (bool IsValid, bool IsExpired, string? Email) ValidateEmailVerificationToken(string token)
+    {
+        if (string.IsNullOrWhiteSpace(token))
+            return (false, false, null);
+
+        try
+        {
+            var json = _jsonProtector.Unprotect(token);
+            using var doc = System.Text.Json.JsonDocument.Parse(json);
+            var root = doc.RootElement;
+            var email = root.GetProperty("Email").GetString();
+            var expiresAt = root.GetProperty("ExpiresAt").GetDateTime();
+
+            if (DateTime.UtcNow > expiresAt)
+            {
+                return (false, true, email);
+            }
+
+            return (true, false, email);
+        }
+        catch
+        {
+            try
+            {
+                var email = _protector.Unprotect(token);
+                return (true, false, email);
+            }
+            catch (System.Security.Cryptography.CryptographicException)
+            {
+                return (false, false, null);
+            }
+        }
+    }
+
+    public async Task<(bool Success, string? Error)> ResendWelcomeEmailAsync(string email, CancellationToken cancellationToken = default)
+    {
+        var normalizedEmail = email.Trim().ToLowerInvariant();
+        var user = await _authRepository.GetUserByEmailWithRoleAsync(normalizedEmail, cancellationToken);
+        if (user is null)
+        {
+            return (false, "Tài khoản không tồn tại.");
+        }
+
+        if (!user.MustChangePassword || user.EmailVerified)
+        {
+            return (false, "Tài khoản của bạn đã được xác thực trước đó. Vui lòng sử dụng tính năng Quên mật khẩu nếu bạn quên mật khẩu.");
+        }
+
+        var newTempPassword = PasswordGenerator.Generate(12);
+        user.PasswordHash = HashPassword(newTempPassword);
+        user.UpdatedAt = DateTime.UtcNow;
+
+        await _authRepository.UpdateUserAsync(user, cancellationToken);
+
+        var token = GenerateEmailVerificationToken(normalizedEmail);
+        var verificationUrl = $"{_appBaseUrl.TrimEnd('/')}/Auth/VerifyEmail?token={Uri.EscapeDataString(token)}";
+
+        var subject = "[FPT RAG] Bạn đã được cấp quyền truy cập hệ thống";
+        var roleName = user.Role?.Name ?? "Người dùng";
+        var body = BuildWelcomeEmailBody(user.FullName, roleName, normalizedEmail, newTempPassword, verificationUrl);
+
+        _emailQueue.Enqueue(new EmailJob(normalizedEmail, subject, body));
+
+        return (true, null);
     }
 
     public async Task<bool> VerifyEmailTokenAsync(string token, CancellationToken cancellationToken = default)
     {
         try
         {
-            var email = _protector.Unprotect(token);
-            var normalizedEmail = email.Trim().ToLowerInvariant();
+            var result = ValidateEmailVerificationToken(token);
+            if (!result.IsValid || string.IsNullOrEmpty(result.Email))
+            {
+                return false;
+            }
+
+            var normalizedEmail = result.Email.Trim().ToLowerInvariant();
 
             var user = await _authRepository.GetUserByEmailWithRoleAsync(normalizedEmail, cancellationToken);
             if (user is null)
@@ -454,7 +533,8 @@ public class AuthService : IAuthService
                     
                     try
                     {
-                        var loginUrl = $"{_appBaseUrl.TrimEnd('/')}/Auth/Login";
+                        var verificationToken = GenerateEmailVerificationToken(normalizedEmail);
+                        var verificationUrl = $"{_appBaseUrl.TrimEnd('/')}/Auth/VerifyEmail?token={Uri.EscapeDataString(verificationToken)}";
 
                         var subject = "[FPT RAG] Bạn đã được cấp quyền truy cập hệ thống";
                         var roleName = roleId switch
@@ -464,7 +544,7 @@ public class AuthService : IAuthService
                             3 => "Sinh viên",
                             _ => $"ID: {roleId}"
                         };
-                        var body = BuildWelcomeEmailBody(user.FullName, roleName, normalizedEmail, password, loginUrl);
+                        var body = BuildWelcomeEmailBody(user.FullName, roleName, normalizedEmail, password, verificationUrl);
 
                         _emailQueue.Enqueue(new EmailJob(normalizedEmail, subject, body));
                     }
@@ -561,7 +641,7 @@ public class AuthService : IAuthService
 
             <p style=""font-size: 15px; color: #52525B; margin-bottom: 12px;"">Vui lòng thực hiện các bước sau để kích hoạt:</p>
             <ol style=""font-size: 15px; color: #52525B; padding-left: 20px; line-height: 1.7; margin-top: 0;"">
-                <li>Click vào nút Đăng Nhập bên dưới.</li>
+                <li>Click vào nút Đăng Nhập bên dưới (đường dẫn có hiệu lực trong 15 phút).</li>
                 <li>Đăng nhập bằng Email và Mật khẩu tạm thời ở trên.</li>
                 <li>Hệ thống sẽ yêu cầu bạn cập nhật mật khẩu mới để hoàn tất xác thực.</li>
             </ol>
