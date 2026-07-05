@@ -3,6 +3,8 @@ namespace BLL.Services.Documents;
 public class DocumentIndexingOptions
 {
     public int ChunkMinWords { get; set; } = 50;
+    public int MinWord { get => ChunkMinWords; set => ChunkMinWords = value; }
+    public int MinWords { get => ChunkMinWords; set => ChunkMinWords = value; }
     public int ChunkMaxWords { get; set; } = 500;
     public int ChunkOverlapWords { get; set; } = 80;
     public int BatchSize { get; set; } = 10;

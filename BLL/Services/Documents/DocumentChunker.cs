@@ -69,7 +69,7 @@ public static class DocumentChunker
         return true;
     }
 
-    public static IReadOnlyList<string> ChunkText(string text, int minWords = 1, int maxWords = 1100, int overlapWords = 100)
+    public static IReadOnlyList<string> ChunkText(string text, int minWords = 50, int maxWords = 500, int overlapWords = 80)
     {
         if (string.IsNullOrWhiteSpace(text))
         {

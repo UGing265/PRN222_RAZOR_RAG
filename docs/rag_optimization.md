@@ -37,8 +37,8 @@ Tài liệu này ghi chú lại toàn bộ những vấn đề kỹ thuật đã
   1. **Đoạn văn (Paragraph):** Dựa vào dấu xuống dòng kép `\n\n`.
   2. **Câu (Sentence):** Nếu đoạn văn vượt quá giới hạn từ, cắt tiếp theo dấu chấm câu `.`, `!`, `?`.
   3. **Từ (Word):** Chỉ sử dụng như phương án cuối cùng nếu có một câu viết quá dài không có dấu chấm.
-- **Cải thiện độ liền mạch:** Thuật toán có sử dụng `overlap = 100` để lùi lại lấy đoạn văn cuối của Chunk trước ghép vào đầu Chunk sau nhằm đảm bảo sự liền mạch mượt mà tuyệt đối.
-- **Mở rộng Context:** Nâng giới hạn một Chunk lên **1100 từ** (`ChunkMaxWords = 1100`), giúp LLM có đầy đủ ngữ cảnh để hiểu toàn diện vấn đề, tránh việc trả lời ngô nghê.
+- **Cải thiện độ liền mạch:** Thuật toán có sử dụng `overlap = 80` để lùi lại lấy đoạn văn cuối của Chunk trước ghép vào đầu Chunk sau nhằm đảm bảo sự liền mạch mượt mà tuyệt đối.
+- **Mở rộng Context:** Nâng giới hạn một Chunk lên **500 từ** (`ChunkMaxWords = 500`), giúp LLM có đầy đủ ngữ cảnh để hiểu toàn diện vấn đề, đồng thời thiết lập ngưỡng tối thiểu **50 từ** (`ChunkMinWords = 50`) để tránh tạo các chunk mồ côi quá ngắn.
 
 ## 3. Kích thước Chunk bị lồi lõm do PDF mất Paragraph
 ### a. Vấn đề
@@ -116,8 +116,9 @@ Trong `DocumentService.cs`, chặn đứng lỗi bằng cách dùng `Substring` 
 
 ## 11. Tổng kết Cấu Hình Tối Ưu (DocumentIndexingOptions.cs)
 ```csharp
-public int ChunkMaxWords { get; set; } = 1100;
-public int ChunkOverlapWords { get; set; } = 100;
+public int ChunkMinWords { get; set; } = 50; // Số từ tối thiểu cho 1 chunk (tránh chunk mồ côi)
+public int ChunkMaxWords { get; set; } = 500;
+public int ChunkOverlapWords { get; set; } = 80;
 public int BatchSize { get; set; } = 10; // Gửi 10 chunks trong 1 request Batch (An toàn)
 public int BatchDelaySeconds { get; set; } = 1; // Tạm nghỉ giữa các Batch
 ```
