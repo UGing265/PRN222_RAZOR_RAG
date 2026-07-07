@@ -69,7 +69,7 @@ public static class DocumentChunker
         return true;
     }
 
-    public static IReadOnlyList<string> ChunkText(string text, int minWords = 1, int maxWords = 1100, int overlapWords = 100)
+    public static IReadOnlyList<string> ChunkText(string text, int minWords = 50, int maxWords = 500, int overlapWords = 80)
     {
         if (string.IsNullOrWhiteSpace(text))
         {
@@ -209,9 +209,18 @@ public static class DocumentChunker
             wordsSinceLastHeader += pWordCount;
         }
 
-        if (currentChunk.Count > 0 && currentWordCount >= minWords)
+        if (currentChunk.Count > 0)
         {
-            chunks.Add(string.Join("\n\n", currentChunk));
+            var remainingContent = string.Join("\n\n", currentChunk);
+            if (chunks.Count == 0 || currentWordCount >= minWords)
+            {
+                chunks.Add(remainingContent);
+            }
+            else if (chunks.Count > 0 && currentWordCount < minWords)
+            {
+                // Merge small leftover chunk into previous chunk to avoid tiny fragments
+                chunks[chunks.Count - 1] += "\n\n" + remainingContent;
+            }
         }
 
         return chunks;

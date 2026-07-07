@@ -14,6 +14,7 @@ public class GeminiChapterSegmentationService : IChapterSegmentationService
     private readonly ILogger<GeminiChapterSegmentationService> _logger;
     private readonly string[] _apiKeys;
     private readonly string _model;
+    private readonly DocumentIndexingOptions _indexingOptions;
     private int _keyIndex;
 
     public GeminiChapterSegmentationService(IConfiguration configuration, ILogger<GeminiChapterSegmentationService> logger)
@@ -36,6 +37,7 @@ public class GeminiChapterSegmentationService : IChapterSegmentationService
         }
 
         _model = configuration["Gemini:ChatModel"] ?? "gemini-2.5-flash";
+        _indexingOptions = new DocumentIndexingOptions();
     }
 
     public async Task<List<DocumentChapter>> GenerateChaptersAsync(Document document, IReadOnlyList<DocumentChunk> chunks, CancellationToken cancellationToken = default)
@@ -107,7 +109,7 @@ Yêu cầu BẮT BUỘC:
 1. NGÔN NGỮ ĐẦU RA: Toàn bộ `title` (Tên chương) và `summary` (Tóm tắt) BẮT BUỘC PHẢI VIẾT BẰNG TIẾNG VIỆT, cho dù nội dung tài liệu gốc là tiếng Anh hay ngôn ngữ khác.
 2. ĐỌC CẨN THẬN VÀ ƯU TIÊN TÌM HEADER: Hãy quét thật kỹ từng dòng nội dung của tất cả các chunk để tìm các dấu hiệu chuyển chương/phần rõ ràng (VD: 'Chapter 1', 'Chương 1', 'PART I', 'Mục lục', 'Introduction', 'Conclusion').
    - Tuyệt đối KHÔNG bỏ sót bất kỳ chương nào có trong sách. Sách có bao nhiêu chương thì HÃY TRẢ VỀ ĐẦY ĐỦ bấy nhiêu chương, không giới hạn số lượng chương.
-   - Nếu sách KHÔNG CÓ chia chương rõ ràng, thì hãy tự động phân tích và gộp các chunk lại thành các phần/chủ đề lớn logic nhất.
+   - Nếu sách KHÔNG CÓ chia chương rõ ràng, thì hãy tự động phân tích và gộp các chunk lại thành các phần/chủ đề lớn logic nhất. Mỗi chương nên duy trì số lượng chunk đồng đều và hợp lý (khuyến nghị từ __MIN_CHUNKS__ đến __MAX_CHUNKS__ chunk/chương).
 3. Chỉ trả về JSON hợp lệ, KHÔNG giải thích thêm.
 4. Mỗi chương phải có title, summary, startChunkIndex, endChunkIndex, confidenceScore.
 5. 'summary' RẤT NGẮN GỌN (1-2 câu) bằng TIẾNG VIỆT.
@@ -142,6 +144,8 @@ __CHUNKPACK__
 .Replace("__SUBJECT__", document.Subject?.Name ?? string.Empty)
 
 .Replace("__LANGUAGE__", document.Language?.Name ?? string.Empty)
+.Replace("__MIN_CHUNKS__", _indexingOptions.ChapterMinChunks.ToString())
+.Replace("__MAX_CHUNKS__", _indexingOptions.ChapterMaxChunks.ToString())
 .Replace("__CHUNKPACK__", chunkPack);
 
         Exception? lastError = null;
@@ -243,19 +247,51 @@ __CHUNKPACK__
 
     private List<DocumentChapter> BuildFallbackChapters(Document document, IReadOnlyList<DocumentChunk> chunks)
     {
-        return [new DocumentChapter
+        if (chunks.Count == 0) return [];
+
+        var targetChunksPerChapter = Math.Clamp(5, _indexingOptions.ChapterMinChunks, _indexingOptions.ChapterMaxChunks);
+        if (chunks.Count <= targetChunksPerChapter)
         {
-            Id = Guid.NewGuid(),
-            DocumentId = document.Id,
-            Title = "Chương 1",
-            Summary = "Tài liệu được gom thành một chương duy nhất do nội dung ngắn hoặc không tách rõ ràng.",
-            ChapterOrder = 1,
-            StartChunkIndex = chunks.Min(x => x.ChunkOrder),
-            EndChunkIndex = chunks.Max(x => x.ChunkOrder),
-            IsAiGenerated = true,
-            ConfidenceScore = 0.5m,
-            CreatedAt = DateTime.UtcNow
-        }];
+            return [new DocumentChapter
+            {
+                Id = Guid.NewGuid(),
+                DocumentId = document.Id,
+                Title = "Chương 1",
+                Summary = "Tài liệu ngắn hoặc không chia ranh giới rõ ràng nên được gom thành một chương duy nhất.",
+                ChapterOrder = 1,
+                StartChunkIndex = chunks.Min(x => x.ChunkOrder),
+                EndChunkIndex = chunks.Max(x => x.ChunkOrder),
+                IsAiGenerated = true,
+                ConfidenceScore = 0.5m,
+                CreatedAt = DateTime.UtcNow
+            }];
+        }
+
+        var sortedChunks = chunks.OrderBy(x => x.ChunkOrder).ToList();
+        var numChapters = (int)Math.Ceiling((double)sortedChunks.Count / targetChunksPerChapter);
+        var chapters = new List<DocumentChapter>();
+
+        for (int i = 0; i < numChapters; i++)
+        {
+            var batch = sortedChunks.Skip(i * targetChunksPerChapter).Take(targetChunksPerChapter).ToList();
+            if (batch.Count == 0) continue;
+
+            chapters.Add(new DocumentChapter
+            {
+                Id = Guid.NewGuid(),
+                DocumentId = document.Id,
+                Title = $"Chương {i + 1}: Phần {i + 1}",
+                Summary = $"Nội dung được chia đều tự động theo dung lượng tài liệu (từ phần {batch.First().ChunkOrder} đến {batch.Last().ChunkOrder}).",
+                ChapterOrder = i + 1,
+                StartChunkIndex = batch.First().ChunkOrder,
+                EndChunkIndex = batch.Last().ChunkOrder,
+                IsAiGenerated = true,
+                ConfidenceScore = 0.6m,
+                CreatedAt = DateTime.UtcNow
+            });
+        }
+
+        return chapters;
     }
 
     private static string ExtractJson(string text)

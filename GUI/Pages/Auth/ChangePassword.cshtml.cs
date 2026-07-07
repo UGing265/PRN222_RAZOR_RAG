@@ -1,4 +1,6 @@
 using BLL.Interfaces.Auth;
+using Microsoft.AspNetCore.Authentication;
+using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
@@ -48,8 +50,8 @@ public class ChangePasswordModel : PageModel
             return Page();
         }
 
-        if (User.IsInRole("Admin"))
-            return RedirectToPage("/Admin/Users");
-        return RedirectToPage("/Documents/All");
+        await HttpContext.SignOutAsync(CookieAuthenticationDefaults.AuthenticationScheme);
+        TempData["SuccessMessage"] = "Đổi mật khẩu và xác thực tài khoản thành công! Vui lòng đăng nhập lại bằng mật khẩu mới.";
+        return RedirectToPage("/Auth/Login");
     }
 }
