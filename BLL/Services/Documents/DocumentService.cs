@@ -50,7 +50,7 @@ public class DocumentService : IDocumentService
         _s3StorageService = s3StorageService;
         _uploadJobRepository = uploadJobRepository;
         _notificationService = notificationService;
-        _indexingOptions = configuration.GetSection("DocumentIndexing").Get<DocumentIndexingOptions>() ?? new DocumentIndexingOptions();
+        _indexingOptions = new DocumentIndexingOptions();
     }
 
     private static string BuildSlug(string title)

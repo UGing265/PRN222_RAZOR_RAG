@@ -37,7 +37,7 @@ public class GeminiChapterSegmentationService : IChapterSegmentationService
         }
 
         _model = configuration["Gemini:ChatModel"] ?? "gemini-2.5-flash";
-        _indexingOptions = configuration.GetSection("DocumentIndexing").Get<DocumentIndexingOptions>() ?? new DocumentIndexingOptions();
+        _indexingOptions = new DocumentIndexingOptions();
     }
 
     public async Task<List<DocumentChapter>> GenerateChaptersAsync(Document document, IReadOnlyList<DocumentChunk> chunks, CancellationToken cancellationToken = default)
