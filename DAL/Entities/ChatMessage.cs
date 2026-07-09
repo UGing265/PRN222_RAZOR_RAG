@@ -23,6 +23,10 @@ public class ChatMessage
     /// </summary>
     public List<Guid> RetrievedChunkIds { get; set; } = [];
 
+    public int? TokenCount { get; set; }
+
+    public int? LatencyMs { get; set; }
+
     public virtual ChatSession Session { get; set; } = null!;
 }
 

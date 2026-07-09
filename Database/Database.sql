@@ -377,6 +377,8 @@ CREATE TABLE public.chat_messages (
     content text,
     created_at timestamp with time zone DEFAULT now() NOT NULL,
     retrieved_chunk_ids jsonb DEFAULT '[]'::jsonb NOT NULL,
+    token_count integer DEFAULT 0,
+    latency_ms integer DEFAULT 0,
     CONSTRAINT chat_messages_pkey PRIMARY KEY (id),
     CONSTRAINT chat_messages_session_id_fkey FOREIGN KEY (session_id) REFERENCES public.chat_sessions(id) ON DELETE CASCADE
 );

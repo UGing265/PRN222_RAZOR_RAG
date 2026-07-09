@@ -635,6 +635,12 @@ public partial class DBContext : DbContext
             entity.Property(e => e.CreatedAt)
                 .HasDefaultValueSql("now()")
                 .HasColumnName("created_at");
+            entity.Property(e => e.TokenCount)
+                .HasDefaultValue(0)
+                .HasColumnName("token_count");
+            entity.Property(e => e.LatencyMs)
+                .HasDefaultValue(0)
+                .HasColumnName("latency_ms");
 
             entity.HasOne(d => d.Session).WithMany(p => p.ChatMessages)
                 .HasForeignKey(d => d.SessionId)

@@ -1,0 +1,653 @@
+@page "/Admin/TokenUsage"
+@model GUI.Pages.Admin.TokenUsageModel
+@using System.Text.Json
+@{
+    ViewData["Title"] = "Quản Lý Token Sử Dụng";
+}
+
+<div class="page-shell grain">
+    <main class="container-fluid px-4 px-md-5 py-5" style="max-width: 1400px;">
+        <!-- Top Heading Area -->
+        <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center mb-5 gap-4">
+            <div>
+                <span class="font-mono-xs text-coral-deep" style="font-weight: 700; letter-spacing: 0.15em;">QUẢN TRỊ VIÊN</span>
+                <h1 class="hero-title mt-2 mb-3" style="font-size: clamp(2.4rem, 4.5vw, 3.2rem); color: var(--brown); line-height: 1.1;">Quản Lý Token Sử Dụng</h1>
+                <p class="text-muted-foreground mb-3" style="font-size: 15px; font-weight: 400; max-width: 700px;">
+                    Theo dõi định lượng tiêu thụ Token Google Gemini API của từng tài khoản Giảng Viên và Sinh Viên trong hệ thống RAG.
+                </p>
+                <div class="d-flex gap-2 align-items-center">
+                    <span class="badge px-3.5 py-2 border-0 rounded-pill text-white bg-dark" style="font-size: 13px; font-weight: 500;">
+                        Tổng Quota: @Model.HeroStats.TotalQuotaTokens.ToString("N0") Tokens
+                    </span>
+                    <span class="badge px-3.5 py-2 border-0 rounded-pill text-white" style="background: var(--coral); font-size: 13px; font-weight: 500;">
+                        @Model.HeroStats.OverallPercent% Đã sử dụng
+                    </span>
+                    <span class="badge px-3 py-1.5 rounded-pill text-muted-foreground border border-border bg-transparent" style="font-size: 12px; font-family: ui-monospace, monospace;">
+                        ✦ MOCK DATA PREVIEW
+                    </span>
+                </div>
+            </div>
+        </div>
+
+        <!-- 3-Card Bento Grid Hero Section -->
+        <div class="row g-4 mb-5">
+            <!-- Card 1: Main Quota Card (60% / Col 12 -> Col LG 6) -->
+            <div class="col-12 col-lg-6">
+                <div class="feature-card-premium h-100 d-flex flex-column justify-content-between p-4 p-md-5" style="background: rgba(255, 255, 255, 0.78); border-radius: 28px; border: 1px solid rgba(82, 39, 27, 0.1);">
+                    <div>
+                        <div class="d-flex justify-content-between align-items-center mb-3">
+                            <span class="font-mono-xs text-muted-foreground" style="font-weight: 700; font-size: 11px;">TỔNG LƯỢNG TOKEN ĐÃ ĐƯỢC DÙNG</span>
+                            <span class="badge rounded-pill px-3 py-1" style="background: rgba(74, 31, 22, 0.08); color: var(--brown); font-weight: 700; font-size: 12px;">
+                                @Model.HeroStats.OverallPercent% Quota
+                            </span>
+                        </div>
+                        <div class="d-flex align-items-baseline gap-2 mb-4">
+                            <span class="font-display" style="font-size: clamp(2.2rem, 4vw, 3.2rem); color: var(--brown); font-weight: 800; line-height: 1;">
+                                @Model.HeroStats.TotalUsedTokens.ToString("N0")
+                            </span>
+                            <span class="text-muted-foreground" style="font-size: clamp(1.2rem, 2vw, 1.6rem); font-weight: 500;">
+                                / @Model.HeroStats.TotalQuotaTokens.ToString("N0")
+                            </span>
+                        </div>
+
+                        <!-- Stacked Multi-color Progress Bar matching the legend below -->
+                        @{
+                            var totalQuota = Model.HeroStats.TotalQuotaTokens > 0 ? (double)Model.HeroStats.TotalQuotaTokens : 1.0;
+                            var chatPercent = Math.Round((double)Model.HeroStats.TotalChatTokens / totalQuota * 100, 1);
+                            var docPercent = Math.Round((double)Model.HeroStats.TotalDocTokens / totalQuota * 100, 1);
+                        }
+                        <div class="progress mb-4 d-flex" style="height: 14px; border-radius: 9999px; background: rgba(82, 39, 27, 0.08); overflow: hidden; padding: 2px; gap: 2px;">
+                            @if (chatPercent > 0)
+                            {
+                                <div class="progress-bar" role="progressbar" 
+                                     style="width: @(chatPercent.ToString(System.Globalization.CultureInfo.InvariantCulture))%; background: var(--brown); border-radius: @(docPercent > 0 ? "9999px 0 0 9999px" : "9999px"); transition: width 1s cubic-bezier(0.16, 1, 0.3, 1);" 
+                                     title="Chat RAG: @Model.HeroStats.TotalChatTokens.ToString("N0") tokens (@chatPercent%)">
+                                </div>
+                            }
+                            @if (docPercent > 0)
+                            {
+                                <div class="progress-bar" role="progressbar" 
+                                     style="width: @(docPercent.ToString(System.Globalization.CultureInfo.InvariantCulture))%; background: var(--coral); border-radius: @(chatPercent > 0 ? "0 9999px 9999px 0" : "9999px"); transition: width 1s cubic-bezier(0.16, 1, 0.3, 1);" 
+                                     title="Embedding & Chia Chương: @Model.HeroStats.TotalDocTokens.ToString("N0") tokens (@docPercent%)">
+                                </div>
+                            }
+                        </div>
+                    </div>
+
+                    <!-- Breakdown Sub-stats -->
+                    <div class="row g-3 pt-3 border-top" style="border-color: rgba(82, 39, 27, 0.08) !important;">
+                        <div class="col-6 border-end" style="border-color: rgba(82, 39, 27, 0.08) !important;">
+                            <div class="d-flex align-items-center gap-2 mb-1">
+                                <span class="rounded-circle d-inline-block" style="width: 8px; height: 8px; background: var(--brown);"></span>
+                                <span class="text-muted-foreground" style="font-size: 13px; font-weight: 500;">Chat RAG / Hỏi Đáp</span>
+                            </div>
+                            <div class="fw-bold text-foreground" style="font-size: 16px;">
+                                @Model.HeroStats.TotalChatTokens.ToString("N0") <span class="text-muted-foreground fw-normal" style="font-size: 12px;">tokens</span>
+                            </div>
+                        </div>
+                        <div class="col-6 ps-3">
+                            <div class="d-flex align-items-center gap-2 mb-1">
+                                <span class="rounded-circle d-inline-block" style="width: 8px; height: 8px; background: var(--coral);"></span>
+                                <span class="text-muted-foreground" style="font-size: 13px; font-weight: 500;">Embedding & Chia Chương</span>
+                            </div>
+                            <div class="fw-bold text-foreground" style="font-size: 16px;">
+                                @Model.HeroStats.TotalDocTokens.ToString("N0") <span class="text-muted-foreground fw-normal" style="font-size: 12px;">tokens</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Card 2: Top Consumer (Col 12 -> Col MD 6 -> Col LG 3) -->
+            <div class="col-12 col-md-6 col-lg-3">
+                <div class="feature-card-premium h-100 d-flex flex-column justify-content-between p-4" style="background: rgba(255, 255, 255, 0.78); border-radius: 28px; border: 1px solid rgba(82, 39, 27, 0.1);">
+                    <div>
+                        <div class="d-flex justify-content-between align-items-center mb-3">
+                            <span class="font-mono-xs text-muted-foreground" style="font-weight: 700; font-size: 11px;">🔥 TOP CONSUMER TUẦN NÀY</span>
+                        </div>
+                        @if (Model.HeroStats.TopConsumer != null)
+                        {
+                            var top = Model.HeroStats.TopConsumer;
+                            <div class="d-flex align-items-center gap-3 mb-3">
+                                <div class="rounded-circle text-white d-flex align-items-center justify-content-center fw-bold shadow-sm flex-shrink-0"
+                                     style="width: 52px; height: 52px; font-size: 1.4rem; background: var(--brown) !important;">
+                                    @top.Initial
+                                </div>
+                                <div class="overflow-hidden">
+                                    <div class="fw-bold text-truncate text-foreground" style="font-size: 15px;" title="@top.FullName">@top.FullName</div>
+                                    <span class="badge rounded-pill mt-1" style="font-size: 11px; background: rgba(216, 106, 88, 0.15); color: var(--coral); font-weight: 600;">
+                                        @top.RoleName
+                                    </span>
+                                </div>
+                            </div>
+                            <p class="text-muted-foreground small mb-0" style="font-size: 13px; line-height: 1.4;">
+                                Tiêu thụ cao nhất với <strong style="color: var(--brown);">@top.TotalTokens.ToString("N0") tokens</strong> trong 7 ngày qua.
+                            </p>
+                        }
+                    </div>
+                    <div class="pt-3 border-top mt-3 d-flex align-items-center justify-content-between" style="border-color: rgba(82, 39, 27, 0.08) !important;">
+                        <span class="text-muted-foreground" style="font-size: 12px;">Tỷ lệ chiếm dụng:</span>
+                        <span class="fw-bold text-coral-deep" style="font-size: 14px;">@Model.HeroStats.TopConsumer?.PercentOfQuota% tổng Quota</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Card 3: Daily Burn Rate & API Health (Col 12 -> Col MD 6 -> Col LG 3) -->
+            <div class="col-12 col-md-6 col-lg-3">
+                <div class="feature-card-premium h-100 d-flex flex-column justify-content-between p-4" style="background: rgba(255, 255, 255, 0.78); border-radius: 28px; border: 1px solid rgba(82, 39, 27, 0.1);">
+                    <div>
+                        <div class="d-flex justify-content-between align-items-center mb-3">
+                            <span class="font-mono-xs text-muted-foreground" style="font-weight: 700; font-size: 11px;">⚡ TỐC ĐỘ TIÊU THỤ TRUNG BÌNH</span>
+                            <span class="badge rounded-pill bg-success-subtle text-success border border-success-subtle" style="font-size: 11px; font-weight: 600;">API Active</span>
+                        </div>
+                        <div class="mb-3">
+                            <div class="fw-bold text-foreground" style="font-size: 1.8rem; color: var(--brown); line-height: 1.1;">
+                                ~@Model.HeroStats.DailyAvgTokens.ToString("N0") <span style="font-size: 14px; font-weight: 500; color: var(--muted);">/ ngày</span>
+                            </div>
+                            <div class="d-flex align-items-center gap-1 mt-2 text-success" style="font-size: 13px; font-weight: 600;">
+                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"/><polyline points="17 6 23 6 23 12"/></svg>
+                                <span>+12.4% so với tuần trước</span>
+                            </div>
+                        </div>
+                        <p class="text-muted-foreground small mb-0" style="font-size: 13px;">
+                            Dựa trên hoạt động trò chuyện RAG và xử lý tài liệu trong 7 ngày gần nhất.
+                        </p>
+                    </div>
+                    <div class="pt-3 border-top mt-3 d-flex align-items-center justify-content-between" style="border-color: rgba(82, 39, 27, 0.08) !important;">
+                        <span class="text-muted-foreground" style="font-size: 12px;">Số lượt gọi API:</span>
+                        <span class="fw-bold text-foreground" style="font-size: 14px;">@Model.HeroStats.WeeklyApiRequests.ToString("N0") lượt</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Section Header & Filter Navigation Bar -->
+        <div class="d-flex flex-column flex-xl-row justify-content-between align-items-xl-center mb-4 pb-3 border-bottom gap-3" style="border-color: rgba(82, 39, 27, 0.1) !important;">
+            <div class="d-flex align-items-center flex-shrink-0">
+                <h3 class="hero-title m-0 text-nowrap" style="font-size: 1.55rem; color: var(--brown); white-space: nowrap;">Token của từng user</h3>
+            </div>
+
+            <!-- Search, Filter Tabs & Sort Controls -->
+            <form method="get" id="filterForm" class="d-flex flex-column flex-md-row align-items-stretch align-items-md-center gap-2.5 flex-grow-1 justify-content-md-end">
+                <!-- Role Filter Tabs -->
+                <div class="d-flex gap-1 bg-white p-1 rounded-pill border border-border flex-shrink-0" style="background: rgba(255,255,255,0.6) !important;">
+                    <button type="submit" name="filterRole" value="all" class="btn btn-sm rounded-pill px-3 py-1.5 fw-semibold text-nowrap @(Model.FilterRole == "all" ? "bg-dark text-white" : "text-muted-foreground")" style="font-size: 13px; border: none; transition: all 0.2s;">
+                        Tất Cả (@Model.UserTokensList.Count)
+                    </button>
+                    <button type="submit" name="filterRole" value="lecturer" class="btn btn-sm rounded-pill px-3 py-1.5 fw-semibold text-nowrap @(Model.FilterRole == "lecturer" ? "bg-dark text-white" : "text-muted-foreground")" style="font-size: 13px; border: none; transition: all 0.2s;">
+                        Giảng Viên (@Model.UserTokensList.Count(u => u.RoleId == 2))
+                    </button>
+                    <button type="submit" name="filterRole" value="student" class="btn btn-sm rounded-pill px-3 py-1.5 fw-semibold text-nowrap @(Model.FilterRole == "student" ? "bg-dark text-white" : "text-muted-foreground")" style="font-size: 13px; border: none; transition: all 0.2s;">
+                        Sinh Viên (@Model.UserTokensList.Count(u => u.RoleId == 3))
+                    </button>
+                </div>
+
+                <!-- Search Input (Widened) -->
+                <div class="premium-search-box flex-grow-1" style="min-width: 280px; max-width: 440px;">
+                    <svg class="premium-search-icon flex-shrink-0" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+                    <input type="text" name="searchTerm" class="premium-search-input" placeholder="Tìm kiếm theo tên hoặc địa chỉ email..." value="@Model.SearchTerm" style="font-size: 13px; min-height: 38px; width: 100%;" />
+                    @if (!string.IsNullOrEmpty(Model.SearchTerm))
+                    {
+                        <a asp-page="/Admin/TokenUsage" asp-route-filterRole="@Model.FilterRole" asp-route-sortBy="@Model.SortBy" class="text-muted-foreground text-decoration-none">✕</a>
+                    }
+                </div>
+
+                <!-- Sort Dropdown (Narrowed & Compact) -->
+                <select name="sortBy" class="form-select pill-input px-3 py-1.5 fw-medium flex-shrink-0" style="width: 175px; min-height: 38px; font-size: 13px; border-color: var(--border);" onchange="document.getElementById('filterForm').submit();">
+                    <option value="highest" selected="@(Model.SortBy == "highest")">Cao Nhất → Thấp Nhất</option>
+                    <option value="lowest" selected="@(Model.SortBy == "lowest")">Thấp Nhất → Cao Nhất</option>
+                    <option value="name" selected="@(Model.SortBy == "name")">Tên A → Z</option>
+                </select>
+            </form>
+        </div>
+
+        <!-- User Cards Bento Grid Area -->
+        @if (!Model.FilteredList.Any())
+        {
+            <div class="soft-panel editorial-shadow p-5 text-center my-4" style="background: rgba(255,255,255,.72); border-radius: 24px;">
+                <h4 class="text-muted-foreground mb-2" style="font-size: 16px; font-weight: 600;">Không tìm thấy người dùng nào phù hợp với bộ lọc.</h4>
+                <p class="text-muted small mb-4">Thử tìm kiếm với từ khóa khác hoặc chuyển sang tab Tất Cả.</p>
+                <a asp-page="/Admin/TokenUsage" class="btn btn-premium-secondary pill-button px-4 py-2">Đặt Lại Bộ Lọc</a>
+            </div>
+        }
+        else
+        {
+            <div class="row g-4 mb-5">
+                @foreach (var user in Model.FilteredList)
+                {
+                    <div class="col-12 col-md-6 col-xl-4">
+                        <div class="feature-card-premium h-100 d-flex flex-column justify-content-between p-4" style="background: rgba(255, 255, 255, 0.78); border-radius: 24px; border: 1px solid rgba(82, 39, 27, 0.08); transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);">
+                            <!-- User Header -->
+                            <div>
+                                <div class="d-flex justify-content-between align-items-start mb-3 gap-2">
+                                    <div class="d-flex align-items-center gap-3 overflow-hidden">
+                                        <div class="rounded-circle text-white d-flex align-items-center justify-content-center fw-bold shadow-sm flex-shrink-0"
+                                             style="width: 44px; height: 44px; font-size: 1.1rem; background: var(--brown) !important;">
+                                            @user.Initial
+                                        </div>
+                                        <div class="overflow-hidden">
+                                            <div class="fw-bold text-truncate text-foreground" style="font-size: 15px;" title="@user.FullName">@user.FullName</div>
+                                            <div class="text-muted-foreground text-truncate" style="font-size: 12px;">@user.Email</div>
+                                        </div>
+                                    </div>
+                                    <span class="badge rounded-pill flex-shrink-0" style="font-size: 11px; padding: 5px 10px; background: @(user.RoleId == 2 ? "rgba(74, 31, 22, 0.08)" : "rgba(30, 62, 98, 0.08)"); color: @(user.RoleId == 2 ? "var(--brown)" : "#1e3e62"); font-weight: 600;">
+                                        @user.RoleName
+                                    </span>
+                                </div>
+
+                                <!-- Sparkline Chart Container -->
+                                <div class="my-3 px-1 py-2 rounded-4" style="background: rgba(255, 255, 255, 0.6); border: 1px solid rgba(82, 39, 27, 0.05);">
+                                    <div class="d-flex justify-content-between align-items-center px-2 mb-1">
+                                        <span class="font-mono-xs text-muted-foreground" style="font-size: 10px;">XU HƯỚNG 7 NGÀY QUA</span>
+                                        <span class="text-coral-deep fw-bold" style="font-size: 11px;">📈 @user.SparklineData.Last().ToString("N0") / ngày</span>
+                                    </div>
+                                    <div style="height: 70px; width: 100%;">
+                                        <canvas class="user-sparkline-canvas" 
+                                                data-user-id="@user.UserId"></canvas>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Card Footer Stats & Detail Action -->
+                            <div class="pt-3 border-top d-flex align-items-center justify-content-between mt-2" style="border-color: rgba(82, 39, 27, 0.08) !important;">
+                                <div>
+                                    <div class="text-muted-foreground" style="font-size: 11px;">Tổng token đã dùng:</div>
+                                    <div class="fw-bold text-foreground d-flex align-items-baseline gap-1" style="font-size: 17px; color: var(--brown);">
+                                        @user.TotalTokens.ToString("N0")
+                                        <span class="text-muted-foreground fw-normal" style="font-size: 12px;">(@user.PercentOfQuota%)</span>
+                                    </div>
+                                </div>
+                                <button type="button" class="btn btn-sm btn-outline-dark pill-button px-3 py-1.5 fw-semibold d-flex align-items-center gap-1.5 view-detail-btn" 
+                                        style="font-size: 12px; border-color: rgba(82, 39, 27, 0.18);"
+                                        data-user-id="@user.UserId">
+                                    <span>Chi Tiết</span>
+                                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="9 18 15 12 9 6"/></svg>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                }
+            </div>
+
+            <!-- Pagination Controls (Matching Admin AuditLogs / Users style) -->
+            @if (Model.TotalPages > 1)
+            {
+                <div class="d-flex justify-content-center mt-4 pt-3 border-top" style="border-color: rgba(0,0,0,0.05) !important;">
+                    <nav aria-label="Page navigation">
+                        <ul class="pagination gap-2 mb-0">
+                            <li class="page-item @(Model.PageNumber <= 1 ? "disabled" : "")">
+                                <a class="page-link rounded-pill border-0 text-dark" style="background: rgba(0,0,0,0.03);" 
+                                   asp-page="/Admin/TokenUsage" asp-route-pageNumber="@(Model.PageNumber - 1)" asp-route-filterRole="@Model.FilterRole" asp-route-searchTerm="@Model.SearchTerm" asp-route-sortBy="@Model.SortBy">
+                                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="15 18 9 12 15 6"/></svg>
+                                </a>
+                            </li>
+
+                            @for (int i = 1; i <= Model.TotalPages; i++)
+                            {
+                                <li class="page-item">
+                                    <a class="page-link rounded-pill border-0 @(i == Model.PageNumber ? "active-page text-white" : "text-dark")" 
+                                       style="@(i == Model.PageNumber ? "background: #4a1f16;" : "background: rgba(0,0,0,0.03);") font-weight: 600;"
+                                       asp-page="/Admin/TokenUsage" asp-route-pageNumber="@i" asp-route-filterRole="@Model.FilterRole" asp-route-searchTerm="@Model.SearchTerm" asp-route-sortBy="@Model.SortBy">
+                                        @i
+                                    </a>
+                                </li>
+                            }
+
+                            <li class="page-item @(Model.PageNumber >= Model.TotalPages ? "disabled" : "")">
+                                <a class="page-link rounded-pill border-0 text-dark" style="background: rgba(0,0,0,0.03);" 
+                                   asp-page="/Admin/TokenUsage" asp-route-pageNumber="@(Model.PageNumber + 1)" asp-route-filterRole="@Model.FilterRole" asp-route-searchTerm="@Model.SearchTerm" asp-route-sortBy="@Model.SortBy">
+                                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="9 18 15 12 9 6"/></svg>
+                                </a>
+                            </li>
+                        </ul>
+                    </nav>
+                </div>
+            }
+        }
+    </main>
+</div>
+
+<!-- Glassmorphism Detail Modal for Individual User Token Breakdown -->
+<div class="modal fade" id="userDetailModal" tabindex="-1" aria-labelledby="userDetailModalLabel" aria-hidden="true" style="backdrop-filter: blur(10px); background: rgba(74, 31, 22, 0.2);">
+    <div class="modal-dialog modal-dialog-centered modal-lg" style="max-width: 760px;">
+        <div class="modal-content border-0 shadow-lg" style="background: var(--card); border-radius: 28px; color: var(--foreground); overflow: hidden; border: 1px solid rgba(82, 39, 27, 0.1) !important;">
+            
+            <!-- Modal Header -->
+            <div class="modal-header border-0 p-4 pb-3 d-flex justify-content-between align-items-center">
+                <div class="d-flex align-items-center gap-3">
+                    <div class="rounded-circle text-white d-flex align-items-center justify-content-center fw-bold shadow-sm"
+                         id="modalUserAvatar"
+                         style="width: 50px; height: 50px; font-size: 1.3rem; background: var(--brown) !important;">
+                        U
+                    </div>
+                    <div>
+                        <h5 class="modal-title fw-bold m-0" id="modalUserFullName" style="font-size: 1.25rem; color: var(--brown);">Họ và Tên</h5>
+                        <div class="d-flex align-items-center gap-2 mt-1">
+                            <span class="text-muted-foreground small" id="modalUserEmail" style="font-size: 13px;">email@domain.com</span>
+                            <span class="badge rounded-pill" id="modalUserRoleBadge" style="font-size: 11px; background: rgba(74, 31, 22, 0.08); color: var(--brown); font-weight: 600;">Vai trò</span>
+                        </div>
+                    </div>
+                </div>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close" style="background-color: rgba(82, 39, 27, 0.05); padding: 0.75rem; border-radius: 50%;"></button>
+            </div>
+
+            <!-- Modal Body -->
+            <div class="modal-body p-4 pt-1">
+                <!-- Summary KPI Row -->
+                <div class="row g-3 mb-4">
+                    <div class="col-4">
+                        <div class="p-3 rounded-4 h-100" style="background: rgba(255,255,255,0.72); border: 1px solid rgba(82,39,27,0.08);">
+                            <div class="font-mono-xs text-muted-foreground" style="font-size: 10px;">TỔNG TOKEN TIÊU THỤ</div>
+                            <div class="fw-bold mt-1" id="modalTotalTokens" style="font-size: 1.4rem; color: var(--brown);">0</div>
+                            <div class="small text-muted-foreground mt-1" id="modalPercentQuota" style="font-size: 12px;">0% Quota hệ thống</div>
+                        </div>
+                    </div>
+                    <div class="col-4">
+                        <div class="p-3 rounded-4 h-100" style="background: rgba(255,255,255,0.72); border: 1px solid rgba(82,39,27,0.08);">
+                            <div class="font-mono-xs text-muted-foreground" style="font-size: 10px;">CHAT RAG / HỎI ĐÁP</div>
+                            <div class="fw-bold mt-1" id="modalChatTokens" style="font-size: 1.4rem; color: #1e3e62;">0</div>
+                            <div class="small text-muted-foreground mt-1" id="modalChatPercent" style="font-size: 12px;">0% trong tổng số</div>
+                        </div>
+                    </div>
+                    <div class="col-4">
+                        <div class="p-3 rounded-4 h-100" style="background: rgba(255,255,255,0.72); border: 1px solid rgba(82,39,27,0.08);">
+                            <div class="font-mono-xs text-muted-foreground" style="font-size: 10px;">EMBEDDING TÀI LIỆU</div>
+                            <div class="fw-bold mt-1" id="modalDocTokens" style="font-size: 1.4rem; color: var(--coral);">0</div>
+                            <div class="small text-muted-foreground mt-1" id="modalDocPercent" style="font-size: 12px;">0% trong tổng số</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 7-Day Detailed Breakdown Chart -->
+                <div class="p-4 rounded-4 mb-4" style="background: rgba(255,255,255,0.78); border: 1px solid rgba(82,39,27,0.08);">
+                    <div class="d-flex justify-content-between align-items-center mb-3">
+                        <h6 class="fw-bold m-0" style="font-size: 14px; color: var(--brown);">Biểu Đồ Phân Bổ Tiêu Thụ 7 Ngày Qua</h6>
+                        <div class="d-flex align-items-center gap-3" style="font-size: 12px;">
+                            <span class="d-flex align-items-center gap-1.5"><span class="rounded-circle d-inline-block" style="width: 10px; height: 10px; background: #1e3e62;"></span> Chat RAG</span>
+                            <span class="d-flex align-items-center gap-1.5"><span class="rounded-circle d-inline-block" style="width: 10px; height: 10px; background: var(--coral);"></span> Tài liệu</span>
+                        </div>
+                    </div>
+                    <div style="height: 220px; width: 100%;">
+                        <canvas id="modalUserChartCanvas"></canvas>
+                    </div>
+                </div>
+
+                <!-- Day-by-day Breakdown Table -->
+                <div class="table-responsive">
+                    <table class="table table-hover align-middle mb-0" style="border-collapse: separate; border-spacing: 0 8px; font-family: inherit;">
+                        <thead>
+                            <tr class="text-muted-foreground" style="border: none; font-size: 12px; font-weight: 600;">
+                                <th scope="col" class="pb-2 border-0 ps-3">Ngày</th>
+                                <th scope="col" class="pb-2 border-0">Chat Tokens</th>
+                                <th scope="col" class="pb-2 border-0">Embedding Tokens</th>
+                                <th scope="col" class="pb-2 border-0 text-end pe-3">Tổng Ngày</th>
+                            </tr>
+                        </thead>
+                        <tbody id="modalTableBody">
+                            <!-- Populated dynamically via JS -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- Modal Footer -->
+            <div class="modal-footer border-0 p-4 pt-2 d-flex justify-content-end">
+                <button type="button" class="btn btn-outline-dark pill-button px-4 py-2" data-bs-dismiss="modal" style="border-color: rgba(82,39,27,0.15); font-size: 13px;">Đóng</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <!-- Include Chart.js for smooth sparklines and modal charts -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+
+    <!-- 1. Define global user lookup map immediately in its own isolated script block -->
+    <script>
+        window.USER_TOKENS_MAP = @Html.Raw(JsonSerializer.Serialize(Model.UserTokensList.ToDictionary(u => u.UserId.ToString().ToLower(), u => u)));
+    </script>
+
+    <!-- 2. Robust UI click handler and modal management -->
+    <script>
+        (function initTokenUsageActions() {
+            function handleDetailClick(e) {
+                const btn = e.target.closest('.view-detail-btn');
+                if (!btn) return;
+                e.preventDefault();
+
+                const userId = (btn.getAttribute('data-user-id') || '').toLowerCase();
+                const user = window.USER_TOKENS_MAP ? window.USER_TOKENS_MAP[userId] : null;
+                if (!user) {
+                    console.error('Không tìm thấy thông tin user có ID:', userId);
+                    return;
+                }
+
+                const modalUserFullName = document.getElementById('modalUserFullName');
+                const modalUserEmail = document.getElementById('modalUserEmail');
+                const modalUserAvatar = document.getElementById('modalUserAvatar');
+                const modalUserRoleBadge = document.getElementById('modalUserRoleBadge');
+                const modalTotalTokens = document.getElementById('modalTotalTokens');
+                const modalPercentQuota = document.getElementById('modalPercentQuota');
+                const modalChatTokens = document.getElementById('modalChatTokens');
+                const modalChatPercent = document.getElementById('modalChatPercent');
+                const modalDocTokens = document.getElementById('modalDocTokens');
+                const modalDocPercent = document.getElementById('modalDocPercent');
+                const modalTableBody = document.getElementById('modalTableBody');
+                const detailModalEl = document.getElementById('userDetailModal');
+
+                // Populate textual details immediately
+                if (modalUserFullName) modalUserFullName.textContent = user.FullName;
+                if (modalUserEmail) modalUserEmail.textContent = user.Email;
+                if (modalUserAvatar) modalUserAvatar.textContent = user.Initial;
+                if (modalUserRoleBadge) modalUserRoleBadge.textContent = user.RoleName;
+                if (modalTotalTokens) modalTotalTokens.textContent = user.TotalTokens.toLocaleString();
+                if (modalPercentQuota) modalPercentQuota.textContent = user.PercentOfQuota + "% Quota hệ thống";
+                if (modalChatTokens) modalChatTokens.textContent = user.ChatTokens.toLocaleString();
+                
+                const chatPct = Math.round(user.ChatTokens / user.TotalTokens * 100);
+                const docPct = 100 - chatPct;
+                if (modalChatPercent) modalChatPercent.textContent = chatPct + "% trong tổng số";
+                if (modalDocTokens) modalDocTokens.textContent = user.DocTokens.toLocaleString();
+                if (modalDocPercent) modalDocPercent.textContent = docPct + "% trong tổng số";
+
+                // Populate Day-by-Day Table Rows
+                if (modalTableBody) {
+                    modalTableBody.innerHTML = '';
+                    for (let i = user.DateLabels.length - 1; i >= 0; i--) {
+                        const date = user.DateLabels[i];
+                        const chatVal = user.ChatHistoryData[i] || 0;
+                        const docVal = user.DocHistoryData[i] || 0;
+                        const totalDay = chatVal + docVal;
+
+                        const row = document.createElement('tr');
+                        row.className = 'glass-row';
+                        row.style.background = 'rgba(255, 255, 255, 0.45)';
+                        row.style.borderRadius = '12px';
+                        row.innerHTML = `
+                            <td class="ps-3 py-2.5 border-0 fw-medium text-foreground" style="border-radius: 12px 0 0 12px; font-size: 13px;">${date}</td>
+                            <td class="py-2.5 border-0 text-muted-foreground" style="font-size: 13px;">${chatVal.toLocaleString()} tokens</td>
+                            <td class="py-2.5 border-0 text-muted-foreground" style="font-size: 13px;">${docVal.toLocaleString()} tokens</td>
+                            <td class="pe-3 py-2.5 border-0 text-end fw-bold text-brown" style="border-radius: 0 12px 12px 0; font-size: 13px; color: var(--brown);">${totalDay.toLocaleString()}</td>
+                        `;
+                        modalTableBody.appendChild(row);
+                    }
+                }
+
+                // Explicitly show modal via Bootstrap 5 JS API
+                if (detailModalEl) {
+                    if (detailModalEl.parentNode !== document.body) {
+                        document.body.appendChild(detailModalEl);
+                    }
+                    try {
+                        let bsModal = bootstrap.Modal.getInstance(detailModalEl);
+                        if (!bsModal) {
+                            bsModal = new bootstrap.Modal(detailModalEl);
+                        }
+                        bsModal.show();
+                    } catch (ex) {
+                        console.error('Modal show error:', ex);
+                    }
+
+                    // Render chart after modal transition completes (200ms)
+                    setTimeout(() => {
+                        try {
+                            if (typeof renderUserModalChart === 'function') {
+                                renderUserModalChart(user);
+                            }
+                        } catch (chartErr) {
+                            console.warn('Modal chart error:', chartErr);
+                        }
+                    }, 200);
+                }
+            }
+
+            document.body.addEventListener('click', handleDetailClick);
+        })();
+
+        // 3. Render charts inside user cards & modal chart function
+        let modalChartInstance = null;
+        function renderUserModalChart(user) {
+            const modalChartCanvas = document.getElementById('modalUserChartCanvas');
+            if (!modalChartCanvas || typeof Chart === 'undefined') return;
+            if (modalChartInstance) {
+                modalChartInstance.destroy();
+                modalChartInstance = null;
+            }
+
+            const ctxModal = modalChartCanvas.getContext('2d');
+            modalChartInstance = new Chart(ctxModal, {
+                type: 'bar',
+                data: {
+                    labels: user.DateLabels,
+                    datasets: [
+                        {
+                            label: 'Chat RAG / Hỏi Đáp',
+                            data: user.ChatHistoryData,
+                            backgroundColor: '#1e3e62',
+                            borderRadius: 6,
+                            barPercentage: 0.65
+                        },
+                        {
+                            label: 'Embedding Tài Liệu',
+                            data: user.DocHistoryData,
+                            backgroundColor: '#d86a58',
+                            borderRadius: 6,
+                            barPercentage: 0.65
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { display: false },
+                        tooltip: {
+                            backgroundColor: 'rgba(74, 31, 22, 0.95)',
+                            titleFont: { size: 12, weight: 'bold' },
+                            bodyFont: { size: 13 },
+                            padding: 10,
+                            cornerRadius: 10,
+                            callbacks: {
+                                label: function(context) {
+                                    return context.dataset.label + ': ' + context.parsed.y.toLocaleString() + ' tokens';
+                                }
+                            }
+                        }
+                    },
+                    scales: {
+                        x: {
+                            stacked: true,
+                            grid: { display: false },
+                            border: { display: false }
+                        },
+                        y: {
+                            stacked: true,
+                            grid: { color: 'rgba(82, 39, 27, 0.06)' },
+                            border: { display: false },
+                            ticks: {
+                                callback: function(value) {
+                                    return value >= 1000 ? (value / 1000) + 'k' : value;
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+        }
+
+        document.addEventListener('DOMContentLoaded', () => {
+            if (typeof Chart === 'undefined') return;
+            try {
+                Chart.defaults.font.family = "'Product Sans', 'Google Sans', Inter, system-ui, sans-serif";
+                Chart.defaults.color = "#8e6f65";
+
+                const sparklineCanvases = document.querySelectorAll('.user-sparkline-canvas');
+                sparklineCanvases.forEach(canvas => {
+                    const userId = (canvas.getAttribute('data-user-id') || '').toLowerCase();
+                    const user = window.USER_TOKENS_MAP ? window.USER_TOKENS_MAP[userId] : null;
+                    if (!user || !user.DateLabels || !user.SparklineData) return;
+
+                    const labels = user.DateLabels;
+                    const values = user.SparklineData;
+
+                    const ctx = canvas.getContext('2d');
+                    
+                    const gradient = ctx.createLinearGradient(0, 0, 0, 70);
+                    gradient.addColorStop(0, 'rgba(216, 106, 88, 0.25)');
+                    gradient.addColorStop(1, 'rgba(216, 106, 88, 0.0)');
+
+                    new Chart(ctx, {
+                        type: 'line',
+                        data: {
+                            labels: labels,
+                            datasets: [{
+                                data: values,
+                                borderColor: '#d86a58',
+                                borderWidth: 2.2,
+                                backgroundColor: gradient,
+                                fill: true,
+                                tension: 0.35,
+                                pointRadius: 0,
+                                pointHoverRadius: 4,
+                                pointHoverBackgroundColor: '#4a1f16',
+                                pointHoverBorderColor: '#ffffff',
+                                pointHoverBorderWidth: 2
+                            }]
+                        },
+                        options: {
+                            responsive: true,
+                            maintainAspectRatio: false,
+                            plugins: {
+                                legend: { display: false },
+                                tooltip: {
+                                    enabled: true,
+                                    backgroundColor: 'rgba(74, 31, 22, 0.9)',
+                                    titleFont: { size: 11, weight: 'bold' },
+                                    bodyFont: { size: 12 },
+                                    padding: 8,
+                                    cornerRadius: 8,
+                                    displayColors: false,
+                                    callbacks: {
+                                        label: function(context) {
+                                            return context.parsed.y.toLocaleString() + ' tokens';
+                                        }
+                                    }
+                                }
+                            },
+                            scales: {
+                                x: { display: false },
+                                y: { display: false }
+                            },
+                            interaction: {
+                                intersect: false,
+                                mode: 'index'
+                            }
+                        }
+                    });
+                });
+            } catch (err) {
+                console.warn('Sparkline initialization warning:', err);
+            }
+        });
+    </script>
+}
