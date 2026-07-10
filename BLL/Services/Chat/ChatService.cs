@@ -4,6 +4,7 @@ using System.Text.RegularExpressions;
 using BLL.DTOs.Chat;
 using BLL.Interfaces.Chat;
 using BLL.Interfaces.Documents;
+using BLL.Interfaces.Tokens;
 using DAL.Entities;
 using DAL.Interfaces.Chat;
 using Microsoft.Extensions.Logging;
@@ -19,17 +20,20 @@ public class ChatService : IChatService
     private readonly IEmbeddingService _embeddingService;
     private readonly IGeminiChatService _geminiChatService;
     private readonly ILogger<ChatService> _logger;
+    private readonly ITokenUsageService _tokenUsageService;
 
     public ChatService(
         IChatRepository chatRepository,
         IEmbeddingService embeddingService,
         IGeminiChatService geminiChatService,
-        ILogger<ChatService> logger)
+        ILogger<ChatService> logger,
+        ITokenUsageService tokenUsageService)
     {
         _chatRepository = chatRepository;
         _embeddingService = embeddingService;
         _geminiChatService = geminiChatService;
         _logger = logger;
+        _tokenUsageService = tokenUsageService;
     }
 
     /// <summary>
@@ -43,7 +47,7 @@ public class ChatService : IChatService
             var session = await GetOrCreateSessionAsync(userId, request, cancellationToken);
 
             // 2. Lưu tin nhắn User vào DB
-            await SaveUserMessageAsync(session.Id, request.Message, cancellationToken);
+            await SaveUserMessageAsync(userId, session.Id, request.Message, cancellationToken);
 
             // 3. Lấy lịch sử hội thoại gần nhất
             var historyMessages = await _chatRepository.GetRecentMessagesAsync(session.Id, MaxHistoryMessages, cancellationToken);
@@ -69,7 +73,7 @@ public class ChatService : IChatService
 
             // 9. Lưu response Assistant vào DB (kèm RetrievedChunkIds để phục vụ "Nguồn trích dẫn" khi load lại lịch sử)
             var chunkIds = relevantChunks.Select(c => c.Id).ToList();
-            await SaveAssistantMessageAsync(session.Id, reply, chunkIds, cancellationToken);
+            await SaveAssistantMessageAsync(userId, session.Id, reply, chunkIds, cancellationToken);
 
             // 10. Extract sources và trả về
             var sources = ExtractSources(relevantChunks);
@@ -100,7 +104,7 @@ public class ChatService : IChatService
     {
         // 1-5: Chuẩn bị giống SendMessageAsync
         var session = await GetOrCreateSessionAsync(userId, request, cancellationToken);
-        await SaveUserMessageAsync(session.Id, request.Message, cancellationToken);
+        await SaveUserMessageAsync(userId, session.Id, request.Message, cancellationToken);
         var historyMessages = await _chatRepository.GetRecentMessagesAsync(session.Id, MaxHistoryMessages, cancellationToken);
         var enhancedQuery = await EnhanceQueryAsync(request.Message, cancellationToken);
         var queryEmbedding = await _embeddingService.EmbedAsync(enhancedQuery, cancellationToken);
@@ -123,7 +127,7 @@ public class ChatService : IChatService
         if (!string.IsNullOrWhiteSpace(completeReply))
         {
             var chunkIds = relevantChunks.Select(c => c.Id).ToList();
-            await SaveAssistantMessageAsync(session.Id, completeReply, chunkIds, cancellationToken);
+            await SaveAssistantMessageAsync(userId, session.Id, completeReply, chunkIds, cancellationToken);
         }
     }
 
@@ -213,29 +217,35 @@ public class ChatService : IChatService
         return await _chatRepository.CreateSessionAsync(session, cancellationToken);
     }
 
-    private async Task SaveUserMessageAsync(Guid sessionId, string content, CancellationToken cancellationToken)
+    private async Task SaveUserMessageAsync(Guid userId, Guid sessionId, string content, CancellationToken cancellationToken)
     {
+        var tokenCount = content.Length / 4 + 1;
         var message = new ChatMessage
         {
             SessionId = sessionId,
             Role = ChatRole.User,
             Content = content,
-            CreatedAt = DateTime.UtcNow
+            CreatedAt = DateTime.UtcNow,
+            TokenCount = tokenCount
         };
         await _chatRepository.AddMessageAsync(message, cancellationToken);
+        await _tokenUsageService.RecordChatTokensAsync(userId, tokenCount, cancellationToken);
     }
 
-    private async Task SaveAssistantMessageAsync(Guid sessionId, string content, List<Guid>? retrievedChunkIds, CancellationToken cancellationToken)
+    private async Task SaveAssistantMessageAsync(Guid userId, Guid sessionId, string content, List<Guid>? retrievedChunkIds, CancellationToken cancellationToken)
     {
+        var tokenCount = content.Length / 4 + 1;
         var message = new ChatMessage
         {
             SessionId = sessionId,
             Role = ChatRole.Assistant,
             Content = content,
             CreatedAt = DateTime.UtcNow,
-            RetrievedChunkIds = retrievedChunkIds ?? []
+            RetrievedChunkIds = retrievedChunkIds ?? [],
+            TokenCount = tokenCount
         };
         await _chatRepository.AddMessageAsync(message, cancellationToken);
+        await _tokenUsageService.RecordChatTokensAsync(userId, tokenCount, cancellationToken);
     }
 
     /// <summary>

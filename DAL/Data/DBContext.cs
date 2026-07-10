@@ -52,6 +52,8 @@ public partial class DBContext : DbContext
 
     public virtual DbSet<UserSubject> UserSubjects { get; set; }
 
+    public virtual DbSet<TokenUsage> TokenUsages { get; set; }
+
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -660,6 +662,27 @@ public partial class DBContext : DbContext
                         (c1, c2) => c1!.SequenceEqual(c2!),
                         c => c.Aggregate(0, (a, v) => HashCode.Combine(a, v.GetHashCode())),
                         c => c.ToList()));
+        });
+
+        modelBuilder.Entity<TokenUsage>(entity =>
+        {
+            entity.HasKey(e => e.Id).HasName("token_usage_pkey");
+            entity.ToTable("token_usage");
+            entity.HasIndex(e => e.UserId, "idx_token_usage_user_id");
+            entity.HasIndex(e => e.UsageDate, "idx_token_usage_usage_date");
+            entity.HasIndex(e => new { e.UserId, e.UsageDate }, "token_usage_user_date_key").IsUnique();
+
+            entity.Property(e => e.Id).HasDefaultValueSql("uuid_generate_v4()").HasColumnName("id");
+            entity.Property(e => e.UserId).HasColumnName("user_id");
+            entity.Property(e => e.UsageDate).HasDefaultValueSql("CURRENT_DATE").HasColumnName("usage_date");
+            entity.Property(e => e.ChatTokens).HasDefaultValue(0).HasColumnName("chat_tokens");
+            entity.Property(e => e.DocTokens).HasDefaultValue(0).HasColumnName("doc_tokens");
+            entity.Property(e => e.UpdatedAt).HasDefaultValueSql("now()").HasColumnName("updated_at");
+
+            entity.HasOne(d => d.User).WithMany(p => p.TokenUsages)
+                .HasForeignKey(d => d.UserId)
+                .OnDelete(DeleteBehavior.Cascade)
+                .HasConstraintName("token_usage_user_id_fkey");
         });
 
         OnModelCreatingPartial(modelBuilder);

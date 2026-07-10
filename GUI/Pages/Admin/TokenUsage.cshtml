@@ -23,7 +23,7 @@
                         @Model.HeroStats.OverallPercent% Đã sử dụng
                     </span>
                     <span class="badge px-3 py-1.5 rounded-pill text-muted-foreground border border-border bg-transparent" style="font-size: 12px; font-family: ui-monospace, monospace;">
-                        ✦ MOCK DATA PREVIEW
+                        ✦ DỮ LIỆU THỰC TẾ (LIVE TRACKING)
                     </span>
                 </div>
             </div>
@@ -127,7 +127,7 @@
                     </div>
                     <div class="pt-3 border-top mt-3 d-flex align-items-center justify-content-between" style="border-color: rgba(82, 39, 27, 0.08) !important;">
                         <span class="text-muted-foreground" style="font-size: 12px;">Tỷ lệ chiếm dụng:</span>
-                        <span class="fw-bold text-coral-deep" style="font-size: 14px;">@Model.HeroStats.TopConsumer?.PercentOfQuota% tổng Quota</span>
+                        <span class="fw-bold text-coral-deep" style="font-size: 14px;">@(Model.HeroStats.TopConsumer?.PercentOfQuota ?? 0)% tổng Quota</span>
                     </div>
                 </div>
             </div>
@@ -239,7 +239,7 @@
                                 <div class="my-3 px-1 py-2 rounded-4" style="background: rgba(255, 255, 255, 0.6); border: 1px solid rgba(82, 39, 27, 0.05);">
                                     <div class="d-flex justify-content-between align-items-center px-2 mb-1">
                                         <span class="font-mono-xs text-muted-foreground" style="font-size: 10px;">XU HƯỚNG 7 NGÀY QUA</span>
-                                        <span class="text-coral-deep fw-bold" style="font-size: 11px;">📈 @user.SparklineData.Last().ToString("N0") / ngày</span>
+                                        <span class="text-coral-deep fw-bold" style="font-size: 11px;">📈 @(user.SparklineData.Any() ? user.SparklineData.Last().ToString("N0") : "0") / ngày</span>
                                     </div>
                                     <div style="height: 70px; width: 100%;">
                                         <canvas class="user-sparkline-canvas" 
@@ -444,11 +444,17 @@
                 if (modalPercentQuota) modalPercentQuota.textContent = user.PercentOfQuota + "% Quota hệ thống";
                 if (modalChatTokens) modalChatTokens.textContent = user.ChatTokens.toLocaleString();
                 
-                const chatPct = Math.round(user.ChatTokens / user.TotalTokens * 100);
-                const docPct = 100 - chatPct;
+                const chatPct = user.TotalTokens > 0 ? Math.round(user.ChatTokens / user.TotalTokens * 100) : 0;
+                const docPct = user.TotalTokens > 0 ? (100 - chatPct) : 0;
                 if (modalChatPercent) modalChatPercent.textContent = chatPct + "% trong tổng số";
-                if (modalDocTokens) modalDocTokens.textContent = user.DocTokens.toLocaleString();
-                if (modalDocPercent) modalDocPercent.textContent = docPct + "% trong tổng số";
+                
+                if (user.RoleId === 3) {
+                    if (modalDocTokens) modalDocTokens.innerHTML = '<span class="badge bg-secondary-subtle text-muted" style="font-size: 13px;">0 (N/A)</span>';
+                    if (modalDocPercent) modalDocPercent.textContent = "Sinh viên không xử lý tài liệu";
+                } else {
+                    if (modalDocTokens) modalDocTokens.textContent = user.DocTokens.toLocaleString();
+                    if (modalDocPercent) modalDocPercent.textContent = docPct + "% trong tổng số";
+                }
 
                 // Populate Day-by-Day Table Rows
                 if (modalTableBody) {
@@ -459,6 +465,10 @@
                         const docVal = user.DocHistoryData[i] || 0;
                         const totalDay = chatVal + docVal;
 
+                        const docCellDisplay = user.RoleId === 3 
+                            ? '<span class="badge bg-secondary-subtle text-muted" style="font-size: 11px;">N/A</span>' 
+                            : `${docVal.toLocaleString()} tokens`;
+
                         const row = document.createElement('tr');
                         row.className = 'glass-row';
                         row.style.background = 'rgba(255, 255, 255, 0.45)';
@@ -466,7 +476,7 @@
                         row.innerHTML = `
                             <td class="ps-3 py-2.5 border-0 fw-medium text-foreground" style="border-radius: 12px 0 0 12px; font-size: 13px;">${date}</td>
                             <td class="py-2.5 border-0 text-muted-foreground" style="font-size: 13px;">${chatVal.toLocaleString()} tokens</td>
-                            <td class="py-2.5 border-0 text-muted-foreground" style="font-size: 13px;">${docVal.toLocaleString()} tokens</td>
+                            <td class="py-2.5 border-0 text-muted-foreground" style="font-size: 13px;">${docCellDisplay}</td>
                             <td class="pe-3 py-2.5 border-0 text-end fw-bold text-brown" style="border-radius: 0 12px 12px 0; font-size: 13px; color: var(--brown);">${totalDay.toLocaleString()}</td>
                         `;
                         modalTableBody.appendChild(row);
@@ -515,26 +525,31 @@
             }
 
             const ctxModal = modalChartCanvas.getContext('2d');
+            const datasets = [
+                {
+                    label: 'Chat RAG / Hỏi Đáp',
+                    data: user.ChatHistoryData,
+                    backgroundColor: '#1e3e62',
+                    borderRadius: 6,
+                    barPercentage: 0.65
+                }
+            ];
+
+            if (user.RoleId !== 3) {
+                datasets.push({
+                    label: 'Embedding Tài Liệu',
+                    data: user.DocHistoryData,
+                    backgroundColor: '#d86a58',
+                    borderRadius: 6,
+                    barPercentage: 0.65
+                });
+            }
+
             modalChartInstance = new Chart(ctxModal, {
                 type: 'bar',
                 data: {
                     labels: user.DateLabels,
-                    datasets: [
-                        {
-                            label: 'Chat RAG / Hỏi Đáp',
-                            data: user.ChatHistoryData,
-                            backgroundColor: '#1e3e62',
-                            borderRadius: 6,
-                            barPercentage: 0.65
-                        },
-                        {
-                            label: 'Embedding Tài Liệu',
-                            data: user.DocHistoryData,
-                            backgroundColor: '#d86a58',
-                            borderRadius: 6,
-                            barPercentage: 0.65
-                        }
-                    ]
+                    datasets: datasets
                 },
                 options: {
                     responsive: true,

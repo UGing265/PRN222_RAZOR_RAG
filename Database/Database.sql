@@ -384,3 +384,17 @@ CREATE TABLE public.chat_messages (
 );
 CREATE INDEX idx_chat_messages_session_id ON public.chat_messages USING btree (session_id);
 CREATE INDEX idx_chat_messages_created_at ON public.chat_messages USING btree (created_at);
+
+CREATE TABLE public.token_usage (
+    id uuid DEFAULT public.uuid_generate_v4() NOT NULL,
+    user_id uuid NOT NULL,
+    usage_date date DEFAULT CURRENT_DATE NOT NULL,
+    chat_tokens integer DEFAULT 0 NOT NULL,
+    doc_tokens integer DEFAULT 0 NOT NULL,
+    updated_at timestamp with time zone DEFAULT now() NOT NULL,
+    CONSTRAINT token_usage_pkey PRIMARY KEY (id),
+    CONSTRAINT token_usage_user_date_key UNIQUE (user_id, usage_date),
+    CONSTRAINT token_usage_user_id_fkey FOREIGN KEY (user_id) REFERENCES public.users(id) ON DELETE CASCADE
+);
+CREATE INDEX idx_token_usage_user_id ON public.token_usage USING btree (user_id);
+CREATE INDEX idx_token_usage_usage_date ON public.token_usage USING btree (usage_date);

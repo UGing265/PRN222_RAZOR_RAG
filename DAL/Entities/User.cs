@@ -46,5 +46,7 @@ public partial class User
     public virtual ICollection<AuditLog> AuditLogs { get; set; } = new List<AuditLog>();
 
     public virtual ICollection<UserSubject> UserSubjects { get; set; } = new List<UserSubject>();
+
+    public virtual ICollection<TokenUsage> TokenUsages { get; set; } = new List<TokenUsage>();
 }
 

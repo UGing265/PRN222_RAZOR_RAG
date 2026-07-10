@@ -14,10 +14,12 @@ services:
       - db_data:/var/lib/postgresql/data
       # Map file Database.sql vào thư mục init của postgres
       # File này sẽ được tự động chạy khi database khởi tạo lần đầu
-      - ./Database/Database.sql:/docker-entrypoint-initdb.d/init.sql
-      # Migration script for admin user verification feature (2026-06-25).
-      # Auto-runs on container init. Idempotent (IF NOT EXISTS) so safe to re-run.
-      - ./Database/migrate_must_change_password.sql:/docker-entrypoint-initdb.d/migrate_must_change_password.sql
+      - ./Database/Database.sql:/docker-entrypoint-initdb.d/01_init.sql
+      - ./Database/migrate_must_change_password.sql:/docker-entrypoint-initdb.d/02_migrate_must_change_password.sql
+      - ./Database/migrate_chat_multidoc.sql:/docker-entrypoint-initdb.d/03_migrate_chat_multidoc.sql
+      - ./Database/migrate_add_chat_metrics.sql:/docker-entrypoint-initdb.d/04_migrate_add_chat_metrics.sql
+      - ./Database/migrate_add_token_usage_table.sql:/docker-entrypoint-initdb.d/05_migrate_add_token_usage_table.sql
+      - ./Database/migrate_add_doc_tokens_to_token_usage.sql:/docker-entrypoint-initdb.d/06_migrate_add_doc_tokens_to_token_usage.sql
     restart: unless-stopped
 
 volumes:

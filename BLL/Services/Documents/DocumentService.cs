@@ -1,6 +1,7 @@
 using BLL.DTOs.Documents;
 using BLL.Interfaces.Documents;
 using BLL.Interfaces.Notifications;
+using BLL.Interfaces.Tokens;
 using DAL.Entities;
 using DAL.Interfaces.Documents;
 using Microsoft.AspNetCore.Http;
@@ -32,6 +33,7 @@ public class DocumentService : IDocumentService
     private readonly DocumentIndexingOptions _indexingOptions;
     private readonly IUploadJobRepository _uploadJobRepository;
     private readonly INotificationService _notificationService;
+    private readonly ITokenUsageService _tokenUsageService;
 
     public DocumentService(
         IDocumentRepository documentRepository,
@@ -41,7 +43,8 @@ public class DocumentService : IDocumentService
         IChapterSegmentationService chapterSegmentationService,
         IS3StorageService s3StorageService,
         IUploadJobRepository uploadJobRepository,
-        INotificationService notificationService)
+        INotificationService notificationService,
+        ITokenUsageService tokenUsageService)
     {
         _documentRepository = documentRepository;
         _fileParserService = fileParserService;
@@ -50,6 +53,7 @@ public class DocumentService : IDocumentService
         _s3StorageService = s3StorageService;
         _uploadJobRepository = uploadJobRepository;
         _notificationService = notificationService;
+        _tokenUsageService = tokenUsageService;
         _indexingOptions = new DocumentIndexingOptions();
     }
 
@@ -204,10 +208,14 @@ public class DocumentService : IDocumentService
 
                 var embeddings = await _embeddingService.EmbedBatchAsync(cleanBatch, embedCts.Token);
 
+                var batchDocTokens = 0;
                 for (int i = 0; i < cleanBatch.Count; i++)
                 {
                     var chunk = cleanBatch[i];
                     var embedding = embeddings.ElementAtOrDefault(i) ?? new Vector(new float[3072]);
+                    var chunkTokens = chunk.Length / 4 + 1;
+                    batchDocTokens += chunkTokens;
+
                     var metadata = SanitizeForPostgres(JsonSerializer.Serialize(new
                     {
                         sourceFileName = SanitizeForPostgres(file.FileName),
@@ -228,7 +236,7 @@ public class DocumentService : IDocumentService
                         ChunkOrder = chunkIndex,
                         PageNumber = null,
                         Content = chunk,
-                        ContentTokens = null,
+                        ContentTokens = chunkTokens,
                         ChunkHash = DocumentChunker.ComputeChunkHash(chunk),
                         Embedding = embedding,
                         Metadata = metadata,
@@ -237,6 +245,11 @@ public class DocumentService : IDocumentService
                     });
 
                     chunkIndex++;
+                }
+
+                if (batchDocTokens > 0)
+                {
+                    await _tokenUsageService.RecordDocTokensAsync(document.OwnerUserId, batchDocTokens, cancellationToken);
                 }
 
                 if (onProgress is not null && totalChunks > 0)
