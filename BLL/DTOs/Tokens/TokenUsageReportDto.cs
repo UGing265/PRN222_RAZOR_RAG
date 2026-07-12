@@ -13,7 +13,7 @@ public class UserTokenUsageDto
     public long ChatTokens { get; set; }
     public long DocTokens { get; set; }
     public long TotalTokens => ChatTokens + DocTokens;
-    public double PercentOfQuota { get; set; }
+
     public List<int> SparklineData { get; set; } = new();
     public List<int> ChatHistoryData { get; set; } = new();
     public List<int> DocHistoryData { get; set; } = new();
@@ -25,8 +25,7 @@ public class UserTokenUsageDto
 public class HeroStatsDto
 {
     public long TotalUsedTokens { get; set; }
-    public long TotalQuotaTokens { get; set; }
-    public double OverallPercent => TotalQuotaTokens > 0 ? Math.Round((double)TotalUsedTokens / TotalQuotaTokens * 100, 1) : 0;
+
     public long TotalChatTokens { get; set; }
     public long TotalDocTokens { get; set; }
     public UserTokenUsageDto? TopConsumer { get; set; }

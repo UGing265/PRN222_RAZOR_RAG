@@ -38,6 +38,8 @@ public partial class DBContext : DbContext
 
     public virtual DbSet<AuditLog> AuditLogs { get; set; }
 
+    public virtual DbSet<SystemSetting> SystemSettings { get; set; }
+
     public virtual DbSet<DocumentType> DocumentTypes { get; set; }
 
     public virtual DbSet<Language> Languages { get; set; }

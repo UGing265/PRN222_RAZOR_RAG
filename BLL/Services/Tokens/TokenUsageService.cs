@@ -57,7 +57,7 @@ public class TokenUsageService : ITokenUsageService
         }
     }
 
-    public async Task<(List<UserTokenUsageDto> users, HeroStatsDto heroStats)> GetTokenUsageReportAsync(long quotaTokens = 200000, CancellationToken cancellationToken = default)
+    public async Task<(List<UserTokenUsageDto> users, HeroStatsDto heroStats)> GetTokenUsageReportAsync(CancellationToken cancellationToken = default)
     {
         var allUsers = await _authRepo.GetAllUsersWithRolesAsync(cancellationToken);
         var allUsages = await _tokenRepo.GetAllWithUserAsync(cancellationToken);
@@ -114,7 +114,7 @@ public class TokenUsageService : ITokenUsageService
                 },
                 ChatTokens = totalChat,
                 DocTokens = totalDoc,
-                PercentOfQuota = quotaTokens > 0 ? Math.Round((double)(totalChat + totalDoc) / quotaTokens * 100, 1) : 0,
+
                 SparklineData = sparkline,
                 ChatHistoryData = chatHistory,
                 DocHistoryData = docHistory,
@@ -137,7 +137,6 @@ public class TokenUsageService : ITokenUsageService
         var heroStats = new HeroStatsDto
         {
             TotalUsedTokens = sumAllTotal,
-            TotalQuotaTokens = quotaTokens,
             TotalChatTokens = sumChat,
             TotalDocTokens = sumDoc,
             TopConsumer = topConsumer,

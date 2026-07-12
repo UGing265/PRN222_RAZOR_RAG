@@ -10,5 +10,5 @@ public interface ITokenUsageService
 {
     Task RecordChatTokensAsync(Guid userId, int tokens, CancellationToken cancellationToken = default);
     Task RecordDocTokensAsync(Guid userId, int tokens, CancellationToken cancellationToken = default);
-    Task<(List<UserTokenUsageDto> users, HeroStatsDto heroStats)> GetTokenUsageReportAsync(long quotaTokens = 200000, CancellationToken cancellationToken = default);
+    Task<(List<UserTokenUsageDto> users, HeroStatsDto heroStats)> GetTokenUsageReportAsync(CancellationToken cancellationToken = default);
 }

@@ -1,4 +1,5 @@
 using BLL.DTOs.Documents;
+using BLL.Interfaces;
 using BLL.Interfaces.Documents;
 using BLL.Interfaces.Notifications;
 using BLL.Interfaces.Tokens;
@@ -30,10 +31,10 @@ public class DocumentService : IDocumentService
     private readonly IEmbeddingService _embeddingService;
     private readonly IChapterSegmentationService _chapterSegmentationService;
     private readonly IS3StorageService _s3StorageService;
-    private readonly DocumentIndexingOptions _indexingOptions;
     private readonly IUploadJobRepository _uploadJobRepository;
     private readonly INotificationService _notificationService;
     private readonly ITokenUsageService _tokenUsageService;
+    private readonly ISystemSettingService _systemSettingService;
 
     public DocumentService(
         IDocumentRepository documentRepository,
@@ -44,7 +45,8 @@ public class DocumentService : IDocumentService
         IS3StorageService s3StorageService,
         IUploadJobRepository uploadJobRepository,
         INotificationService notificationService,
-        ITokenUsageService tokenUsageService)
+        ITokenUsageService tokenUsageService,
+        ISystemSettingService systemSettingService)
     {
         _documentRepository = documentRepository;
         _fileParserService = fileParserService;
@@ -54,7 +56,7 @@ public class DocumentService : IDocumentService
         _uploadJobRepository = uploadJobRepository;
         _notificationService = notificationService;
         _tokenUsageService = tokenUsageService;
-        _indexingOptions = new DocumentIndexingOptions();
+        _systemSettingService = systemSettingService;
     }
 
     private static string BuildSlug(string title)
@@ -183,6 +185,8 @@ public class DocumentService : IDocumentService
         var extension = Path.GetExtension(file.FileName).ToLowerInvariant();
         var tempPath = Path.Combine(Path.GetTempPath(), $"{Guid.NewGuid():N}{extension}");
 
+        var indexingOptions = await _systemSettingService.GetChunkingSettingsAsync(cancellationToken);
+
         try
         {
             await using (var s3Stream = await _s3StorageService.OpenReadAsync(s3Key, cancellationToken))
@@ -195,12 +199,12 @@ public class DocumentService : IDocumentService
             var checksum = await ComputeSha256Async(checksumStream, cancellationToken);
 
             var extractedText = SanitizeForPostgres(await _fileParserService.ExtractTextAsync(tempPath, extension, cancellationToken));
-            var chunks = DocumentChunker.ChunkText(extractedText, _indexingOptions.ChunkMinWords, _indexingOptions.ChunkMaxWords, _indexingOptions.ChunkOverlapWords).ToList();
+            var chunks = DocumentChunker.ChunkText(extractedText, indexingOptions.ChunkMinWords, indexingOptions.ChunkMaxWords, indexingOptions.ChunkOverlapWords).ToList();
             var chunkEntities = new List<DocumentChunk>();
             var totalChunks = chunks.Count;
             var chunkIndex = 0;
 
-            foreach (var batch in chunks.Chunk(_indexingOptions.BatchSize))
+            foreach (var batch in chunks.Chunk(indexingOptions.BatchSize))
             {
                 var cleanBatch = batch.Select(SanitizeForPostgres).ToList();
                 var embedCts = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
@@ -260,7 +264,7 @@ public class DocumentService : IDocumentService
 
                 if (chunkIndex < totalChunks)
                 {
-                    await Task.Delay(TimeSpan.FromSeconds(_indexingOptions.BatchDelaySeconds), cancellationToken);
+                    await Task.Delay(TimeSpan.FromSeconds(indexingOptions.BatchDelaySeconds), cancellationToken);
                 }
             }
 

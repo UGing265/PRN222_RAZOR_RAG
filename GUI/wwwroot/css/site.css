@@ -150,6 +150,7 @@ h1, h2, h3, h4, h5, h6, .hero-title, .font-display { font-family: 'Product Sans'
     background: linear-gradient(135deg, rgba(216, 106, 88, 0.03) 0%, transparent 100%);
     opacity: 0;
     transition: opacity 0.4s ease;
+    pointer-events: none;
 }
 
 .feature-card-premium:hover::before {

@@ -6,26 +6,20 @@
 }
 
 <div class="page-shell grain">
-    <main class="container-fluid px-4 px-md-5 py-5" style="max-width: 1400px;">
+    <main class="container-fluid px-4 px-md-5 py-5" style="max-width: 1300px;">
         <!-- Top Heading Area -->
         <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center mb-5 gap-4">
             <div>
                 <span class="font-mono-xs text-coral-deep" style="font-weight: 700; letter-spacing: 0.15em;">QUẢN TRỊ VIÊN</span>
-                <h1 class="hero-title mt-2 mb-3" style="font-size: clamp(2.4rem, 4.5vw, 3.2rem); color: var(--brown); line-height: 1.1;">Quản Lý Token Sử Dụng</h1>
+                <h1 class="hero-title mt-2 mb-3" style="font-size: clamp(2.5rem, 5vw, 3.5rem); color: var(--brown); line-height: 1.1;">Quản Lý Token Sử Dụng</h1>
                 <p class="text-muted-foreground mb-3" style="font-size: 15px; font-weight: 400; max-width: 700px;">
                     Theo dõi định lượng tiêu thụ Token Google Gemini API của từng tài khoản Giảng Viên và Sinh Viên trong hệ thống RAG.
                 </p>
-                <div class="d-flex gap-2 align-items-center">
-                    <span class="badge px-3.5 py-2 border-0 rounded-pill text-white bg-dark" style="font-size: 13px; font-weight: 500;">
-                        Tổng Quota: @Model.HeroStats.TotalQuotaTokens.ToString("N0") Tokens
-                    </span>
-                    <span class="badge px-3.5 py-2 border-0 rounded-pill text-white" style="background: var(--coral); font-size: 13px; font-weight: 500;">
-                        @Model.HeroStats.OverallPercent% Đã sử dụng
-                    </span>
-                    <span class="badge px-3 py-1.5 rounded-pill text-muted-foreground border border-border bg-transparent" style="font-size: 12px; font-family: ui-monospace, monospace;">
-                        ✦ DỮ LIỆU THỰC TẾ (LIVE TRACKING)
-                    </span>
-                </div>
+            </div>
+            <div class="d-flex align-items-center">
+                <button type="button" class="btn" data-bs-toggle="modal" data-bs-target="#chunkingConfigModal" style="background: rgba(255, 255, 255, 0.5); border: 1px solid var(--border-crisp); color: var(--text-primary); font-weight: 500; font-size: 14px; border-radius: 8px; padding: 0.5rem 1rem; transition: all 0.2s ease;">
+                    <i class="bi bi-gear-fill me-2" style="color: var(--text-muted);"></i>Cấu Hình Chunking
+                </button>
             </div>
         </div>
 
@@ -37,24 +31,18 @@
                     <div>
                         <div class="d-flex justify-content-between align-items-center mb-3">
                             <span class="font-mono-xs text-muted-foreground" style="font-weight: 700; font-size: 11px;">TỔNG LƯỢNG TOKEN ĐÃ ĐƯỢC DÙNG</span>
-                            <span class="badge rounded-pill px-3 py-1" style="background: rgba(74, 31, 22, 0.08); color: var(--brown); font-weight: 700; font-size: 12px;">
-                                @Model.HeroStats.OverallPercent% Quota
-                            </span>
                         </div>
                         <div class="d-flex align-items-baseline gap-2 mb-4">
                             <span class="font-display" style="font-size: clamp(2.2rem, 4vw, 3.2rem); color: var(--brown); font-weight: 800; line-height: 1;">
                                 @Model.HeroStats.TotalUsedTokens.ToString("N0")
                             </span>
-                            <span class="text-muted-foreground" style="font-size: clamp(1.2rem, 2vw, 1.6rem); font-weight: 500;">
-                                / @Model.HeroStats.TotalQuotaTokens.ToString("N0")
-                            </span>
                         </div>
 
                         <!-- Stacked Multi-color Progress Bar matching the legend below -->
                         @{
-                            var totalQuota = Model.HeroStats.TotalQuotaTokens > 0 ? (double)Model.HeroStats.TotalQuotaTokens : 1.0;
-                            var chatPercent = Math.Round((double)Model.HeroStats.TotalChatTokens / totalQuota * 100, 1);
-                            var docPercent = Math.Round((double)Model.HeroStats.TotalDocTokens / totalQuota * 100, 1);
+                            var totalUsed = Model.HeroStats.TotalUsedTokens > 0 ? (double)Model.HeroStats.TotalUsedTokens : 1.0;
+                            var chatPercent = Math.Round((double)Model.HeroStats.TotalChatTokens / totalUsed * 100, 1);
+                            var docPercent = Math.Round((double)Model.HeroStats.TotalDocTokens / totalUsed * 100, 1);
                         }
                         <div class="progress mb-4 d-flex" style="height: 14px; border-radius: 9999px; background: rgba(82, 39, 27, 0.08); overflow: hidden; padding: 2px; gap: 2px;">
                             @if (chatPercent > 0)
@@ -103,7 +91,7 @@
                 <div class="feature-card-premium h-100 d-flex flex-column justify-content-between p-4" style="background: rgba(255, 255, 255, 0.78); border-radius: 28px; border: 1px solid rgba(82, 39, 27, 0.1);">
                     <div>
                         <div class="d-flex justify-content-between align-items-center mb-3">
-                            <span class="font-mono-xs text-muted-foreground" style="font-weight: 700; font-size: 11px;">🔥 TOP CONSUMER TUẦN NÀY</span>
+                            <span class="font-mono-xs text-muted-foreground" style="font-weight: 700; font-size: 11px;">TOP CONSUMER TUẦN NÀY</span>
                         </div>
                         @if (Model.HeroStats.TopConsumer != null)
                         {
@@ -125,10 +113,6 @@
                             </p>
                         }
                     </div>
-                    <div class="pt-3 border-top mt-3 d-flex align-items-center justify-content-between" style="border-color: rgba(82, 39, 27, 0.08) !important;">
-                        <span class="text-muted-foreground" style="font-size: 12px;">Tỷ lệ chiếm dụng:</span>
-                        <span class="fw-bold text-coral-deep" style="font-size: 14px;">@(Model.HeroStats.TopConsumer?.PercentOfQuota ?? 0)% tổng Quota</span>
-                    </div>
                 </div>
             </div>
 
@@ -137,7 +121,7 @@
                 <div class="feature-card-premium h-100 d-flex flex-column justify-content-between p-4" style="background: rgba(255, 255, 255, 0.78); border-radius: 28px; border: 1px solid rgba(82, 39, 27, 0.1);">
                     <div>
                         <div class="d-flex justify-content-between align-items-center mb-3">
-                            <span class="font-mono-xs text-muted-foreground" style="font-weight: 700; font-size: 11px;">⚡ TỐC ĐỘ TIÊU THỤ TRUNG BÌNH</span>
+                            <span class="font-mono-xs text-muted-foreground" style="font-weight: 700; font-size: 11px;">TỐC ĐỘ TIÊU THỤ TRUNG BÌNH</span>
                             <span class="badge rounded-pill bg-success-subtle text-success border border-success-subtle" style="font-size: 11px; font-weight: 600;">API Active</span>
                         </div>
                         <div class="mb-3">
@@ -239,7 +223,7 @@
                                 <div class="my-3 px-1 py-2 rounded-4" style="background: rgba(255, 255, 255, 0.6); border: 1px solid rgba(82, 39, 27, 0.05);">
                                     <div class="d-flex justify-content-between align-items-center px-2 mb-1">
                                         <span class="font-mono-xs text-muted-foreground" style="font-size: 10px;">XU HƯỚNG 7 NGÀY QUA</span>
-                                        <span class="text-coral-deep fw-bold" style="font-size: 11px;">📈 @(user.SparklineData.Any() ? user.SparklineData.Last().ToString("N0") : "0") / ngày</span>
+                                        <span class="text-coral-deep fw-bold" style="font-size: 11px;">@(user.SparklineData.Any() ? user.SparklineData.Last().ToString("N0") : "0") / ngày</span>
                                     </div>
                                     <div style="height: 70px; width: 100%;">
                                         <canvas class="user-sparkline-canvas" 
@@ -254,12 +238,13 @@
                                     <div class="text-muted-foreground" style="font-size: 11px;">Tổng token đã dùng:</div>
                                     <div class="fw-bold text-foreground d-flex align-items-baseline gap-1" style="font-size: 17px; color: var(--brown);">
                                         @user.TotalTokens.ToString("N0")
-                                        <span class="text-muted-foreground fw-normal" style="font-size: 12px;">(@user.PercentOfQuota%)</span>
                                     </div>
                                 </div>
                                 <button type="button" class="btn btn-sm btn-outline-dark pill-button px-3 py-1.5 fw-semibold d-flex align-items-center gap-1.5 view-detail-btn" 
                                         style="font-size: 12px; border-color: rgba(82, 39, 27, 0.18);"
-                                        data-user-id="@user.UserId">
+                                        data-user-id="@user.UserId"
+                                        data-bs-toggle="modal" 
+                                        data-bs-target="#userDetailModal">
                                     <span>Chi Tiết</span>
                                     <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="9 18 15 12 9 6"/></svg>
                                 </button>
@@ -309,91 +294,127 @@
 
 <!-- Glassmorphism Detail Modal for Individual User Token Breakdown -->
 <div class="modal fade" id="userDetailModal" tabindex="-1" aria-labelledby="userDetailModalLabel" aria-hidden="true" style="backdrop-filter: blur(10px); background: rgba(74, 31, 22, 0.2);">
-    <div class="modal-dialog modal-dialog-centered modal-lg" style="max-width: 760px;">
-        <div class="modal-content border-0 shadow-lg" style="background: var(--card); border-radius: 28px; color: var(--foreground); overflow: hidden; border: 1px solid rgba(82, 39, 27, 0.1) !important;">
+    <div class="modal-dialog modal-dialog-centered" style="max-width: 560px;">
+        <div class="modal-content border-0 shadow-lg" style="background: var(--card); border-radius: 22px; color: var(--foreground); overflow: hidden; border: 1px solid rgba(82, 39, 27, 0.1) !important;">
             
             <!-- Modal Header -->
-            <div class="modal-header border-0 p-4 pb-3 d-flex justify-content-between align-items-center">
-                <div class="d-flex align-items-center gap-3">
+            <div class="modal-header border-0 px-4 py-3 d-flex justify-content-between align-items-center">
+                <div class="d-flex align-items-center gap-2">
                     <div class="rounded-circle text-white d-flex align-items-center justify-content-center fw-bold shadow-sm"
                          id="modalUserAvatar"
-                         style="width: 50px; height: 50px; font-size: 1.3rem; background: var(--brown) !important;">
+                         style="width: 34px; height: 34px; font-size: 0.85rem; background: var(--brown) !important;">
                         U
                     </div>
                     <div>
-                        <h5 class="modal-title fw-bold m-0" id="modalUserFullName" style="font-size: 1.25rem; color: var(--brown);">Họ và Tên</h5>
-                        <div class="d-flex align-items-center gap-2 mt-1">
-                            <span class="text-muted-foreground small" id="modalUserEmail" style="font-size: 13px;">email@domain.com</span>
-                            <span class="badge rounded-pill" id="modalUserRoleBadge" style="font-size: 11px; background: rgba(74, 31, 22, 0.08); color: var(--brown); font-weight: 600;">Vai trò</span>
+                        <h5 class="modal-title fw-bold m-0" id="modalUserFullName" style="font-size: 0.95rem; color: var(--brown);">Họ và Tên</h5>
+                        <div class="d-flex align-items-center gap-2">
+                            <span class="text-muted-foreground" id="modalUserEmail" style="font-size: 11px;">email@domain.com</span>
+                            <span class="badge rounded-pill" id="modalUserRoleBadge" style="font-size: 9px; padding: 2px 7px; background: rgba(74, 31, 22, 0.08); color: var(--brown); font-weight: 600;">Vai trò</span>
                         </div>
                     </div>
                 </div>
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close" style="background-color: rgba(82, 39, 27, 0.05); padding: 0.75rem; border-radius: 50%;"></button>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close" style="background-color: rgba(82, 39, 27, 0.05); padding: 0.5rem; border-radius: 50%;"></button>
             </div>
 
             <!-- Modal Body -->
-            <div class="modal-body p-4 pt-1">
+            <div class="modal-body px-4 py-2">
                 <!-- Summary KPI Row -->
-                <div class="row g-3 mb-4">
+                <div class="row g-2 mb-2">
                     <div class="col-4">
-                        <div class="p-3 rounded-4 h-100" style="background: rgba(255,255,255,0.72); border: 1px solid rgba(82,39,27,0.08);">
-                            <div class="font-mono-xs text-muted-foreground" style="font-size: 10px;">TỔNG TOKEN TIÊU THỤ</div>
-                            <div class="fw-bold mt-1" id="modalTotalTokens" style="font-size: 1.4rem; color: var(--brown);">0</div>
-                            <div class="small text-muted-foreground mt-1" id="modalPercentQuota" style="font-size: 12px;">0% Quota hệ thống</div>
+                        <div class="p-2 rounded-3 h-100" style="background: rgba(255,255,255,0.72); border: 1px solid rgba(82,39,27,0.08);">
+                            <div class="font-mono-xs text-muted-foreground" style="font-size: 9px;">TỔNG TOKEN</div>
+                            <div class="fw-bold" id="modalTotalTokens" style="font-size: 1.05rem; color: var(--brown);">0</div>
                         </div>
                     </div>
                     <div class="col-4">
-                        <div class="p-3 rounded-4 h-100" style="background: rgba(255,255,255,0.72); border: 1px solid rgba(82,39,27,0.08);">
-                            <div class="font-mono-xs text-muted-foreground" style="font-size: 10px;">CHAT RAG / HỎI ĐÁP</div>
-                            <div class="fw-bold mt-1" id="modalChatTokens" style="font-size: 1.4rem; color: #1e3e62;">0</div>
-                            <div class="small text-muted-foreground mt-1" id="modalChatPercent" style="font-size: 12px;">0% trong tổng số</div>
+                        <div class="p-2 rounded-3 h-100" style="background: rgba(255,255,255,0.72); border: 1px solid rgba(82,39,27,0.08);">
+                            <div class="font-mono-xs text-muted-foreground" style="font-size: 9px;">CHAT RAG</div>
+                            <div class="fw-bold" id="modalChatTokens" style="font-size: 1.05rem; color: #1e3e62;">0</div>
+                            <div class="text-muted-foreground" id="modalChatPercent" style="font-size: 10px;">0%</div>
                         </div>
                     </div>
                     <div class="col-4">
-                        <div class="p-3 rounded-4 h-100" style="background: rgba(255,255,255,0.72); border: 1px solid rgba(82,39,27,0.08);">
-                            <div class="font-mono-xs text-muted-foreground" style="font-size: 10px;">EMBEDDING TÀI LIỆU</div>
-                            <div class="fw-bold mt-1" id="modalDocTokens" style="font-size: 1.4rem; color: var(--coral);">0</div>
-                            <div class="small text-muted-foreground mt-1" id="modalDocPercent" style="font-size: 12px;">0% trong tổng số</div>
+                        <div class="p-2 rounded-3 h-100" style="background: rgba(255,255,255,0.72); border: 1px solid rgba(82,39,27,0.08);">
+                            <div class="font-mono-xs text-muted-foreground" style="font-size: 9px;">EMBEDDING</div>
+                            <div class="fw-bold" id="modalDocTokens" style="font-size: 1.05rem; color: var(--coral);">0</div>
+                            <div class="text-muted-foreground" id="modalDocPercent" style="font-size: 10px;">0%</div>
                         </div>
                     </div>
                 </div>
 
                 <!-- 7-Day Detailed Breakdown Chart -->
-                <div class="p-4 rounded-4 mb-4" style="background: rgba(255,255,255,0.78); border: 1px solid rgba(82,39,27,0.08);">
-                    <div class="d-flex justify-content-between align-items-center mb-3">
-                        <h6 class="fw-bold m-0" style="font-size: 14px; color: var(--brown);">Biểu Đồ Phân Bổ Tiêu Thụ 7 Ngày Qua</h6>
-                        <div class="d-flex align-items-center gap-3" style="font-size: 12px;">
-                            <span class="d-flex align-items-center gap-1.5"><span class="rounded-circle d-inline-block" style="width: 10px; height: 10px; background: #1e3e62;"></span> Chat RAG</span>
-                            <span class="d-flex align-items-center gap-1.5"><span class="rounded-circle d-inline-block" style="width: 10px; height: 10px; background: var(--coral);"></span> Tài liệu</span>
+                <div class="p-2 rounded-3 mb-2" style="background: rgba(255,255,255,0.78); border: 1px solid rgba(82,39,27,0.08);">
+                    <div class="d-flex justify-content-between align-items-center mb-2">
+                        <h6 class="fw-bold m-0" style="font-size: 12px; color: var(--brown);">Biểu Đồ 7 Ngày Qua</h6>
+                        <div class="d-flex align-items-center gap-2" style="font-size: 10px;">
+                            <span class="d-flex align-items-center gap-1"><span class="rounded-circle d-inline-block" style="width: 8px; height: 8px; background: #1e3e62;"></span> Chat</span>
+                            <span class="d-flex align-items-center gap-1"><span class="rounded-circle d-inline-block" style="width: 8px; height: 8px; background: var(--coral);"></span> Tài liệu</span>
                         </div>
                     </div>
-                    <div style="height: 220px; width: 100%;">
+                    <div style="height: 100px; width: 100%;">
                         <canvas id="modalUserChartCanvas"></canvas>
                     </div>
                 </div>
 
                 <!-- Day-by-day Breakdown Table -->
                 <div class="table-responsive">
-                    <table class="table table-hover align-middle mb-0" style="border-collapse: separate; border-spacing: 0 8px; font-family: inherit;">
+                    <table class="table table-hover align-middle mb-0" style="border-collapse: separate; border-spacing: 0 4px; font-family: inherit;">
                         <thead>
-                            <tr class="text-muted-foreground" style="border: none; font-size: 12px; font-weight: 600;">
-                                <th scope="col" class="pb-2 border-0 ps-3">Ngày</th>
-                                <th scope="col" class="pb-2 border-0">Chat Tokens</th>
-                                <th scope="col" class="pb-2 border-0">Embedding Tokens</th>
-                                <th scope="col" class="pb-2 border-0 text-end pe-3">Tổng Ngày</th>
+                            <tr class="text-muted-foreground" style="border: none; font-size: 11px; font-weight: 600;">
+                                <th scope="col" class="pb-1 border-0 ps-3" style="width: 20%;">Ngày</th>
+                                <th scope="col" class="pb-1 border-0" style="width: 30%;">Chat Tokens</th>
+                                <th scope="col" class="pb-1 border-0" style="width: 30%;">Embedding Tokens</th>
+                                <th scope="col" class="pb-1 border-0 text-end pe-3" style="width: 20%;">Tổng Ngày</th>
                             </tr>
                         </thead>
                         <tbody id="modalTableBody">
                             <!-- Populated dynamically via JS -->
                         </tbody>
                     </table>
-                </div>
             </div>
 
-            <!-- Modal Footer -->
-            <div class="modal-footer border-0 p-4 pt-2 d-flex justify-content-end">
-                <button type="button" class="btn btn-outline-dark pill-button px-4 py-2" data-bs-dismiss="modal" style="border-color: rgba(82,39,27,0.15); font-size: 13px;">Đóng</button>
+            <!-- Modal Footer with Pagination -->
+            <div class="modal-footer border-0 px-4 py-2 d-flex justify-content-between align-items-center">
+                <div id="modalTablePagination" class="d-flex align-items-center gap-2" style="font-size: 11px;"></div>
+                <button type="button" class="btn btn-outline-dark pill-button px-3 py-1" data-bs-dismiss="modal" style="border-color: rgba(82,39,27,0.15); font-size: 12px;">Đóng</button>
             </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal Config Chunking -->
+<div class="modal fade" id="chunkingConfigModal" tabindex="-1" aria-labelledby="chunkingConfigModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content" style="border-radius: 8px; border: 1px solid var(--border-crisp); box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.02); background: rgba(255, 255, 255, 0.75); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px);">
+            <div class="modal-header border-0 px-4 py-3 d-flex justify-content-between align-items-center" style="border-bottom: 1px solid var(--border-crisp) !important;">
+                <h5 class="modal-title font-serif tracking-tight text-text-primary" id="chunkingConfigModalLabel" style="font-weight: 600; font-size: 1.25rem;">
+                    <i class="bi bi-gear-fill me-2" style="color: var(--text-muted);"></i>Cấu Hình Chunking
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <form method="post" asp-page-handler="UpdateChunkingSettings">
+                <div class="modal-body px-4 py-4">
+                    <div class="mb-4">
+                        <label asp-for="ChunkMinWords" class="form-label" style="font-size: 14px; font-weight: 500; color: var(--text-secondary);">Số từ tối thiểu (Chunk Min Words)</label>
+                        <input asp-for="ChunkMinWords" type="number" class="form-control" style="border-radius: 8px; font-size: 14px; border: 1px solid var(--border-crisp); background: rgba(255, 255, 255, 0.5);" required min="10" max="5000" />
+                    </div>
+                    <div class="mb-4">
+                        <label asp-for="ChunkMaxWords" class="form-label" style="font-size: 14px; font-weight: 500; color: var(--text-secondary);">Số từ tối đa (Chunk Max Words)</label>
+                        <input asp-for="ChunkMaxWords" type="number" class="form-control" style="border-radius: 8px; font-size: 14px; border: 1px solid var(--border-crisp); background: rgba(255, 255, 255, 0.5);" required min="10" max="5000" />
+                    </div>
+                    <div class="mb-2">
+                        <label asp-for="ChunkOverlapWords" class="form-label" style="font-size: 14px; font-weight: 500; color: var(--text-secondary);">Số từ lặp lại (Chunk Overlap Words)</label>
+                        <input asp-for="ChunkOverlapWords" type="number" class="form-control" style="border-radius: 8px; font-size: 14px; border: 1px solid var(--border-crisp); background: rgba(255, 255, 255, 0.5);" required min="0" max="5000" />
+                        <div class="form-text mt-2" style="font-size: 13px; color: var(--text-muted);">
+                            Số từ lặp lại giữa các đoạn liền kề giúp giữ lại ngữ cảnh. Nên đặt nhỏ hơn Chunk Max Words.
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer border-0 px-4 py-3 d-flex justify-content-end gap-2" style="border-top: 1px solid var(--border-crisp) !important;">
+                    <button type="button" class="btn" data-bs-dismiss="modal" style="background: rgba(255, 255, 255, 0.5); border: 1px solid var(--border-crisp); color: var(--text-primary); font-weight: 500; font-size: 14px; border-radius: 8px; padding: 0.5rem 1rem; transition: all 0.2s ease;">Đóng</button>
+                    <button type="submit" class="btn" style="background: var(--accent-primary); color: #FFFFFF; font-weight: 600; font-size: 14px; border-radius: 8px; padding: 0.5rem 1.25rem; border: none; transition: all 0.2s ease;">Lưu Thay Đổi</button>
+                </div>
+            </form>
         </div>
     </div>
 </div>
@@ -410,10 +431,12 @@
     <!-- 2. Robust UI click handler and modal management -->
     <script>
         (function initTokenUsageActions() {
-            function handleDetailClick(e) {
-                const btn = e.target.closest('.view-detail-btn');
+            const detailModalEl = document.getElementById('userDetailModal');
+            if (!detailModalEl) return;
+
+            detailModalEl.addEventListener('show.bs.modal', function (event) {
+                const btn = event.relatedTarget;
                 if (!btn) return;
-                e.preventDefault();
 
                 const userId = (btn.getAttribute('data-user-id') || '').toLowerCase();
                 const user = window.USER_TOKENS_MAP ? window.USER_TOKENS_MAP[userId] : null;
@@ -427,91 +450,126 @@
                 const modalUserAvatar = document.getElementById('modalUserAvatar');
                 const modalUserRoleBadge = document.getElementById('modalUserRoleBadge');
                 const modalTotalTokens = document.getElementById('modalTotalTokens');
-                const modalPercentQuota = document.getElementById('modalPercentQuota');
                 const modalChatTokens = document.getElementById('modalChatTokens');
                 const modalChatPercent = document.getElementById('modalChatPercent');
                 const modalDocTokens = document.getElementById('modalDocTokens');
                 const modalDocPercent = document.getElementById('modalDocPercent');
                 const modalTableBody = document.getElementById('modalTableBody');
-                const detailModalEl = document.getElementById('userDetailModal');
 
                 // Populate textual details immediately
-                if (modalUserFullName) modalUserFullName.textContent = user.FullName;
-                if (modalUserEmail) modalUserEmail.textContent = user.Email;
-                if (modalUserAvatar) modalUserAvatar.textContent = user.Initial;
-                if (modalUserRoleBadge) modalUserRoleBadge.textContent = user.RoleName;
-                if (modalTotalTokens) modalTotalTokens.textContent = user.TotalTokens.toLocaleString();
-                if (modalPercentQuota) modalPercentQuota.textContent = user.PercentOfQuota + "% Quota hệ thống";
-                if (modalChatTokens) modalChatTokens.textContent = user.ChatTokens.toLocaleString();
+                const total = user.TotalTokens ?? user.totalTokens ?? 0;
+                const chat = user.ChatTokens ?? user.chatTokens ?? 0;
+                const doc = user.DocTokens ?? user.docTokens ?? 0;
+                const roleId = user.RoleId ?? user.roleId ?? 0;
+
+                if (modalUserFullName) modalUserFullName.textContent = user.FullName ?? user.fullName ?? 'Người dùng';
+                if (modalUserEmail) modalUserEmail.textContent = user.Email ?? user.email ?? '';
+                if (modalUserAvatar) modalUserAvatar.textContent = user.Initial ?? user.initial ?? 'U';
+                if (modalUserRoleBadge) modalUserRoleBadge.textContent = user.RoleName ?? user.roleName ?? 'User';
                 
-                const chatPct = user.TotalTokens > 0 ? Math.round(user.ChatTokens / user.TotalTokens * 100) : 0;
-                const docPct = user.TotalTokens > 0 ? (100 - chatPct) : 0;
+                if (modalTotalTokens) modalTotalTokens.textContent = total.toLocaleString();
+                if (modalChatTokens) modalChatTokens.textContent = chat.toLocaleString();
+                
+                const chatPct = total > 0 ? Math.round(chat / total * 100) : 0;
+                const docPct = total > 0 ? (100 - chatPct) : 0;
                 if (modalChatPercent) modalChatPercent.textContent = chatPct + "% trong tổng số";
                 
-                if (user.RoleId === 3) {
+                if (roleId === 3) {
                     if (modalDocTokens) modalDocTokens.innerHTML = '<span class="badge bg-secondary-subtle text-muted" style="font-size: 13px;">0 (N/A)</span>';
                     if (modalDocPercent) modalDocPercent.textContent = "Sinh viên không xử lý tài liệu";
                 } else {
-                    if (modalDocTokens) modalDocTokens.textContent = user.DocTokens.toLocaleString();
+                    if (modalDocTokens) modalDocTokens.textContent = doc.toLocaleString();
                     if (modalDocPercent) modalDocPercent.textContent = docPct + "% trong tổng số";
                 }
 
-                // Populate Day-by-Day Table Rows
+                // Populate Day-by-Day Table Rows with Pagination
                 if (modalTableBody) {
-                    modalTableBody.innerHTML = '';
-                    for (let i = user.DateLabels.length - 1; i >= 0; i--) {
-                        const date = user.DateLabels[i];
-                        const chatVal = user.ChatHistoryData[i] || 0;
-                        const docVal = user.DocHistoryData[i] || 0;
-                        const totalDay = chatVal + docVal;
+                    const dateLabels = user.DateLabels ?? user.dateLabels ?? [];
+                    const chatHistory = user.ChatHistoryData ?? user.chatHistoryData ?? [];
+                    const docHistory = user.DocHistoryData ?? user.docHistoryData ?? [];
+                    const ROWS_PER_PAGE = 3;
 
-                        const docCellDisplay = user.RoleId === 3 
-                            ? '<span class="badge bg-secondary-subtle text-muted" style="font-size: 11px;">N/A</span>' 
-                            : `${docVal.toLocaleString()} tokens`;
-
-                        const row = document.createElement('tr');
-                        row.className = 'glass-row';
-                        row.style.background = 'rgba(255, 255, 255, 0.45)';
-                        row.style.borderRadius = '12px';
-                        row.innerHTML = `
-                            <td class="ps-3 py-2.5 border-0 fw-medium text-foreground" style="border-radius: 12px 0 0 12px; font-size: 13px;">${date}</td>
-                            <td class="py-2.5 border-0 text-muted-foreground" style="font-size: 13px;">${chatVal.toLocaleString()} tokens</td>
-                            <td class="py-2.5 border-0 text-muted-foreground" style="font-size: 13px;">${docCellDisplay}</td>
-                            <td class="pe-3 py-2.5 border-0 text-end fw-bold text-brown" style="border-radius: 0 12px 12px 0; font-size: 13px; color: var(--brown);">${totalDay.toLocaleString()}</td>
-                        `;
-                        modalTableBody.appendChild(row);
+                    // Build all row data (newest first)
+                    const allRows = [];
+                    for (let i = dateLabels.length - 1; i >= 0; i--) {
+                        allRows.push({
+                            date: dateLabels[i] || '',
+                            chatVal: chatHistory[i] || 0,
+                            docVal: docHistory[i] || 0
+                        });
                     }
+                    const totalPages = Math.max(1, Math.ceil(allRows.length / ROWS_PER_PAGE));
+
+                    function renderModalTablePage(page) {
+                        modalTableBody.innerHTML = '';
+                        const start = (page - 1) * ROWS_PER_PAGE;
+                        const end = Math.min(start + ROWS_PER_PAGE, allRows.length);
+
+                        for (let idx = start; idx < end; idx++) {
+                            const r = allRows[idx];
+                            const totalDay = r.chatVal + r.docVal;
+                            const docCellDisplay = roleId === 3 
+                                ? '<span class="badge bg-secondary-subtle text-muted" style="font-size: 11px;">N/A</span>' 
+                                : `${r.docVal.toLocaleString()} tokens`;
+
+                            const row = document.createElement('tr');
+                            row.className = 'glass-row';
+                            row.style.background = 'rgba(255, 255, 255, 0.45)';
+                            row.style.borderRadius = '10px';
+                            row.innerHTML = `
+                                <td class="ps-3 py-2 border-0 fw-medium text-foreground" style="border-radius: 10px 0 0 10px; font-size: 12px;">${r.date}</td>
+                                <td class="py-2 border-0 text-muted-foreground" style="font-size: 12px;">${r.chatVal.toLocaleString()} tokens</td>
+                                <td class="py-2 border-0 text-muted-foreground" style="font-size: 12px;">${docCellDisplay}</td>
+                                <td class="pe-3 py-2 border-0 text-end fw-bold" style="border-radius: 0 10px 10px 0; font-size: 12px; color: var(--brown);">${totalDay.toLocaleString()}</td>
+                            `;
+                            modalTableBody.appendChild(row);
+                        }
+
+                        // Render pagination controls
+                        const paginationEl = document.getElementById('modalTablePagination');
+                        if (paginationEl && totalPages > 1) {
+                            paginationEl.innerHTML = '';
+                            const prevBtn = document.createElement('button');
+                            prevBtn.className = 'btn btn-sm rounded-pill px-2 py-0';
+                            prevBtn.style.cssText = 'font-size: 11px; border: 1px solid rgba(82,39,27,0.12); color: var(--brown); background: transparent;';
+                            prevBtn.textContent = '‹ Trước';
+                            prevBtn.disabled = page <= 1;
+                            prevBtn.onclick = () => renderModalTablePage(page - 1);
+
+                            const info = document.createElement('span');
+                            info.className = 'text-muted-foreground';
+                            info.style.fontSize = '11px';
+                            info.textContent = `${page} / ${totalPages}`;
+
+                            const nextBtn = document.createElement('button');
+                            nextBtn.className = 'btn btn-sm rounded-pill px-2 py-0';
+                            nextBtn.style.cssText = 'font-size: 11px; border: 1px solid rgba(82,39,27,0.12); color: var(--brown); background: transparent;';
+                            nextBtn.textContent = 'Sau ›';
+                            nextBtn.disabled = page >= totalPages;
+                            nextBtn.onclick = () => renderModalTablePage(page + 1);
+
+                            paginationEl.appendChild(prevBtn);
+                            paginationEl.appendChild(info);
+                            paginationEl.appendChild(nextBtn);
+                        } else if (paginationEl) {
+                            paginationEl.innerHTML = '';
+                        }
+                    }
+
+                    renderModalTablePage(1);
                 }
 
-                // Explicitly show modal via Bootstrap 5 JS API
-                if (detailModalEl) {
-                    if (detailModalEl.parentNode !== document.body) {
-                        document.body.appendChild(detailModalEl);
-                    }
+                // Render chart after modal transition completes (200ms)
+                setTimeout(() => {
                     try {
-                        let bsModal = bootstrap.Modal.getInstance(detailModalEl);
-                        if (!bsModal) {
-                            bsModal = new bootstrap.Modal(detailModalEl);
+                        if (typeof renderUserModalChart === 'function') {
+                            renderUserModalChart(user);
                         }
-                        bsModal.show();
-                    } catch (ex) {
-                        console.error('Modal show error:', ex);
+                    } catch (chartErr) {
+                        console.warn('Modal chart error:', chartErr);
                     }
-
-                    // Render chart after modal transition completes (200ms)
-                    setTimeout(() => {
-                        try {
-                            if (typeof renderUserModalChart === 'function') {
-                                renderUserModalChart(user);
-                            }
-                        } catch (chartErr) {
-                            console.warn('Modal chart error:', chartErr);
-                        }
-                    }, 200);
-                }
-            }
-
-            document.body.addEventListener('click', handleDetailClick);
+                }, 200);
+            });
         })();
 
         // 3. Render charts inside user cards & modal chart function
@@ -528,17 +586,18 @@
             const datasets = [
                 {
                     label: 'Chat RAG / Hỏi Đáp',
-                    data: user.ChatHistoryData,
+                    data: user.ChatHistoryData ?? user.chatHistoryData ?? [],
                     backgroundColor: '#1e3e62',
                     borderRadius: 6,
                     barPercentage: 0.65
                 }
             ];
 
-            if (user.RoleId !== 3) {
+            const roleId = user.RoleId ?? user.roleId ?? 0;
+            if (roleId !== 3) {
                 datasets.push({
                     label: 'Embedding Tài Liệu',
-                    data: user.DocHistoryData,
+                    data: user.DocHistoryData ?? user.docHistoryData ?? [],
                     backgroundColor: '#d86a58',
                     borderRadius: 6,
                     barPercentage: 0.65
@@ -548,7 +607,7 @@
             modalChartInstance = new Chart(ctxModal, {
                 type: 'bar',
                 data: {
-                    labels: user.DateLabels,
+                    labels: user.DateLabels ?? user.dateLabels ?? [],
                     datasets: datasets
                 },
                 options: {
@@ -600,10 +659,12 @@
                 sparklineCanvases.forEach(canvas => {
                     const userId = (canvas.getAttribute('data-user-id') || '').toLowerCase();
                     const user = window.USER_TOKENS_MAP ? window.USER_TOKENS_MAP[userId] : null;
-                    if (!user || !user.DateLabels || !user.SparklineData) return;
+                    const dateLabels = user.DateLabels ?? user.dateLabels;
+                    const sparkline = user.SparklineData ?? user.sparklineData;
+                    if (!user || !dateLabels || !sparkline) return;
 
-                    const labels = user.DateLabels;
-                    const values = user.SparklineData;
+                    const labels = dateLabels;
+                    const values = sparkline;
 
                     const ctx = canvas.getContext('2d');
                     

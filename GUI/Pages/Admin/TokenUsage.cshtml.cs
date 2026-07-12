@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using BLL.DTOs.Tokens;
+using BLL.Interfaces;
 using BLL.Interfaces.Tokens;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -15,11 +16,16 @@ namespace GUI.Pages.Admin
     public class TokenUsageModel : PageModel
     {
         private readonly ITokenUsageService _tokenUsageService;
+        private readonly ISystemSettingService _systemSettingService;
         private readonly ILogger<TokenUsageModel> _logger;
 
-        public TokenUsageModel(ITokenUsageService tokenUsageService, ILogger<TokenUsageModel> logger)
+        public TokenUsageModel(
+            ITokenUsageService tokenUsageService, 
+            ISystemSettingService systemSettingService,
+            ILogger<TokenUsageModel> logger)
         {
             _tokenUsageService = tokenUsageService;
+            _systemSettingService = systemSettingService;
             _logger = logger;
         }
 
@@ -42,14 +48,28 @@ namespace GUI.Pages.Admin
         public int TotalPages { get; set; } = 1;
         public int TotalUsersCount { get; set; } = 0;
 
+        [BindProperty]
+        public int ChunkMinWords { get; set; }
+
+        [BindProperty]
+        public int ChunkMaxWords { get; set; }
+
+        [BindProperty]
+        public int ChunkOverlapWords { get; set; }
+
         public async Task OnGetAsync()
         {
             _logger.LogInformation("Admin loading TokenUsage page with FilterRole={FilterRole}, SearchTerm={SearchTerm}, SortBy={SortBy}", FilterRole, SearchTerm, SortBy);
 
             // Kết nối dữ liệu thật từ BLL / Repository
-            var (users, stats) = await _tokenUsageService.GetTokenUsageReportAsync(200000, HttpContext.RequestAborted);
+            var (users, stats) = await _tokenUsageService.GetTokenUsageReportAsync(HttpContext.RequestAborted);
             UserTokensList = users;
             HeroStats = stats;
+
+            var chunkSettings = await _systemSettingService.GetChunkingSettingsAsync(HttpContext.RequestAborted);
+            ChunkMinWords = chunkSettings.ChunkMinWords;
+            ChunkMaxWords = chunkSettings.ChunkMaxWords;
+            ChunkOverlapWords = chunkSettings.ChunkOverlapWords;
 
             // Filter by Role
             var query = UserTokensList.AsEnumerable();
@@ -84,6 +104,19 @@ namespace GUI.Pages.Admin
             if (PageNumber > TotalPages && TotalPages > 0) PageNumber = TotalPages;
 
             FilteredList = allFiltered.Skip((PageNumber - 1) * PageSize).Take(PageSize).ToList();
+        }
+
+        public async Task<IActionResult> OnPostUpdateChunkingSettingsAsync()
+        {
+            if (ChunkMinWords < 10 || ChunkMaxWords > 5000 || ChunkMinWords >= ChunkMaxWords || ChunkOverlapWords >= ChunkMaxWords)
+            {
+                TempData["ErrorMessage"] = "Cấu hình chunking không hợp lệ.";
+                return RedirectToPage();
+            }
+
+            await _systemSettingService.UpdateChunkingSettingsAsync(ChunkMinWords, ChunkMaxWords, ChunkOverlapWords, HttpContext.RequestAborted);
+            TempData["SuccessMessage"] = "Đã cập nhật cấu hình Chunking thành công!";
+            return RedirectToPage();
         }
     }
 }
