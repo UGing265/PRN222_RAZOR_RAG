@@ -108,7 +108,7 @@ namespace GUI.Pages.Admin
 
         public async Task<IActionResult> OnPostUpdateChunkingSettingsAsync()
         {
-            if (ChunkMinWords < 10 || ChunkMaxWords > 5000 || ChunkMinWords >= ChunkMaxWords || ChunkOverlapWords >= ChunkMaxWords)
+            if (ChunkMinWords < 10 || ChunkMaxWords > 5000 || ChunkMinWords >= ChunkMaxWords || ChunkOverlapWords < 0 || ChunkOverlapWords >= ChunkMaxWords)
             {
                 TempData["ErrorMessage"] = "Cấu hình chunking không hợp lệ.";
                 return RedirectToPage();
