@@ -1,19 +1,27 @@
 using Amazon;
 using Amazon.S3;
+using BLL.Interfaces;
 using BLL.Interfaces.Auth;
 using BLL.Interfaces.Chat;
 using BLL.Interfaces.Documents;
+using BLL.Interfaces.Tokens;
+using BLL.Services;
 using BLL.Services.Auth;
 using BLL.Services.Chat;
 using BLL.Services.Documents;
 using BLL.Services.Email;
+using BLL.Services.Tokens;
 using DAL.Data;
+using DAL.Interfaces;
 using DAL.Interfaces.Auth;
 using DAL.Interfaces.Chat;
 using DAL.Interfaces.Documents;
+using DAL.Interfaces.Tokens;
+using DAL.Repositories;
 using DAL.Repositories.Auth;
 using DAL.Repositories.Chat;
 using DAL.Repositories.Documents;
+using DAL.Repositories.Tokens;
 using Microsoft.EntityFrameworkCore;
 using Npgsql;
 using Microsoft.EntityFrameworkCore.Diagnostics;
@@ -41,9 +49,12 @@ public static class ServiceCollectionExtensions
             configuration.GetSection(EmailQueueOptions.SectionName));
         services.AddSingleton<IEmailQueue, EmailQueue>();
         services.AddHostedService<EmailQueueHostedService>();
+        services.AddScoped<ISystemSettingRepository, SystemSettingRepository>();
         services.AddScoped<IAuthRepository, AuthRepository>();
         services.AddScoped<IDocumentRepository, DocumentRepository>();
         services.AddScoped<IUploadJobRepository, UploadJobRepository>();
+        services.AddScoped<ITokenUsageRepository, TokenUsageRepository>();
+        services.AddScoped<ISystemSettingService, SystemSettingService>();
         services.AddScoped<IAuthService, AuthService>();
         services.AddScoped<IDocumentService, DocumentService>();
         services.AddScoped<IS3StorageService, S3StorageService>();
@@ -53,6 +64,7 @@ public static class ServiceCollectionExtensions
         services.AddScoped<ICompareService, CompareService>();
         services.AddScoped<IEmbeddingService, GeminiEmbeddingService>();
         services.AddScoped<IDocumentComparisonService, DocumentComparisonService>();
+        services.AddScoped<ITokenUsageService, TokenUsageService>();
         services.AddSingleton<IComparisonPdfExporter, QuestPdfComparisonExporter>();
         services.AddHostedService<UploadJobBackgroundService>();
 

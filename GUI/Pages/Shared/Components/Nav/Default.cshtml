@@ -13,6 +13,7 @@
         "register" => "<path d=\"M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2\"/><circle cx=\"8.5\" cy=\"7\" r=\"4\"/><line x1=\"20\" y1=\"8\" x2=\"20\" y2=\"14\"/><line x1=\"23\" y1=\"11\" x2=\"17\" y2=\"11\"/>",
         "audit"    => "<polyline points=\"22 12 18 12 15 21 9 3 6 12 2 12\"/>",
         "compare"  => "<path d=\"M12 3h7a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-7m0-18H5a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h7m0-18v18\"/>",
+        "token"    => "<circle cx=\"12\" cy=\"12\" r=\"10\"/><path d=\"M16 8h-6a2 2 0 1 0 0 4h4a2 2 0 1 1 0 4H8\"/><path d=\"M12 6v2\"/><path d=\"M12 16v2\"/>",
         _          => string.Empty
     };
 }
@@ -81,20 +82,7 @@
     <div>
         @if (Model.IsAuthenticated)
         {
-            <a asp-page="/Subscription" class="text-decoration-none d-block mb-3 sidebar-text">
-                <div class="p-3 shadow-sm text-white d-flex align-items-center justify-content-between"
-                     style="background: linear-gradient(135deg, var(--brown) 0%, var(--coral) 100%); transition: all 0.3s ease; border: 1px solid rgba(255,255,255,0.1); border-radius: 16px;"
-                     onmouseover="this.style.transform='translateY(-2px)'; this.style.boxShadow='0 10px 20px rgba(216, 106, 88, 0.2)';"
-                     onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='none';">
-                    <div style="max-width: 75%;">
-                        <div class="fw-bold" style="font-size: 0.85rem;">Nâng cấp Premium</div>
-                        <div style="font-size: 0.7rem; opacity: 0.85;">Mở khóa câu hỏi vô hạn & tài liệu lớn</div>
-                    </div>
-                    <div class="rounded-circle d-flex align-items-center justify-content-center bg-white" style="width: 32px; height: 32px; color: var(--coral);">
-                        <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>
-                    </div>
-                </div>
-            </a>
+
 
             <div class="profile-card-toggle" id="profileCard" aria-expanded="false" style="cursor: pointer;">
                 <div class="d-flex align-items-center justify-content-between">
@@ -135,10 +123,7 @@
                 <hr class="my-2" style="border-top: 1px solid rgba(82, 39, 27, 0.08);" />
 
                 <div class="d-flex flex-column gap-1">
-                    <a asp-page="/Subscription" class="popout-item text-decoration-none">
-                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="flex-shrink-0"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>
-                        <span>Nâng cấp Premium</span>
-                    </a>
+
 
                     <button type="button" data-bs-toggle="modal" data-bs-target="#settingsModal" data-bs-target-tab="subscription" class="popout-item border-0 bg-transparent text-start w-100">
                         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="flex-shrink-0"><rect x="2" y="4" width="20" height="16" rx="2"/><line x1="2" y1="10" x2="22" y2="10"/></svg>

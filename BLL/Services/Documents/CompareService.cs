@@ -5,6 +5,7 @@ using BLL.DTOs.Chat;
 using BLL.Exceptions;
 using BLL.Interfaces.Chat;
 using BLL.Interfaces.Documents;
+using BLL.Interfaces.Tokens;
 using DAL.Interfaces.Documents;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Logging;
@@ -22,6 +23,7 @@ public class CompareService : ICompareService
     private readonly IEmbeddingService _embeddingService;
     private readonly IGeminiChatService _geminiChatService;
     private readonly IDocumentRepository _documentRepository;
+    private readonly ITokenUsageService _tokenUsageService;
     private readonly ILogger<CompareService> _logger;
 
     private static readonly JsonSerializerOptions JsonOptions = new()
@@ -35,12 +37,14 @@ public class CompareService : ICompareService
         IEmbeddingService embeddingService,
         IGeminiChatService geminiChatService,
         IDocumentRepository documentRepository,
+        ITokenUsageService tokenUsageService,
         ILogger<CompareService> logger)
     {
         _fileParserService = fileParserService;
         _embeddingService = embeddingService;
         _geminiChatService = geminiChatService;
         _documentRepository = documentRepository;
+        _tokenUsageService = tokenUsageService;
         _logger = logger;
     }
 
@@ -122,6 +126,21 @@ public class CompareService : ICompareService
         var rawResponse = await _geminiChatService.GenerateAsync(prompt, history, cancellationToken);
 
         _logger.LogDebug("CompareDocumentsAsync: Raw LLM response length={Length}", rawResponse.Length);
+
+        // Record token usage for document comparison (prompt + response tokens)
+        var estimatedTokens = (prompt.Length + rawResponse.Length) / 4 + 1;
+        if (userId != Guid.Empty && estimatedTokens > 0)
+        {
+            try
+            {
+                await _tokenUsageService.RecordChatTokensAsync(userId, estimatedTokens, cancellationToken);
+                _logger.LogInformation("Recorded {Tokens} chat tokens for user {UserId} during document comparison.", estimatedTokens, userId);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogWarning(ex, "Failed to record token usage during document comparison for user {UserId}", userId);
+            }
+        }
 
         // 5. Parse JSON response → ComparisonResultDto
         try
