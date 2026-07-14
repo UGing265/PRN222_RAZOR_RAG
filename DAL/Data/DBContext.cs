@@ -687,6 +687,16 @@ public partial class DBContext : DbContext
                 .HasConstraintName("token_usage_user_id_fkey");
         });
 
+        modelBuilder.Entity<SystemSetting>(entity =>
+        {
+            entity.HasKey(e => e.Key).HasName("system_settings_pkey");
+            entity.ToTable("system_settings");
+            entity.Property(e => e.Key).HasMaxLength(100).HasColumnName("key");
+            entity.Property(e => e.Value).HasMaxLength(1000).HasColumnName("value");
+            entity.Property(e => e.Description).HasMaxLength(500).HasColumnName("description");
+            entity.Property(e => e.UpdatedAt).HasDefaultValueSql("now()").HasColumnName("updated_at");
+        });
+
         OnModelCreatingPartial(modelBuilder);
     }
 

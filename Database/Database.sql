@@ -154,6 +154,14 @@ CREATE TABLE public.subjects (
     created_at timestamp with time zone DEFAULT now() NOT NULL
 );
 
+CREATE TABLE public.system_settings (
+    key character varying(100) NOT NULL,
+    value character varying(1000) NOT NULL,
+    description character varying(500),
+    updated_at timestamp with time zone DEFAULT now() NOT NULL
+);
+
+
 CREATE TABLE public.tags (
     id uuid DEFAULT public.uuid_generate_v4() NOT NULL,
     name character varying(100) NOT NULL,
@@ -232,6 +240,7 @@ ALTER TABLE ONLY public.roles ADD CONSTRAINT roles_name_key UNIQUE (name);
 ALTER TABLE ONLY public.roles ADD CONSTRAINT roles_pkey PRIMARY KEY (id);
 ALTER TABLE ONLY public.subjects ADD CONSTRAINT subjects_code_key UNIQUE (code);
 ALTER TABLE ONLY public.subjects ADD CONSTRAINT subjects_pkey PRIMARY KEY (id);
+ALTER TABLE ONLY public.system_settings ADD CONSTRAINT system_settings_pkey PRIMARY KEY (key);
 ALTER TABLE ONLY public.tags ADD CONSTRAINT tags_name_key UNIQUE (name);
 ALTER TABLE ONLY public.tags ADD CONSTRAINT tags_pkey PRIMARY KEY (id);
 ALTER TABLE ONLY public.tags ADD CONSTRAINT tags_slug_key UNIQUE (slug);
@@ -315,6 +324,13 @@ INSERT INTO public.subjects (id, code, name) VALUES
 ('ce07db58-2977-4b72-b883-7e4cbcdce490', 'EXE101', 'Experiential Entrepreneurship 1'),
 ('de07db58-2977-4b72-b883-7e4cbcdce491', 'MLN111', 'Triết học Mac-Lenin')
 ON CONFLICT (code) DO NOTHING;
+
+-- Seed System Settings
+INSERT INTO public.system_settings (key, value, description, updated_at) VALUES
+('ChunkMinWords', '50', 'Số từ tối thiểu của một chunk', now()),
+('ChunkMaxWords', '500', 'Số từ tối đa của một chunk', now()),
+('ChunkOverlapWords', '80', 'Số từ trùng lặp giữa các chunk', now())
+ON CONFLICT (key) DO NOTHING;
 
 -- Seed Users
 INSERT INTO public.users (id, role_id, full_name, email, password_hash, email_verified, username, "displayUsername", is_active, is_blocked) VALUES
