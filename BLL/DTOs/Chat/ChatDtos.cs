@@ -21,6 +21,10 @@ public sealed class ChatSourceDto
     public string DocumentTitle { get; set; } = string.Empty;
     public string? ChapterTitle { get; set; }
     public int? PageNumber { get; set; }
+    public string? ContentSnippet { get; set; }
+    public int? ChunkIndex { get; set; }
+    public string DocumentSlug { get; set; } = string.Empty;
+    public int? ChunkOrder { get; set; }
 }
 
 public sealed class ChatSessionSummaryDto
@@ -37,6 +41,7 @@ public sealed class ChatMessageDto
     public string Role { get; set; } = string.Empty;
     public string Content { get; set; } = string.Empty;
     public DateTime CreatedAt { get; set; }
+    public List<ChatSourceDto> Sources { get; set; } = [];
 }
 
 /// <summary>

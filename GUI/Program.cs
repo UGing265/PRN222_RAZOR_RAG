@@ -6,7 +6,6 @@ using GUI.Hubs;
 using GUI.Services;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.Cookies;
-using Microsoft.EntityFrameworkCore;
 using QuestPDF.Infrastructure;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -57,12 +56,12 @@ builder.Services.AddAuthentication(options =>
         {
             OnValidatePrincipal = async context =>
             {
-                var dbContext = context.HttpContext.RequestServices.GetRequiredService<DAL.Data.DBContext>();
+                var authService = context.HttpContext.RequestServices.GetRequiredService<BLL.Interfaces.Auth.IAuthService>();
                 var userIdClaim = context.Principal?.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
                 if (Guid.TryParse(userIdClaim, out var userId))
                 {
-                    var user = await dbContext.Users.AsNoTracking().FirstOrDefaultAsync(u => u.Id == userId);
-                    if (user == null || !user.IsActive || user.IsBlocked || !user.EmailVerified)
+                    var isValid = await authService.ValidateUserSessionAsync(userId);
+                    if (!isValid)
                     {
                         context.RejectPrincipal();
                         await context.HttpContext.SignOutAsync(CookieAuthenticationDefaults.AuthenticationScheme);

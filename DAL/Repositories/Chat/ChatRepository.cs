@@ -84,6 +84,17 @@ public class ChatRepository : IChatRepository
             .ToListAsync(cancellationToken);
     }
 
+    public async Task<List<DocumentChunk>> GetChunksByIdsAsync(List<Guid> chunkIds, CancellationToken cancellationToken = default)
+    {
+        if (chunkIds == null || chunkIds.Count == 0) return [];
+        return await _context.DocumentChunks
+            .Include(c => c.Document)
+            .Include(c => c.Chapter)
+            .Where(c => chunkIds.Contains(c.Id))
+            .ToListAsync(cancellationToken);
+    }
+
+
     public async Task UpdateSessionTitleAsync(Guid sessionId, string title, CancellationToken cancellationToken = default)
     {
         await _context.ChatSessions

@@ -3,8 +3,6 @@ using BLL.DTOs.Chat;
 using BLL.Interfaces.Chat;
 using BLL.Interfaces.Documents;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
-using Pgvector.EntityFrameworkCore;
 
 namespace GUI.Endpoints;
 
@@ -82,47 +80,6 @@ public static class ChatEndpoints
             return Results.Ok();
         });
 
-        group.MapGet("/debug-docs", async (
-            IDocumentService documents,
-            DAL.Interfaces.Documents.IDocumentRepository repo,
-            CancellationToken ct) =>
-        {
-            var raw = await repo.GetDocumentsAsync(null, null, 1, 100, null, null, null, null, null, null, ct);
-            return Results.Ok(new
-            {
-                Count = raw.Count,
-                Items = raw.Select(d => new
-                {
-                    d.Id,
-                    d.Title,
-                    d.Status,
-                    d.Visibility,
-                    OwnerRoleId = d.OwnerUser?.RoleId,
-                    OwnerId = d.OwnerUserId
-                })
-            });
-        });
-
-        group.MapGet("/debug-text-search", async (
-            DAL.Data.DBContext context,
-            [FromQuery] string q,
-            CancellationToken ct) =>
-        {
-            var matchedChunks = await context.DocumentChunks
-                .Where(c => c.Content.Contains(q))
-                .Select(c => new
-                {
-                    c.Id,
-                    c.DocumentId,
-                    DocTitle = c.Document.Title,
-                    ChapterTitle = c.Chapter != null ? c.Chapter.Title : "N/A",
-                    c.PageNumber,
-                    c.Content
-                })
-                .ToListAsync(ct);
-
-            return Results.Ok(matchedChunks);
-        });
 
         group.MapGet("/documents", async (
             IDocumentService documents,
@@ -208,8 +165,15 @@ public static class ChatEndpoints
             {
                 await foreach (var chunk in chat.StreamMessageAsync(userId, request, ct))
                 {
-                    var safeChunk = chunk?.Replace("\n", "\\n") ?? string.Empty;
-                    await http.Response.WriteAsync($"data: {safeChunk}\n\n", ct);
+                    if (chunk != null && chunk.StartsWith("[SOURCES]"))
+                    {
+                        await http.Response.WriteAsync($"data: {chunk}\n\n", ct);
+                    }
+                    else
+                    {
+                        var safeChunk = chunk?.Replace("\n", "\\n") ?? string.Empty;
+                        await http.Response.WriteAsync($"data: {safeChunk}\n\n", ct);
+                    }
                     await http.Response.Body.FlushAsync(ct);
                 }
                 await http.Response.WriteAsync("data: [DONE]\n\n", ct);
