@@ -21,4 +21,5 @@ public interface IAuthService
     Task<bool> UnblockUserAsync(Guid adminUserId, Guid userId, CancellationToken cancellationToken = default);
     Task<AuditLogListDto> GetAuditLogsAsync(int page = 1, int pageSize = 20, CancellationToken cancellationToken = default);
     Task<(int SuccessCount, List<string> Errors)> BulkRegisterFromExcelAsync(Stream excelStream, short roleId, CancellationToken cancellationToken = default);
+    Task<bool> ValidateUserSessionAsync(Guid userId, CancellationToken cancellationToken = default);
 }

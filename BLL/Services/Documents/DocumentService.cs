@@ -10,6 +10,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Pgvector;
 using System.Security.Cryptography;
+using System.Text;
 using System.Text.Json;
 
 namespace BLL.Services.Documents;
@@ -198,24 +199,48 @@ public class DocumentService : IDocumentService
             await using var checksumStream = new FileStream(tempPath, FileMode.Open, FileAccess.Read, FileShare.Read);
             var checksum = await ComputeSha256Async(checksumStream, cancellationToken);
 
-            var extractedText = SanitizeForPostgres(await _fileParserService.ExtractTextAsync(tempPath, extension, cancellationToken));
-            var chunks = DocumentChunker.ChunkText(extractedText, indexingOptions.ChunkMinWords, indexingOptions.ChunkMaxWords, indexingOptions.ChunkOverlapWords).ToList();
+            var pages = await _fileParserService.ExtractPagesAsync(tempPath, extension, cancellationToken);
+
+            var extractedTextBuilder = new StringBuilder();
+            foreach (var page in pages)
+            {
+                extractedTextBuilder.AppendLine(page.Content);
+                extractedTextBuilder.AppendLine();
+            }
+            var extractedText = SanitizeForPostgres(extractedTextBuilder.ToString());
+
+            var tempChunks = new List<(string Content, int? PageNumber)>();
+            foreach (var page in pages)
+            {
+                var pageContentClean = SanitizeForPostgres(page.Content);
+                if (string.IsNullOrWhiteSpace(pageContentClean)) continue;
+
+                var pageChunks = DocumentChunker.ChunkText(pageContentClean, indexingOptions.ChunkMinWords, indexingOptions.ChunkMaxWords, indexingOptions.ChunkOverlapWords);
+                foreach (var chunkText in pageChunks)
+                {
+                    tempChunks.Add((chunkText, page.PageNumber));
+                }
+            }
+
             var chunkEntities = new List<DocumentChunk>();
-            var totalChunks = chunks.Count;
+            var totalChunks = tempChunks.Count;
             var chunkIndex = 0;
 
-            foreach (var batch in chunks.Chunk(indexingOptions.BatchSize))
+            foreach (var batch in tempChunks.Chunk(indexingOptions.BatchSize))
             {
-                var cleanBatch = batch.Select(SanitizeForPostgres).ToList();
+                var cleanBatch = batch.Select(b => b.Content).ToList();
                 var embedCts = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
                 embedCts.CancelAfter(TimeSpan.FromSeconds(120));
 
                 var embeddings = await _embeddingService.EmbedBatchAsync(cleanBatch, embedCts.Token);
 
                 var batchDocTokens = 0;
-                for (int i = 0; i < cleanBatch.Count; i++)
+                for (int i = 0; i < batch.Length; i++)
                 {
-                    var chunk = cleanBatch[i];
+                    var chunkObj = batch[i];
+                    var chunk = chunkObj.Content;
+                    var pageNumber = chunkObj.PageNumber;
+
                     var embedding = embeddings.ElementAtOrDefault(i) ?? new Vector(new float[3072]);
                     var chunkTokens = chunk.Length / 4 + 1;
                     batchDocTokens += chunkTokens;
@@ -238,7 +263,7 @@ public class DocumentService : IDocumentService
                         Id = Guid.NewGuid(),
                         DocumentId = documentId,
                         ChunkOrder = chunkIndex,
-                        PageNumber = null,
+                        PageNumber = pageNumber,
                         Content = chunk,
                         ContentTokens = chunkTokens,
                         ChunkHash = DocumentChunker.ComputeChunkHash(chunk),
@@ -280,6 +305,7 @@ public class DocumentService : IDocumentService
                 MimeType = file.ContentType,
                 FileSizeBytes = file.Length,
                 ChecksumSha256 = checksum,
+                PageCount = pages.Count,
                 ExtractionStatus = string.IsNullOrWhiteSpace(extractedText) ? "failed" : "success",
                 CreatedAt = DateTime.UtcNow,
                 ExtractedText = extractedText
@@ -318,7 +344,7 @@ public class DocumentService : IDocumentService
         var document = await _documentRepository.GetDocumentWithFilesAsync(documentId, cancellationToken);
         if (document is null) return null;
 
-        chunkPageSize = Math.Clamp(chunkPageSize, 8, 10);
+        chunkPageSize = Math.Clamp(chunkPageSize, 4, 10);
         var orderedChunks = document.DocumentChunks?.OrderBy(x => x.ChunkOrder).ToList() ?? [];
         var totalPages = Math.Max(1, (int)Math.Ceiling(orderedChunks.Count / (double)chunkPageSize));
         chunkPage = Math.Clamp(chunkPage, 1, totalPages);

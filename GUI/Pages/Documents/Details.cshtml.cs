@@ -26,6 +26,9 @@ public class DetailsModel : PageModel
     [BindProperty(Name = "chunkPageSize", SupportsGet = true)]
     public int ChunkPageSize { get; set; } = 4;
 
+    [BindProperty(Name = "chunkOrder", SupportsGet = true)]
+    public int? ChunkOrder { get; set; }
+
     public DocumentDetailsViewModel ViewModel { get; set; } = new();
 
     public async Task<IActionResult> OnGetAsync(string slug, CancellationToken cancellationToken)
@@ -36,6 +39,11 @@ public class DetailsModel : PageModel
         }
 
         Slug = slug;
+
+        if (ChunkOrder.HasValue)
+        {
+            ChunkPage = (ChunkOrder.Value / ChunkPageSize) + 1;
+        }
 
         try
         {

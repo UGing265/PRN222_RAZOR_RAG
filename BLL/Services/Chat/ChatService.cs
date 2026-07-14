@@ -1,5 +1,6 @@
 using System.Runtime.CompilerServices;
 using System.Text;
+using System.Text.Json;
 using System.Text.RegularExpressions;
 using BLL.DTOs.Chat;
 using BLL.Interfaces.Chat;
@@ -59,7 +60,20 @@ public class ChatService : IChatService
 
             // 5. Tìm Top K chunks liên quan
             _logger.LogInformation("Searching similar chunks. DocumentIds={DocumentIds}, TopK={TopK}", string.Join(",", request.DocumentIds ?? new List<Guid>()), TopKChunks);
-            var relevantChunks = await _chatRepository.SearchSimilarChunksAsync(queryEmbedding, TopKChunks, request.DocumentIds, cancellationToken);
+            List<DocumentChunk> relevantChunks;
+            if (request.DocumentIds != null && request.DocumentIds.Count > 1)
+            {
+                relevantChunks = new List<DocumentChunk>();
+                foreach (var docId in request.DocumentIds)
+                {
+                    var chunks = await _chatRepository.SearchSimilarChunksAsync(queryEmbedding, 3, new List<Guid> { docId }, cancellationToken);
+                    relevantChunks.AddRange(chunks);
+                }
+            }
+            else
+            {
+                relevantChunks = await _chatRepository.SearchSimilarChunksAsync(queryEmbedding, TopKChunks, request.DocumentIds, cancellationToken);
+            }
 
             // 6. Build System Prompt
             var systemPrompt = BuildSystemPrompt(relevantChunks);
@@ -108,7 +122,20 @@ public class ChatService : IChatService
         var historyMessages = await _chatRepository.GetRecentMessagesAsync(session.Id, MaxHistoryMessages, cancellationToken);
         var enhancedQuery = await EnhanceQueryAsync(request.Message, cancellationToken);
         var queryEmbedding = await _embeddingService.EmbedAsync(enhancedQuery, cancellationToken);
-        var relevantChunks = await _chatRepository.SearchSimilarChunksAsync(queryEmbedding, TopKChunks, request.DocumentIds, cancellationToken);
+        List<DocumentChunk> relevantChunks;
+        if (request.DocumentIds != null && request.DocumentIds.Count > 1)
+        {
+            relevantChunks = new List<DocumentChunk>();
+            foreach (var docId in request.DocumentIds)
+            {
+                var chunks = await _chatRepository.SearchSimilarChunksAsync(queryEmbedding, 3, new List<Guid> { docId }, cancellationToken);
+                relevantChunks.AddRange(chunks);
+            }
+        }
+        else
+        {
+            relevantChunks = await _chatRepository.SearchSimilarChunksAsync(queryEmbedding, TopKChunks, request.DocumentIds, cancellationToken);
+        }
         var systemPrompt = BuildSystemPrompt(relevantChunks);
         var geminiHistory = BuildGeminiHistory(historyMessages);
 
@@ -129,6 +156,12 @@ public class ChatService : IChatService
             var chunkIds = relevantChunks.Select(c => c.Id).ToList();
             await SaveAssistantMessageAsync(userId, session.Id, completeReply, chunkIds, cancellationToken);
         }
+
+        // 8. Đẩy nguồn trích dẫn dạng JSON đặc biệt ở cuối luồng stream
+        var sources = ExtractSources(relevantChunks);
+        var options = new JsonSerializerOptions { PropertyNamingPolicy = JsonNamingPolicy.CamelCase };
+        var sourcesJson = JsonSerializer.Serialize(sources, options);
+        yield return $"[SOURCES]{sourcesJson}";
     }
 
     public async Task<List<ChatSessionSummaryDto>> GetSessionsAsync(Guid userId, CancellationToken cancellationToken = default)
@@ -153,12 +186,38 @@ public class ChatService : IChatService
         }
 
         var messages = await _chatRepository.GetRecentMessagesAsync(sessionId, 100, cancellationToken);
-        return messages.Select(m => new ChatMessageDto
+
+        // Nhóm các chunk ID cần tải từ các tin nhắn Assistant để tránh truy vấn N+1
+        var assistantMessages = messages.Where(m => m.Role == ChatRole.Assistant && m.RetrievedChunkIds != null && m.RetrievedChunkIds.Count > 0).ToList();
+        var allChunkIds = assistantMessages.SelectMany(m => m.RetrievedChunkIds).Distinct().ToList();
+
+        var chunkMap = new Dictionary<Guid, DocumentChunk>();
+        if (allChunkIds.Count > 0)
         {
-            Id = m.Id,
-            Role = m.Role,
-            Content = m.Content,
-            CreatedAt = m.CreatedAt
+            var chunks = await _chatRepository.GetChunksByIdsAsync(allChunkIds, cancellationToken);
+            chunkMap = chunks.ToDictionary(c => c.Id);
+        }
+
+        return messages.Select(m =>
+        {
+            var dto = new ChatMessageDto
+            {
+                Id = m.Id,
+                Role = m.Role,
+                Content = m.Content,
+                CreatedAt = m.CreatedAt
+            };
+
+            if (m.Role == ChatRole.Assistant && m.RetrievedChunkIds != null && m.RetrievedChunkIds.Count > 0)
+            {
+                var msgChunks = m.RetrievedChunkIds
+                    .Where(id => chunkMap.ContainsKey(id))
+                    .Select(id => chunkMap[id])
+                    .ToList();
+                dto.Sources = ExtractSources(msgChunks);
+            }
+
+            return dto;
         }).ToList();
     }
 
@@ -309,15 +368,17 @@ public class ChatService : IChatService
     {
         return chunks
             .Where(c => c.Document != null)
-            .Select(c => new ChatSourceDto
+            .Select((c, idx) => new ChatSourceDto
             {
                 DocumentId = c.DocumentId,
                 DocumentTitle = c.Document!.Title,
                 ChapterTitle = c.Chapter?.Title,
-                PageNumber = c.PageNumber
+                PageNumber = c.PageNumber,
+                ContentSnippet = c.Content.Length > 200 ? c.Content[..200].Trim() + "..." : c.Content,
+                ChunkIndex = idx + 1,
+                DocumentSlug = c.Document?.Slug ?? string.Empty,
+                ChunkOrder = c.ChunkOrder
             })
-            .GroupBy(s => new { s.DocumentId, s.ChapterTitle, s.PageNumber })
-            .Select(g => g.First())
             .ToList();
     }
 

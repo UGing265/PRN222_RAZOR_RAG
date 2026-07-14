@@ -772,4 +772,14 @@ public class AuthService : IAuthService
 
         return CryptographicOperations.FixedTimeEquals(actualHash, expectedHash);
     }
+
+    public async Task<bool> ValidateUserSessionAsync(Guid userId, CancellationToken cancellationToken = default)
+    {
+        var user = await _authRepository.GetUserByIdAsync(userId, cancellationToken);
+        if (user == null || !user.IsActive || user.IsBlocked || !user.EmailVerified)
+        {
+            return false;
+        }
+        return true;
+    }
 }

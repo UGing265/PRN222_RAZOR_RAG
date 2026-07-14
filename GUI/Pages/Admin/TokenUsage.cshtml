@@ -146,38 +146,34 @@
         </div>
 
         <!-- Section Header & Filter Navigation Bar -->
-        <div class="d-flex flex-column flex-xl-row justify-content-between align-items-xl-center mb-4 pb-3 border-bottom gap-3" style="border-color: rgba(82, 39, 27, 0.1) !important;">
-            <div class="d-flex align-items-center flex-shrink-0">
-                <h3 class="hero-title m-0 text-nowrap" style="font-size: 1.55rem; color: var(--brown); white-space: nowrap;">Token của từng user</h3>
-            </div>
-
+        <div class="mb-4 pb-3 border-bottom" style="border-color: rgba(82, 39, 27, 0.1) !important;">
             <!-- Search, Filter Tabs & Sort Controls -->
-            <form method="get" id="filterForm" class="d-flex flex-column flex-md-row align-items-stretch align-items-md-center gap-2.5 flex-grow-1 justify-content-md-end">
+            <form method="get" id="filterForm" class="d-flex flex-column flex-md-row align-items-stretch align-items-md-center gap-3 w-100 justify-content-md-end">
                 <!-- Role Filter Tabs -->
-                <div class="d-flex gap-1 bg-white p-1 rounded-pill border border-border flex-shrink-0" style="background: rgba(255,255,255,0.6) !important;">
-                    <button type="submit" name="filterRole" value="all" class="btn btn-sm rounded-pill px-3 py-1.5 fw-semibold text-nowrap @(Model.FilterRole == "all" ? "bg-dark text-white" : "text-muted-foreground")" style="font-size: 13px; border: none; transition: all 0.2s;">
+                <div class="d-flex gap-1 rounded-pill border flex-shrink-0 p-1" style="background: rgba(255,255,255,0.6) !important; border-color: rgba(82, 39, 27, 0.08) !important; height: 44px; align-items: center;">
+                    <button type="submit" name="filterRole" value="all" class="btn btn-sm rounded-pill px-3 fw-semibold text-nowrap @(Model.FilterRole == "all" ? "text-white" : "text-muted-foreground")" style="font-size: 13px; border: none; transition: all 0.2s; height: 34px; display: flex; align-items: center; justify-content: center; line-height: 1; @(Model.FilterRole == "all" ? "background: #4a1f16;" : "background: transparent;")">
                         Tất Cả (@Model.UserTokensList.Count)
                     </button>
-                    <button type="submit" name="filterRole" value="lecturer" class="btn btn-sm rounded-pill px-3 py-1.5 fw-semibold text-nowrap @(Model.FilterRole == "lecturer" ? "bg-dark text-white" : "text-muted-foreground")" style="font-size: 13px; border: none; transition: all 0.2s;">
+                    <button type="submit" name="filterRole" value="lecturer" class="btn btn-sm rounded-pill px-3 fw-semibold text-nowrap @(Model.FilterRole == "lecturer" ? "text-white" : "text-muted-foreground")" style="font-size: 13px; border: none; transition: all 0.2s; height: 34px; display: flex; align-items: center; justify-content: center; line-height: 1; @(Model.FilterRole == "lecturer" ? "background: #4a1f16;" : "background: transparent;")">
                         Giảng Viên (@Model.UserTokensList.Count(u => u.RoleId == 2))
                     </button>
-                    <button type="submit" name="filterRole" value="student" class="btn btn-sm rounded-pill px-3 py-1.5 fw-semibold text-nowrap @(Model.FilterRole == "student" ? "bg-dark text-white" : "text-muted-foreground")" style="font-size: 13px; border: none; transition: all 0.2s;">
+                    <button type="submit" name="filterRole" value="student" class="btn btn-sm rounded-pill px-3 fw-semibold text-nowrap @(Model.FilterRole == "student" ? "text-white" : "text-muted-foreground")" style="font-size: 13px; border: none; transition: all 0.2s; height: 34px; display: flex; align-items: center; justify-content: center; line-height: 1; @(Model.FilterRole == "student" ? "background: #4a1f16;" : "background: transparent;")">
                         Sinh Viên (@Model.UserTokensList.Count(u => u.RoleId == 3))
                     </button>
                 </div>
 
                 <!-- Search Input (Widened) -->
-                <div class="premium-search-box flex-grow-1" style="min-width: 280px; max-width: 440px;">
+                <div class="premium-search-box flex-grow-1" style="min-width: 280px; max-width: 440px; height: 44px; background: rgba(255,255,255,0.6) !important; border: 1px solid rgba(82, 39, 27, 0.08) !important; padding: 0 16px; align-items: center;">
                     <svg class="premium-search-icon flex-shrink-0" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
-                    <input type="text" name="searchTerm" class="premium-search-input" placeholder="Tìm kiếm theo tên hoặc địa chỉ email..." value="@Model.SearchTerm" style="font-size: 13px; min-height: 38px; width: 100%;" />
+                    <input type="text" name="searchTerm" class="premium-search-input" placeholder="Tìm kiếm theo tên hoặc địa chỉ email..." value="@Model.SearchTerm" style="font-size: 13px; height: 100%; width: 100%; outline: none;" />
                     @if (!string.IsNullOrEmpty(Model.SearchTerm))
                     {
-                        <a asp-page="/Admin/TokenUsage" asp-route-filterRole="@Model.FilterRole" asp-route-sortBy="@Model.SortBy" class="text-muted-foreground text-decoration-none">✕</a>
+                        <a asp-page="/Admin/TokenUsage" asp-route-filterRole="@Model.FilterRole" asp-route-sortBy="@Model.SortBy" class="text-muted-foreground text-decoration-none" style="padding-left: 8px;">✕</a>
                     }
                 </div>
 
                 <!-- Sort Dropdown (Narrowed & Compact) -->
-                <select name="sortBy" class="form-select pill-input px-3 py-1.5 fw-medium flex-shrink-0" style="width: 175px; min-height: 38px; font-size: 13px; border-color: var(--border);" onchange="document.getElementById('filterForm').submit();">
+                <select name="sortBy" class="form-select flex-shrink-0" style="width: 195px; height: 44px; font-size: 13px; background: rgba(255,255,255,0.6) !important; border: 1px solid rgba(82, 39, 27, 0.08) !important; border-radius: 9999px; padding: 0 36px 0 16px; color: var(--foreground); cursor: pointer;" onchange="document.getElementById('filterForm').submit();">
                     <option value="highest" selected="@(Model.SortBy == "highest")">Cao Nhất → Thấp Nhất</option>
                     <option value="lowest" selected="@(Model.SortBy == "lowest")">Thấp Nhất → Cao Nhất</option>
                     <option value="name" selected="@(Model.SortBy == "name")">Tên A → Z</option>

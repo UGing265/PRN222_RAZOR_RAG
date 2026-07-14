@@ -653,6 +653,30 @@
                 }
             });
         });
+
+        // Auto open chunk modal if chunkOrder query param is present
+        (function() {
+            const urlParams = new URLSearchParams(window.location.search);
+            const chunkOrder = urlParams.get('chunkOrder');
+            if (chunkOrder !== null) {
+                const modalEl = document.getElementById(`chunkModal-${chunkOrder}`);
+                if (modalEl) {
+                    setTimeout(() => {
+                        // Open Bootstrap modal
+                        const bootstrapModal = new bootstrap.Modal(modalEl);
+                        bootstrapModal.show();
+                        
+                        // Highlight the card and scroll to it
+                        const cardEl = document.querySelector(`[data-bs-target="#chunkModal-${chunkOrder}"]`);
+                        if (cardEl) {
+                            cardEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                            cardEl.style.borderColor = 'var(--coral)';
+                            cardEl.style.boxShadow = '0 0 15px rgba(216, 106, 88, 0.4)';
+                        }
+                    }, 300);
+                }
+            }
+        })();
     </script>
 }
 
