@@ -656,6 +656,11 @@ public class DocumentRepository : IDocumentRepository
         return report;
     }
 
+    public Task<bool> HasUserReportedDocumentAsync(Guid documentId, Guid reporterUserId, CancellationToken cancellationToken = default)
+    {
+        return _dbContext.DocumentReports.AnyAsync(x => x.DocumentId == documentId && x.ReporterUserId == reporterUserId, cancellationToken);
+    }
+
     public Task<List<DocumentReport>> GetPendingReportsAsync(CancellationToken cancellationToken = default)
     {
         return _dbContext.DocumentReports.AsNoTracking()

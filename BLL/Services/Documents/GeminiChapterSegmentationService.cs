@@ -112,8 +112,9 @@ Yêu cầu BẮT BUỘC:
    - Nếu sách KHÔNG CÓ chia chương rõ ràng, thì hãy tự động phân tích và gộp các chunk lại thành các phần/chủ đề lớn logic nhất. Mỗi chương nên duy trì số lượng chunk đồng đều và hợp lý (khuyến nghị từ __MIN_CHUNKS__ đến __MAX_CHUNKS__ chunk/chương).
 3. Chỉ trả về JSON hợp lệ, KHÔNG giải thích thêm.
 4. Mỗi chương phải có title, summary, startChunkIndex, endChunkIndex, confidenceScore.
-5. 'summary' RẤT NGẮN GỌN (1-2 câu) bằng TIẾNG VIỆT.
-6. startChunkIndex và endChunkIndex là số nguyên. Các chương phải bao phủ ĐẦY ĐỦ toàn bộ tài liệu (từ chunk đầu tiên đến chunk cuối cùng) và tuyệt đối KHÔNG được chồng lấn nhau.
+5. TUYỆT ĐỐI KHÔNG bao gồm các từ "Chương X", "Chapter X", "Phần X" ở đầu của `title` (Ví dụ: thay vì "Chương 1: Giới thiệu", hãy chỉ ghi là "Giới thiệu").
+6. 'summary' RẤT NGẮN GỌN (1-2 câu) bằng TIẾNG VIỆT.
+7. startChunkIndex và endChunkIndex là số nguyên. Các chương phải bao phủ ĐẦY ĐỦ toàn bộ tài liệu (từ chunk đầu tiên đến chunk cuối cùng) và tuyệt đối KHÔNG được chồng lấn nhau.
 7. Chỉ dùng chunk có sẵn, không bịa nội dung.
 8. Nếu tài liệu quá ngắn, trả về 1 chương duy nhất.
 
@@ -253,11 +254,19 @@ __CHUNKPACK__
         {
             var start = Math.Clamp(chapter.StartChunkIndex, 0, maxIndex);
             var end = Math.Clamp(chapter.EndChunkIndex, start, maxIndex);
+            
+            var rawTitle = chapter.Title?.Trim() ?? string.Empty;
+            var cleanTitle = System.Text.RegularExpressions.Regex.Replace(rawTitle, @"^(?i)(Chương|Chapter|Phần|Part)\s*(\d+|[IVXLCDM]+)[\s:\.\-]*", "").Trim();
+            if (string.IsNullOrWhiteSpace(cleanTitle))
+            {
+                cleanTitle = string.IsNullOrWhiteSpace(rawTitle) ? $"Chương {order}" : rawTitle;
+            }
+
             chapters.Add(new DocumentChapter
             {
                 Id = Guid.NewGuid(),
                 DocumentId = document.Id,
-                Title = string.IsNullOrWhiteSpace(chapter.Title) ? $"Chương {order}" : chapter.Title.Trim(),
+                Title = cleanTitle,
                 Summary = chapter.Summary?.Trim(),
                 ChapterOrder = order,
                 StartChunkIndex = start,

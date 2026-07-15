@@ -94,9 +94,9 @@ public sealed class NavViewComponent : ViewComponent
         }
         else if (roleId == 1)
         {
-            model.NavLinks.Add(new NavLink { Page = "/Admin/Documents", Label = "Quản Lý Tài Liệu", IconKey = "doc" });
+            model.NavLinks.Add(new NavLink { Page = "/Admin/TokenUsage", Label = "Báo Cáo và Thống Kê", IconKey = "token" });
+            model.NavLinks.Add(new NavLink { Page = "/Admin/Documents", Label = "Giám Sát Tài Liệu", IconKey = "doc" });
             model.NavLinks.Add(new NavLink { Page = "/Admin/Users", Label = "Quản Lý Thành Viên", IconKey = "users" });
-            model.NavLinks.Add(new NavLink { Page = "/Admin/TokenUsage", Label = "Quản Lý Token", IconKey = "token" });
             model.NavLinks.Add(new NavLink { Page = "/Admin/Categories", Label = "Quản Lý Danh Mục", IconKey = "metadata" });
             model.NavLinks.Add(new NavLink { Page = "/Admin/AuditLogs", Label = "Lịch Sử Hệ Thống", IconKey = "audit" });
         }

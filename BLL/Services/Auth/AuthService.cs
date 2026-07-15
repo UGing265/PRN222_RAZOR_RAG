@@ -54,7 +54,7 @@ public class AuthService : IAuthService
             throw new InvalidOperationException("Role không hợp lệ.");
         }
 
-        var tempPassword = PasswordGenerator.Generate(12);
+        var tempPassword = GeneratePasswordFromName(fullName);
         var passwordHash = HashPassword(tempPassword);
 
         var now = DateTime.UtcNow;

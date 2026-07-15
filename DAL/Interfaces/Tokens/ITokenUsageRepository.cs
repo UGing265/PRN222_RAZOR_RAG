@@ -8,9 +8,9 @@ namespace DAL.Interfaces.Tokens;
 
 public interface ITokenUsageRepository
 {
-    Task<TokenUsage?> GetByUserIdAndDateAsync(Guid userId, DateOnly date, CancellationToken cancellationToken = default);
-    Task IncrementChatTokensAsync(Guid userId, DateOnly date, int tokensToAdd, CancellationToken cancellationToken = default);
-    Task IncrementDocTokensAsync(Guid userId, DateOnly date, int tokensToAdd, CancellationToken cancellationToken = default);
+    Task<TokenUsage?> GetByUserIdAndDateAsync(Guid userId, DateOnly date, byte hour, CancellationToken cancellationToken = default);
+    Task IncrementChatTokensAsync(Guid userId, DateOnly date, byte hour, int tokensToAdd, CancellationToken cancellationToken = default);
+    Task IncrementDocTokensAsync(Guid userId, DateOnly date, byte hour, int tokensToAdd, CancellationToken cancellationToken = default);
     Task<List<TokenUsage>> GetByDateRangeAsync(DateOnly startDate, DateOnly endDate, CancellationToken cancellationToken = default);
     Task<List<TokenUsage>> GetByUserAndDateRangeAsync(Guid userId, DateOnly startDate, DateOnly endDate, CancellationToken cancellationToken = default);
     Task<List<TokenUsage>> GetAllWithUserAsync(CancellationToken cancellationToken = default);

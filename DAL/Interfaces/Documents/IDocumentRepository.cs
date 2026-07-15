@@ -69,6 +69,7 @@ public interface IDocumentRepository
     Task<List<Document>> GetAdminDocumentsAsync(string? query, Guid? subjectId, int page, int pageSize, CancellationToken cancellationToken = default);
     Task<int> CountAdminDocumentsAsync(string? query, Guid? subjectId, CancellationToken cancellationToken = default);
     Task<DocumentReport> AddDocumentReportAsync(DocumentReport report, CancellationToken cancellationToken = default);
+    Task<bool> HasUserReportedDocumentAsync(Guid documentId, Guid reporterUserId, CancellationToken cancellationToken = default);
     Task<List<DocumentReport>> GetPendingReportsAsync(CancellationToken cancellationToken = default);
     Task<DocumentReport?> GetDocumentReportAsync(Guid reportId, CancellationToken cancellationToken = default);
     Task<List<DocumentReport>> GetDocumentReportsByDocumentAsync(Guid documentId, CancellationToken cancellationToken = default);

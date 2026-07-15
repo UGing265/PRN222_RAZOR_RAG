@@ -19,6 +19,9 @@ public class UserTokenUsageDto
     public List<int> DocHistoryData { get; set; } = new();
     public List<string> DateLabels { get; set; } = new();
 
+    public List<int> ChatHourlyData { get; set; } = new();
+    public List<int> DocHourlyData { get; set; } = new();
+
     public string Initial => string.IsNullOrWhiteSpace(FullName) ? "U" : FullName.Trim().Substring(0, 1).ToUpper();
 }
 
@@ -30,4 +33,11 @@ public class HeroStatsDto
     public long TotalDocTokens { get; set; }
     public UserTokenUsageDto? TopConsumer { get; set; }
     public int DailyAvgTokens { get; set; }
+
+    public List<string> DateLabels { get; set; } = new();
+    public List<int> SystemChatHistoryData { get; set; } = new();
+    public List<int> SystemDocHistoryData { get; set; } = new();
+
+    public List<int> SystemChatHourlyData { get; set; } = new();
+    public List<int> SystemDocHourlyData { get; set; } = new();
 }

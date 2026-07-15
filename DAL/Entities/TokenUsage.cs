@@ -10,6 +10,8 @@ public partial class TokenUsage
 
     public DateOnly UsageDate { get; set; }
 
+    public byte UsageHour { get; set; }
+
     public int ChatTokens { get; set; }
 
     public int DocTokens { get; set; }

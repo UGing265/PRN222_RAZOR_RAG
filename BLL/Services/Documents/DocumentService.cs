@@ -1122,6 +1122,9 @@ public class DocumentService : IDocumentService
     {
         if (string.IsNullOrWhiteSpace(reason)) throw new InvalidOperationException("Lý do báo cáo không được để trống.");
 
+        var hasReported = await _documentRepository.HasUserReportedDocumentAsync(documentId, reporterUserId, cancellationToken);
+        if (hasReported) throw new InvalidOperationException("Bạn đã gửi báo cáo cho tài liệu này rồi.");
+
         var document = await _documentRepository.GetDocumentAsync(documentId, cancellationToken);
         if (document is null) throw new InvalidOperationException("Tài liệu không tồn tại.");
 

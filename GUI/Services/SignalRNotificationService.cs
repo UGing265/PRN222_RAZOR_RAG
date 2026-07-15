@@ -89,4 +89,9 @@ public class SignalRNotificationService : INotificationService
     {
         await _hubContext.Clients.Group("Role_Admin").SendAsync("ReceiveDocumentListUpdated", cancellationToken);
     }
+
+    public async Task SendTokenUsageUpdatedAsync(CancellationToken cancellationToken = default)
+    {
+        await _hubContext.Clients.Group("Role_Admin").SendAsync("ReceiveTokenUsageUpdated", cancellationToken);
+    }
 }

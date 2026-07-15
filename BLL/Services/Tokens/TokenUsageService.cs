@@ -16,15 +16,18 @@ public class TokenUsageService : ITokenUsageService
     private readonly ITokenUsageRepository _tokenRepo;
     private readonly IAuthRepository _authRepo;
     private readonly ILogger<TokenUsageService> _logger;
+    private readonly BLL.Interfaces.Notifications.INotificationService _notificationService;
 
     public TokenUsageService(
         ITokenUsageRepository tokenRepo,
         IAuthRepository authRepo,
-        ILogger<TokenUsageService> logger)
+        ILogger<TokenUsageService> logger,
+        BLL.Interfaces.Notifications.INotificationService notificationService)
     {
         _tokenRepo = tokenRepo;
         _authRepo = authRepo;
         _logger = logger;
+        _notificationService = notificationService;
     }
 
     public async Task RecordChatTokensAsync(Guid userId, int tokens, CancellationToken cancellationToken = default)
@@ -32,9 +35,12 @@ public class TokenUsageService : ITokenUsageService
         if (tokens <= 0) return;
         try
         {
-            var today = DateOnly.FromDateTime(DateTime.UtcNow);
-            await _tokenRepo.IncrementChatTokensAsync(userId, today, tokens, cancellationToken);
-            _logger.LogInformation("Recorded {Tokens} chat tokens for user {UserId}", tokens, userId);
+            var now = DateTime.UtcNow.AddHours(7); // Convert to Vietnam Time (GMT+7)
+            var today = DateOnly.FromDateTime(now);
+            var hour = (byte)now.Hour;
+            await _tokenRepo.IncrementChatTokensAsync(userId, today, hour, tokens, cancellationToken);
+            _logger.LogInformation("Recorded {Tokens} chat tokens for user {UserId} at hour {Hour}", tokens, userId, hour);
+            await _notificationService.SendTokenUsageUpdatedAsync(cancellationToken);
         }
         catch (Exception ex)
         {
@@ -47,9 +53,12 @@ public class TokenUsageService : ITokenUsageService
         if (tokens <= 0) return;
         try
         {
-            var today = DateOnly.FromDateTime(DateTime.UtcNow);
-            await _tokenRepo.IncrementDocTokensAsync(userId, today, tokens, cancellationToken);
-            _logger.LogInformation("Recorded {Tokens} doc (embedding) tokens for user {UserId}", tokens, userId);
+            var now = DateTime.UtcNow.AddHours(7); // Convert to Vietnam Time (GMT+7)
+            var today = DateOnly.FromDateTime(now);
+            var hour = (byte)now.Hour;
+            await _tokenRepo.IncrementDocTokensAsync(userId, today, hour, tokens, cancellationToken);
+            _logger.LogInformation("Recorded {Tokens} doc (embedding) tokens for user {UserId} at hour {Hour}", tokens, userId, hour);
+            await _notificationService.SendTokenUsageUpdatedAsync(cancellationToken);
         }
         catch (Exception ex)
         {
@@ -62,10 +71,10 @@ public class TokenUsageService : ITokenUsageService
         var allUsers = await _authRepo.GetAllUsersWithRolesAsync(cancellationToken);
         var allUsages = await _tokenRepo.GetAllWithUserAsync(cancellationToken);
 
-        // Lấy danh sách 7 ngày liên tiếp gần nhất (kết thúc bởi hôm nay)
+        // Lấy danh sách 7 ngày liên tiếp gần nhất (kết thúc bởi hôm nay theo giờ Việt Nam)
         var dateLabels = new List<string>();
         var dates = new List<DateOnly>();
-        var today = DateOnly.FromDateTime(DateTime.UtcNow);
+        var today = DateOnly.FromDateTime(DateTime.UtcNow.AddHours(7));
 
         for (int i = 6; i >= 0; i--)
         {
@@ -88,11 +97,25 @@ public class TokenUsageService : ITokenUsageService
             var chatHistory = new List<int>();
             var docHistory = new List<int>();
 
+            // Calculate hourly data for "today"
+            var chatHourly = new List<int>(new int[24]);
+            var docHourly = new List<int>(new int[24]);
+
+            var todayUsages = userUsages.Where(t => t.UsageDate == today).ToList();
+            foreach (var record in todayUsages)
+            {
+                if (record.UsageHour >= 0 && record.UsageHour < 24)
+                {
+                    chatHourly[record.UsageHour] += record.ChatTokens;
+                    if (user.RoleId == 2) docHourly[record.UsageHour] += record.DocTokens;
+                }
+            }
+
             foreach (var d in dates)
             {
-                var dayRecord = userUsages.FirstOrDefault(t => t.UsageDate == d);
-                int chatDay = dayRecord != null ? dayRecord.ChatTokens : 0;
-                int docDay = (dayRecord != null && user.RoleId == 2) ? dayRecord.DocTokens : 0;
+                var dayRecords = userUsages.Where(t => t.UsageDate == d).ToList();
+                int chatDay = dayRecords.Sum(t => t.ChatTokens);
+                int docDay = user.RoleId == 2 ? dayRecords.Sum(t => t.DocTokens) : 0;
 
                 chatHistory.Add(chatDay);
                 docHistory.Add(docDay);
@@ -118,7 +141,9 @@ public class TokenUsageService : ITokenUsageService
                 SparklineData = sparkline,
                 ChatHistoryData = chatHistory,
                 DocHistoryData = docHistory,
-                DateLabels = dateLabels
+                DateLabels = dateLabels,
+                ChatHourlyData = chatHourly,
+                DocHourlyData = docHourly
             };
 
             userList.Add(dto);
@@ -133,13 +158,36 @@ public class TokenUsageService : ITokenUsageService
         var last7DaysTotal = userList.Sum(u => u.SparklineData.Sum());
         var dailyAvg = (int)Math.Round(last7DaysTotal / 7.0);
 
+        // Tính tổng dữ liệu theo từng ngày cho toàn hệ thống
+        var systemChatHistory = new List<int>();
+        var systemDocHistory = new List<int>();
+        for (int i = 0; i < dates.Count; i++)
+        {
+            systemChatHistory.Add(userList.Sum(u => u.ChatHistoryData[i]));
+            systemDocHistory.Add(userList.Sum(u => u.DocHistoryData[i]));
+        }
+
+        // Tính tổng dữ liệu theo từng giờ cho toàn hệ thống
+        var systemChatHourly = new List<int>();
+        var systemDocHourly = new List<int>();
+        for (int i = 0; i < 24; i++)
+        {
+            systemChatHourly.Add(userList.Sum(u => u.ChatHourlyData[i]));
+            systemDocHourly.Add(userList.Sum(u => u.DocHourlyData[i]));
+        }
+
         var heroStats = new HeroStatsDto
         {
             TotalUsedTokens = sumAllTotal,
             TotalChatTokens = sumChat,
             TotalDocTokens = sumDoc,
             TopConsumer = topConsumer,
-            DailyAvgTokens = dailyAvg
+            DailyAvgTokens = dailyAvg,
+            DateLabels = dateLabels,
+            SystemChatHistoryData = systemChatHistory,
+            SystemDocHistoryData = systemDocHistory,
+            SystemChatHourlyData = systemChatHourly,
+            SystemDocHourlyData = systemDocHourly
         };
 
         return (userList, heroStats);

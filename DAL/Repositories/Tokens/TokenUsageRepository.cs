@@ -19,16 +19,16 @@ public class TokenUsageRepository : ITokenUsageRepository
         _context = context;
     }
 
-    public async Task<TokenUsage?> GetByUserIdAndDateAsync(Guid userId, DateOnly date, CancellationToken cancellationToken = default)
+    public async Task<TokenUsage?> GetByUserIdAndDateAsync(Guid userId, DateOnly date, byte hour, CancellationToken cancellationToken = default)
     {
         return await _context.TokenUsages
-            .FirstOrDefaultAsync(t => t.UserId == userId && t.UsageDate == date, cancellationToken);
+            .FirstOrDefaultAsync(t => t.UserId == userId && t.UsageDate == date && t.UsageHour == hour, cancellationToken);
     }
 
-    public async Task IncrementChatTokensAsync(Guid userId, DateOnly date, int tokensToAdd, CancellationToken cancellationToken = default)
+    public async Task IncrementChatTokensAsync(Guid userId, DateOnly date, byte hour, int tokensToAdd, CancellationToken cancellationToken = default)
     {
         var existing = await _context.TokenUsages
-            .FirstOrDefaultAsync(t => t.UserId == userId && t.UsageDate == date, cancellationToken);
+            .FirstOrDefaultAsync(t => t.UserId == userId && t.UsageDate == date && t.UsageHour == hour, cancellationToken);
 
         if (existing != null)
         {
@@ -42,6 +42,7 @@ public class TokenUsageRepository : ITokenUsageRepository
                 Id = Guid.NewGuid(),
                 UserId = userId,
                 UsageDate = date,
+                UsageHour = hour,
                 ChatTokens = tokensToAdd,
                 DocTokens = 0,
                 UpdatedAt = DateTime.UtcNow
@@ -52,10 +53,10 @@ public class TokenUsageRepository : ITokenUsageRepository
         await _context.SaveChangesAsync(cancellationToken);
     }
 
-    public async Task IncrementDocTokensAsync(Guid userId, DateOnly date, int tokensToAdd, CancellationToken cancellationToken = default)
+    public async Task IncrementDocTokensAsync(Guid userId, DateOnly date, byte hour, int tokensToAdd, CancellationToken cancellationToken = default)
     {
         var existing = await _context.TokenUsages
-            .FirstOrDefaultAsync(t => t.UserId == userId && t.UsageDate == date, cancellationToken);
+            .FirstOrDefaultAsync(t => t.UserId == userId && t.UsageDate == date && t.UsageHour == hour, cancellationToken);
 
         if (existing != null)
         {
@@ -69,6 +70,7 @@ public class TokenUsageRepository : ITokenUsageRepository
                 Id = Guid.NewGuid(),
                 UserId = userId,
                 UsageDate = date,
+                UsageHour = hour,
                 ChatTokens = 0,
                 DocTokens = tokensToAdd,
                 UpdatedAt = DateTime.UtcNow
