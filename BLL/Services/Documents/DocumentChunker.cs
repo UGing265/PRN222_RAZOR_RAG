@@ -232,7 +232,17 @@ public static class DocumentChunker
             else if (chunks.Count > 0 && currentWordCount < minWords)
             {
                 var last = chunks[chunks.Count - 1];
-                chunks[chunks.Count - 1] = (last.Content + "\n\n" + remainingContent, last.PageNumber);
+                var lastWordCount = CountWords(last.Content);
+                
+                if (lastWordCount + currentWordCount <= maxWords)
+                {
+                    chunks[chunks.Count - 1] = (last.Content + "\n\n" + remainingContent, last.PageNumber);
+                }
+                else
+                {
+                    // Adding it would exceed maxWords, so we must add it as a new chunk (maxWords is a hard limit)
+                    chunks.Add((remainingContent, currentStartPage));
+                }
             }
         }
 
@@ -252,7 +262,10 @@ public static class DocumentChunker
         for (int i = previousItems.Count - 1; i >= 0; i--)
         {
             var itemWordCount = CountWords(previousItems[i]);
-            if (newWordCount + itemWordCount <= overlapWords || newWordCount == 0) // Ít nhất giữ lại 1 item
+            // Only keep an item if it doesn't exceed the max overlap, 
+            // OR if it's the first item we are keeping AND its size is strictly less than maxWords
+            // to avoid infinite loop when spaceLeft <= 0 later
+            if (newWordCount + itemWordCount <= overlapWords || (newWordCount == 0 && itemWordCount < 300))
             {
                 overlap.Insert(0, previousItems[i]);
                 newWordCount += itemWordCount;

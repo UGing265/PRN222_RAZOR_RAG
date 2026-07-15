@@ -1,4 +1,5 @@
 using BLL.Interfaces.Auth;
+using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using Microsoft.Extensions.Caching.Memory;
@@ -80,6 +81,12 @@ public class TokenExpiredModel : PageModel
             _memoryCache.Set(cacheKey, true, TimeSpan.FromMinutes(3));
 
             TempData["SuccessMessage"] = "Đã gửi lại email xác thực mới kèm mật khẩu tạm thời mới tới hộp thư của bạn! Vui lòng kiểm tra email và đăng nhập.";
+            
+            if (User.Identity?.IsAuthenticated == true)
+            {
+                await HttpContext.SignOutAsync(Microsoft.AspNetCore.Authentication.Cookies.CookieAuthenticationDefaults.AuthenticationScheme);
+            }
+
             return RedirectToPage("/Auth/Login");
         }
         catch (Exception ex)

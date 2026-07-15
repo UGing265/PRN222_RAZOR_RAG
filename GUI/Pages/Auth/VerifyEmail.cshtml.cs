@@ -1,4 +1,5 @@
 using BLL.Interfaces.Auth;
+using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 
@@ -38,6 +39,11 @@ namespace GUI.Pages.Auth
                         TempData["ErrorMessage"] = "Không thể xác thực email. Tài khoản không tồn tại hoặc đã bị khóa.";
                     }
                     
+                    if (User.Identity?.IsAuthenticated == true)
+                    {
+                        await HttpContext.SignOutAsync(Microsoft.AspNetCore.Authentication.Cookies.CookieAuthenticationDefaults.AuthenticationScheme);
+                    }
+
                     return RedirectToPage("/Auth/Login", new { email = email });
                 }
                 else if (isExpired)
