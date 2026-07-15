@@ -13,14 +13,16 @@
             <div>
                 <span class="font-mono-xs text-coral-deep" style="font-weight: 700; letter-spacing: 0.15em;">QUẢN TRỊ VIÊN</span>
                 <h1 class="hero-title mt-2 mb-3" style="font-size: clamp(2.5rem, 5vw, 3.5rem); color: var(--brown); line-height: 1.1;">Giám Sát Tài Liệu</h1>
-                <p class="text-muted-foreground mb-3" style="font-size: 15px; font-weight: 400;">Giám sát, tìm kiếm, phân quyền và giải quyết các tài liệu báo cáo vi phạm trên hệ thống.</p>
+                <p class="text-muted-foreground mb-3" style="font-size: 15px; font-weight: 400;">Giám sát, tìm kiếm và phân quyền các tài liệu trên hệ thống.</p>
                 <div class="d-flex gap-2" id="admin-header-badges">
                     <span class="badge bg-dark text-white px-3.5 py-2 border-0 rounded-pill" style="font-size: 13px; font-weight: 500; font-family: inherit; text-transform: none; letter-spacing: normal;">
                         @Model.ViewModel.TotalDocuments Tài liệu
                     </span>
+                    @* Report UI hidden per user request
                     <span class="badge px-3.5 py-2 border-0 rounded-pill text-white" style="background-color: #dc3545 !important; font-size: 13px; font-weight: 500; font-family: inherit; text-transform: none; letter-spacing: normal;">
                         @Model.ViewModel.PendingReports.Count Báo cáo chờ xử lý
                     </span>
+                    *@
                 </div>
             </div>
             <!-- If there are actions, put them here in a separate div -->
@@ -33,11 +35,13 @@
                     Giám Sát Tài Liệu (<span id="tab-files-count">@Model.ViewModel.TotalDocuments</span>)
                 </button>
             </li>
+            @* Report UI hidden per user request
             <li class="nav-item" role="presentation">
                 <button class="nav-link pill-button px-4 py-2 text-decoration-none border-0 @(activeTab == "reports" ? "active" : "")" id="reports-tab" data-bs-toggle="tab" data-bs-target="#reports-pane" type="button" role="tab" aria-controls="reports-pane" aria-selected="@(activeTab == "reports" ? "true" : "false")" style="border-radius: 100px;">
                     Tài Liệu Bị Báo Cáo (<span id="tab-reports-count">@Model.ViewModel.PendingReports.Count</span>)
                 </button>
             </li>
+            *@
         </ul>
 
         <div class="tab-content" id="adminDocsTabsContent">

@@ -100,6 +100,7 @@ app.UseMiddleware<GUI.Middleware.ForceChangePasswordMiddleware>();
 app.MapRazorPages();
 app.MapChatEndpoints();
 app.MapDocumentEndpoints();
+app.MapUserEndpoints();
 app.MapHub<SystemHub>("/systemHub");
 
 using (var scope = app.Services.CreateScope())

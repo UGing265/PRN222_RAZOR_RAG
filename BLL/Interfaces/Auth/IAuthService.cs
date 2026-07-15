@@ -8,6 +8,8 @@ public interface IAuthService
 
     Task<(bool Success, string? Error)> ChangePasswordAsync(Guid userId, string currentPassword, string newPassword, string confirmPassword, CancellationToken cancellationToken = default);
 
+    Task<(bool Success, string? Error)> UpdateProfileAsync(Guid userId, string fullName, CancellationToken cancellationToken = default);
+
     Task<AuthUserDto?> GetUserByIdAsync(Guid userId, CancellationToken cancellationToken = default);
     Task<AuthUserDto?> ValidateCredentialsAsync(string email, string password, CancellationToken cancellationToken = default);
     Task<AuthUserDto> LoginOrRegisterExternalAsync(string email, string fullName, CancellationToken cancellationToken = default);

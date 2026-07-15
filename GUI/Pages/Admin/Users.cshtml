@@ -699,6 +699,11 @@
                 console.log("ReceiveAuditLogCreated: Refreshing admin users list...");
                 fetchAndUpdateUI(window.location.href);
             });
+            
+            connection.on("ReceiveUserListUpdated", function () {
+                console.log("ReceiveUserListUpdated: Refreshing admin users list...");
+                fetchAndUpdateUI(window.location.href);
+            });
         }
         setupSignalRAdmin();
     });

@@ -138,17 +138,22 @@ public static class DocumentChunker
                 }
                 else
                 {
-                    var shouldCloseChunk = currentChunk.Count > 0 && currentWordCount >= minWords;
-
-                    if (shouldCloseChunk)
+                    // Đã vượt quá maxWords -> Đóng chunk hiện tại (maxWords là giới hạn cứng)
+                    if (currentChunk.Count > 0)
                     {
                         chunks.Add((string.Join("\n\n", currentChunk), currentStartPage));
                         currentChunk = GetOverlap(currentChunk, overlapWords, out currentWordCount);
                         currentStartPage = page.PageNumber; 
                     }
 
-                    if (pWordCount > maxWords)
+                    if (currentWordCount + pWordCount <= maxWords)
                     {
+                        currentChunk.Add(paragraph);
+                        currentWordCount += pWordCount;
+                    }
+                    else
+                    {
+                        // Paragraph quá dài (kể cả khi đã tạo chunk mới), cần cắt theo câu
                         var sentences = Regex.Split(paragraph, @"(?<=[.!?])\s+")
                             .Where(s => !string.IsNullOrWhiteSpace(s))
                             .ToList();
@@ -156,60 +161,61 @@ public static class DocumentChunker
                         foreach (var sentence in sentences)
                         {
                             var sWordCount = CountWords(sentence);
-                            if (currentWordCount + sWordCount <= maxWords || currentWordCount < minWords)
+                            if (currentWordCount + sWordCount <= maxWords)
                             {
                                 currentChunk.Add(sentence);
                                 currentWordCount += sWordCount;
                             }
                             else
                             {
-                                if (currentChunk.Count > 0 && currentWordCount >= minWords)
+                                // Câu này khi thêm vào vượt maxWords -> Đóng chunk
+                                if (currentChunk.Count > 0)
                                 {
                                     chunks.Add((string.Join(" ", currentChunk), currentStartPage));
                                     currentChunk = GetOverlap(currentChunk, overlapWords, out currentWordCount);
                                     currentStartPage = page.PageNumber;
                                 }
                                 
-                                if (sWordCount > maxWords)
-                                {
-                                    var words = sentence.Split((char[]?)null, StringSplitOptions.RemoveEmptyEntries);
-                                    var start = 0;
-                                    var stride = maxWords - overlapWords;
-                                    if (stride <= 0) stride = 1;
-
-                                    while (start < words.Length)
-                                    {
-                                        var length = Math.Min(maxWords, words.Length - start);
-                                        // To strictly enforce minWords even on long sentences, if the remaining is less than minWords, try to bundle it
-                                        if (words.Length - start < minWords && chunks.Count > 0 && start > 0)
-                                        {
-                                            // Fallback for strict minWords: if remaining piece of long sentence is small, just take it with the current chunk
-                                            length = words.Length - start; 
-                                        }
-
-                                        chunks.Add((string.Join(" ", words.Skip(start).Take(length)), currentStartPage));
-                                        
-                                        if (start + length >= words.Length)
-                                        {
-                                            break;
-                                        }
-                                        start += stride;
-                                    }
-                                    currentChunk.Clear();
-                                    currentWordCount = 0;
-                                }
-                                else
+                                if (currentWordCount + sWordCount <= maxWords)
                                 {
                                     currentChunk.Add(sentence);
                                     currentWordCount += sWordCount;
                                 }
+                                else
+                                {
+                                    // Bản thân câu đã dài hơn maxWords -> Bắt buộc cắt theo từ (hard limit)
+                                    var words = sentence.Split((char[]?)null, StringSplitOptions.RemoveEmptyEntries);
+                                    var start = 0;
+
+                                    while (start < words.Length)
+                                    {
+                                        var spaceLeft = maxWords - currentWordCount;
+                                        if (spaceLeft <= 0)
+                                        {
+                                            chunks.Add((string.Join(" ", currentChunk), currentStartPage));
+                                            currentChunk = GetOverlap(currentChunk, overlapWords, out currentWordCount);
+                                            currentStartPage = page.PageNumber;
+                                            spaceLeft = maxWords - currentWordCount;
+                                        }
+
+                                        var length = Math.Min(spaceLeft, words.Length - start);
+                                        var wordPart = string.Join(" ", words.Skip(start).Take(length));
+                                        
+                                        currentChunk.Add(wordPart);
+                                        currentWordCount += length;
+                                        start += length;
+
+                                        // Nếu chunk đã đầy thì đóng lại
+                                        if (currentWordCount >= maxWords)
+                                        {
+                                            chunks.Add((string.Join(" ", currentChunk), currentStartPage));
+                                            currentChunk = GetOverlap(currentChunk, overlapWords, out currentWordCount);
+                                            currentStartPage = page.PageNumber;
+                                        }
+                                    }
+                                }
                             }
                         }
-                    }
-                    else
-                    {
-                        currentChunk.Add(paragraph);
-                        currentWordCount += pWordCount;
                     }
                 }
                 wordsSinceLastHeader += pWordCount;

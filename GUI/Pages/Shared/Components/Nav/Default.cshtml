@@ -92,7 +92,7 @@
                             @Model.Initial
                         </div>
                         <div class="lh-sm overflow-hidden sidebar-text" style="max-width: 125px;">
-                            <div class="fw-bold text-truncate text-foreground" id="sidebarFullName" style="font-size: 0.88rem;">@Model.FullName</div>
+                            <div class="fw-bold text-truncate text-foreground user-fullname-display" id="sidebarFullName" style="font-size: 0.88rem;">@Model.FullName</div>
                             <div class="small text-muted-foreground text-truncate" id="sidebarRole" style="font-size: 0.72rem;">@Model.RoleLabel</div>
                         </div>
                     </div>
@@ -110,7 +110,7 @@
                             @Model.Initial
                         </div>
                         <div style="display: flex; flex-direction: column; line-height: 1.25; overflow: hidden; max-width: 140px; text-align: left;">
-                            <div class="fw-bold text-truncate" style="font-size: 0.85rem; color: var(--foreground);">@Model.FullName</div>
+                            <div class="fw-bold text-truncate user-fullname-display" style="font-size: 0.85rem; color: var(--foreground);">@Model.FullName</div>
                         </div>
                     </div>
                     <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="var(--muted)" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink: 0;">
@@ -118,6 +118,7 @@
                     </svg>
                 </div>
 
+                @*
                 <hr class="my-2" style="border-top: 1px solid rgba(82, 39, 27, 0.08);" />
 
                 <div class="d-flex flex-column gap-1">
@@ -130,8 +131,9 @@
                 </div>
 
                 <hr class="my-2" style="border-top: 1px solid rgba(82, 39, 27, 0.08);" />
-
+                *@
                 <div class="d-flex flex-column gap-1">
+                    @*
                     <a href="#" class="popout-item text-decoration-none justify-content-between">
                         <div class="d-flex align-items-center gap-2">
                             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="flex-shrink-0"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
@@ -141,6 +143,7 @@
                             <polyline points="9 18 15 12 9 6"></polyline>
                         </svg>
                     </a>
+                    *@
 
                     <form asp-page="/Auth/Logout" method="post" class="w-100 m-0">
                         @Html.AntiForgeryToken()
@@ -173,37 +176,67 @@
                     <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close" style="background-color: rgba(82, 39, 27, 0.05); padding: 0.75rem; border-radius: 50%;"></button>
                 </div>
 
-                <div class="modal-body p-4">
-                    <form id="editProfileForm">
-                        <div class="text-center mb-4">
-                            <div class="position-relative d-inline-block">
-                                <div class="rounded-circle text-white d-flex align-items-center justify-content-center fw-bold shadow-sm mx-auto mb-2"
-                                     id="modalAvatarCircle"
-                                     style="width: 72px; height: 72px; font-size: 1.8rem; background: var(--brown) !important;">
-                                    @Model.Initial
+                <div class="modal-body p-0">
+                    <!-- Tabs Nav -->
+                    <ul class="nav nav-tabs profile-tabs border-0 px-4 pt-2" id="profileTabs" role="tablist">
+                        <li class="nav-item" role="presentation">
+                            <button class="nav-link active fw-semibold" id="personal-info-tab" data-bs-toggle="tab" data-bs-target="#personal-info" type="button" role="tab" aria-controls="personal-info" aria-selected="true">Thông Tin</button>
+                        </li>
+                        <li class="nav-item" role="presentation">
+                            <button class="nav-link fw-semibold" id="change-password-tab" data-bs-toggle="tab" data-bs-target="#change-password" type="button" role="tab" aria-controls="change-password" aria-selected="false">Mật Khẩu</button>
+                        </li>
+                    </ul>
+
+                    <!-- Tabs Content -->
+                    <div class="tab-content p-4" id="profileTabsContent">
+                        <!-- Tab 1: Personal Info -->
+                        <div class="tab-pane fade show active" id="personal-info" role="tabpanel" aria-labelledby="personal-info-tab">
+                            <form id="editProfileForm">
+                                <div class="text-center mb-4">
+                                    <div class="position-relative d-inline-block">
+                                        <div class="rounded-circle text-white d-flex align-items-center justify-content-center fw-bold shadow-sm mx-auto mb-2"
+                                             id="modalAvatarCircle"
+                                             style="width: 72px; height: 72px; font-size: 1.8rem; background: var(--brown) !important;">
+                                            @Model.Initial
+                                        </div>
+                                    </div>
+                                    <div class="small text-muted-foreground">@Model.Email</div>
                                 </div>
-                            </div>
-                            <div class="small text-muted-foreground">@Model.Email</div>
+
+                                <div class="mb-3">
+                                    <label for="inputFullName" class="form-label small fw-semibold text-muted-foreground">Họ và Tên</label>
+                                    <input type="text" class="form-control pill-input px-3" id="inputFullName" value="@Model.FullName" required style="border-color: rgba(82, 39, 27, 0.12);" />
+                                </div>
+
+                                <div class="d-flex justify-content-end gap-2 mt-4">
+                                    <button type="button" class="btn btn-outline-dark pill-button px-4 py-2" data-bs-dismiss="modal" style="border-color: rgba(82,39,27,0.15); font-size: 0.85rem;">Hủy</button>
+                                    <button type="submit" class="btn btn-premium-primary pill-button px-4 py-2" style="font-size: 0.85rem;">Lưu Thay Đổi</button>
+                                </div>
+                            </form>
                         </div>
 
-                        <div class="mb-3">
-                            <label for="inputFullName" class="form-label small fw-semibold text-muted-foreground">Họ và Tên</label>
-                            <input type="text" class="form-control pill-input px-3" id="inputFullName" value="@Model.FullName" required style="border-color: rgba(82, 39, 27, 0.12);" />
+                        <!-- Tab 2: Change Password -->
+                        <div class="tab-pane fade" id="change-password" role="tabpanel" aria-labelledby="change-password-tab">
+                            <form id="changePasswordForm">
+                                <div class="mb-3">
+                                    <label for="inputCurrentPassword" class="form-label small fw-semibold text-muted-foreground">Mật khẩu hiện tại</label>
+                                    <input type="password" class="form-control pill-input px-3" id="inputCurrentPassword" required style="border-color: rgba(82, 39, 27, 0.12);" />
+                                </div>
+                                <div class="mb-3">
+                                    <label for="inputNewPassword" class="form-label small fw-semibold text-muted-foreground">Mật khẩu mới</label>
+                                    <input type="password" class="form-control pill-input px-3" id="inputNewPassword" required style="border-color: rgba(82, 39, 27, 0.12);" />
+                                </div>
+                                <div class="mb-3">
+                                    <label for="inputConfirmPassword" class="form-label small fw-semibold text-muted-foreground">Xác nhận mật khẩu mới</label>
+                                    <input type="password" class="form-control pill-input px-3" id="inputConfirmPassword" required style="border-color: rgba(82, 39, 27, 0.12);" />
+                                </div>
+                                <div class="d-flex justify-content-end gap-2 mt-4">
+                                    <button type="button" class="btn btn-outline-dark pill-button px-4 py-2" data-bs-dismiss="modal" style="border-color: rgba(82,39,27,0.15); font-size: 0.85rem;">Hủy</button>
+                                    <button type="submit" class="btn btn-premium-primary pill-button px-4 py-2" style="font-size: 0.85rem;">Đổi Mật Khẩu</button>
+                                </div>
+                            </form>
                         </div>
-
-                        <div class="mb-3">
-                            <label for="inputRole" class="form-label small fw-semibold text-muted-foreground">Vai Trò / Đối Tượng</label>
-                            <div class="form-control pill-input px-3 d-flex align-items-center" style="border-color: rgba(82, 39, 27, 0.12); background: rgba(82,39,27,0.03); cursor: not-allowed; color: var(--muted-foreground); pointer-events: none; user-select: none;">
-                                @Model.RoleLabel
-                            </div>
-                            <div class="form-text text-muted-foreground" style="font-size: 0.75rem;">Vai trò được cấp bởi hệ thống quản trị.</div>
-                        </div>
-
-                        <div class="d-flex justify-content-end gap-2 mt-4">
-                            <button type="button" class="btn btn-outline-dark pill-button px-4 py-2" data-bs-dismiss="modal" style="border-color: rgba(82,39,27,0.15); font-size: 0.85rem;">Hủy</button>
-                            <button type="submit" class="btn btn-premium-primary pill-button px-4 py-2" style="font-size: 0.85rem;">Lưu Thay Đổi</button>
-                        </div>
-                    </form>
+                    </div>
                 </div>
             </div>
         </div>
@@ -211,6 +244,22 @@
 }
 
 <style>
+
+.profile-tabs .nav-link {
+    color: var(--muted);
+    border: none;
+    border-bottom: 2px solid transparent;
+    background: transparent;
+    transition: all 0.2s;
+}
+.profile-tabs .nav-link:hover {
+    color: var(--brown);
+}
+.profile-tabs .nav-link.active {
+    color: var(--brown);
+    border-bottom: 2px solid var(--brown);
+    font-weight: 600;
+}
 
 /* Premium Glassmorphic Popout Profile Menu (Floating Dropup style) */
 .profile-popout {
@@ -581,34 +630,118 @@ document.addEventListener("DOMContentLoaded", function() {
 
     const profileForm = document.getElementById('editProfileForm');
     if (profileForm) {
-        profileForm.addEventListener('submit', function(e) {
+        profileForm.addEventListener('submit', async function(e) {
             e.preventDefault();
             const newName = document.getElementById('inputFullName').value.trim();
-            if (newName) {
-                const sidebarFullName = document.getElementById('sidebarFullName');
-                const sidebarAvatar = document.getElementById('sidebarAvatar');
-                const modalAvatarCircle = document.getElementById('modalAvatarCircle');
+            if (!newName) return;
+            
+            const submitBtn = profileForm.querySelector('button[type="submit"]');
+            if (submitBtn) {
+                submitBtn.disabled = true;
+                submitBtn.innerHTML = '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Đang lưu...';
+            }
 
-                if (sidebarFullName) sidebarFullName.textContent = newName;
-                if (sidebarAvatar) sidebarAvatar.textContent = newName.charAt(0).toUpperCase();
-                if (modalAvatarCircle) modalAvatarCircle.textContent = newName.charAt(0).toUpperCase();
+            try {
+                const response = await fetch('/api/user/profile', {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ FullName: newName })
+                });
 
-                const existingAlert = profileForm.querySelector('.alert');
-                if (existingAlert) existingAlert.remove();
+                if (response.ok) {
+                    const sidebarFullName = document.getElementById('sidebarFullName');
+                    const sidebarAvatar = document.getElementById('sidebarAvatar');
+                    const modalAvatarCircle = document.getElementById('modalAvatarCircle');
 
-                const alertDiv = document.createElement('div');
-                alertDiv.className = 'alert alert-success alert-dismissible fade show mt-3 mb-0 py-2.5 px-3 border-0 rounded-3 shadow-sm';
-                alertDiv.role = 'alert';
-                alertDiv.style.fontSize = '0.8rem';
-                alertDiv.style.backgroundColor = '#ecfdf5';
-                alertDiv.style.color = '#065f46';
-                alertDiv.innerHTML = '<strong>Thành công!</strong> Đã cập nhật hồ sơ.<button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close" style="padding: 0.6rem 0.75rem;"></button>';
+                    if (sidebarFullName) sidebarFullName.textContent = newName;
+                    if (sidebarAvatar) sidebarAvatar.textContent = newName.charAt(0).toUpperCase();
+                    if (modalAvatarCircle) modalAvatarCircle.textContent = newName.charAt(0).toUpperCase();
 
-                profileForm.appendChild(alertDiv);
+                    if (typeof showPremiumToast === 'function') {
+                        showPremiumToast('Cập nhật thông tin thành công.', 'success');
+                    }
+                    
+                    const modalEl = document.getElementById('settingsModal');
+                    const modal = bootstrap.Modal.getInstance(modalEl);
+                    if (modal) {
+                        modal.hide();
+                    }
+                } else {
+                    const errorData = await response.json();
+                    if (typeof showPremiumToast === 'function') {
+                        showPremiumToast(errorData.error || 'Cập nhật thất bại.', 'danger');
+                    }
+                }
+            } catch (err) {
+                if (typeof showPremiumToast === 'function') {
+                    showPremiumToast('Lỗi kết nối máy chủ.', 'danger');
+                }
+            } finally {
+                if (submitBtn) {
+                    submitBtn.disabled = false;
+                    submitBtn.innerHTML = 'Lưu Thay Đổi';
+                }
+            }
+        });
+    }
+    const changePasswordForm = document.getElementById('changePasswordForm');
+    if (changePasswordForm) {
+        changePasswordForm.addEventListener('submit', async function(e) {
+            e.preventDefault();
+            const currentPw = document.getElementById('inputCurrentPassword').value;
+            const newPw = document.getElementById('inputNewPassword').value;
+            const confirmPw = document.getElementById('inputConfirmPassword').value;
 
-                setTimeout(() => {
-                    bootstrap.Alert.getInstance(alertDiv)?.close() || alertDiv.remove();
-                }, 3000);
+            if (newPw !== confirmPw) {
+                if (typeof showPremiumToast === 'function') {
+                    showPremiumToast('Mật khẩu mới không khớp. Vui lòng kiểm tra lại.', 'danger');
+                }
+                return;
+            }
+
+            const submitBtn = changePasswordForm.querySelector('button[type="submit"]');
+            if (submitBtn) {
+                submitBtn.disabled = true;
+                submitBtn.innerHTML = '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Đang đổi...';
+            }
+            
+            try {
+                const response = await fetch('/api/user/password', {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        CurrentPassword: currentPw,
+                        NewPassword: newPw,
+                        ConfirmPassword: confirmPw
+                    })
+                });
+
+                if (response.ok) {
+                    if (typeof showPremiumToast === 'function') {
+                        showPremiumToast('Đã đổi mật khẩu thành công.', 'success');
+                    }
+                    changePasswordForm.reset();
+                    
+                    const modalEl = document.getElementById('settingsModal');
+                    const modal = bootstrap.Modal.getInstance(modalEl);
+                    if (modal) {
+                        modal.hide();
+                    }
+                } else {
+                    const errorData = await response.json();
+                    if (typeof showPremiumToast === 'function') {
+                        showPremiumToast(errorData.error || 'Đổi mật khẩu thất bại.', 'danger');
+                    }
+                }
+            } catch (err) {
+                if (typeof showPremiumToast === 'function') {
+                    showPremiumToast('Lỗi kết nối máy chủ.', 'danger');
+                }
+            } finally {
+                if (submitBtn) {
+                    submitBtn.disabled = false;
+                    submitBtn.innerHTML = 'Đổi Mật Khẩu';
+                }
             }
         });
     }

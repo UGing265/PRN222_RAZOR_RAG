@@ -93,6 +93,31 @@ public class AuthService : IAuthService
         return Map(created);
     }
 
+    public async Task<(bool Success, string? Error)> UpdateProfileAsync(Guid userId, string fullName, CancellationToken cancellationToken = default)
+    {
+        if (string.IsNullOrWhiteSpace(fullName))
+        {
+            return (false, "Họ và tên không được để trống.");
+        }
+
+        var user = await _authRepository.GetUserByIdAsync(userId, cancellationToken);
+        if (user is null)
+        {
+            return (false, "Tài khoản không tồn tại.");
+        }
+
+        user.FullName = fullName.Trim();
+        user.UpdatedAt = DateTime.UtcNow;
+
+        await _authRepository.UpdateUserAsync(user, cancellationToken);
+        
+        // Notify clients via SignalR
+        await _notificationService.SendProfileUpdatedAsync(userId, user.FullName, cancellationToken);
+        await _notificationService.SendUserListUpdatedAsync(cancellationToken);
+
+        return (true, null);
+    }
+
     public async Task<AuthUserDto?> GetUserByIdAsync(Guid userId, CancellationToken cancellationToken = default)
     {
         var user = await _authRepository.GetUserByIdAsync(userId, cancellationToken);

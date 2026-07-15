@@ -5,27 +5,15 @@ using Microsoft.Extensions.Caching.Memory;
 namespace GUI.Components;
 
 /// <summary>
-/// Renders the role-aware sidebar. Backed by <see cref="IMemoryCache"/> with a
-/// per-user, per-page key so role changes invalidate on the next render and
-/// active-link state is always correct for the current page.
+/// Renders the role-aware sidebar.
 /// </summary>
-/// <remarks>
-/// Cache key: <c>nav-{userId}-{roleId}-{page}</c>. TTL: 1 hour. Stale-on-page
-/// is acceptable because a key change (different page) creates a new entry;
-/// stale-on-role would leak across role changes, but role lives in the same
-/// user claim so the key naturally shifts when role changes.
-/// </remarks>
 public sealed class NavViewComponent : ViewComponent
 {
     private const string GuestKey = "anon";
-    private static readonly TimeSpan CacheTtl = TimeSpan.FromHours(1);
-
-    private readonly IMemoryCache _cache;
     private readonly ILogger<NavViewComponent> _logger;
 
-    public NavViewComponent(IMemoryCache cache, ILogger<NavViewComponent> logger)
+    public NavViewComponent(ILogger<NavViewComponent> logger)
     {
-        _cache = cache;
         _logger = logger;
     }
 
@@ -53,20 +41,7 @@ public sealed class NavViewComponent : ViewComponent
                 : principal.FindFirstValue(ClaimTypes.NameIdentifier) ?? GuestKey;
         }
 
-        var cacheKey = $"nav-{cacheUser}-{roleId}-{page}";
-
-        if (_cache.TryGetValue(cacheKey, out NavViewModel? cached) && cached is not null)
-        {
-            _logger.LogDebug("Nav cache HIT key={Key}", cacheKey);
-            // Active state is page-specific and lives inside the cached model;
-            // refresh it for the current page before returning.
-            UpdateActiveState(cached, page, HttpContext.Request.QueryString.Value ?? "");
-            return View(cached);
-        }
-
-        _logger.LogDebug("Nav cache MISS key={Key}", cacheKey);
         var model = BuildModel(page, isAuthenticated, roleId, fullName, email, HttpContext.Request.QueryString.Value ?? "");
-        _cache.Set(cacheKey, model, CacheTtl);
         return View(model);
     }
 
@@ -115,11 +90,18 @@ public sealed class NavViewComponent : ViewComponent
             };
             model.NavLinks.Add(khamPhaLink);
 
-            if (roleId == 2 || roleId == 3)
+            // Trò Chuyện AI is only for Students (role 3)
+            if (roleId == 3)
             {
                 model.NavLinks.Add(new NavLink { Page = "/Chat/Index", Label = "Trò Chuyện AI", IconKey = "chat" });
+            }
+            // "So sánh" is hidden for everyone
+            /*
+            if (roleId == 2 || roleId == 3)
+            {
                 model.NavLinks.Add(new NavLink { Page = "/documents/compare", Label = "So Sánh", IconKey = "compare" });
             }
+            */
             if (roleId == 2)
             {
                 model.NavLinks.Add(new NavLink { Page = "/Documents/Mine", Label = "Thư Viện", IconKey = "library" });

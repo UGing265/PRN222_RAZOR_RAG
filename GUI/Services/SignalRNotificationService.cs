@@ -94,4 +94,14 @@ public class SignalRNotificationService : INotificationService
     {
         await _hubContext.Clients.Group("Role_Admin").SendAsync("ReceiveTokenUsageUpdated", cancellationToken);
     }
+
+    public async Task SendProfileUpdatedAsync(Guid userId, string newFullName, CancellationToken cancellationToken = default)
+    {
+        await _hubContext.Clients.Group($"User_{userId}").SendAsync("ReceiveProfileUpdated", new { newFullName }, cancellationToken);
+    }
+
+    public async Task SendUserListUpdatedAsync(CancellationToken cancellationToken = default)
+    {
+        await _hubContext.Clients.Group("Role_Admin").SendAsync("ReceiveUserListUpdated", cancellationToken);
+    }
 }
