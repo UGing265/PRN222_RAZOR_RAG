@@ -170,7 +170,32 @@ __CHUNKPACK__
                         Temperature = 0.2,
                         TopP = 0.8,
                         MaxOutputTokens = 8192,
-                        ResponseMimeType = "application/json"
+                        ResponseMimeType = "application/json",
+                        ResponseSchema = new
+                        {
+                            type = "OBJECT",
+                            properties = new
+                            {
+                                chapters = new
+                                {
+                                    type = "ARRAY",
+                                    items = new
+                                    {
+                                        type = "OBJECT",
+                                        properties = new
+                                        {
+                                            title = new { type = "STRING" },
+                                            summary = new { type = "STRING" },
+                                            startChunkIndex = new { type = "INTEGER" },
+                                            endChunkIndex = new { type = "INTEGER" },
+                                            confidenceScore = new { type = "NUMBER" }
+                                        },
+                                        required = new[] { "title", "summary", "startChunkIndex", "endChunkIndex", "confidenceScore" }
+                                    }
+                                }
+                            },
+                            required = new[] { "chapters" }
+                        }
                     }
                 };
 
@@ -186,14 +211,21 @@ __CHUNKPACK__
 
                 _logger.LogInformation("Gemini chapter segmentation succeeded. ApiKeyIndex={ApiKeyIndex}", apiKeyIndex);
 
-                var payload = JsonSerializer.Deserialize<GeminiGenerateResponse>(body);
+                var jsonSerializerOptions = new JsonSerializerOptions 
+                { 
+                    PropertyNameCaseInsensitive = true,
+                    AllowTrailingCommas = true,
+                    ReadCommentHandling = JsonCommentHandling.Skip
+                };
+
+                var payload = JsonSerializer.Deserialize<GeminiGenerateResponse>(body, jsonSerializerOptions);
                 var text = payload?.Candidates?.FirstOrDefault()?.Content?.Parts?.FirstOrDefault()?.Text;
                 if (string.IsNullOrWhiteSpace(text))
                 {
                     return BuildFallbackChapters(document, chunks);
                 }
 
-                var parsed = JsonSerializer.Deserialize<ChapterResponse>(ExtractJson(text));
+                var parsed = JsonSerializer.Deserialize<ChapterResponse>(ExtractJson(text), jsonSerializerOptions);
                 return BuildChaptersFromResponse(document, chunks, parsed);
             }
             catch (Exception ex)
@@ -365,6 +397,10 @@ __CHUNKPACK__
 
         [JsonPropertyName("responseMimeType")]
         public string ResponseMimeType { get; set; } = "application/json";
+
+        [JsonPropertyName("responseSchema")]
+        [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+        public object? ResponseSchema { get; set; }
     }
 
     private sealed class GeminiGenerateResponse
