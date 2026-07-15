@@ -105,6 +105,31 @@
                         }
                     });
 
+                    connection.on("ReceiveProfileUpdated", function (data) {
+                        const newFullName = data?.newFullName;
+                        if (newFullName) {
+                            const nameDisplays = document.querySelectorAll('.user-fullname-display');
+                            nameDisplays.forEach(el => {
+                                el.textContent = newFullName;
+                            });
+                            
+                            // Try to update input if it exists
+                            const inputFullName = document.getElementById('inputFullName');
+                            if (inputFullName && inputFullName.value !== newFullName) {
+                                inputFullName.value = newFullName;
+                            }
+                            
+                            // Update initials
+                            const words = newFullName.trim().split(' ');
+                            const initial = words.length > 0 ? words[words.length - 1].charAt(0).toUpperCase() : '?';
+                            const avatarCircles = document.querySelectorAll('#sidebarAvatar, #modalAvatarCircle');
+                            avatarCircles.forEach(el => {
+                                // Find text nodes and replace, keeping structure
+                                el.textContent = initial;
+                            });
+                        }
+                    });
+
                     connection.on("ReceiveLibraryRefresh", function () {
                         if (window.location.pathname.toLowerCase().includes('/admin/')) {
                             return;
@@ -335,6 +360,7 @@
         });
     </script>
 
+    @await RenderSectionAsync("Modals", required: false)
     @await RenderSectionAsync("Scripts", required: false)
 </body>
 </html>

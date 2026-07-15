@@ -70,8 +70,6 @@ public partial class Document
 
     public virtual DocumentSource? DocumentSource { get; set; }
 
-    public virtual ICollection<Tag> Tags { get; set; } = new List<Tag>();
-
     public virtual ICollection<UserBookmark> UserBookmarks { get; set; } = new List<UserBookmark>();
 
     public virtual ICollection<DocumentReport> DocumentReports { get; set; } = new List<DocumentReport>();

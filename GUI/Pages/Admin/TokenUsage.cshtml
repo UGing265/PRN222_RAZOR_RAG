@@ -11,7 +11,7 @@
         <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center mb-5 gap-4">
             <div>
                 <span class="font-mono-xs text-coral-deep" style="font-weight: 700; letter-spacing: 0.15em;">QUẢN TRỊ VIÊN</span>
-                <h1 class="hero-title mt-2 mb-3" style="font-size: clamp(2.5rem, 5vw, 3.5rem); color: var(--brown); line-height: 1.1;">Quản Lý Token Sử Dụng</h1>
+                <h1 class="hero-title mt-2 mb-3" style="font-size: clamp(2.5rem, 5vw, 3.5rem); color: var(--brown); line-height: 1.1;">Báo Cáo và Thống Kê Token</h1>
                 <p class="text-muted-foreground mb-3" style="font-size: 15px; font-weight: 400; max-width: 700px;">
                     Theo dõi định lượng tiêu thụ Token Google Gemini API của từng tài khoản Giảng Viên và Sinh Viên trong hệ thống RAG.
                 </p>
@@ -86,8 +86,8 @@
                 </div>
             </div>
 
-            <!-- Card 2: Top Consumer (Col 12 -> Col MD 6 -> Col LG 3) -->
-            <div class="col-12 col-md-6 col-lg-3">
+            <!-- Card 2: Top Consumer (Col 12 -> Col LG 6) -->
+            <div class="col-16 col-lg-6">
                 <div class="feature-card-premium h-100 d-flex flex-column justify-content-between p-4" style="background: rgba(255, 255, 255, 0.78); border-radius: 28px; border: 1px solid rgba(82, 39, 27, 0.1);">
                     <div>
                         <div class="d-flex justify-content-between align-items-center mb-3">
@@ -115,31 +115,26 @@
                     </div>
                 </div>
             </div>
+        </div>
 
-            <!-- Card 3: Daily Burn Rate & API Health (Col 12 -> Col MD 6 -> Col LG 3) -->
-            <div class="col-12 col-md-6 col-lg-3">
-                <div class="feature-card-premium h-100 d-flex flex-column justify-content-between p-4" style="background: rgba(255, 255, 255, 0.78); border-radius: 28px; border: 1px solid rgba(82, 39, 27, 0.1);">
-                    <div>
-                        <div class="d-flex justify-content-between align-items-center mb-3">
-                            <span class="font-mono-xs text-muted-foreground" style="font-weight: 700; font-size: 11px;">TỐC ĐỘ TIÊU THỤ TRUNG BÌNH</span>
-                            <span class="badge rounded-pill bg-success-subtle text-success border border-success-subtle" style="font-size: 11px; font-weight: 600;">API Active</span>
+        <!-- NEW System Chart Row -->
+        <div class="row g-4 mb-5">
+            <div class="col-12">
+                <div class="feature-card-premium h-100 d-flex flex-column p-4" style="background: rgba(255, 255, 255, 0.78); border-radius: 28px; border: 1px solid rgba(82, 39, 27, 0.1);">
+                    <div class="d-flex justify-content-between align-items-center mb-4">
+                        <h3 class="hero-title m-0" style="font-size: 1.25rem; color: var(--brown);">Biểu Đồ Tiêu Thụ Token Hệ Thống</h3>
+                        
+                        <!-- Global Chart Toggle -->
+                        <div class="btn-group premium-toggle-group flex-shrink-0" role="group" aria-label="Global Chart view toggle" style="border: 1px solid rgba(82, 39, 27, 0.15); border-radius: 9999px; overflow: hidden; background: rgba(255, 255, 255, 0.6);">
+                            <input type="radio" class="btn-check" name="globalChartToggle" id="btnGlobalToggleDay" autocomplete="off" checked>
+                            <label class="btn btn-sm px-4 m-0 global-toggle-btn" for="btnGlobalToggleDay" style="font-size: 13px; font-weight: 600; height: 38px; display: flex; align-items: center; justify-content: center; border: none; border-radius: 0; color: var(--brown); cursor: pointer; transition: all 0.2s ease;">7 Ngày</label>
+
+                            <input type="radio" class="btn-check" name="globalChartToggle" id="btnGlobalToggleHour" autocomplete="off">
+                            <label class="btn btn-sm px-4 m-0 global-toggle-btn" for="btnGlobalToggleHour" style="font-size: 13px; font-weight: 600; height: 38px; display: flex; align-items: center; justify-content: center; border: none; border-radius: 0; color: var(--brown); cursor: pointer; transition: all 0.2s ease;">Hôm Nay (Giờ)</label>
                         </div>
-                        <div class="mb-3">
-                            <div class="fw-bold text-foreground" style="font-size: 1.8rem; color: var(--brown); line-height: 1.1;">
-                                ~@Model.HeroStats.DailyAvgTokens.ToString("N0") <span style="font-size: 14px; font-weight: 500; color: var(--muted);">/ ngày</span>
-                            </div>
-                            <div class="d-flex align-items-center gap-1 mt-2 text-success" style="font-size: 13px; font-weight: 600;">
-                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"/><polyline points="17 6 23 6 23 12"/></svg>
-                                <span>+12.4% so với tuần trước</span>
-                            </div>
-                        </div>
-                        <p class="text-muted-foreground small mb-0" style="font-size: 13px;">
-                            Dựa trên hoạt động trò chuyện RAG và xử lý tài liệu trong 7 ngày gần nhất.
-                        </p>
                     </div>
-                    <div class="pt-3 border-top mt-3 d-flex align-items-center justify-content-between" style="border-color: rgba(82, 39, 27, 0.08) !important;">
-                        <span class="text-muted-foreground" style="font-size: 12px;">Số lượt gọi API:</span>
-                        <span class="fw-bold text-foreground" style="font-size: 14px;">@Model.HeroStats.WeeklyApiRequests.ToString("N0") lượt</span>
+                    <div class="flex-grow-1 w-100" style="position: relative; min-height: 250px;">
+                        <canvas id="systemTokenChartCanvas"></canvas>
                     </div>
                 </div>
             </div>
@@ -218,8 +213,8 @@
                                 <!-- Sparkline Chart Container -->
                                 <div class="my-3 px-1 py-2 rounded-4" style="background: rgba(255, 255, 255, 0.6); border: 1px solid rgba(82, 39, 27, 0.05);">
                                     <div class="d-flex justify-content-between align-items-center px-2 mb-1">
-                                        <span class="font-mono-xs text-muted-foreground" style="font-size: 10px;">XU HƯỚNG 7 NGÀY QUA</span>
-                                        <span class="text-coral-deep fw-bold" style="font-size: 11px;">@(user.SparklineData.Any() ? user.SparklineData.Last().ToString("N0") : "0") / ngày</span>
+                                        <span class="font-mono-xs text-muted-foreground sparkline-title" style="font-size: 10px;" id="title-sparkline-@user.UserId">XU HƯỚNG 7 NGÀY QUA</span>
+                                        <span class="text-coral-deep fw-bold sparkline-total" style="font-size: 11px;" id="total-sparkline-@user.UserId">@(user.SparklineData.Any() ? user.SparklineData.Last().ToString("N0") : "0") / ngày</span>
                                     </div>
                                     <div style="height: 70px; width: 100%;">
                                         <canvas class="user-sparkline-canvas" 
@@ -338,10 +333,20 @@
                     </div>
                 </div>
 
-                <!-- 7-Day Detailed Breakdown Chart -->
+                <!-- 7-Day / 24-Hour Detailed Breakdown Chart -->
                 <div class="p-2 rounded-3 mb-2" style="background: rgba(255,255,255,0.78); border: 1px solid rgba(82,39,27,0.08);">
                     <div class="d-flex justify-content-between align-items-center mb-2">
-                        <h6 class="fw-bold m-0" style="font-size: 12px; color: var(--brown);">Biểu Đồ 7 Ngày Qua</h6>
+                        <div class="d-flex align-items-center gap-3">
+                            <h6 class="fw-bold m-0" id="modalChartTitle" style="font-size: 12px; color: var(--brown);">Biểu Đồ 7 Ngày Qua</h6>
+                            <div class="btn-group" role="group" style="background: rgba(255,255,255,0.8); border-radius: 6px; padding: 2px; border: 1px solid rgba(82,39,27,0.1);">
+                                <input type="radio" class="btn-check" name="modalToggleType" id="btnModalToggleDay" autocomplete="off" checked>
+                                <label class="btn btn-sm px-2 py-0 m-0 text-muted-foreground" for="btnModalToggleDay" style="font-size: 10px; font-weight: 600; border-radius: 4px; border: none; cursor: pointer;">Ngày</label>
+
+                                <input type="radio" class="btn-check" name="modalToggleType" id="btnModalToggleHour" autocomplete="off">
+                                <label class="btn btn-sm px-2 py-0 m-0 text-muted-foreground" for="btnModalToggleHour" style="font-size: 10px; font-weight: 600; border-radius: 4px; border: none; cursor: pointer;">Giờ</label>
+                            </div>
+                        </div>
+
                         <div class="d-flex align-items-center gap-2" style="font-size: 10px;">
                             <span class="d-flex align-items-center gap-1"><span class="rounded-circle d-inline-block" style="width: 8px; height: 8px; background: #1e3e62;"></span> Chat</span>
                             <span class="d-flex align-items-center gap-1"><span class="rounded-circle d-inline-block" style="width: 8px; height: 8px; background: var(--coral);"></span> Tài liệu</span>
@@ -416,16 +421,148 @@
 </div>
 
 @section Scripts {
+    <style>
+        /* Styling for the toggles */
+        .btn-check:checked + label[for^="btnModalToggle"],
+        .btn-check:checked + label[for^="btnGlobalToggle"] {
+            background: var(--brown) !important;
+            color: #fff !important;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+        }
+    </style>
+
     <!-- Include Chart.js for smooth sparklines and modal charts -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 
-    <!-- 1. Define global user lookup map immediately in its own isolated script block -->
+        // 1. Define global user lookup map immediately in its own isolated script block
     <script>
         window.USER_TOKENS_MAP = @Html.Raw(JsonSerializer.Serialize(Model.UserTokensList.ToDictionary(u => u.UserId.ToString().ToLower(), u => u)));
     </script>
 
     <!-- 2. Robust UI click handler and modal management -->
     <script>
+        window.globalChartMode = 'day';
+        window.sparklineInstances = {};
+
+        let currentUserForModal = null;
+
+        function getHourlyData(user) {
+            // Sử dụng dữ liệu thật từ backend (đã được tính toán theo giờ cho ngày hôm nay)
+            const hours = [];
+            for (let i = 0; i < 24; i++) {
+                hours.push(`${i}:00`);
+            }
+
+            return {
+                labels: hours,
+                chatData: user.ChatHourlyData ?? user.chatHourlyData ?? [],
+                docData: user.DocHourlyData ?? user.docHourlyData ?? []
+            };
+        }
+
+        window.updateUserModalChart = function(user) {
+            const roleId = user.RoleId ?? user.roleId;
+
+            document.getElementById('modalUserFullName').textContent = user.FullName ?? user.fullName;
+            renderUserModalChart(user);
+            renderModalTableData(user);
+        };
+
+        function renderModalTableData(user) {
+            const modalTableBody = document.getElementById('modalTableBody');
+            if (!modalTableBody) return;
+
+            const roleId = user.RoleId ?? user.roleId ?? 0;
+            const ROWS_PER_PAGE = 3;
+            const allRows = [];
+
+            if (window.globalChartMode === 'day') {
+                const dateLabels = user.DateLabels ?? user.dateLabels ?? [];
+                const chatHistory = user.ChatHistoryData ?? user.chatHistoryData ?? [];
+                const docHistory = user.DocHistoryData ?? user.docHistoryData ?? [];
+                for (let i = dateLabels.length - 1; i >= 0; i--) {
+                    allRows.push({
+                        label: dateLabels[i] || '',
+                        chatVal: chatHistory[i] || 0,
+                        docVal: docHistory[i] || 0
+                    });
+                }
+            } else {
+                const hourlyData = getHourlyData(user);
+                for (let i = hourlyData.labels.length - 1; i >= 0; i--) {
+                    if (hourlyData.chatData[i] > 0 || hourlyData.docData[i] > 0) {
+                        allRows.push({
+                            label: hourlyData.labels[i],
+                            chatVal: hourlyData.chatData[i],
+                            docVal: hourlyData.docData[i]
+                        });
+                    }
+                }
+                if (allRows.length === 0) {
+                    allRows.push({ label: 'Hôm nay', chatVal: 0, docVal: 0 });
+                }
+            }
+
+            const totalPages = Math.max(1, Math.ceil(allRows.length / ROWS_PER_PAGE));
+
+            function renderPage(page) {
+                modalTableBody.innerHTML = '';
+                const start = (page - 1) * ROWS_PER_PAGE;
+                const end = Math.min(start + ROWS_PER_PAGE, allRows.length);
+
+                for (let idx = start; idx < end; idx++) {
+                    const r = allRows[idx];
+                    const totalDay = r.chatVal + r.docVal;
+                    const docCellDisplay = roleId === 3 
+                        ? '<span class="badge bg-secondary-subtle text-muted" style="font-size: 11px;">N/A</span>' 
+                        : `${r.docVal.toLocaleString()} tokens`;
+
+                    const row = document.createElement('tr');
+                    row.className = 'glass-row';
+                    row.style.background = 'rgba(255, 255, 255, 0.45)';
+                    row.style.borderRadius = '10px';
+                    row.innerHTML = `
+                        <td class="ps-3 py-2 border-0 fw-medium text-foreground" style="border-radius: 10px 0 0 10px; font-size: 12px;">${r.label}</td>
+                        <td class="py-2 border-0 text-muted-foreground" style="font-size: 12px;">${r.chatVal.toLocaleString()} tokens</td>
+                        <td class="py-2 border-0 text-muted-foreground" style="font-size: 12px;">${docCellDisplay}</td>
+                        <td class="pe-3 py-2 border-0 text-end fw-bold" style="border-radius: 0 10px 10px 0; font-size: 12px; color: var(--brown);">${totalDay.toLocaleString()}</td>
+                    `;
+                    modalTableBody.appendChild(row);
+                }
+
+                const paginationEl = document.getElementById('modalTablePagination');
+                if (paginationEl && totalPages > 1) {
+                    paginationEl.innerHTML = '';
+                    const prevBtn = document.createElement('button');
+                    prevBtn.className = 'btn btn-sm rounded-pill px-2 py-0';
+                    prevBtn.style.cssText = 'font-size: 11px; border: 1px solid rgba(82,39,27,0.12); color: var(--brown); background: transparent;';
+                    prevBtn.textContent = '‹ Trước';
+                    prevBtn.disabled = page <= 1;
+                    prevBtn.onclick = () => renderPage(page - 1);
+
+                    const info = document.createElement('span');
+                    info.className = 'text-muted-foreground';
+                    info.style.fontSize = '11px';
+                    info.textContent = `${page} / ${totalPages}`;
+
+                    const nextBtn = document.createElement('button');
+                    nextBtn.className = 'btn btn-sm rounded-pill px-2 py-0';
+                    nextBtn.style.cssText = 'font-size: 11px; border: 1px solid rgba(82,39,27,0.12); color: var(--brown); background: transparent;';
+                    nextBtn.textContent = 'Sau ›';
+                    nextBtn.disabled = page >= totalPages;
+                    nextBtn.onclick = () => renderPage(page + 1);
+
+                    paginationEl.appendChild(prevBtn);
+                    paginationEl.appendChild(info);
+                    paginationEl.appendChild(nextBtn);
+                } else if (paginationEl) {
+                    paginationEl.innerHTML = '';
+                }
+            }
+
+            renderPage(1);
+        }
+
         (function initTokenUsageActions() {
             const detailModalEl = document.getElementById('userDetailModal');
             if (!detailModalEl) return;
@@ -436,164 +573,104 @@
 
                 const userId = (btn.getAttribute('data-user-id') || '').toLowerCase();
                 const user = window.USER_TOKENS_MAP ? window.USER_TOKENS_MAP[userId] : null;
-                if (!user) {
-                    console.error('Không tìm thấy thông tin user có ID:', userId);
-                    return;
-                }
+                if (!user) return;
 
-                const modalUserFullName = document.getElementById('modalUserFullName');
-                const modalUserEmail = document.getElementById('modalUserEmail');
-                const modalUserAvatar = document.getElementById('modalUserAvatar');
-                const modalUserRoleBadge = document.getElementById('modalUserRoleBadge');
-                const modalTotalTokens = document.getElementById('modalTotalTokens');
-                const modalChatTokens = document.getElementById('modalChatTokens');
-                const modalChatPercent = document.getElementById('modalChatPercent');
-                const modalDocTokens = document.getElementById('modalDocTokens');
-                const modalDocPercent = document.getElementById('modalDocPercent');
-                const modalTableBody = document.getElementById('modalTableBody');
-
-                // Populate textual details immediately
+                currentUserForModal = user;
                 const total = user.TotalTokens ?? user.totalTokens ?? 0;
                 const chat = user.ChatTokens ?? user.chatTokens ?? 0;
                 const doc = user.DocTokens ?? user.docTokens ?? 0;
                 const roleId = user.RoleId ?? user.roleId ?? 0;
 
-                if (modalUserFullName) modalUserFullName.textContent = user.FullName ?? user.fullName ?? 'Người dùng';
-                if (modalUserEmail) modalUserEmail.textContent = user.Email ?? user.email ?? '';
-                if (modalUserAvatar) modalUserAvatar.textContent = user.Initial ?? user.initial ?? 'U';
-                if (modalUserRoleBadge) modalUserRoleBadge.textContent = user.RoleName ?? user.roleName ?? 'User';
-                
-                if (modalTotalTokens) modalTotalTokens.textContent = total.toLocaleString();
-                if (modalChatTokens) modalChatTokens.textContent = chat.toLocaleString();
+                // Sync modal toggle to global toggle initially when opening
+                if (window.globalChartMode === 'hour') {
+                    document.getElementById('btnModalToggleHour').checked = true;
+                } else {
+                    document.getElementById('btnModalToggleDay').checked = true;
+                }
+
+                document.getElementById('modalUserFullName').textContent = user.FullName ?? user.fullName ?? 'Người dùng';
+                document.getElementById('modalUserEmail').textContent = user.Email ?? user.email ?? '';
+                document.getElementById('modalUserAvatar').textContent = user.Initial ?? user.initial ?? 'U';
+                document.getElementById('modalUserRoleBadge').textContent = user.RoleName ?? user.roleName ?? 'User';
+                document.getElementById('modalTotalTokens').textContent = total.toLocaleString();
+                document.getElementById('modalChatTokens').textContent = chat.toLocaleString();
                 
                 const chatPct = total > 0 ? Math.round(chat / total * 100) : 0;
                 const docPct = total > 0 ? (100 - chatPct) : 0;
-                if (modalChatPercent) modalChatPercent.textContent = chatPct + "% trong tổng số";
+                document.getElementById('modalChatPercent').textContent = chatPct + "% trong tổng số";
                 
                 if (roleId === 3) {
-                    if (modalDocTokens) modalDocTokens.innerHTML = '<span class="badge bg-secondary-subtle text-muted" style="font-size: 13px;">0 (N/A)</span>';
-                    if (modalDocPercent) modalDocPercent.textContent = "Sinh viên không xử lý tài liệu";
+                    document.getElementById('modalDocTokens').innerHTML = '<span class="badge bg-secondary-subtle text-muted" style="font-size: 13px;">0 (N/A)</span>';
+                    document.getElementById('modalDocPercent').textContent = "Sinh viên không xử lý tài liệu";
                 } else {
-                    if (modalDocTokens) modalDocTokens.textContent = doc.toLocaleString();
-                    if (modalDocPercent) modalDocPercent.textContent = docPct + "% trong tổng số";
+                    document.getElementById('modalDocTokens').textContent = doc.toLocaleString();
+                    document.getElementById('modalDocPercent').textContent = docPct + "% trong tổng số";
                 }
 
-                // Populate Day-by-Day Table Rows with Pagination
-                if (modalTableBody) {
-                    const dateLabels = user.DateLabels ?? user.dateLabels ?? [];
-                    const chatHistory = user.ChatHistoryData ?? user.chatHistoryData ?? [];
-                    const docHistory = user.DocHistoryData ?? user.docHistoryData ?? [];
-                    const ROWS_PER_PAGE = 3;
-
-                    // Build all row data (newest first)
-                    const allRows = [];
-                    for (let i = dateLabels.length - 1; i >= 0; i--) {
-                        allRows.push({
-                            date: dateLabels[i] || '',
-                            chatVal: chatHistory[i] || 0,
-                            docVal: docHistory[i] || 0
-                        });
-                    }
-                    const totalPages = Math.max(1, Math.ceil(allRows.length / ROWS_PER_PAGE));
-
-                    function renderModalTablePage(page) {
-                        modalTableBody.innerHTML = '';
-                        const start = (page - 1) * ROWS_PER_PAGE;
-                        const end = Math.min(start + ROWS_PER_PAGE, allRows.length);
-
-                        for (let idx = start; idx < end; idx++) {
-                            const r = allRows[idx];
-                            const totalDay = r.chatVal + r.docVal;
-                            const docCellDisplay = roleId === 3 
-                                ? '<span class="badge bg-secondary-subtle text-muted" style="font-size: 11px;">N/A</span>' 
-                                : `${r.docVal.toLocaleString()} tokens`;
-
-                            const row = document.createElement('tr');
-                            row.className = 'glass-row';
-                            row.style.background = 'rgba(255, 255, 255, 0.45)';
-                            row.style.borderRadius = '10px';
-                            row.innerHTML = `
-                                <td class="ps-3 py-2 border-0 fw-medium text-foreground" style="border-radius: 10px 0 0 10px; font-size: 12px;">${r.date}</td>
-                                <td class="py-2 border-0 text-muted-foreground" style="font-size: 12px;">${r.chatVal.toLocaleString()} tokens</td>
-                                <td class="py-2 border-0 text-muted-foreground" style="font-size: 12px;">${docCellDisplay}</td>
-                                <td class="pe-3 py-2 border-0 text-end fw-bold" style="border-radius: 0 10px 10px 0; font-size: 12px; color: var(--brown);">${totalDay.toLocaleString()}</td>
-                            `;
-                            modalTableBody.appendChild(row);
-                        }
-
-                        // Render pagination controls
-                        const paginationEl = document.getElementById('modalTablePagination');
-                        if (paginationEl && totalPages > 1) {
-                            paginationEl.innerHTML = '';
-                            const prevBtn = document.createElement('button');
-                            prevBtn.className = 'btn btn-sm rounded-pill px-2 py-0';
-                            prevBtn.style.cssText = 'font-size: 11px; border: 1px solid rgba(82,39,27,0.12); color: var(--brown); background: transparent;';
-                            prevBtn.textContent = '‹ Trước';
-                            prevBtn.disabled = page <= 1;
-                            prevBtn.onclick = () => renderModalTablePage(page - 1);
-
-                            const info = document.createElement('span');
-                            info.className = 'text-muted-foreground';
-                            info.style.fontSize = '11px';
-                            info.textContent = `${page} / ${totalPages}`;
-
-                            const nextBtn = document.createElement('button');
-                            nextBtn.className = 'btn btn-sm rounded-pill px-2 py-0';
-                            nextBtn.style.cssText = 'font-size: 11px; border: 1px solid rgba(82,39,27,0.12); color: var(--brown); background: transparent;';
-                            nextBtn.textContent = 'Sau ›';
-                            nextBtn.disabled = page >= totalPages;
-                            nextBtn.onclick = () => renderModalTablePage(page + 1);
-
-                            paginationEl.appendChild(prevBtn);
-                            paginationEl.appendChild(info);
-                            paginationEl.appendChild(nextBtn);
-                        } else if (paginationEl) {
-                            paginationEl.innerHTML = '';
-                        }
-                    }
-
-                    renderModalTablePage(1);
-                }
-
-                // Render chart after modal transition completes (200ms)
-                setTimeout(() => {
-                    try {
-                        if (typeof renderUserModalChart === 'function') {
-                            renderUserModalChart(user);
-                        }
-                    } catch (chartErr) {
-                        console.warn('Modal chart error:', chartErr);
-                    }
-                }, 200);
+                updateUserModalChart(user);
             });
         })();
 
-        // 3. Render charts inside user cards & modal chart function
         let modalChartInstance = null;
         function renderUserModalChart(user) {
             const modalChartCanvas = document.getElementById('modalUserChartCanvas');
             if (!modalChartCanvas || typeof Chart === 'undefined') return;
-            if (modalChartInstance) {
-                modalChartInstance.destroy();
-                modalChartInstance = null;
-            }
+            if (modalChartInstance) { modalChartInstance.destroy(); modalChartInstance = null; }
 
             const ctxModal = modalChartCanvas.getContext('2d');
+            const roleId = user.RoleId ?? user.roleId ?? 0;
+            
+            let chartLabels = [];
+            let chatData = [];
+            let docData = [];
+
+            // Read the local modal toggle state if the modal is already open, otherwise default to global mode
+            const isHourSelected = document.getElementById('btnModalToggleHour').checked;
+            const currentMode = isHourSelected ? 'hour' : 'day';
+
+            if (currentMode === 'day') {
+                chartLabels = user.DateLabels ?? user.dateLabels ?? [];
+                chatData = user.ChatHistoryData ?? user.chatHistoryData ?? [];
+                docData = user.DocHistoryData ?? user.docHistoryData ?? [];
+                document.getElementById('modalChartTitle').textContent = 'Biểu Đồ 7 Ngày Qua';
+                document.getElementById('modalTableBody').previousElementSibling.innerHTML = `
+                    <tr class="text-muted-foreground" style="border: none; font-size: 11px; font-weight: 600;">
+                        <th scope="col" class="pb-1 border-0 ps-3" style="width: 20%;">Ngày</th>
+                        <th scope="col" class="pb-1 border-0" style="width: 30%;">Chat Tokens</th>
+                        <th scope="col" class="pb-1 border-0" style="width: 30%;">Embedding Tokens</th>
+                        <th scope="col" class="pb-1 border-0 text-end pe-3" style="width: 20%;">Tổng Ngày</th>
+                    </tr>
+                `;
+            } else {
+                const hourlyData = getHourlyData(user);
+                chartLabels = hourlyData.labels;
+                chatData = hourlyData.chatData;
+                docData = hourlyData.docData;
+                document.getElementById('modalChartTitle').textContent = 'Biểu Đồ Hôm Nay (Theo Giờ)';
+                document.getElementById('modalTableBody').previousElementSibling.innerHTML = `
+                    <tr class="text-muted-foreground" style="border: none; font-size: 11px; font-weight: 600;">
+                        <th scope="col" class="pb-1 border-0 ps-3" style="width: 20%;">Giờ</th>
+                        <th scope="col" class="pb-1 border-0" style="width: 30%;">Chat Tokens</th>
+                        <th scope="col" class="pb-1 border-0" style="width: 30%;">Embedding Tokens</th>
+                        <th scope="col" class="pb-1 border-0 text-end pe-3" style="width: 20%;">Tổng Giờ</th>
+                    </tr>
+                `;
+            }
+
             const datasets = [
                 {
                     label: 'Chat RAG / Hỏi Đáp',
-                    data: user.ChatHistoryData ?? user.chatHistoryData ?? [],
+                    data: chatData,
                     backgroundColor: '#1e3e62',
                     borderRadius: 6,
                     barPercentage: 0.65
                 }
             ];
 
-            const roleId = user.RoleId ?? user.roleId ?? 0;
             if (roleId !== 3) {
                 datasets.push({
                     label: 'Embedding Tài Liệu',
-                    data: user.DocHistoryData ?? user.docHistoryData ?? [],
+                    data: docData,
                     backgroundColor: '#d86a58',
                     borderRadius: 6,
                     barPercentage: 0.65
@@ -603,7 +680,7 @@
             modalChartInstance = new Chart(ctxModal, {
                 type: 'bar',
                 data: {
-                    labels: user.DateLabels ?? user.dateLabels ?? [],
+                    labels: chartLabels,
                     datasets: datasets
                 },
                 options: {
@@ -645,81 +722,324 @@
             });
         }
 
+
         document.addEventListener('DOMContentLoaded', () => {
             if (typeof Chart === 'undefined') return;
             try {
                 Chart.defaults.font.family = "'Product Sans', 'Google Sans', Inter, system-ui, sans-serif";
                 Chart.defaults.color = "#8e6f65";
 
-                const sparklineCanvases = document.querySelectorAll('.user-sparkline-canvas');
-                sparklineCanvases.forEach(canvas => {
-                    const userId = (canvas.getAttribute('data-user-id') || '').toLowerCase();
-                    const user = window.USER_TOKENS_MAP ? window.USER_TOKENS_MAP[userId] : null;
-                    const dateLabels = user.DateLabels ?? user.dateLabels;
-                    const sparkline = user.SparklineData ?? user.sparklineData;
-                    if (!user || !dateLabels || !sparkline) return;
+                // 4. Render System-Wide Chart in Hero Section
+                (function initSystemChart() {
+                    const stats = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(Model.HeroStats));
+                    let systemChartInstance = null;
 
-                    const labels = dateLabels;
-                    const values = sparkline;
+                    function getSystemHourlyData() {
+                        const hours = [];
+                        for (let i = 0; i < 24; i += 2) {
+                            hours.push(`${i.toString().padStart(2, '0')}:00`);
+                        }
 
-                    const ctx = canvas.getContext('2d');
-                    
-                    const gradient = ctx.createLinearGradient(0, 0, 0, 70);
-                    gradient.addColorStop(0, 'rgba(216, 106, 88, 0.25)');
-                    gradient.addColorStop(1, 'rgba(216, 106, 88, 0.0)');
+                        // We have 24 hours of data from backend, let's group them by 2 hours to match the UI labels
+                        const hChatData = [];
+                        const hDocData = [];
+                        for (let i = 0; i < 24; i += 2) {
+                            const chatSum = (stats.SystemChatHourlyData[i] || 0) + (stats.SystemChatHourlyData[i+1] || 0);
+                            const docSum = (stats.SystemDocHourlyData[i] || 0) + (stats.SystemDocHourlyData[i+1] || 0);
+                            hChatData.push(chatSum);
+                            hDocData.push(docSum);
+                        }
 
-                    new Chart(ctx, {
-                        type: 'line',
-                        data: {
-                            labels: labels,
-                            datasets: [{
-                                data: values,
-                                borderColor: '#d86a58',
-                                borderWidth: 2.2,
-                                backgroundColor: gradient,
-                                fill: true,
-                                tension: 0.35,
-                                pointRadius: 0,
-                                pointHoverRadius: 4,
-                                pointHoverBackgroundColor: '#4a1f16',
-                                pointHoverBorderColor: '#ffffff',
-                                pointHoverBorderWidth: 2
-                            }]
-                        },
-                        options: {
-                            responsive: true,
-                            maintainAspectRatio: false,
-                            plugins: {
-                                legend: { display: false },
-                                tooltip: {
-                                    enabled: true,
-                                    backgroundColor: 'rgba(74, 31, 22, 0.9)',
-                                    titleFont: { size: 11, weight: 'bold' },
-                                    bodyFont: { size: 12 },
-                                    padding: 8,
-                                    cornerRadius: 8,
-                                    displayColors: false,
-                                    callbacks: {
-                                        label: function(context) {
-                                            return context.parsed.y.toLocaleString() + ' tokens';
+                        return {
+                            labels: hours,
+                            chatData: hChatData,
+                            docData: hDocData
+                        };
+                    }
+
+                    window.renderSystemChart = function() {
+                        const canvas = document.getElementById('systemTokenChartCanvas');
+                        if (!canvas || typeof Chart === 'undefined') return;
+
+                        if (systemChartInstance) {
+                            systemChartInstance.destroy();
+                            systemChartInstance = null;
+                        }
+
+                        const ctx = canvas.getContext('2d');
+                        let chartLabels = [];
+                        let chatData = [];
+                        let docData = [];
+
+                        if (window.globalChartMode === 'day') {
+                            chartLabels = stats.DateLabels || [];
+                            chatData = stats.SystemChatHistoryData || [];
+                            docData = stats.SystemDocHistoryData || [];
+                        } else {
+                            const hourlyData = getSystemHourlyData();
+                            chartLabels = hourlyData.labels;
+                            chatData = hourlyData.chatData;
+                            docData = hourlyData.docData;
+                        }
+
+                        systemChartInstance = new Chart(ctx, {
+                            type: 'bar',
+                            data: {
+                                labels: chartLabels,
+                                datasets: [
+                                    {
+                                        label: 'Chat RAG / Hỏi Đáp',
+                                        data: chatData,
+                                        backgroundColor: '#1e3e62',
+                                        borderRadius: 6,
+                                        barPercentage: 0.65
+                                    },
+                                    {
+                                        label: 'Embedding & Chia Chương',
+                                        data: docData,
+                                        backgroundColor: '#d86a58',
+                                        borderRadius: 6,
+                                        barPercentage: 0.65
+                                    }
+                                ]
+                            },
+                            options: {
+                                responsive: true,
+                                maintainAspectRatio: false,
+                                interaction: {
+                                    mode: 'index',
+                                    intersect: false,
+                                },
+                                plugins: {
+                                    legend: {
+                                        position: 'top',
+                                        align: 'end',
+                                        labels: {
+                                            usePointStyle: true,
+                                            boxWidth: 8,
+                                            boxHeight: 8,
+                                            font: { family: "'Inter', sans-serif", size: 12 }
+                                        }
+                                    },
+                                    tooltip: {
+                                        backgroundColor: 'rgba(255, 255, 255, 0.95)',
+                                        titleColor: '#4a1f16',
+                                        bodyColor: '#4a1f16',
+                                        borderColor: 'rgba(82, 39, 27, 0.1)',
+                                        borderWidth: 1,
+                                        padding: 12,
+                                        boxPadding: 6,
+                                        usePointStyle: true,
+                                        callbacks: {
+                                            label: function(context) {
+                                                let label = context.dataset.label || '';
+                                                if (label) label += ': ';
+                                                if (context.parsed.y !== null) {
+                                                    label += context.parsed.y.toLocaleString() + ' tokens';
+                                                }
+                                                return label;
+                                            }
+                                        }
+                                    }
+                                },
+                                scales: {
+                                    x: {
+                                        stacked: true,
+                                        grid: { display: false },
+                                        ticks: { font: { family: "'Inter', sans-serif", size: 11 }, color: '#6c757d' }
+                                    },
+                                    y: {
+                                        stacked: true,
+                                        beginAtZero: true,
+                                        border: { display: false },
+                                        grid: { color: 'rgba(82, 39, 27, 0.05)' },
+                                        ticks: {
+                                            font: { family: "'Inter', sans-serif", size: 11 }, 
+                                            color: '#6c757d',
+                                            callback: function(value) {
+                                                if (value >= 1000) return (value / 1000).toFixed(1) + 'k';
+                                                return value;
+                                            }
                                         }
                                     }
                                 }
-                            },
-                            scales: {
-                                x: { display: false },
-                                y: { display: false }
-                            },
-                            interaction: {
-                                intersect: false,
-                                mode: 'index'
+                            }
+                        });
+                    };
+
+                    window.renderSystemChart();
+                })();
+
+                window.renderAllSparklines = function() {
+                    const sparklineCanvases = document.querySelectorAll('.user-sparkline-canvas');
+                    sparklineCanvases.forEach(canvas => {
+                        const userId = (canvas.getAttribute('data-user-id') || '').toLowerCase();
+                        const user = window.USER_TOKENS_MAP ? window.USER_TOKENS_MAP[userId] : null;
+                        if (!user) return;
+
+                        let labels = [];
+                        let values = [];
+
+                        if (window.globalChartMode === 'day') {
+                            labels = user.DateLabels ?? user.dateLabels ?? [];
+                            values = user.SparklineData ?? user.sparklineData ?? [];
+                            
+                            const titleEl = document.getElementById(`title-sparkline-${user.UserId}`);
+                            if (titleEl) titleEl.textContent = 'XU HƯỚNG 7 NGÀY QUA';
+                            const totalEl = document.getElementById(`total-sparkline-${user.UserId}`);
+                            if (totalEl) totalEl.textContent = (values.length > 0 ? values[values.length - 1].toLocaleString() : "0") + " / ngày";
+                        } else {
+                            const hourlyData = getHourlyData(user);
+                            labels = hourlyData.labels;
+                            values = hourlyData.chatData.map((v, i) => v + hourlyData.docData[i]);
+                            
+                            const titleEl = document.getElementById(`title-sparkline-${user.UserId}`);
+                            if (titleEl) titleEl.textContent = 'HÔM NAY (GIỜ)';
+                            
+                            // Hiển thị tổng số lượng token của hôm nay thay vì lấy giờ 23:00
+                            const totalEl = document.getElementById(`total-sparkline-${user.UserId}`);
+                            if (totalEl) {
+                                const totalSum = values.reduce((a, b) => a + b, 0);
+                                totalEl.textContent = totalSum.toLocaleString() + " / hôm nay";
                             }
                         }
+
+                        if (window.sparklineInstances[userId]) {
+                            window.sparklineInstances[userId].destroy();
+                        }
+
+                        const ctx = canvas.getContext('2d');
+                        
+                        const gradient = ctx.createLinearGradient(0, 0, 0, 70);
+                        gradient.addColorStop(0, 'rgba(216, 106, 88, 0.25)');
+                        gradient.addColorStop(1, 'rgba(216, 106, 88, 0)');
+
+                        window.sparklineInstances[userId] = new Chart(ctx, {
+                            type: 'line',
+                            data: {
+                                labels: labels,
+                                datasets: [{
+                                    data: values,
+                                    borderColor: '#d86a58',
+                                    borderWidth: 2.2,
+                                    tension: 0.35,
+                                    fill: true,
+                                    backgroundColor: gradient,
+                                    pointRadius: 0,
+                                    pointHoverRadius: 4,
+                                    pointBackgroundColor: '#4a1f16',
+                                    pointHoverBackgroundColor: '#4a1f16',
+                                    pointHoverBorderColor: '#ffffff',
+                                    pointHoverBorderWidth: 2
+                                }]
+                            },
+                            options: {
+                                responsive: true,
+                                maintainAspectRatio: false,
+                                plugins: {
+                                    legend: { display: false },
+                                    tooltip: {
+                                        enabled: true,
+                                        backgroundColor: 'rgba(255,255,255,0.9)',
+                                        titleColor: '#4a1f16',
+                                        bodyColor: '#4a1f16',
+                                        borderColor: 'rgba(82, 39, 27, 0.1)',
+                                        borderWidth: 1,
+                                        displayColors: false,
+                                        callbacks: {
+                                            label: function(context) {
+                                                return context.parsed.y.toLocaleString() + ' tokens';
+                                            }
+                                        }
+                                    }
+                                },
+                                scales: {
+                                    x: { display: false },
+                                    y: { display: false, min: 0 }
+                                },
+                                interaction: {
+                                    mode: 'index',
+                                    intersect: false,
+                                }
+                            }
+                        });
                     });
-                });
+                };
+
+                // Initial render
+                window.renderAllSparklines();
+
+                // Hook up the global toggle
+                const btnGlobalDay = document.getElementById('btnGlobalToggleDay');
+                const btnGlobalHour = document.getElementById('btnGlobalToggleHour');
+                if (btnGlobalDay && btnGlobalHour) {
+                    btnGlobalDay.addEventListener('change', function() {
+                        if (this.checked) {
+                            window.globalChartMode = 'day';
+                            updateAllCharts();
+                        }
+                    });
+                    btnGlobalHour.addEventListener('change', function() {
+                        if (this.checked) {
+                            window.globalChartMode = 'hour';
+                            updateAllCharts();
+                        }
+                    });
+                }
+                // Hook up the local modal toggle
+                const btnModalDay = document.getElementById('btnModalToggleDay');
+                const btnModalHour = document.getElementById('btnModalToggleHour');
+                if (btnModalDay && btnModalHour) {
+                    btnModalDay.addEventListener('change', function() {
+                        if (this.checked && currentUserForModal) {
+                            renderUserModalChart(currentUserForModal);
+                        }
+                    });
+                    btnModalHour.addEventListener('change', function() {
+                        if (this.checked && currentUserForModal) {
+                            renderUserModalChart(currentUserForModal);
+                        }
+                    });
+                }
+
+                function updateAllCharts() {
+                    if (window.renderSystemChart) window.renderSystemChart();
+                    if (window.renderAllSparklines) window.renderAllSparklines();
+                    if (currentUserForModal) {
+                        // Keep modal local toggle in sync with global when global is clicked
+                        if (window.globalChartMode === 'hour') {
+                            if (btnModalHour) btnModalHour.checked = true;
+                        } else {
+                            if (btnModalDay) btnModalDay.checked = true;
+                        }
+                        renderUserModalChart(currentUserForModal);
+                    }
+                }
+
             } catch (err) {
                 console.warn('Sparkline initialization warning:', err);
             }
         });
+
+        // Initialize SignalR for real-time Token Usage updates
+        if (typeof signalR !== 'undefined') {
+            const connection = new signalR.HubConnectionBuilder()
+                .withUrl("/systemHub")
+                .withAutomaticReconnect()
+                .build();
+
+            connection.on("ReceiveTokenUsageUpdated", function () {
+                // Soft refresh the page when new tokens are recorded
+                window.location.reload();
+            });
+
+            connection.start().then(function () {
+                console.log("SignalR Connected to SystemHub for Token Usage.");
+            }).catch(function (err) {
+                return console.error(err.toString());
+            });
+        } else {
+            console.warn("SignalR library not found. Real-time updates disabled.");
+        }
     </script>
 }

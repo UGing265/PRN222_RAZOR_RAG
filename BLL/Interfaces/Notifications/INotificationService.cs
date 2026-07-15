@@ -20,4 +20,7 @@ public interface INotificationService
     Task SendBookmarkUpdatedAsync(Guid documentId, Guid userId, bool isBookmarked, CancellationToken cancellationToken = default);
     Task SendLibraryRefreshAsync(CancellationToken cancellationToken = default);
     Task SendDocumentListUpdatedAsync(CancellationToken cancellationToken = default);
+    Task SendTokenUsageUpdatedAsync(CancellationToken cancellationToken = default);
+    Task SendProfileUpdatedAsync(Guid userId, string newFullName, CancellationToken cancellationToken = default);
+    Task SendUserListUpdatedAsync(CancellationToken cancellationToken = default);
 }

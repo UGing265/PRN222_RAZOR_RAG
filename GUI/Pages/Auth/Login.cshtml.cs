@@ -71,6 +71,13 @@ namespace GUI.Pages.Auth
                     });
 
                 _logger.LogInformation("User {Email} logged in successfully.", user.Email);
+                
+                if (user.MustChangePassword)
+                {
+                    TempData["SuccessMessage"] = "Đăng nhập thành công. Vui lòng đổi mật khẩu mặc định của hệ thống!";
+                    return RedirectToPage("/Auth/ChangePassword");
+                }
+
                 TempData["SuccessMessage"] = "Đăng nhập thành công.";
                 
                 if (user.RoleName == "Admin")

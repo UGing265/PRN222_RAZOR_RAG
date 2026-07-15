@@ -112,8 +112,9 @@ Yêu cầu BẮT BUỘC:
    - Nếu sách KHÔNG CÓ chia chương rõ ràng, thì hãy tự động phân tích và gộp các chunk lại thành các phần/chủ đề lớn logic nhất. Mỗi chương nên duy trì số lượng chunk đồng đều và hợp lý (khuyến nghị từ __MIN_CHUNKS__ đến __MAX_CHUNKS__ chunk/chương).
 3. Chỉ trả về JSON hợp lệ, KHÔNG giải thích thêm.
 4. Mỗi chương phải có title, summary, startChunkIndex, endChunkIndex, confidenceScore.
-5. 'summary' RẤT NGẮN GỌN (1-2 câu) bằng TIẾNG VIỆT.
-6. startChunkIndex và endChunkIndex là số nguyên. Các chương phải bao phủ ĐẦY ĐỦ toàn bộ tài liệu (từ chunk đầu tiên đến chunk cuối cùng) và tuyệt đối KHÔNG được chồng lấn nhau.
+5. TUYỆT ĐỐI KHÔNG bao gồm các từ "Chương X", "Chapter X", "Phần X" ở đầu của `title` (Ví dụ: thay vì "Chương 1: Giới thiệu", hãy chỉ ghi là "Giới thiệu").
+6. 'summary' RẤT NGẮN GỌN (1-2 câu) bằng TIẾNG VIỆT.
+7. startChunkIndex và endChunkIndex là số nguyên. Các chương phải bao phủ ĐẦY ĐỦ toàn bộ tài liệu (từ chunk đầu tiên đến chunk cuối cùng) và tuyệt đối KHÔNG được chồng lấn nhau.
 7. Chỉ dùng chunk có sẵn, không bịa nội dung.
 8. Nếu tài liệu quá ngắn, trả về 1 chương duy nhất.
 
@@ -170,7 +171,32 @@ __CHUNKPACK__
                         Temperature = 0.2,
                         TopP = 0.8,
                         MaxOutputTokens = 8192,
-                        ResponseMimeType = "application/json"
+                        ResponseMimeType = "application/json",
+                        ResponseSchema = new
+                        {
+                            type = "OBJECT",
+                            properties = new
+                            {
+                                chapters = new
+                                {
+                                    type = "ARRAY",
+                                    items = new
+                                    {
+                                        type = "OBJECT",
+                                        properties = new
+                                        {
+                                            title = new { type = "STRING" },
+                                            summary = new { type = "STRING" },
+                                            startChunkIndex = new { type = "INTEGER" },
+                                            endChunkIndex = new { type = "INTEGER" },
+                                            confidenceScore = new { type = "NUMBER" }
+                                        },
+                                        required = new[] { "title", "summary", "startChunkIndex", "endChunkIndex", "confidenceScore" }
+                                    }
+                                }
+                            },
+                            required = new[] { "chapters" }
+                        }
                     }
                 };
 
@@ -186,14 +212,21 @@ __CHUNKPACK__
 
                 _logger.LogInformation("Gemini chapter segmentation succeeded. ApiKeyIndex={ApiKeyIndex}", apiKeyIndex);
 
-                var payload = JsonSerializer.Deserialize<GeminiGenerateResponse>(body);
+                var jsonSerializerOptions = new JsonSerializerOptions 
+                { 
+                    PropertyNameCaseInsensitive = true,
+                    AllowTrailingCommas = true,
+                    ReadCommentHandling = JsonCommentHandling.Skip
+                };
+
+                var payload = JsonSerializer.Deserialize<GeminiGenerateResponse>(body, jsonSerializerOptions);
                 var text = payload?.Candidates?.FirstOrDefault()?.Content?.Parts?.FirstOrDefault()?.Text;
                 if (string.IsNullOrWhiteSpace(text))
                 {
                     return BuildFallbackChapters(document, chunks);
                 }
 
-                var parsed = JsonSerializer.Deserialize<ChapterResponse>(ExtractJson(text));
+                var parsed = JsonSerializer.Deserialize<ChapterResponse>(ExtractJson(text), jsonSerializerOptions);
                 return BuildChaptersFromResponse(document, chunks, parsed);
             }
             catch (Exception ex)
@@ -221,11 +254,19 @@ __CHUNKPACK__
         {
             var start = Math.Clamp(chapter.StartChunkIndex, 0, maxIndex);
             var end = Math.Clamp(chapter.EndChunkIndex, start, maxIndex);
+            
+            var rawTitle = chapter.Title?.Trim() ?? string.Empty;
+            var cleanTitle = System.Text.RegularExpressions.Regex.Replace(rawTitle, @"^(?i)(Chương|Chapter|Phần|Part)\s*(\d+|[IVXLCDM]+)[\s:\.\-]*", "").Trim();
+            if (string.IsNullOrWhiteSpace(cleanTitle))
+            {
+                cleanTitle = string.IsNullOrWhiteSpace(rawTitle) ? $"Chương {order}" : rawTitle;
+            }
+
             chapters.Add(new DocumentChapter
             {
                 Id = Guid.NewGuid(),
                 DocumentId = document.Id,
-                Title = string.IsNullOrWhiteSpace(chapter.Title) ? $"Chương {order}" : chapter.Title.Trim(),
+                Title = cleanTitle,
                 Summary = chapter.Summary?.Trim(),
                 ChapterOrder = order,
                 StartChunkIndex = start,
@@ -365,6 +406,10 @@ __CHUNKPACK__
 
         [JsonPropertyName("responseMimeType")]
         public string ResponseMimeType { get; set; } = "application/json";
+
+        [JsonPropertyName("responseSchema")]
+        [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+        public object? ResponseSchema { get; set; }
     }
 
     private sealed class GeminiGenerateResponse

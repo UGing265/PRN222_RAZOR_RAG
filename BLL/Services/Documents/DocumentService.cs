@@ -209,18 +209,10 @@ public class DocumentService : IDocumentService
             }
             var extractedText = SanitizeForPostgres(extractedTextBuilder.ToString());
 
-            var tempChunks = new List<(string Content, int? PageNumber)>();
-            foreach (var page in pages)
-            {
-                var pageContentClean = SanitizeForPostgres(page.Content);
-                if (string.IsNullOrWhiteSpace(pageContentClean)) continue;
-
-                var pageChunks = DocumentChunker.ChunkText(pageContentClean, indexingOptions.ChunkMinWords, indexingOptions.ChunkMaxWords, indexingOptions.ChunkOverlapWords);
-                foreach (var chunkText in pageChunks)
-                {
-                    tempChunks.Add((chunkText, page.PageNumber));
-                }
-            }
+            var pagesData = pages.Select(p => (Content: SanitizeForPostgres(p.Content), p.PageNumber));
+            var tempChunks = DocumentChunker.ChunkPages(pagesData, indexingOptions.ChunkMinWords, indexingOptions.ChunkMaxWords, indexingOptions.ChunkOverlapWords)
+                .Select(c => (Content: c.Content, PageNumber: c.PageNumber))
+                .ToList();
 
             var chunkEntities = new List<DocumentChunk>();
             var totalChunks = tempChunks.Count;
@@ -1129,6 +1121,9 @@ public class DocumentService : IDocumentService
     public async Task<DocumentReportDto> ReportDocumentAsync(Guid documentId, Guid reporterUserId, string reason, CancellationToken cancellationToken = default)
     {
         if (string.IsNullOrWhiteSpace(reason)) throw new InvalidOperationException("Lý do báo cáo không được để trống.");
+
+        var hasReported = await _documentRepository.HasUserReportedDocumentAsync(documentId, reporterUserId, cancellationToken);
+        if (hasReported) throw new InvalidOperationException("Bạn đã gửi báo cáo cho tài liệu này rồi.");
 
         var document = await _documentRepository.GetDocumentAsync(documentId, cancellationToken);
         if (document is null) throw new InvalidOperationException("Tài liệu không tồn tại.");

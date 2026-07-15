@@ -3,6 +3,7 @@ using System;
 using DAL.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 using Pgvector;
@@ -12,9 +13,11 @@ using Pgvector;
 namespace DAL.Migrations
 {
     [DbContext(typeof(DBContext))]
-    partial class DBContextModelSnapshot : ModelSnapshot
+    [Migration("20260714214924_UpdateSystemSettingsToSnakeCase")]
+    partial class UpdateSystemSettingsToSnakeCase
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -658,31 +661,31 @@ namespace DAL.Migrations
                         new
                         {
                             Id = new Guid("aaaaaaaa-aaaa-aaaa-aaaa-111111111111"),
-                            CreatedAt = new DateTime(2026, 7, 15, 10, 47, 1, 149, DateTimeKind.Utc).AddTicks(8318),
+                            CreatedAt = new DateTime(2026, 7, 14, 21, 49, 23, 804, DateTimeKind.Utc).AddTicks(7619),
                             Name = "Giáo trình"
                         },
                         new
                         {
                             Id = new Guid("aaaaaaaa-aaaa-aaaa-aaaa-222222222222"),
-                            CreatedAt = new DateTime(2026, 7, 15, 10, 47, 1, 149, DateTimeKind.Utc).AddTicks(8320),
+                            CreatedAt = new DateTime(2026, 7, 14, 21, 49, 23, 804, DateTimeKind.Utc).AddTicks(7620),
                             Name = "Slide bài giảng"
                         },
                         new
                         {
                             Id = new Guid("aaaaaaaa-aaaa-aaaa-aaaa-333333333333"),
-                            CreatedAt = new DateTime(2026, 7, 15, 10, 47, 1, 149, DateTimeKind.Utc).AddTicks(8322),
+                            CreatedAt = new DateTime(2026, 7, 14, 21, 49, 23, 804, DateTimeKind.Utc).AddTicks(7638),
                             Name = "Đề thi mẫu"
                         },
                         new
                         {
                             Id = new Guid("aaaaaaaa-aaaa-aaaa-aaaa-444444444444"),
-                            CreatedAt = new DateTime(2026, 7, 15, 10, 47, 1, 149, DateTimeKind.Utc).AddTicks(8323),
+                            CreatedAt = new DateTime(2026, 7, 14, 21, 49, 23, 804, DateTimeKind.Utc).AddTicks(7640),
                             Name = "Tài liệu tham khảo"
                         },
                         new
                         {
                             Id = new Guid("aaaaaaaa-aaaa-aaaa-aaaa-555555555555"),
-                            CreatedAt = new DateTime(2026, 7, 15, 10, 47, 1, 149, DateTimeKind.Utc).AddTicks(8324),
+                            CreatedAt = new DateTime(2026, 7, 14, 21, 49, 23, 804, DateTimeKind.Utc).AddTicks(7641),
                             Name = "Hướng dẫn thực hành"
                         });
                 });
@@ -726,21 +729,21 @@ namespace DAL.Migrations
                         {
                             Id = new Guid("bbbbbbbb-bbbb-bbbb-bbbb-111111111111"),
                             Code = "vi",
-                            CreatedAt = new DateTime(2026, 7, 15, 10, 47, 1, 149, DateTimeKind.Utc).AddTicks(8346),
+                            CreatedAt = new DateTime(2026, 7, 14, 21, 49, 23, 804, DateTimeKind.Utc).AddTicks(7663),
                             Name = "Tiếng Việt"
                         },
                         new
                         {
                             Id = new Guid("bbbbbbbb-bbbb-bbbb-bbbb-222222222222"),
                             Code = "en",
-                            CreatedAt = new DateTime(2026, 7, 15, 10, 47, 1, 149, DateTimeKind.Utc).AddTicks(8348),
+                            CreatedAt = new DateTime(2026, 7, 14, 21, 49, 23, 804, DateTimeKind.Utc).AddTicks(7665),
                             Name = "Tiếng Anh"
                         },
                         new
                         {
                             Id = new Guid("bbbbbbbb-bbbb-bbbb-bbbb-333333333333"),
                             Code = "ja",
-                            CreatedAt = new DateTime(2026, 7, 15, 10, 47, 1, 149, DateTimeKind.Utc).AddTicks(8350),
+                            CreatedAt = new DateTime(2026, 7, 14, 21, 49, 23, 804, DateTimeKind.Utc).AddTicks(7666),
                             Name = "Tiếng Nhật"
                         });
                 });
@@ -824,28 +827,28 @@ namespace DAL.Migrations
                         {
                             Id = new Guid("55555555-5555-5555-5555-555555555555"),
                             Code = "PRN222",
-                            CreatedAt = new DateTime(2026, 7, 15, 10, 47, 1, 149, DateTimeKind.Utc).AddTicks(6243),
+                            CreatedAt = new DateTime(2026, 7, 14, 21, 49, 23, 804, DateTimeKind.Utc).AddTicks(5870),
                             Name = "Phát triển ứng dụng với .NET"
                         },
                         new
                         {
                             Id = new Guid("66666666-6666-6666-6666-666666666666"),
                             Code = "SWD392",
-                            CreatedAt = new DateTime(2026, 7, 15, 10, 47, 1, 149, DateTimeKind.Utc).AddTicks(6246),
+                            CreatedAt = new DateTime(2026, 7, 14, 21, 49, 23, 804, DateTimeKind.Utc).AddTicks(5874),
                             Name = "Kỹ nghệ phần mềm"
                         },
                         new
                         {
                             Id = new Guid("77777777-7777-7777-7777-777777777777"),
                             Code = "DBI202",
-                            CreatedAt = new DateTime(2026, 7, 15, 10, 47, 1, 149, DateTimeKind.Utc).AddTicks(6247),
+                            CreatedAt = new DateTime(2026, 7, 14, 21, 49, 23, 804, DateTimeKind.Utc).AddTicks(5877),
                             Name = "Cơ sở dữ liệu"
                         },
                         new
                         {
                             Id = new Guid("88888888-8888-8888-8888-888888888888"),
                             Code = "PRN231",
-                            CreatedAt = new DateTime(2026, 7, 15, 10, 47, 1, 149, DateTimeKind.Utc).AddTicks(6249),
+                            CreatedAt = new DateTime(2026, 7, 14, 21, 49, 23, 804, DateTimeKind.Utc).AddTicks(5878),
                             Name = "Lập trình ứng dụng phân tán"
                         });
                 });
@@ -880,6 +883,41 @@ namespace DAL.Migrations
                     b.ToTable("system_settings", (string)null);
                 });
 
+            modelBuilder.Entity("DAL.Entities.Tag", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid")
+                        .HasColumnName("id")
+                        .HasDefaultValueSql("uuid_generate_v4()");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("created_at")
+                        .HasDefaultValueSql("now()");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)")
+                        .HasColumnName("name");
+
+                    b.Property<string>("Slug")
+                        .IsRequired()
+                        .HasMaxLength(120)
+                        .HasColumnType("character varying(120)")
+                        .HasColumnName("slug");
+
+                    b.HasKey("Id")
+                        .HasName("tags_pkey");
+
+                    b.HasIndex(new[] { "Name" }, "tags_name_key")
+                        .IsUnique();
+
+                    b.ToTable("tags", (string)null);
+                });
+
             modelBuilder.Entity("DAL.Entities.TokenUsage", b =>
                 {
                     b.Property<Guid>("Id")
@@ -912,12 +950,6 @@ namespace DAL.Migrations
                         .HasColumnName("usage_date")
                         .HasDefaultValueSql("CURRENT_DATE");
 
-                    b.Property<byte>("UsageHour")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("smallint")
-                        .HasDefaultValue((byte)0)
-                        .HasColumnName("usage_hour");
-
                     b.Property<Guid>("UserId")
                         .HasColumnType("uuid")
                         .HasColumnName("user_id");
@@ -929,7 +961,7 @@ namespace DAL.Migrations
 
                     b.HasIndex(new[] { "UserId" }, "idx_token_usage_user_id");
 
-                    b.HasIndex(new[] { "UserId", "UsageDate", "UsageHour" }, "token_usage_user_date_key")
+                    b.HasIndex(new[] { "UserId", "UsageDate" }, "token_usage_user_date_key")
                         .IsUnique();
 
                     b.ToTable("token_usage", (string)null);
@@ -1153,6 +1185,24 @@ namespace DAL.Migrations
                     b.HasIndex("SubjectId");
 
                     b.ToTable("user_subjects", (string)null);
+                });
+
+            modelBuilder.Entity("DocumentTag", b =>
+                {
+                    b.Property<Guid>("DocumentId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("document_id");
+
+                    b.Property<Guid>("TagId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("tag_id");
+
+                    b.HasKey("DocumentId", "TagId")
+                        .HasName("document_tags_pkey");
+
+                    b.HasIndex(new[] { "TagId" }, "idx_document_tags_tag_id");
+
+                    b.ToTable("document_tags", (string)null);
                 });
 
             modelBuilder.Entity("DAL.Entities.AuditLog", b =>
@@ -1411,6 +1461,23 @@ namespace DAL.Migrations
                     b.Navigation("Subject");
 
                     b.Navigation("User");
+                });
+
+            modelBuilder.Entity("DocumentTag", b =>
+                {
+                    b.HasOne("DAL.Entities.Document", null)
+                        .WithMany()
+                        .HasForeignKey("DocumentId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired()
+                        .HasConstraintName("document_tags_document_id_fkey");
+
+                    b.HasOne("DAL.Entities.Tag", null)
+                        .WithMany()
+                        .HasForeignKey("TagId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired()
+                        .HasConstraintName("document_tags_tag_id_fkey");
                 });
 
             modelBuilder.Entity("DAL.Entities.ChatSession", b =>
