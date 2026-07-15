@@ -1,0 +1,182 @@
+@page "/Admin/Dashboard"
+@model GUI.Pages.Admin.DashboardModel
+@{
+    ViewData["Title"] = "Dashboard Report & Statistics";
+}
+
+<div class="page-shell grain">
+    <main class="container-fluid px-4 px-md-5 py-5" style="max-width: 1300px;">
+        <!-- Top Heading Area -->
+        <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center mb-5 gap-4">
+            <div>
+                <span class="font-mono-xs text-muted-foreground" style="font-weight: 700; letter-spacing: 0.15em;">STUDYMATE AI ADMIN</span>
+                <h1 class="hero-title mt-2 mb-3" style="font-size: clamp(2.5rem, 5vw, 3.5rem); color: var(--brown); line-height: 1.1;">Report & Statistics</h1>
+                <p class="text-muted-foreground mb-3" style="font-size: 15px; font-weight: 400; max-width: 700px;">
+                    Tổng quan hệ thống, tình trạng xử lý tài liệu và các đánh giá tự động từ trợ lý ảo.
+                </p>
+            </div>
+            <div class="d-flex align-items-center gap-2 text-muted-foreground" style="font-size: 14px;">
+                <i class="bi bi-calendar3"></i>
+                <span>Cập nhật lúc @DateTime.Now.ToString("HH:mm, dd/MM/yyyy")</span>
+                <span class="badge rounded-pill bg-warning text-dark ms-2">Dữ liệu Mock</span>
+            </div>
+        </div>
+
+        <!-- BENTO GRID LAYOUT -->
+        <div class="row g-4 mb-4">
+            <!-- ROW 1: MINI OVERVIEW CARDS (1/4 width each) -->
+            <!-- Token -->
+            <div class="col-12 col-md-6 col-lg-3">
+                <div class="feature-card-premium h-100 d-flex flex-column justify-content-between p-4" style="background: rgba(255, 255, 255, 0.75); backdrop-filter: blur(12px); border-radius: 16px; border: 1px solid rgba(82, 39, 27, 0.1);">
+                    <div class="d-flex justify-content-between align-items-start mb-4">
+                        <h3 class="font-mono-xs text-muted-foreground m-0" style="font-weight: 700; font-size: 11px;">TOKEN ĐÃ TIÊU (7 NGÀY)</h3>
+                        <i class="bi bi-coin" style="color: var(--brown);"></i>
+                    </div>
+                    <div>
+                        <p class="font-display mb-1" style="font-size: 2rem; color: var(--brown); font-weight: 800; line-height: 1;">145,200</p>
+                        <p class="text-muted-foreground mb-0" style="font-size: 12px;">Dữ liệu từ bảng token_usage</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Documents -->
+            <div class="col-12 col-md-6 col-lg-3">
+                <div class="feature-card-premium h-100 d-flex flex-column justify-content-between p-4" style="background: rgba(255, 255, 255, 0.75); backdrop-filter: blur(12px); border-radius: 16px; border: 1px solid rgba(82, 39, 27, 0.1);">
+                    <div class="d-flex justify-content-between align-items-start mb-4">
+                        <h3 class="font-mono-xs text-muted-foreground m-0" style="font-weight: 700; font-size: 11px;">TÀI LIỆU (KNOWLEDGE BASE)</h3>
+                        <i class="bi bi-book" style="color: var(--brown);"></i>
+                    </div>
+                    <div>
+                        <p class="font-display mb-1" style="font-size: 2rem; color: var(--brown); font-weight: 800; line-height: 1;">128</p>
+                        <p class="text-muted-foreground mb-0" style="font-size: 12px;">Tổng cộng 3,450 chunks</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Chat Sessions -->
+            <div class="col-12 col-md-6 col-lg-3">
+                <div class="feature-card-premium h-100 d-flex flex-column justify-content-between p-4" style="background: rgba(255, 255, 255, 0.75); backdrop-filter: blur(12px); border-radius: 16px; border: 1px solid rgba(82, 39, 27, 0.1);">
+                    <div class="d-flex justify-content-between align-items-start mb-4">
+                        <h3 class="font-mono-xs text-muted-foreground m-0" style="font-weight: 700; font-size: 11px;">PHIÊN CHAT ACTIVE</h3>
+                        <i class="bi bi-chat-dots" style="color: var(--brown);"></i>
+                    </div>
+                    <div>
+                        <p class="font-display mb-1" style="font-size: 2rem; color: var(--brown); font-weight: 800; line-height: 1;">42</p>
+                        <p class="text-muted-foreground mb-0" style="font-size: 12px;"><span class="text-success fw-bold">+5</span> so với hôm qua</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- RAG Latency -->
+            <div class="col-12 col-md-6 col-lg-3">
+                <div class="feature-card-premium h-100 d-flex flex-column justify-content-between p-4" style="background: rgba(255, 255, 255, 0.75); backdrop-filter: blur(12px); border-radius: 16px; border: 1px solid rgba(82, 39, 27, 0.1);">
+                    <div class="d-flex justify-content-between align-items-start mb-4">
+                        <h3 class="font-mono-xs text-muted-foreground m-0" style="font-weight: 700; font-size: 11px;">TỐC ĐỘ RAG TRUNG BÌNH</h3>
+                        <i class="bi bi-lightning-charge" style="color: var(--brown);"></i>
+                    </div>
+                    <div>
+                        <p class="font-display mb-1" style="font-size: 2rem; color: var(--brown); font-weight: 800; line-height: 1;">1.8s</p>
+                        <p class="text-muted-foreground mb-0" style="font-size: 12px;">Phản hồi ổn định (Tốt)</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ROW 2 & 3: Charts and Logs -->
+        <div class="row g-4 mb-5">
+            <!-- Main Chart (Span 8 out of 12) -->
+            <div class="col-12 col-lg-8 d-flex flex-column">
+                <div class="feature-card-premium h-100 d-flex flex-column p-4" style="background: rgba(255, 255, 255, 0.75); backdrop-filter: blur(12px); border-radius: 16px; border: 1px solid rgba(82, 39, 27, 0.1); min-height: 300px;">
+                    <div class="d-flex justify-content-between align-items-center mb-4">
+                        <h3 class="hero-title m-0" style="font-size: 1.25rem; color: var(--brown);">Biểu Đồ Tiêu Thụ Token</h3>
+                        <button class="btn btn-sm btn-outline-secondary" style="border-radius: 8px;">Tuần này</button>
+                    </div>
+                    <div class="flex-grow-1 d-flex align-items-center justify-content-center" style="border: 1px dashed rgba(82, 39, 27, 0.2); border-radius: 8px; background: rgba(255,255,255,0.4);">
+                        <p class="text-muted-foreground" style="font-size: 13px;">[Placeholder: Biểu đồ đường (Line Chart) biểu diễn Token In/Out mỗi ngày]</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Side Panel (Span 4 out of 12) -->
+            <div class="col-12 col-lg-4 d-flex flex-column">
+                <div class="feature-card-premium h-100 d-flex flex-column p-4" style="background: rgba(255, 255, 255, 0.75); backdrop-filter: blur(12px); border-radius: 16px; border: 1px solid rgba(82, 39, 27, 0.1);">
+                    <h3 class="hero-title mb-4" style="font-size: 1.25rem; color: var(--brown);">Tình Trạng Xử Lý (Upload Jobs)</h3>
+                    
+                    <div class="mb-3">
+                        <div class="d-flex justify-content-between mb-1" style="font-size: 13px;">
+                            <span class="fw-medium text-dark">Hoàn tất (Thành công)</span>
+                            <span class="fw-bold text-success">92%</span>
+                        </div>
+                        <div class="progress" style="height: 8px; border-radius: 99px; background: rgba(82, 39, 27, 0.08);">
+                            <div class="progress-bar bg-success" style="width: 92%; border-radius: 99px;"></div>
+                        </div>
+                    </div>
+
+                    <div class="mb-4">
+                        <div class="d-flex justify-content-between mb-1" style="font-size: 13px;">
+                            <span class="fw-medium text-dark">Lỗi trích xuất Text (PDF Scan)</span>
+                            <span class="fw-bold text-danger">8%</span>
+                        </div>
+                        <div class="progress" style="height: 8px; border-radius: 99px; background: rgba(82, 39, 27, 0.08);">
+                            <div class="progress-bar bg-danger" style="width: 8%; border-radius: 99px;"></div>
+                        </div>
+                    </div>
+
+                    <div class="mt-auto pt-3 border-top" style="border-color: rgba(82, 39, 27, 0.1) !important;">
+                        <p class="text-muted-foreground mb-0" style="font-size: 12px;">
+                            <i class="bi bi-info-circle me-1"></i> Tỷ lệ lỗi font/scan chiếm đa số.
+                        </p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Audit Logs (Span 6 out of 12) -->
+            <div class="col-12 col-lg-6">
+                <div class="feature-card-premium h-100 p-4" style="background: rgba(255, 255, 255, 0.75); backdrop-filter: blur(12px); border-radius: 16px; border: 1px solid rgba(82, 39, 27, 0.1);">
+                    <h3 class="hero-title mb-4" style="font-size: 1.25rem; color: var(--brown);">Nhật Ký Quản Trị Hệ Thống (Audit Logs)</h3>
+                    
+                    <div class="d-flex gap-3 mb-3 pb-3 border-bottom" style="border-color: rgba(82, 39, 27, 0.08) !important;">
+                        <i class="bi bi-gear text-muted"></i>
+                        <div class="flex-grow-1">
+                            <p class="mb-0 fw-medium" style="color: var(--foreground); font-size: 14px;">Admin đã cập nhật cấu hình Chunking</p>
+                            <p class="text-muted-foreground mb-0" style="font-size: 12px;">Min: 50 | Max: 500 | Overlap: 80</p>
+                        </div>
+                        <span class="text-muted-foreground" style="font-size: 12px;">5 phút trước</span>
+                    </div>
+
+                    <div class="d-flex gap-3 mb-3 pb-3 border-bottom" style="border-color: rgba(82, 39, 27, 0.08) !important;">
+                        <i class="bi bi-file-earmark-minus text-danger"></i>
+                        <div class="flex-grow-1">
+                            <p class="mb-0 fw-medium" style="color: var(--foreground); font-size: 14px;">Hệ thống xóa 1 tài liệu lỗi (Gomaa software.pdf)</p>
+                            <p class="text-muted-foreground mb-0" style="font-size: 12px;">Phát hiện văn bản xáo trộn</p>
+                        </div>
+                        <span class="text-muted-foreground" style="font-size: 12px;">15 phút trước</span>
+                    </div>
+
+                    <div class="d-flex gap-3">
+                        <i class="bi bi-file-earmark-plus text-success"></i>
+                        <div class="flex-grow-1">
+                            <p class="mb-0 fw-medium" style="color: var(--foreground); font-size: 14px;">User #124 upload tài liệu mới</p>
+                            <p class="text-muted-foreground mb-0" style="font-size: 12px;">Lập trình cơ bản.pdf (4.2 MB)</p>
+                        </div>
+                        <span class="text-muted-foreground" style="font-size: 12px;">1 giờ trước</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- AI Insight (Span 6 out of 12) -->
+            <div class="col-12 col-lg-6">
+                <div class="feature-card-premium h-100 p-4" style="background: linear-gradient(135deg, rgba(255,255,255,0.8), rgba(255,255,255,0.3)); backdrop-filter: blur(12px); border-radius: 16px; border: 1px solid rgba(82, 39, 27, 0.1);">
+                    <h3 class="hero-title mb-3" style="font-size: 1.25rem; color: var(--brown);">Đánh Giá Từ Trợ Lý Ảo</h3>
+                    <p class="text-muted-foreground mb-4" style="font-size: 14px; line-height: 1.6;">
+                        Hệ thống đang hoạt động ổn định. Tốc độ truy xuất RAG ở mức 1.8s (tối ưu). Chi phí Token tuần này tiêu tốn khoảng <span class="fw-bold" style="color: var(--brown);">$1.2</span>. Tuy nhiên, ghi nhận 8% tài liệu đầu vào là ảnh/scan không thể đọc, kiến nghị tích hợp thêm OCR.
+                    </p>
+                    <button class="btn btn-premium-primary w-100 py-2" style="border-radius: 8px;">
+                        Xuất Báo Cáo PDF
+                    </button>
+                </div>
+            </div>
+        </div>
+
+    </main>
+</div>

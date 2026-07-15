@@ -30,5 +30,4 @@ public class HeroStatsDto
     public long TotalDocTokens { get; set; }
     public UserTokenUsageDto? TopConsumer { get; set; }
     public int DailyAvgTokens { get; set; }
-    public int WeeklyApiRequests { get; set; }
 }

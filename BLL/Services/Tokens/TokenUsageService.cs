@@ -129,10 +129,9 @@ public class TokenUsageService : ITokenUsageService
         var sumChat = userList.Sum(u => u.ChatTokens);
         var sumDoc = userList.Sum(u => u.DocTokens);
 
-        // Tổng token 7 ngày qua để tính trung bình ngày và lượt gọi API
+        // Tổng token 7 ngày qua để tính trung bình ngày
         var last7DaysTotal = userList.Sum(u => u.SparklineData.Sum());
         var dailyAvg = (int)Math.Round(last7DaysTotal / 7.0);
-        int weeklyApiRequests = Math.Max(1, (int)(last7DaysTotal / 15));
 
         var heroStats = new HeroStatsDto
         {
@@ -140,8 +139,7 @@ public class TokenUsageService : ITokenUsageService
             TotalChatTokens = sumChat,
             TotalDocTokens = sumDoc,
             TopConsumer = topConsumer,
-            DailyAvgTokens = dailyAvg,
-            WeeklyApiRequests = weeklyApiRequests
+            DailyAvgTokens = dailyAvg
         };
 
         return (userList, heroStats);
