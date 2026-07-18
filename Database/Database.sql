@@ -399,3 +399,12 @@ CREATE TABLE public.token_usage (
 );
 CREATE INDEX idx_token_usage_user_id ON public.token_usage USING btree (user_id);
 CREATE INDEX idx_token_usage_usage_date ON public.token_usage USING btree (usage_date);
+
+-- ==========================================
+-- 10. SEED DATA
+-- ==========================================
+INSERT INTO public.system_settings (key, value, description) 
+VALUES 
+('DailyTokenLimit_Student', '0', 'Giới hạn số token tối đa 1 Sinh viên được sử dụng trong 1 ngày (bao gồm cả Chat và Chia chương). 0 = Không giới hạn.'),
+('DailyTokenLimit_Lecturer', '0', 'Giới hạn số token tối đa 1 Giảng viên được sử dụng trong 1 ngày (bao gồm cả Chat và Chia chương). 0 = Không giới hạn.')
+ON CONFLICT (key) DO NOTHING;

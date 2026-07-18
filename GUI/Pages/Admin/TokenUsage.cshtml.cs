@@ -57,6 +57,12 @@ namespace GUI.Pages.Admin
         [BindProperty]
         public int ChunkOverlapWords { get; set; }
 
+        [BindProperty]
+        public int StudentDailyTokenLimit { get; set; }
+
+        [BindProperty]
+        public int LecturerDailyTokenLimit { get; set; }
+
         public async Task OnGetAsync()
         {
             _logger.LogInformation("Admin loading TokenUsage page with FilterRole={FilterRole}, SearchTerm={SearchTerm}, SortBy={SortBy}", FilterRole, SearchTerm, SortBy);
@@ -72,6 +78,9 @@ namespace GUI.Pages.Admin
             ChunkMinWords = chunkSettings.ChunkMinWords;
             ChunkMaxWords = chunkSettings.ChunkMaxWords;
             ChunkOverlapWords = chunkSettings.ChunkOverlapWords;
+
+            StudentDailyTokenLimit = await _systemSettingService.GetStudentDailyTokenLimitAsync(HttpContext.RequestAborted);
+            LecturerDailyTokenLimit = await _systemSettingService.GetLecturerDailyTokenLimitAsync(HttpContext.RequestAborted);
 
             // Filter by Role
             var query = UserTokensList.AsEnumerable();
@@ -118,6 +127,20 @@ namespace GUI.Pages.Admin
 
             await _systemSettingService.UpdateChunkingSettingsAsync(ChunkMinWords, ChunkMaxWords, ChunkOverlapWords, HttpContext.RequestAborted);
             TempData["SuccessMessage"] = "Đã cập nhật cấu hình Chunking thành công!";
+            return RedirectToPage();
+        }
+
+        public async Task<IActionResult> OnPostUpdateDailyLimitAsync()
+        {
+            if (StudentDailyTokenLimit < 0 || LecturerDailyTokenLimit < 0)
+            {
+                TempData["ErrorMessage"] = "Giới hạn token không hợp lệ (phải >= 0).";
+                return RedirectToPage();
+            }
+
+            await _systemSettingService.UpdateStudentDailyTokenLimitAsync(StudentDailyTokenLimit, HttpContext.RequestAborted);
+            await _systemSettingService.UpdateLecturerDailyTokenLimitAsync(LecturerDailyTokenLimit, HttpContext.RequestAborted);
+            TempData["SuccessMessage"] = "Đã cập nhật giới hạn Token sử dụng trong ngày thành công!";
             return RedirectToPage();
         }
     }

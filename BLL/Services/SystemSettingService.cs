@@ -47,4 +47,41 @@ public class SystemSettingService : ISystemSettingService
 
         await _repository.SetValuesAsync(updates, cancellationToken);
     }
+    public async Task<int> GetStudentDailyTokenLimitAsync(CancellationToken cancellationToken = default)
+    {
+        var settings = await _repository.GetAllSettingsAsync(cancellationToken);
+        if (settings.TryGetValue("DailyTokenLimit_Student", out var limitStr) && int.TryParse(limitStr, out var limit))
+        {
+            return limit;
+        }
+        return 0; // 0 indicates unlimited if not configured
+    }
+
+    public async Task UpdateStudentDailyTokenLimitAsync(int dailyTokenLimit, CancellationToken cancellationToken = default)
+    {
+        var updates = new Dictionary<string, string>
+        {
+            { "DailyTokenLimit_Student", dailyTokenLimit.ToString() }
+        };
+        await _repository.SetValuesAsync(updates, cancellationToken);
+    }
+
+    public async Task<int> GetLecturerDailyTokenLimitAsync(CancellationToken cancellationToken = default)
+    {
+        var settings = await _repository.GetAllSettingsAsync(cancellationToken);
+        if (settings.TryGetValue("DailyTokenLimit_Lecturer", out var limitStr) && int.TryParse(limitStr, out var limit))
+        {
+            return limit;
+        }
+        return 0; // 0 indicates unlimited if not configured
+    }
+
+    public async Task UpdateLecturerDailyTokenLimitAsync(int dailyTokenLimit, CancellationToken cancellationToken = default)
+    {
+        var updates = new Dictionary<string, string>
+        {
+            { "DailyTokenLimit_Lecturer", dailyTokenLimit.ToString() }
+        };
+        await _repository.SetValuesAsync(updates, cancellationToken);
+    }
 }

@@ -42,6 +42,11 @@ public class ChatService : IChatService
     /// </summary>
     public async Task<ChatResponse> SendMessageAsync(Guid userId, ChatRequest request, CancellationToken cancellationToken = default)
     {
+        if (await _tokenUsageService.IsDailyLimitExceededAsync(userId, cancellationToken))
+        {
+            throw new InvalidOperationException("Vượt quá giới hạn token trong ngày. Vui lòng thử lại vào ngày mai.");
+        }
+
         try
         {
             // 1. Tạo hoặc lấy Session
@@ -117,6 +122,11 @@ public class ChatService : IChatService
         ChatRequest request,
         [EnumeratorCancellation] CancellationToken cancellationToken = default)
     {
+        if (await _tokenUsageService.IsDailyLimitExceededAsync(userId, cancellationToken))
+        {
+            throw new InvalidOperationException("Vượt quá giới hạn token trong ngày. Vui lòng thử lại vào ngày mai.");
+        }
+
         // 1-5: Chuẩn bị giống SendMessageAsync
         var session = await GetOrCreateSessionAsync(userId, request, cancellationToken);
         await SaveUserMessageAsync(userId, session.Id, request.Message, cancellationToken);
@@ -319,7 +329,7 @@ public class ChatService : IChatService
         if (chunks.Count == 0)
         {
             contextBuilder.AppendLine("[CONTEXT]");
-            contextBuilder.AppendLine("Không có tài liệu nào được cung cấp.");
+            contextBuilder.AppendLine("No documents provided.");
             contextBuilder.AppendLine("[/CONTEXT]");
         }
         else
@@ -332,13 +342,13 @@ public class ChatService : IChatService
                 var chapterTitle = chunk.Chapter?.Title ?? "N/A";
                 var page = (chunk.PageNumber.HasValue && chunk.PageNumber.Value > 0)
                     ? chunk.PageNumber.Value.ToString()
-                    : "không có";
+                    : "N/A";
 
                 contextBuilder.AppendLine($"--- Chunk {i + 1} ---");
-                contextBuilder.AppendLine($"Tài liệu: {docTitle}");
-                contextBuilder.AppendLine($"Chương: {chapterTitle}");
-                contextBuilder.AppendLine($"Trang: {page}");
-                contextBuilder.AppendLine("Nội dung:");
+                contextBuilder.AppendLine($"Document: {docTitle}");
+                contextBuilder.AppendLine($"Chapter: {chapterTitle}");
+                contextBuilder.AppendLine($"Page: {page}");
+                contextBuilder.AppendLine("Content:");
                 contextBuilder.AppendLine(chunk.Content);
                 contextBuilder.AppendLine();
             }

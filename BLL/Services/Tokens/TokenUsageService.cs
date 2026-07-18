@@ -4,6 +4,7 @@ using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using BLL.DTOs.Tokens;
+using BLL.Interfaces;
 using BLL.Interfaces.Tokens;
 using DAL.Interfaces.Auth;
 using DAL.Interfaces.Tokens;
@@ -17,17 +18,20 @@ public class TokenUsageService : ITokenUsageService
     private readonly IAuthRepository _authRepo;
     private readonly ILogger<TokenUsageService> _logger;
     private readonly BLL.Interfaces.Notifications.INotificationService _notificationService;
+    private readonly ISystemSettingService _systemSettingService;
 
     public TokenUsageService(
         ITokenUsageRepository tokenRepo,
         IAuthRepository authRepo,
         ILogger<TokenUsageService> logger,
-        BLL.Interfaces.Notifications.INotificationService notificationService)
+        BLL.Interfaces.Notifications.INotificationService notificationService,
+        ISystemSettingService systemSettingService)
     {
         _tokenRepo = tokenRepo;
         _authRepo = authRepo;
         _logger = logger;
         _notificationService = notificationService;
+        _systemSettingService = systemSettingService;
     }
 
     public async Task RecordChatTokensAsync(Guid userId, int tokens, CancellationToken cancellationToken = default)
@@ -191,5 +195,35 @@ public class TokenUsageService : ITokenUsageService
         };
 
         return (userList, heroStats);
+    }
+
+    public async Task<bool> IsDailyLimitExceededAsync(Guid userId, CancellationToken cancellationToken = default)
+    {
+        var user = await _authRepo.GetUserByIdAsync(userId, cancellationToken);
+        if (user == null) return false;
+
+        int limit = 0;
+        if (user.RoleId == 3) // Student
+        {
+            limit = await _systemSettingService.GetStudentDailyTokenLimitAsync(cancellationToken);
+        }
+        else if (user.RoleId == 2) // Lecturer
+        {
+            limit = await _systemSettingService.GetLecturerDailyTokenLimitAsync(cancellationToken);
+        }
+        else
+        {
+            return false; // Admin or other roles have no limit
+        }
+
+        if (limit <= 0) return false;
+
+        var now = DateTime.UtcNow.AddHours(7);
+        var today = DateOnly.FromDateTime(now);
+        
+        var todayUsages = await _tokenRepo.GetByUserAndDateRangeAsync(userId, today, today, cancellationToken);
+        long totalToday = todayUsages.Sum(u => (long)u.ChatTokens + u.DocTokens);
+
+        return totalToday >= limit;
     }
 }

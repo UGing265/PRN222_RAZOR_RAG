@@ -125,8 +125,15 @@ public static class ChatEndpoints
             if (!request.SessionId.HasValue && (request.DocumentIds == null || request.DocumentIds.Count == 0))
                 return Results.BadRequest(new { error = "Vui lòng chọn ít nhất một tài liệu để bắt đầu chat." });
 
-            var response = await chat.SendMessageAsync(userId, request, ct);
-            return Results.Ok(response);
+            try
+            {
+                var response = await chat.SendMessageAsync(userId, request, ct);
+                return Results.Ok(response);
+            }
+            catch (InvalidOperationException ex)
+            {
+                return Results.BadRequest(new { error = ex.Message });
+            }
         });
 
         group.MapPost("/messages/stream", async (
@@ -182,6 +189,12 @@ public static class ChatEndpoints
             catch (OperationCanceledException)
             {
                 logger.LogDebug("Stream cancelled by client.");
+            }
+            catch (InvalidOperationException ex)
+            {
+                logger.LogWarning(ex, "Invalid operation during stream.");
+                await http.Response.WriteAsync($"data: [ERROR] {ex.Message}\n\n", ct);
+                await http.Response.Body.FlushAsync(ct);
             }
             catch (Exception ex)
             {

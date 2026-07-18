@@ -94,6 +94,11 @@ public class DocumentService : IDocumentService
 
     public async Task<DocumentCreateResultDto> CreateDocumentAsync(DocumentCreateInput input, IFormFile file, CancellationToken cancellationToken = default)
     {
+        if (await _tokenUsageService.IsDailyLimitExceededAsync(input.OwnerUserId, cancellationToken))
+        {
+            throw new InvalidOperationException("Tài khoản của bạn đã vượt quá giới hạn token sử dụng trong ngày. Vui lòng thử lại vào ngày mai.");
+        }
+
         ValidateFile(file);
 
         // Compute MD5 hash of the uploaded file to detect duplicates

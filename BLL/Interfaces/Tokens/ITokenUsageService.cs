@@ -11,4 +11,5 @@ public interface ITokenUsageService
     Task RecordChatTokensAsync(Guid userId, int tokens, CancellationToken cancellationToken = default);
     Task RecordDocTokensAsync(Guid userId, int tokens, CancellationToken cancellationToken = default);
     Task<(List<UserTokenUsageDto> users, HeroStatsDto heroStats)> GetTokenUsageReportAsync(CancellationToken cancellationToken = default);
+    Task<bool> IsDailyLimitExceededAsync(Guid userId, CancellationToken cancellationToken = default);
 }

@@ -17,6 +17,9 @@
                 </p>
             </div>
             <div class="d-flex align-items-center">
+                <button type="button" class="btn me-2" data-bs-toggle="modal" data-bs-target="#dailyLimitConfigModal" style="background: rgba(255, 255, 255, 0.5); border: 1px solid var(--border-crisp); color: var(--text-primary); font-weight: 500; font-size: 14px; border-radius: 8px; padding: 0.5rem 1rem; transition: all 0.2s ease;">
+                    <i class="bi bi-shield-lock-fill me-2" style="color: var(--text-muted);"></i>Giới Hạn Token
+                </button>
                 <button type="button" class="btn" data-bs-toggle="modal" data-bs-target="#chunkingConfigModal" style="background: rgba(255, 255, 255, 0.5); border: 1px solid var(--border-crisp); color: var(--text-primary); font-weight: 500; font-size: 14px; border-radius: 8px; padding: 0.5rem 1rem; transition: all 0.2s ease;">
                     <i class="bi bi-gear-fill me-2" style="color: var(--text-muted);"></i>Cấu Hình Chunking
                 </button>
@@ -408,6 +411,39 @@
                         <input asp-for="ChunkOverlapWords" type="number" class="form-control" style="border-radius: 12px; font-size: 14px; border: 1px solid rgba(82, 39, 27, 0.15); background: rgba(255, 255, 255, 0.6); padding: 0.6rem 1rem;" required min="0" max="5000" />
                         <div class="form-text mt-2" style="font-size: 13px; color: var(--text-muted);">
                             Số từ lặp lại giữa các đoạn liền kề giúp giữ lại ngữ cảnh. Nên đặt nhỏ hơn Chunk Max Words.
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer border-0 px-4 py-3 d-flex justify-content-end gap-2" style="border-top: 1px solid rgba(82, 39, 27, 0.08) !important; background: rgba(255, 255, 255, 0.3);">
+                    <button type="button" class="btn btn-outline-dark pill-button px-4 py-2 fw-semibold" data-bs-dismiss="modal" style="border-color: rgba(82, 39, 27, 0.15); font-size: 13.5px;">Đóng</button>
+                    <button type="submit" class="btn pill-button px-4 py-2 fw-semibold shadow-sm" style="background: var(--brown); color: #FFFFFF; font-size: 13.5px; border: none; transition: all 0.2s ease;">Lưu Thay Đổi</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Modal Config Daily Limit -->
+<div class="modal fade" id="dailyLimitConfigModal" tabindex="-1" aria-labelledby="dailyLimitConfigModalLabel" aria-hidden="true" style="backdrop-filter: blur(10px); background: rgba(74, 31, 22, 0.2);">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content border-0 shadow-lg" style="background: var(--card); border-radius: 22px; color: var(--foreground); overflow: hidden; border: 1px solid rgba(82, 39, 27, 0.1) !important;">
+            <div class="modal-header border-0 px-4 py-3 d-flex justify-content-between align-items-center" style="border-bottom: 1px solid rgba(82, 39, 27, 0.08) !important;">
+                <h5 class="modal-title font-serif tracking-tight" id="dailyLimitConfigModalLabel" style="font-weight: 600; font-size: 1.25rem; color: var(--brown);">
+                    <i class="bi bi-shield-lock-fill me-2" style="color: rgba(82, 39, 27, 0.6);"></i>Cấu Hình Giới Hạn Token
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close" style="background-color: rgba(82, 39, 27, 0.05); padding: 0.5rem; border-radius: 50%;"></button>
+            </div>
+            <form method="post" asp-page-handler="UpdateDailyLimit">
+                <div class="modal-body px-4 py-4">
+                    <div class="mb-3">
+                        <label asp-for="StudentDailyTokenLimit" class="form-label" style="font-size: 14px; font-weight: 600; color: var(--brown);">Giới hạn Token cho Sinh viên (Student)</label>
+                        <input asp-for="StudentDailyTokenLimit" type="number" class="form-control" style="border-radius: 12px; font-size: 14px; border: 1px solid rgba(82, 39, 27, 0.15); background: rgba(255, 255, 255, 0.6); padding: 0.6rem 1rem;" required min="0" />
+                    </div>
+                    <div class="mb-2">
+                        <label asp-for="LecturerDailyTokenLimit" class="form-label" style="font-size: 14px; font-weight: 600; color: var(--brown);">Giới hạn Token cho Giảng viên (Lecturer)</label>
+                        <input asp-for="LecturerDailyTokenLimit" type="number" class="form-control" style="border-radius: 12px; font-size: 14px; border: 1px solid rgba(82, 39, 27, 0.15); background: rgba(255, 255, 255, 0.6); padding: 0.6rem 1rem;" required min="0" />
+                        <div class="form-text mt-2" style="font-size: 13px; color: var(--text-muted);">
+                            Số token tối đa một user được sử dụng trong 1 ngày (bao gồm cả Chat và Chia chương/Tài liệu). Đặt giá trị <strong>0</strong> để không giới hạn.
                         </div>
                     </div>
                 </div>
