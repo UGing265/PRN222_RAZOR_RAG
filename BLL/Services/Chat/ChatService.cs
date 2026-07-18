@@ -66,7 +66,8 @@ public class ChatService : IChatService
                 relevantChunks = new List<DocumentChunk>();
                 foreach (var docId in request.DocumentIds)
                 {
-                    var chunks = await _chatRepository.SearchSimilarChunksAsync(queryEmbedding, 3, new List<Guid> { docId }, cancellationToken);
+                    // Lấy Top 5 chunks cho mỗi file để đảm bảo đủ dữ liệu so sánh
+                    var chunks = await _chatRepository.SearchSimilarChunksAsync(queryEmbedding, 5, new List<Guid> { docId }, cancellationToken);
                     relevantChunks.AddRange(chunks);
                 }
             }
@@ -128,7 +129,8 @@ public class ChatService : IChatService
             relevantChunks = new List<DocumentChunk>();
             foreach (var docId in request.DocumentIds)
             {
-                var chunks = await _chatRepository.SearchSimilarChunksAsync(queryEmbedding, 3, new List<Guid> { docId }, cancellationToken);
+                // Lấy Top 5 chunks cho mỗi file để đảm bảo đủ dữ liệu so sánh
+                var chunks = await _chatRepository.SearchSimilarChunksAsync(queryEmbedding, 5, new List<Guid> { docId }, cancellationToken);
                 relevantChunks.AddRange(chunks);
             }
         }

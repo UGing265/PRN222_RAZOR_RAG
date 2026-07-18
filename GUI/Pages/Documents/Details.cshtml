@@ -143,12 +143,14 @@
                 }
                 else if (roleId == 2 || roleId == 3)
                 {
+                    @* Report UI hidden per user request
                     <button type="button" class="btn btn-premium-danger pill-button px-4 py-2.5 d-inline-flex align-items-center gap-2" style="font-size: 0.88rem;" data-bs-toggle="modal" data-bs-target="#reportModal">
                         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
                             <path d="M4 15s1-1 4-1 5 2 8 2 4-1 4-1V3s-1 1-4 1-5-2-8-2-4 1-4 1z"/><line x1="4" y1="22" x2="4" y2="15"/>
                         </svg>
                         Báo Cáo Vi Phạm
                     </button>
+                    *@
                 }
             </div>
         </div>
@@ -409,7 +411,8 @@
     </div>
 </div>
 
-<!-- Report Modal -->
+@section Modals {
+    <!-- Report Modal -->
 <div class="modal fade" id="reportModal" tabindex="-1" aria-labelledby="reportModalLabel" aria-hidden="true" style="backdrop-filter: blur(8px); background: rgba(139, 0, 0, 0.05);">
     <div class="modal-dialog modal-dialog-centered" style="max-width: 500px;">
         <div class="modal-content border-0 shadow-lg" style="background: var(--card); border-radius: 24px; color: var(--foreground); overflow: hidden;">
@@ -437,27 +440,31 @@
 </div>
 
 <!-- Chunk Modals -->
-@if (Model.ViewModel.Chunks.Any())
-{
-    foreach (var chunk in Model.ViewModel.Chunks)
+<div id="chunk-modals-container">
+    @if (Model.ViewModel.Chunks.Any())
     {
-        <div class="modal fade" id="chunkModal-@chunk.ChunkOrder" tabindex="-1" aria-hidden="true" style="backdrop-filter: blur(8px); background: rgba(82, 39, 27, 0.05);">
-            <div class="modal-dialog modal-dialog-centered modal-lg modal-dialog-scrollable">
-                <div class="modal-content border-0 shadow-lg" style="background: var(--card); border-radius: 24px; color: var(--foreground); overflow: hidden;">
-                    <div class="modal-header border-0 p-4 pb-0 d-flex justify-content-between align-items-center">
-                        <h5 class="modal-title fw-bold" style="font-size: 1.25rem; color: var(--brown);">Nội dung phân đoạn @chunk.ChunkOrder</h5>
-                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close" style="background-color: rgba(0, 0, 0, 0.05); padding: 0.75rem; border-radius: 50%;"></button>
-                    </div>
-                    <div class="modal-body p-4 text-overflow-safe text-dark" style="font-family: 'Source Serif 4', Georgia, serif; font-size: 1rem; white-space: pre-wrap; line-height: 1.7;">@chunk.Content</div>
-                    <div class="modal-footer border-0 p-4 pt-0 d-flex justify-content-between align-items-center">
-                        <div class="font-mono-xs text-muted-foreground">@chunk.WordCount từ vựng</div>
-                        <button type="button" class="btn btn-premium-secondary pill-button px-4 py-2" data-bs-dismiss="modal" style="font-size: 0.85rem; border-color: rgba(0,0,0,0.15); border-radius: 100px;">Đóng</button>
+        foreach (var chunk in Model.ViewModel.Chunks)
+        {
+            <div class="modal fade" id="chunkModal-@chunk.ChunkOrder" tabindex="-1" aria-hidden="true" style="backdrop-filter: blur(8px); background: rgba(82, 39, 27, 0.05);">
+                <div class="modal-dialog modal-dialog-centered modal-lg modal-dialog-scrollable">
+                    <div class="modal-content border-0 shadow-lg" style="background: var(--card); border-radius: 24px; color: var(--foreground); overflow: hidden;">
+                        <div class="modal-header border-0 p-4 pb-0 d-flex justify-content-between align-items-center">
+                            <h5 class="modal-title fw-bold" style="font-size: 1.25rem; color: var(--brown);">Nội dung phân đoạn @chunk.ChunkOrder</h5>
+                            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close" style="background-color: rgba(0, 0, 0, 0.05); padding: 0.75rem; border-radius: 50%;"></button>
+                        </div>
+                        <div class="modal-body p-4 text-overflow-safe text-dark" style="font-family: 'Source Serif 4', Georgia, serif; font-size: 1rem; white-space: pre-wrap; line-height: 1.7;">@chunk.Content</div>
+                        <div class="modal-footer border-0 p-4 pt-0 d-flex justify-content-between align-items-center">
+                            <div class="font-mono-xs text-muted-foreground">@chunk.WordCount từ vựng</div>
+                            <button type="button" class="btn btn-premium-secondary pill-button px-4 py-2" data-bs-dismiss="modal" style="font-size: 0.85rem; border-color: rgba(0,0,0,0.15); border-radius: 100px;">Đóng</button>
+                        </div>
                     </div>
                 </div>
             </div>
-        </div>
+        }
     }
+</div>
 }
+
 
 @section Scripts {
     <script>
@@ -507,10 +514,16 @@
                             const parser = new DOMParser();
                             const doc = parser.parseFromString(htmlText, 'text/html');
                             const newChunksCard = doc.getElementById('chunks-card');
+                            const newModalsContainer = doc.getElementById('chunk-modals-container');
+                            const currentModalsContainer = document.getElementById('chunk-modals-container');
 
                             if (newChunksCard) {
                                 // Replace content dynamically
                                 chunksCard.innerHTML = newChunksCard.innerHTML;
+                                
+                                if (newModalsContainer && currentModalsContainer) {
+                                    currentModalsContainer.innerHTML = newModalsContainer.innerHTML;
+                                }
                                 
                                 // Update URL without refreshing the whole page
                                 window.history.pushState(null, '', href);

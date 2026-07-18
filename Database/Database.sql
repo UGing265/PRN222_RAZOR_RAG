@@ -97,11 +97,6 @@ CREATE TABLE public.document_sources (
     created_at timestamp with time zone DEFAULT now() NOT NULL
 );
 
-CREATE TABLE public.document_tags (
-    document_id uuid NOT NULL,
-    tag_id uuid NOT NULL
-);
-
 CREATE TABLE public.document_types (
     id uuid DEFAULT public.uuid_generate_v4() NOT NULL,
     name character varying(50) NOT NULL,
@@ -154,11 +149,11 @@ CREATE TABLE public.subjects (
     created_at timestamp with time zone DEFAULT now() NOT NULL
 );
 
-CREATE TABLE public.tags (
-    id uuid DEFAULT public.uuid_generate_v4() NOT NULL,
-    name character varying(100) NOT NULL,
-    slug character varying(120) NOT NULL,
-    created_at timestamp with time zone DEFAULT now() NOT NULL
+CREATE TABLE public.system_settings (
+    key character varying(100) NOT NULL,
+    value character varying(1000) NOT NULL,
+    description character varying(500),
+    updated_at timestamp with time zone DEFAULT now() NOT NULL
 );
 
 CREATE TABLE public.upload_jobs (
@@ -222,7 +217,7 @@ ALTER TABLE ONLY public.document_files ADD CONSTRAINT document_files_pkey PRIMAR
 ALTER TABLE ONLY public.document_reports ADD CONSTRAINT document_reports_pkey PRIMARY KEY (id);
 ALTER TABLE ONLY public.document_sources ADD CONSTRAINT document_sources_name_key UNIQUE (name);
 ALTER TABLE ONLY public.document_sources ADD CONSTRAINT document_sources_pkey PRIMARY KEY (id);
-ALTER TABLE ONLY public.document_tags ADD CONSTRAINT document_tags_pkey PRIMARY KEY (document_id, tag_id);
+
 ALTER TABLE ONLY public.document_types ADD CONSTRAINT document_types_name_key UNIQUE (name);
 ALTER TABLE ONLY public.document_types ADD CONSTRAINT document_types_pkey PRIMARY KEY (id);
 ALTER TABLE ONLY public.documents ADD CONSTRAINT documents_pkey PRIMARY KEY (id);
@@ -232,9 +227,8 @@ ALTER TABLE ONLY public.roles ADD CONSTRAINT roles_name_key UNIQUE (name);
 ALTER TABLE ONLY public.roles ADD CONSTRAINT roles_pkey PRIMARY KEY (id);
 ALTER TABLE ONLY public.subjects ADD CONSTRAINT subjects_code_key UNIQUE (code);
 ALTER TABLE ONLY public.subjects ADD CONSTRAINT subjects_pkey PRIMARY KEY (id);
-ALTER TABLE ONLY public.tags ADD CONSTRAINT tags_name_key UNIQUE (name);
-ALTER TABLE ONLY public.tags ADD CONSTRAINT tags_pkey PRIMARY KEY (id);
-ALTER TABLE ONLY public.tags ADD CONSTRAINT tags_slug_key UNIQUE (slug);
+ALTER TABLE ONLY public.system_settings ADD CONSTRAINT system_settings_pkey PRIMARY KEY (key);
+
 ALTER TABLE ONLY public.upload_jobs ADD CONSTRAINT upload_jobs_pkey PRIMARY KEY (id);
 ALTER TABLE ONLY public.user_bookmarks ADD CONSTRAINT user_bookmarks_pkey PRIMARY KEY (user_id, document_id);
 ALTER TABLE ONLY public.user_subjects ADD CONSTRAINT user_subjects_pkey PRIMARY KEY (user_id, subject_id);
@@ -282,8 +276,7 @@ ALTER TABLE ONLY public.document_chunks ADD CONSTRAINT document_chunks_document_
 ALTER TABLE ONLY public.document_files ADD CONSTRAINT document_files_document_id_fkey FOREIGN KEY (document_id) REFERENCES public.documents(id) ON DELETE CASCADE;
 ALTER TABLE ONLY public.document_reports ADD CONSTRAINT document_reports_document_id_fkey FOREIGN KEY (document_id) REFERENCES public.documents(id) ON DELETE CASCADE;
 ALTER TABLE ONLY public.document_reports ADD CONSTRAINT document_reports_reporter_user_id_fkey FOREIGN KEY (reporter_user_id) REFERENCES public.users(id) ON DELETE CASCADE;
-ALTER TABLE ONLY public.document_tags ADD CONSTRAINT document_tags_document_id_fkey FOREIGN KEY (document_id) REFERENCES public.documents(id) ON DELETE CASCADE;
-ALTER TABLE ONLY public.document_tags ADD CONSTRAINT document_tags_tag_id_fkey FOREIGN KEY (tag_id) REFERENCES public.tags(id) ON DELETE CASCADE;
+
 ALTER TABLE ONLY public.documents ADD CONSTRAINT documents_owner_user_id_fkey FOREIGN KEY (owner_user_id) REFERENCES public.users(id) ON DELETE CASCADE;
 ALTER TABLE ONLY public.documents ADD CONSTRAINT documents_subject_id_fkey FOREIGN KEY (subject_id) REFERENCES public.subjects(id) ON DELETE SET NULL;
 ALTER TABLE ONLY public.documents ADD CONSTRAINT fk_documents_document_type FOREIGN KEY (document_type_id) REFERENCES public.document_types(id) ON DELETE SET NULL;
@@ -315,6 +308,13 @@ INSERT INTO public.subjects (id, code, name) VALUES
 ('ce07db58-2977-4b72-b883-7e4cbcdce490', 'EXE101', 'Experiential Entrepreneurship 1'),
 ('de07db58-2977-4b72-b883-7e4cbcdce491', 'MLN111', 'Triết học Mac-Lenin')
 ON CONFLICT (code) DO NOTHING;
+
+-- Seed System Settings
+INSERT INTO public.system_settings (key, value, description, updated_at) VALUES
+('ChunkMinWords', '50', 'Số từ tối thiểu của một chunk', now()),
+('ChunkMaxWords', '500', 'Số từ tối đa của một chunk', now()),
+('ChunkOverlapWords', '80', 'Số từ trùng lặp giữa các chunk', now())
+ON CONFLICT (key) DO NOTHING;
 
 -- Seed Users
 INSERT INTO public.users (id, role_id, full_name, email, password_hash, email_verified, username, "displayUsername", is_active, is_blocked) VALUES
@@ -389,11 +389,12 @@ CREATE TABLE public.token_usage (
     id uuid DEFAULT public.uuid_generate_v4() NOT NULL,
     user_id uuid NOT NULL,
     usage_date date DEFAULT CURRENT_DATE NOT NULL,
+    usage_hour smallint DEFAULT 0 NOT NULL,
     chat_tokens integer DEFAULT 0 NOT NULL,
     doc_tokens integer DEFAULT 0 NOT NULL,
     updated_at timestamp with time zone DEFAULT now() NOT NULL,
     CONSTRAINT token_usage_pkey PRIMARY KEY (id),
-    CONSTRAINT token_usage_user_date_key UNIQUE (user_id, usage_date),
+    CONSTRAINT token_usage_user_date_key UNIQUE (user_id, usage_date, usage_hour),
     CONSTRAINT token_usage_user_id_fkey FOREIGN KEY (user_id) REFERENCES public.users(id) ON DELETE CASCADE
 );
 CREATE INDEX idx_token_usage_user_id ON public.token_usage USING btree (user_id);

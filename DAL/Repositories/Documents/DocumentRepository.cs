@@ -33,6 +33,7 @@ public class DocumentRepository : IDocumentRepository
             .Include(x => x.Subject)
             .Include(x => x.DocumentType)
             .Include(x => x.Language)
+            .Include(x => x.DocumentSource)
             
             .FirstOrDefaultAsync(x => x.Id == documentId, cancellationToken);
 
@@ -44,6 +45,7 @@ public class DocumentRepository : IDocumentRepository
             .Include(x => x.Subject)
             .Include(x => x.DocumentType)
             .Include(x => x.Language)
+            .Include(x => x.DocumentSource)
             
             .Where(x => x.OwnerUserId == ownerUserId && x.Status == "pending")
             .OrderByDescending(x => x.UpdatedAt)
@@ -55,6 +57,7 @@ public class DocumentRepository : IDocumentRepository
             .Include(x => x.Subject)
             .Include(x => x.DocumentType)
             .Include(x => x.Language)
+            .Include(x => x.DocumentSource)
             
             .FirstOrDefaultAsync(x => x.Slug == slug, cancellationToken);
 
@@ -65,6 +68,7 @@ public class DocumentRepository : IDocumentRepository
             .Include(x => x.Subject)
             .Include(x => x.DocumentType)
             .Include(x => x.Language)
+            .Include(x => x.DocumentSource)
             
             .Where(x => x.Slug == slug);
 
@@ -106,6 +110,7 @@ public class DocumentRepository : IDocumentRepository
             .Include(x => x.Subject)
             .Include(x => x.DocumentType)
             .Include(x => x.Language)
+            .Include(x => x.DocumentSource)
             
             .AsSplitQuery()
             .FirstOrDefaultAsync(x => x.Id == documentId, cancellationToken);
@@ -119,6 +124,7 @@ public class DocumentRepository : IDocumentRepository
             .Include(x => x.Subject)
             .Include(x => x.DocumentType)
             .Include(x => x.Language)
+            .Include(x => x.DocumentSource)
             
             .AsSplitQuery()
             .FirstOrDefaultAsync(x => x.Slug == slug, cancellationToken);
@@ -145,6 +151,7 @@ public class DocumentRepository : IDocumentRepository
             .Include(x => x.Subject)
             .Include(x => x.DocumentType)
             .Include(x => x.Language)
+            .Include(x => x.DocumentSource)
             
             .Where(x => x.OwnerUserId == ownerUserId && x.Status == "completed");
 
@@ -245,6 +252,7 @@ public class DocumentRepository : IDocumentRepository
             .Include(x => x.Subject)
             .Include(x => x.DocumentType)
             .Include(x => x.Language)
+            .Include(x => x.DocumentSource)
             
             .Where(x => x.Status == "completed" && (x.OwnerUser.RoleId == 1 || x.OwnerUser.RoleId == 2) && !x.OwnerUser.IsBlocked);
 
@@ -596,7 +604,8 @@ public class DocumentRepository : IDocumentRepository
 
             .Include(x => x.Subject)
             .Include(x => x.DocumentType)
-            .Include(x => x.Language);
+            .Include(x => x.Language)
+            .Include(x => x.DocumentSource);
 
         if (!string.IsNullOrWhiteSpace(query))
         {
@@ -645,6 +654,11 @@ public class DocumentRepository : IDocumentRepository
     {
         await _dbContext.DocumentReports.AddAsync(report, cancellationToken);
         return report;
+    }
+
+    public Task<bool> HasUserReportedDocumentAsync(Guid documentId, Guid reporterUserId, CancellationToken cancellationToken = default)
+    {
+        return _dbContext.DocumentReports.AnyAsync(x => x.DocumentId == documentId && x.ReporterUserId == reporterUserId, cancellationToken);
     }
 
     public Task<List<DocumentReport>> GetPendingReportsAsync(CancellationToken cancellationToken = default)

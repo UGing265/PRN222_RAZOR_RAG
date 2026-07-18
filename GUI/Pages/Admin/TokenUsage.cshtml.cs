@@ -63,7 +63,9 @@ namespace GUI.Pages.Admin
 
             // Kết nối dữ liệu thật từ BLL / Repository
             var (users, stats) = await _tokenUsageService.GetTokenUsageReportAsync(HttpContext.RequestAborted);
-            UserTokensList = users;
+            
+            // Bỏ qua hiển thị Admin (RoleId == 1) trên UI báo cáo
+            UserTokensList = users.Where(u => u.RoleId != 1).ToList();
             HeroStats = stats;
 
             var chunkSettings = await _systemSettingService.GetChunkingSettingsAsync(HttpContext.RequestAborted);

@@ -1,4 +1,5 @@
 using BLL.Interfaces.Auth;
+using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 
@@ -15,7 +16,7 @@ namespace GUI.Pages.Auth
             _logger = logger;
         }
 
-        public IActionResult OnGet(string token)
+        public async Task<IActionResult> OnGetAsync(string token)
         {
             if (string.IsNullOrEmpty(token))
             {
@@ -28,6 +29,21 @@ namespace GUI.Pages.Auth
                 var (isValid, isExpired, email) = _authService.ValidateEmailVerificationToken(token);
                 if (isValid)
                 {
+                    bool verified = await _authService.VerifyEmailTokenAsync(token);
+                    if (verified)
+                    {
+                        TempData["SuccessMessage"] = "Xác thực email thành công! Vui lòng đăng nhập.";
+                    }
+                    else
+                    {
+                        TempData["ErrorMessage"] = "Không thể xác thực email. Tài khoản không tồn tại hoặc đã bị khóa.";
+                    }
+                    
+                    if (User.Identity?.IsAuthenticated == true)
+                    {
+                        await HttpContext.SignOutAsync(Microsoft.AspNetCore.Authentication.Cookies.CookieAuthenticationDefaults.AuthenticationScheme);
+                    }
+
                     return RedirectToPage("/Auth/Login", new { email = email });
                 }
                 else if (isExpired)

@@ -25,8 +25,6 @@ public partial class DBContext : DbContext
 
     public virtual DbSet<Role> Roles { get; set; }
 
-    public virtual DbSet<Tag> Tags { get; set; }
-
     public virtual DbSet<User> Users { get; set; }
 
 
@@ -235,23 +233,7 @@ public partial class DBContext : DbContext
                 .OnDelete(DeleteBehavior.SetNull)
                 .HasConstraintName("fk_documents_document_source");
 
-            entity.HasMany(d => d.Tags).WithMany(p => p.Documents)
-                .UsingEntity<Dictionary<string, object>>(
-                    "DocumentTag",
-                    r => r.HasOne<Tag>().WithMany()
-                        .HasForeignKey("TagId")
-                        .HasConstraintName("document_tags_tag_id_fkey"),
-                    l => l.HasOne<Document>().WithMany()
-                        .HasForeignKey("DocumentId")
-                        .HasConstraintName("document_tags_document_id_fkey"),
-                    j =>
-                    {
-                        j.HasKey("DocumentId", "TagId").HasName("document_tags_pkey");
-                        j.ToTable("document_tags");
-                        j.HasIndex(new[] { "TagId" }, "idx_document_tags_tag_id");
-                        j.IndexerProperty<Guid>("DocumentId").HasColumnName("document_id");
-                        j.IndexerProperty<Guid>("TagId").HasColumnName("tag_id");
-                    });
+
         });
 
         modelBuilder.Entity<DocumentChapter>(entity =>
@@ -425,28 +407,6 @@ public partial class DBContext : DbContext
             entity.Property(e => e.Name)
                 .HasMaxLength(50)
                 .HasColumnName("name");
-        });
-
-        modelBuilder.Entity<Tag>(entity =>
-        {
-            entity.HasKey(e => e.Id).HasName("tags_pkey");
-
-            entity.ToTable("tags");
-
-            entity.HasIndex(e => e.Name, "tags_name_key").IsUnique();
-
-            entity.Property(e => e.Id)
-                .HasDefaultValueSql("uuid_generate_v4()")
-                .HasColumnName("id");
-            entity.Property(e => e.CreatedAt)
-                .HasDefaultValueSql("now()")
-                .HasColumnName("created_at");
-            entity.Property(e => e.Name)
-                .HasMaxLength(100)
-                .HasColumnName("name");
-            entity.Property(e => e.Slug)
-                .HasMaxLength(120)
-                .HasColumnName("slug");
         });
 
         modelBuilder.Entity<User>(entity =>
@@ -672,11 +632,12 @@ public partial class DBContext : DbContext
             entity.ToTable("token_usage");
             entity.HasIndex(e => e.UserId, "idx_token_usage_user_id");
             entity.HasIndex(e => e.UsageDate, "idx_token_usage_usage_date");
-            entity.HasIndex(e => new { e.UserId, e.UsageDate }, "token_usage_user_date_key").IsUnique();
+            entity.HasIndex(e => new { e.UserId, e.UsageDate, e.UsageHour }, "token_usage_user_date_key").IsUnique();
 
             entity.Property(e => e.Id).HasDefaultValueSql("uuid_generate_v4()").HasColumnName("id");
             entity.Property(e => e.UserId).HasColumnName("user_id");
             entity.Property(e => e.UsageDate).HasDefaultValueSql("CURRENT_DATE").HasColumnName("usage_date");
+            entity.Property(e => e.UsageHour).HasDefaultValue(0).HasColumnName("usage_hour");
             entity.Property(e => e.ChatTokens).HasDefaultValue(0).HasColumnName("chat_tokens");
             entity.Property(e => e.DocTokens).HasDefaultValue(0).HasColumnName("doc_tokens");
             entity.Property(e => e.UpdatedAt).HasDefaultValueSql("now()").HasColumnName("updated_at");
@@ -685,6 +646,16 @@ public partial class DBContext : DbContext
                 .HasForeignKey(d => d.UserId)
                 .OnDelete(DeleteBehavior.Cascade)
                 .HasConstraintName("token_usage_user_id_fkey");
+        });
+
+        modelBuilder.Entity<SystemSetting>(entity =>
+        {
+            entity.HasKey(e => e.Key).HasName("system_settings_pkey");
+            entity.ToTable("system_settings");
+            entity.Property(e => e.Key).HasMaxLength(100).HasColumnName("key");
+            entity.Property(e => e.Value).HasMaxLength(1000).HasColumnName("value");
+            entity.Property(e => e.Description).HasMaxLength(500).HasColumnName("description");
+            entity.Property(e => e.UpdatedAt).HasDefaultValueSql("now()").HasColumnName("updated_at");
         });
 
         OnModelCreatingPartial(modelBuilder);

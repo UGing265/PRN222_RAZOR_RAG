@@ -92,7 +92,7 @@
                             @Model.Initial
                         </div>
                         <div class="lh-sm overflow-hidden sidebar-text" style="max-width: 125px;">
-                            <div class="fw-bold text-truncate text-foreground" id="sidebarFullName" style="font-size: 0.88rem;">@Model.FullName</div>
+                            <div class="fw-bold text-truncate text-foreground user-fullname-display" id="sidebarFullName" style="font-size: 0.88rem;">@Model.FullName</div>
                             <div class="small text-muted-foreground text-truncate" id="sidebarRole" style="font-size: 0.72rem;">@Model.RoleLabel</div>
                         </div>
                     </div>
@@ -103,15 +103,14 @@
             </div>
 
             <div class="profile-popout" id="profilePopout">
-                <div class="hover-bg-profile-item" style="display: flex; align-items: center; justify-content: space-between; padding: 8px; margin-bottom: 6px; border-radius: 12px; cursor: pointer; gap: 12px;" data-bs-toggle="modal" data-bs-target="#settingsModal" data-bs-target-tab="profile">
+                <div class="hover-bg-profile-item" style="display: flex; align-items: center; justify-content: space-between; padding: 8px; margin-bottom: 6px; border-radius: 12px; cursor: pointer; gap: 12px;" data-bs-toggle="modal" data-bs-target="#settingsModal">
                     <div style="display: flex; align-items: center; gap: 12px; overflow: hidden;">
                         <div class="rounded-circle text-white"
                              style="width: 38px; height: 38px; min-width: 38px; display: flex; align-items: center; justify-content: center; font-weight: bold; background: var(--brown) !important; flex-shrink: 0; box-shadow: 0 2px 4px rgba(0,0,0,0.08);">
                             @Model.Initial
                         </div>
                         <div style="display: flex; flex-direction: column; line-height: 1.25; overflow: hidden; max-width: 140px; text-align: left;">
-                            <div class="fw-bold text-truncate" style="font-size: 0.85rem; color: var(--foreground);">@Model.FullName</div>
-                            <div class="text-muted-foreground text-truncate" style="font-size: 0.72rem; color: var(--muted);">Gói: Basic</div>
+                            <div class="fw-bold text-truncate user-fullname-display" style="font-size: 0.85rem; color: var(--foreground);">@Model.FullName</div>
                         </div>
                     </div>
                     <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="var(--muted)" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink: 0;">
@@ -119,30 +118,22 @@
                     </svg>
                 </div>
 
+                @*
                 <hr class="my-2" style="border-top: 1px solid rgba(82, 39, 27, 0.08);" />
 
                 <div class="d-flex flex-column gap-1">
 
 
-                    <button type="button" data-bs-toggle="modal" data-bs-target="#settingsModal" data-bs-target-tab="subscription" class="popout-item border-0 bg-transparent text-start w-100">
-                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="flex-shrink-0"><rect x="2" y="4" width="20" height="16" rx="2"/><line x1="2" y1="10" x2="22" y2="10"/></svg>
-                        <span>Gói Dịch Vụ</span>
-                    </button>
-
-                    <button type="button" data-bs-toggle="modal" data-bs-target="#settingsModal" data-bs-target-tab="profile" class="popout-item border-0 bg-transparent text-start w-100">
+                    <button type="button" data-bs-toggle="modal" data-bs-target="#settingsModal" class="popout-item border-0 bg-transparent text-start w-100">
                         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="flex-shrink-0"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
                         <span>Hồ Sơ Cá Nhân</span>
-                    </button>
-
-                    <button type="button" data-bs-toggle="modal" data-bs-target="#settingsModal" data-bs-target-tab="profile" class="popout-item border-0 bg-transparent text-start w-100">
-                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="flex-shrink-0"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
-                        <span>Cài Đặt</span>
                     </button>
                 </div>
 
                 <hr class="my-2" style="border-top: 1px solid rgba(82, 39, 27, 0.08);" />
-
+                *@
                 <div class="d-flex flex-column gap-1">
+                    @*
                     <a href="#" class="popout-item text-decoration-none justify-content-between">
                         <div class="d-flex align-items-center gap-2">
                             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="flex-shrink-0"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
@@ -152,6 +143,7 @@
                             <polyline points="9 18 15 12 9 6"></polyline>
                         </svg>
                     </a>
+                    *@
 
                     <form asp-page="/Auth/Logout" method="post" class="w-100 m-0">
                         @Html.AntiForgeryToken()
@@ -180,26 +172,25 @@
             <div class="modal-content border-0 shadow-lg" style="background: var(--card); border-radius: 24px; color: var(--foreground); overflow: hidden;">
 
                 <div class="modal-header border-0 p-4 pb-0 d-flex justify-content-between align-items-center">
-                    <h5 class="modal-title fw-bold" id="settingsModalLabel" style="font-size: 1.2rem; color: var(--brown);">Cài Đặt Tài Khoản</h5>
+                    <h5 class="modal-title fw-bold" id="settingsModalLabel" style="font-size: 1.2rem; color: var(--brown);">Hồ Sơ Cá Nhân</h5>
                     <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close" style="background-color: rgba(82, 39, 27, 0.05); padding: 0.75rem; border-radius: 50%;"></button>
                 </div>
 
-                <div class="modal-body p-4">
-                    <ul class="nav nav-pills mb-4 p-1.5 rounded-pill bg-light d-flex gap-1" id="settingsTabs" role="tablist" style="background: rgba(82,39,27,0.05) !important;">
-                        <li class="nav-item flex-fill" role="presentation">
-                            <button class="nav-link w-100 rounded-pill fw-semibold py-2 active" id="profile-tab" data-bs-toggle="pill" data-bs-target="#profile-panel" type="button" role="tab" aria-controls="profile-panel" aria-selected="true" style="font-size: 0.85rem;">
-                                Hồ Sơ Của Tôi
-                            </button>
+                <div class="modal-body p-0">
+                    <!-- Tabs Nav -->
+                    <ul class="nav nav-tabs profile-tabs border-0 px-4 pt-2" id="profileTabs" role="tablist">
+                        <li class="nav-item" role="presentation">
+                            <button class="nav-link active fw-semibold" id="personal-info-tab" data-bs-toggle="tab" data-bs-target="#personal-info" type="button" role="tab" aria-controls="personal-info" aria-selected="true">Thông Tin</button>
                         </li>
-                        <li class="nav-item flex-fill" role="presentation">
-                            <button class="nav-link w-100 rounded-pill fw-semibold py-2" id="subscription-tab" data-bs-toggle="pill" data-bs-target="#subscription-panel" type="button" role="tab" aria-controls="subscription-panel" aria-selected="false" style="font-size: 0.85rem;">
-                                Gói Dịch Vụ
-                            </button>
+                        <li class="nav-item" role="presentation">
+                            <button class="nav-link fw-semibold" id="change-password-tab" data-bs-toggle="tab" data-bs-target="#change-password" type="button" role="tab" aria-controls="change-password" aria-selected="false">Mật Khẩu</button>
                         </li>
                     </ul>
 
-                    <div class="tab-content" id="settingsTabContent">
-                        <div class="tab-pane fade show active" id="profile-panel" role="tabpanel" aria-labelledby="profile-tab">
+                    <!-- Tabs Content -->
+                    <div class="tab-content p-4" id="profileTabsContent">
+                        <!-- Tab 1: Personal Info -->
+                        <div class="tab-pane fade show active" id="personal-info" role="tabpanel" aria-labelledby="personal-info-tab">
                             <form id="editProfileForm">
                                 <div class="text-center mb-4">
                                     <div class="position-relative d-inline-block">
@@ -217,14 +208,6 @@
                                     <input type="text" class="form-control pill-input px-3" id="inputFullName" value="@Model.FullName" required style="border-color: rgba(82, 39, 27, 0.12);" />
                                 </div>
 
-                                <div class="mb-3">
-                                    <label for="inputRole" class="form-label small fw-semibold text-muted-foreground">Vai Trò / Đối Tượng</label>
-                                    <div class="form-control pill-input px-3 d-flex align-items-center" style="border-color: rgba(82, 39, 27, 0.12); background: rgba(82,39,27,0.03); cursor: not-allowed; color: var(--muted-foreground); pointer-events: none; user-select: none;">
-                                        @Model.RoleLabel
-                                    </div>
-                                    <div class="form-text text-muted-foreground" style="font-size: 0.75rem;">Vai trò được cấp bởi hệ thống quản trị.</div>
-                                </div>
-
                                 <div class="d-flex justify-content-end gap-2 mt-4">
                                     <button type="button" class="btn btn-outline-dark pill-button px-4 py-2" data-bs-dismiss="modal" style="border-color: rgba(82,39,27,0.15); font-size: 0.85rem;">Hủy</button>
                                     <button type="submit" class="btn btn-premium-primary pill-button px-4 py-2" style="font-size: 0.85rem;">Lưu Thay Đổi</button>
@@ -232,42 +215,26 @@
                             </form>
                         </div>
 
-                        <div class="tab-pane fade" id="subscription-panel" role="tabpanel" aria-labelledby="subscription-tab">
-                            <div class="p-4 rounded-4 text-white mb-4 d-flex justify-content-between align-items-center" style="background: linear-gradient(135deg, var(--brown) 0%, var(--coral) 100%);">
-                                <div>
-                                    <div class="font-mono-xs opacity-75 mb-1" style="font-size: 10px;">GÓI HIỆN TẠI</div>
-                                    <h3 class="fw-bold m-0" style="font-size: 1.4rem;">Basic Member</h3>
-                                    <div class="mt-2 small opacity-90">Truy vấn: <strong>4 / 10 lượt</strong> hôm nay</div>
+                        <!-- Tab 2: Change Password -->
+                        <div class="tab-pane fade" id="change-password" role="tabpanel" aria-labelledby="change-password-tab">
+                            <form id="changePasswordForm">
+                                <div class="mb-3">
+                                    <label for="inputCurrentPassword" class="form-label small fw-semibold text-muted-foreground">Mật khẩu hiện tại</label>
+                                    <input type="password" class="form-control pill-input px-3" id="inputCurrentPassword" required style="border-color: rgba(82, 39, 27, 0.12);" />
                                 </div>
-                                <div class="rounded-circle d-flex align-items-center justify-content-center bg-white" style="width: 44px; height: 44px; color: var(--coral);">
-                                    <svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>
+                                <div class="mb-3">
+                                    <label for="inputNewPassword" class="form-label small fw-semibold text-muted-foreground">Mật khẩu mới</label>
+                                    <input type="password" class="form-control pill-input px-3" id="inputNewPassword" required style="border-color: rgba(82, 39, 27, 0.12);" />
                                 </div>
-                            </div>
-
-                            <div class="mb-4">
-                                <h6 class="fw-bold mb-3" style="color: var(--brown); font-size: 0.95rem;">Tính năng khả dụng:</h6>
-                                <ul class="list-unstyled d-flex flex-column gap-2.5 small" style="color: var(--foreground); padding-left: 0;">
-                                    <li class="d-flex align-items-center gap-2.5">
-                                        <span class="rounded-circle d-flex align-items-center justify-content-center text-white flex-shrink-0" style="width: 18px; height: 18px; background: var(--coral) !important; font-size: 0.65rem;">✓</span>
-                                        <span>Hỏi đáp <strong>10 câu hỏi</strong> / ngày</span>
-                                    </li>
-                                    <li class="d-flex align-items-center gap-2.5">
-                                        <span class="rounded-circle d-flex align-items-center justify-content-center text-white flex-shrink-0" style="width: 18px; height: 18px; background: var(--coral) !important; font-size: 0.65rem;">✓</span>
-                                        <span>Hỏi đáp tài liệu PDF cơ bản</span>
-                                    </li>
-                                    <li class="d-flex align-items-center gap-2.5">
-                                        <span class="rounded-circle d-flex align-items-center justify-content-center text-white flex-shrink-0" style="width: 18px; height: 18px; background: var(--coral) !important; font-size: 0.65rem;">✓</span>
-                                        <span>Tốc độ phải hồi AI tiêu chuẩn</span>
-                                    </li>
-                                </ul>
-                            </div>
-
-                            <div class="d-grid gap-2">
-                                <a asp-page="/Subscription" class="btn btn-premium-primary pill-button py-2.5 text-center fw-semibold" style="font-size: 0.85rem;" onclick="bootstrap.Modal.getInstance(document.getElementById('settingsModal')).hide();">
-                                    Nâng Cấp Gói Premium
-                                </a>
-                                <button type="button" class="btn btn-outline-dark pill-button py-2.5" data-bs-dismiss="modal" style="border-color: rgba(82,39,27,0.15); font-size: 0.85rem;">Đóng</button>
-                            </div>
+                                <div class="mb-3">
+                                    <label for="inputConfirmPassword" class="form-label small fw-semibold text-muted-foreground">Xác nhận mật khẩu mới</label>
+                                    <input type="password" class="form-control pill-input px-3" id="inputConfirmPassword" required style="border-color: rgba(82, 39, 27, 0.12);" />
+                                </div>
+                                <div class="d-flex justify-content-end gap-2 mt-4">
+                                    <button type="button" class="btn btn-outline-dark pill-button px-4 py-2" data-bs-dismiss="modal" style="border-color: rgba(82,39,27,0.15); font-size: 0.85rem;">Hủy</button>
+                                    <button type="submit" class="btn btn-premium-primary pill-button px-4 py-2" style="font-size: 0.85rem;">Đổi Mật Khẩu</button>
+                                </div>
+                            </form>
                         </div>
                     </div>
                 </div>
@@ -277,17 +244,21 @@
 }
 
 <style>
-/* Custom Settings Modal Tabs Styling */
-#settingsModal #settingsTabs .nav-link.active {
-    background-color: var(--brown) !important;
-    color: white !important;
+
+.profile-tabs .nav-link {
+    color: var(--muted);
+    border: none;
+    border-bottom: 2px solid transparent;
+    background: transparent;
+    transition: all 0.2s;
 }
-#settingsModal #settingsTabs .nav-link {
-    color: var(--muted) !important;
+.profile-tabs .nav-link:hover {
+    color: var(--brown);
 }
-#settingsModal #settingsTabs .nav-link:hover:not(.active) {
-    background-color: rgba(82, 39, 27, 0.06) !important;
-    color: var(--brown) !important;
+.profile-tabs .nav-link.active {
+    color: var(--brown);
+    border-bottom: 2px solid var(--brown);
+    font-weight: 600;
 }
 
 /* Premium Glassmorphic Popout Profile Menu (Floating Dropup style) */
@@ -655,55 +626,122 @@ document.addEventListener("DOMContentLoaded", function() {
         }
     }
 
-    if (settingsModal) {
-        settingsModal.addEventListener('show.bs.modal', function(event) {
-            const button = event.relatedTarget;
-            const targetTab = button ? button.getAttribute('data-bs-target-tab') : 'profile';
 
-            if (targetTab === 'subscription') {
-                const subscriptionTabTrigger = document.querySelector('#subscription-tab');
-                if (subscriptionTabTrigger) {
-                    bootstrap.Tab.getInstance(subscriptionTabTrigger)?.show() || new bootstrap.Tab(subscriptionTabTrigger).show();
+
+    const profileForm = document.getElementById('editProfileForm');
+    if (profileForm) {
+        profileForm.addEventListener('submit', async function(e) {
+            e.preventDefault();
+            const newName = document.getElementById('inputFullName').value.trim();
+            if (!newName) return;
+            
+            const submitBtn = profileForm.querySelector('button[type="submit"]');
+            if (submitBtn) {
+                submitBtn.disabled = true;
+                submitBtn.innerHTML = '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Đang lưu...';
+            }
+
+            try {
+                const response = await fetch('/api/user/profile', {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ FullName: newName })
+                });
+
+                if (response.ok) {
+                    const sidebarFullName = document.getElementById('sidebarFullName');
+                    const sidebarAvatar = document.getElementById('sidebarAvatar');
+                    const modalAvatarCircle = document.getElementById('modalAvatarCircle');
+
+                    if (sidebarFullName) sidebarFullName.textContent = newName;
+                    if (sidebarAvatar) sidebarAvatar.textContent = newName.charAt(0).toUpperCase();
+                    if (modalAvatarCircle) modalAvatarCircle.textContent = newName.charAt(0).toUpperCase();
+
+                    if (typeof showPremiumToast === 'function') {
+                        showPremiumToast('Cập nhật thông tin thành công.', 'success');
+                    }
+                    
+                    const modalEl = document.getElementById('settingsModal');
+                    const modal = bootstrap.Modal.getInstance(modalEl);
+                    if (modal) {
+                        modal.hide();
+                    }
+                } else {
+                    const errorData = await response.json();
+                    if (typeof showPremiumToast === 'function') {
+                        showPremiumToast(errorData.error || 'Cập nhật thất bại.', 'danger');
+                    }
                 }
-            } else {
-                const profileTabTrigger = document.querySelector('#profile-tab');
-                if (profileTabTrigger) {
-                    bootstrap.Tab.getInstance(profileTabTrigger)?.show() || new bootstrap.Tab(profileTabTrigger).show();
+            } catch (err) {
+                if (typeof showPremiumToast === 'function') {
+                    showPremiumToast('Lỗi kết nối máy chủ.', 'danger');
+                }
+            } finally {
+                if (submitBtn) {
+                    submitBtn.disabled = false;
+                    submitBtn.innerHTML = 'Lưu Thay Đổi';
                 }
             }
         });
     }
-
-    const profileForm = document.getElementById('editProfileForm');
-    if (profileForm) {
-        profileForm.addEventListener('submit', function(e) {
+    const changePasswordForm = document.getElementById('changePasswordForm');
+    if (changePasswordForm) {
+        changePasswordForm.addEventListener('submit', async function(e) {
             e.preventDefault();
-            const newName = document.getElementById('inputFullName').value.trim();
-            if (newName) {
-                const sidebarFullName = document.getElementById('sidebarFullName');
-                const sidebarAvatar = document.getElementById('sidebarAvatar');
-                const modalAvatarCircle = document.getElementById('modalAvatarCircle');
+            const currentPw = document.getElementById('inputCurrentPassword').value;
+            const newPw = document.getElementById('inputNewPassword').value;
+            const confirmPw = document.getElementById('inputConfirmPassword').value;
 
-                if (sidebarFullName) sidebarFullName.textContent = newName;
-                if (sidebarAvatar) sidebarAvatar.textContent = newName.charAt(0).toUpperCase();
-                if (modalAvatarCircle) modalAvatarCircle.textContent = newName.charAt(0).toUpperCase();
+            if (newPw !== confirmPw) {
+                if (typeof showPremiumToast === 'function') {
+                    showPremiumToast('Mật khẩu mới không khớp. Vui lòng kiểm tra lại.', 'danger');
+                }
+                return;
+            }
 
-                const existingAlert = profileForm.querySelector('.alert');
-                if (existingAlert) existingAlert.remove();
+            const submitBtn = changePasswordForm.querySelector('button[type="submit"]');
+            if (submitBtn) {
+                submitBtn.disabled = true;
+                submitBtn.innerHTML = '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Đang đổi...';
+            }
+            
+            try {
+                const response = await fetch('/api/user/password', {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        CurrentPassword: currentPw,
+                        NewPassword: newPw,
+                        ConfirmPassword: confirmPw
+                    })
+                });
 
-                const alertDiv = document.createElement('div');
-                alertDiv.className = 'alert alert-success alert-dismissible fade show mt-3 mb-0 py-2.5 px-3 border-0 rounded-3 shadow-sm';
-                alertDiv.role = 'alert';
-                alertDiv.style.fontSize = '0.8rem';
-                alertDiv.style.backgroundColor = '#ecfdf5';
-                alertDiv.style.color = '#065f46';
-                alertDiv.innerHTML = '<strong>Thành công!</strong> Đã cập nhật hồ sơ.<button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close" style="padding: 0.6rem 0.75rem;"></button>';
-
-                profileForm.appendChild(alertDiv);
-
-                setTimeout(() => {
-                    bootstrap.Alert.getInstance(alertDiv)?.close() || alertDiv.remove();
-                }, 3000);
+                if (response.ok) {
+                    if (typeof showPremiumToast === 'function') {
+                        showPremiumToast('Đã đổi mật khẩu thành công.', 'success');
+                    }
+                    changePasswordForm.reset();
+                    
+                    const modalEl = document.getElementById('settingsModal');
+                    const modal = bootstrap.Modal.getInstance(modalEl);
+                    if (modal) {
+                        modal.hide();
+                    }
+                } else {
+                    const errorData = await response.json();
+                    if (typeof showPremiumToast === 'function') {
+                        showPremiumToast(errorData.error || 'Đổi mật khẩu thất bại.', 'danger');
+                    }
+                }
+            } catch (err) {
+                if (typeof showPremiumToast === 'function') {
+                    showPremiumToast('Lỗi kết nối máy chủ.', 'danger');
+                }
+            } finally {
+                if (submitBtn) {
+                    submitBtn.disabled = false;
+                    submitBtn.innerHTML = 'Đổi Mật Khẩu';
+                }
             }
         });
     }
